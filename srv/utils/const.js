@@ -1,0 +1,9 @@
+module.exports = {
+    TX_CONTEXT_PATH_DELIMITER: "/",
+    OBJECT_PATH_DELIMITER: "/",
+    VALUE_DELIMITER: ", ",
+    OBJECT_TYPE_I18N_LABEL_KEY: "@Common.Label",
+    CHANGE_HISTORY_ANNOTATION: "@changehistory",
+    REF_OBJECT_ID_DELIMITER: ".",
+    COMPLEX_DATA_TYPE_DELIMITER: "_",
+};

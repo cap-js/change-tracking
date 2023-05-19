@@ -1,0 +1,14 @@
+{
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sql"
+      }
+    },
+    "i18n": {
+      "folders": [
+        "../../db/_i18n"
+      ]
+    }
+  }
+}
