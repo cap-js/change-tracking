@@ -3,7 +3,6 @@ using {
   cuid,
   sap
 } from '@sap/cds/common';
-using sap.sme.changelog.ChangeView from '../../../';
 using {
   sap.capire.common.types.PersonName as PersonName,
   sap.capire.common.types.CountryName as CountryName,
@@ -64,33 +63,29 @@ entity Authors : managed, cuid {
   @title : '{i18n>authors.placeOfBirth}'
   placeOfBirth : String;
   placeOfDeath : String;
-  books        : Association to many Books
-                   on books.author = $self;
-
-  changes      : Association to many ChangeView
-                   on changes.entityKey = ID;
+  books        : Association to many Books on books.author = $self;
 }
 
 @title                  : '{i18n>volumns.objectTitle}'
-@changehistory.objectID : [title]
+@changelog.keys : [title]
 entity Volumns : managed, cuid {
-  @changehistory
+  @changelog
   @title : '{i18n>volumns.title}'
   title    : String;
 
-  @changehistory
+  @changelog
   @title : '{i18n>volumns.sequence}'
   sequence : Integer;
   book     : Association to one Books;
 }
 
 @title                  : '{i18n>bookStoreRegistry.objectTitle}'
-@changehistory.objectID : [code]
+@changelog.keys : [code]
 entity BookStoreRegistry : managed, cuid {
   @title : '{i18n>bookStoreRegistry.code}'
   code      : String;
 
-  @changehistory
+  @changelog
   @title : '{i18n>bookStoreRegistry.validOn}'
   validOn   : Date;
 }

@@ -1,14 +1,15 @@
 {
+  "dependencies": {
+    "@cap-js/change-tracking": "*"
+  },
   "cds": {
     "requires": {
+      "change-tracking": {
+        "model": "@cap-js/change-tracking"
+      },
       "db": {
         "kind": "sql"
       }
-    },
-    "i18n": {
-      "folders": [
-        "../../db/_i18n"
-      ]
     }
   }
 }

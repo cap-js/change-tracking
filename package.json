@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "files": [
+    "cds-plugin.js",
+    "index.cds",
+    "lib",
+    "_i18n"
+  ],
   "scripts": {
     "build": "cds build",
     "start": "cds run",
@@ -26,5 +32,12 @@
   },
   "peerDependencies": {
     "@sap/cds": ">=6"
+  },
+  "cds": {
+    "requires": {
+      "change-tracking": {
+        "model": "@cap-js/change-tracking"
+      }
+    }
   }
 }

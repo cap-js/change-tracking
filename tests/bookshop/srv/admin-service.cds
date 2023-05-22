@@ -17,76 +17,76 @@ annotate AdminService.Authors with {
   name @(Common.Label : '{i18n>serviceAuthors.name}');
 };
 
-annotate AdminService.BookStores with @changehistory.objectID : [name]{
-  name            @changehistory;
-  location        @changehistory;
-  books           @changehistory                              : [books.title];
-  lifecycleStatus @changehistory                              : [lifecycleStatus.name];
-  city            @changehistory                              : [
+annotate AdminService.BookStores with @changelog.keys : [name]{
+  name            @changelog;
+  location        @changelog;
+  books           @changelog                              : [books.title];
+  lifecycleStatus @changelog                              : [lifecycleStatus.name];
+  city            @changelog                              : [
     city.name,
     city.country.countryName.code
   ]
 };
 
 
-annotate AdminService.Books with @changehistory.objectID : [
+annotate AdminService.Books with @changelog.keys : [
   title,
   author.name.firstName,
   author.name.lastName
 ]{
-  title    @changehistory;
-  descr    @changehistory;
-  author   @changehistory                                : [
+  title    @changelog;
+  descr    @changelog;
+  author   @changelog                                : [
     author.name.firstName,
     author.name.lastName
   ];
-  genre    @changehistory;
-  bookType @changehistory                                : [
+  genre    @changelog;
+  bookType @changelog                                : [
     bookType.name,
     bookType.descr
   ];
 };
 
-annotate AdminService.Authors with @changehistory.objectID : [
+annotate AdminService.Authors with @changelog.keys : [
   name.firstName,
   name.lastName
 ]{
-  name         @changehistory;
-  placeOfBirth @changehistory;
-  books        @changehistory                              : [
+  name         @changelog;
+  placeOfBirth @changelog;
+  books        @changelog                              : [
     books.name,
     books.title
   ];
 };
 
 annotate AdminService.Order with {
-  header @changehistory;
+  header @changelog;
 }
 
 annotate AdminService.OrderHeader with {
-  status @changehistory;
+  status @changelog;
 }
 
 annotate AdminService.OrderItem with {
-  quantity @changehistory;
-  customer @changehistory : [
+  quantity @changelog;
+  customer @changelog : [
     customer.country,
     customer.name,
     customer.city,
   ];
-  order    @changehistory : [
+  order    @changelog : [
     order.report.comment,
     order.status
   ];
 }
 
 annotate AdminService.OrderItemNote with {
-  content @changehistory;
+  content @changelog;
 }
 
 annotate AdminService.Customers with {
-  name    @changehistory;
-  city    @changehistory;
-  country @changehistory;
-  age     @changehistory;
+  name    @changelog;
+  city    @changelog;
+  country @changelog;
+  age     @changelog;
 }

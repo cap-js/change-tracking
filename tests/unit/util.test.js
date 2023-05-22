@@ -1,7 +1,7 @@
 const chai = require("chai");
 const { expect } = require("chai");
-const templateProcessor = require("../../srv/utils/template-processor");
-const { getEntityByContextPath, getEntity, hasComposition } = require("../../srv/utils/entityHelper");
+const templateProcessor = require("../../lib/template-processor");
+const { getEntityByContextPath, getEntity, hasComposition } = require("../../lib/entity-helper");
 
 // Configure chai
 chai.should();
@@ -25,7 +25,7 @@ describe("templateProcessor", () => {
         elements.set("test", {
             template: { elements: [], target: { elements: elements, keys: [] } },
             picked: (element) => {
-                return element["@changehistory"];
+                return element["@changelog"];
             },
         });
         const template = { elements: elements, target: { elements: elements, keys: [] } };
