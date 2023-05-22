@@ -4,9 +4,6 @@
   },
   "cds": {
     "requires": {
-      "change-tracking": {
-        "model": "@cap-js/change-tracking"
-      },
       "db": {
         "kind": "sql"
       }

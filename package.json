@@ -2,9 +2,8 @@
   "name": "@cap-js/change-tracking",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "cds-plugin.js",
   "files": [
-    "cds-plugin.js",
     "index.cds",
     "lib",
     "_i18n"

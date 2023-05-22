@@ -76,18 +76,17 @@ view ChangeView as
 
 annotate ChangeView with @(UI: {
   PresentationVariant: {
-    SortOrder     : [{
-      Property  : createdAt,
-      Descending: true
-    }],
     Visualizations: ['@UI.LineItem'],
     RequestAtLeast: [
       parentKey,
       serviceEntity,
       serviceEntityPath
-    ]
+    ],
+    SortOrder     : [{
+      Property  : createdAt,
+      Descending: true
+    }],
   },
-  DeleteHidden       : true,
   LineItem           : [
     { Value: objectID },
     { Value: entity },
@@ -98,5 +97,6 @@ annotate ChangeView with @(UI: {
     { Value: createdBy },
     { Value: createdAt },
     { Value: modification }
-  ]
+  ],
+  DeleteHidden       : true,
 });
