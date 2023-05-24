@@ -27,7 +27,7 @@ cds.on('loaded', m => {
       }
 
       // Add defaults for @changelog.keys
-      entity['@changelog.keys'] ??= keys
+      entity['@changelog.keys'] ??= keys.map(k => ({'=':k}))
 
       // Add UI.Facet for Change History List
       entity['@UI.Facets']?.push(facet)
