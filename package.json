@@ -1,7 +1,7 @@
 {
   "name": "@cap-js/change-tracking",
+  "description": "CAP cds-plugin providing change tracking out-of-the-box.",
   "version": "1.0.0",
-  "description": "",
   "main": "cds-plugin.js",
   "files": [
     "index.cds",
@@ -14,17 +14,15 @@
     "test": "npx jest"
   },
   "devDependencies": {
+    "@cap-js/sqlite": "^5.0.2",
     "axios": ">=0.24",
-    "cds-swagger-ui-express": "^0.6.0",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "chai-subset": "^1.6.0",
     "eslint": "^8.0.0",
     "express": "^4",
     "jest": "^29.1.0",
-    "jest-junit": "^15.0.0",
-    "prettier": "^2.3.0",
-    "sqlite3": "^5.0.2"
+    "prettier": "^2.3.0"
   },
   "dependencies": {
     "@sap/cds-foss": "^4"
