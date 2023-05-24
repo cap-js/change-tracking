@@ -14,7 +14,7 @@
     "test": "npx jest"
   },
   "devDependencies": {
-    "@cap-js/sqlite": "^5.0.2",
+    "@cap-js/sqlite": "*",
     "axios": ">=0.24",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
