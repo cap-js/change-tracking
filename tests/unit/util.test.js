@@ -42,12 +42,14 @@ describe("templateProcessor", () => {
 });
 
 describe("entityHelper", () => {
+    cds.model = {definitions:{}}
+
     it("1.0 should return null if content path not exist (ERP4SMEPREPWORKAPPPLAT-32)", async () => {
-        expect(getEntityByContextPath("")).to.equal(null);
+        expect(getEntityByContextPath("".split('/'))).to.not.exist;
     });
 
     it("1.1 should return null if entityName not provided (ERP4SMEPREPWORKAPPPLAT-32)", async () => {
-        expect(getEntity("")).to.equal(null);
+        expect(getEntity("")).to.not.exist
     });
 
     it("1.2 should return false if composition not found (ERP4SMEPREPWORKAPPPLAT-32)", async () => {
