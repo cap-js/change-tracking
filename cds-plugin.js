@@ -1,9 +1,8 @@
 const cds = require('@sap/cds/lib')
 
 const isChangeTracked = (entity) => (
-  entity['@changelog']
-  || entity['@changelog.keys']
-  // || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])
+  entity['@changelog'] || entity['@changelog.keys']
+  || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])
 )
 
 
@@ -33,9 +32,6 @@ cds.on('loaded', m => {
         entity.elements.changes = assoc
       }
 
-      // Add defaults for @changelog.keys
-      entity['@changelog.keys'] ??= keys.map(k => ({ '=': k }))
-
       // Add UI.Facet for Change History List
       entity['@UI.Facets']?.push(facet)
     }
@@ -44,15 +40,15 @@ cds.on('loaded', m => {
 
 // Add generic change tracking handlers
 cds.on('served', () => {
-  const { _logChanges, _afterReadChangeView } = require("./lib/change-log")
+  const { track_changes, _afterReadChangeView } = require("./lib/change-log")
   for (const srv of cds.services) {
     if (srv instanceof cds.ApplicationService) {
       let any = false
       for (const entity of Object.values(srv.entities)) {
-        if (isChangeTracked(entity) || Object.values(entity.elements).some(e => e['@changelog'])) {
-          cds.db.before("CREATE", entity, _logChanges)
-          cds.db.before("UPDATE", entity, _logChanges)
-          cds.db.before("DELETE", entity, _logChanges)
+        if (isChangeTracked(entity)) {
+          cds.db.before("CREATE", entity, track_changes)
+          cds.db.before("UPDATE", entity, track_changes)
+          cds.db.before("DELETE", entity, track_changes)
           any = true
         }
       }
