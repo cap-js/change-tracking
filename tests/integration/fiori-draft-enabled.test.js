@@ -55,7 +55,7 @@ describe("change log integration test", () => {
         expect(bookChange.valueChangedFrom).to.equal("");
         expect(bookChange.valueChangedTo).to.equal("test title");
 
-        const titleChanges = await await adminService.run(
+        const titleChanges = await adminService.run(
             SELECT.from(ChangeView).where({
                 entity: "sap.capire.bookshop.Books",
                 attribute: "title",
@@ -72,7 +72,7 @@ describe("change log integration test", () => {
         expect(titleChange.valueChangedFrom).to.equal("");
         expect(titleChange.valueChangedTo).to.equal("test title");
 
-        const authorChanges = await await adminService.run(
+        const authorChanges = await adminService.run(
             SELECT.from(ChangeView).where({
                 entity: "sap.capire.bookshop.Books",
                 attribute: "author",
