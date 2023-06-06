@@ -1,3 +1,3 @@
-ID;quantity;price;Order_ID;Customer_ID;
+ID;quantity;price;order_ID;customer_ID;
 9a61178f-bfb3-4c17-8d17-c6b4a63e0097;10.0;5.0;0a41a187-a2ff-4df6-bd12-fae8996e6e31;47f97f40-4f41-488a-b10b-a5725e762d57
 ae0d8b10-84cf-4777-a489-a198d1716b61;11.0;6.0;0a41a187-a2ff-4df6-bd12-fae8996e6e31;47f97f40-4f41-488a-b10b-a5725e762d57
