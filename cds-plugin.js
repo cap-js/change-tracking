@@ -22,7 +22,7 @@ cds.on('loaded', m => {
       const keys = [], { elements: elms } = entity
       for (let e in elms) if (elms[e].key) keys.push(e)
 
-      // Add association to ChangeView...
+      // Add association to Changes
       const on = [...changes.on]; keys.forEach((k, i) => { i && on.push('||'); on.push({ ref: [k] }) })
       const assoc = { ...changes, on }
       const query = entity.projection || entity.query?.SELECT
@@ -40,7 +40,7 @@ cds.on('loaded', m => {
 
 // Add generic change tracking handlers
 cds.on('served', () => {
-  const { track_changes, _afterReadChangeView } = require("./lib/change-log")
+  const { track_changes, _afterReadChanges } = require("./lib/change-log")
   for (const srv of cds.services) {
     if (srv instanceof cds.ApplicationService) {
       let any = false
@@ -52,8 +52,8 @@ cds.on('served', () => {
           any = true
         }
       }
-      if (any && srv.entities.ChangeView) {
-        srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
+      if (any && srv.entities.Changes) {
+        srv.after("READ", srv.entities.Changes, _afterReadChanges)
       }
     }
   }

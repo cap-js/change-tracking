@@ -12,7 +12,7 @@ aspect aspect @(
     Target: 'changes/@UI.PresentationVariant'
   }]
 ) {
-  changes : Association to many ChangeView on changes.entityKey = ID;
+  changes : Association to many Changes on changes.entityKey = ID;
   key ID : UUID;
 }
 
@@ -27,8 +27,12 @@ entity Changes : managed {
 
   // Business meaningful object id
   entityID          : String                   @title: '{i18n>Changes.entityID}';
+  entityKey         : UUID                     @title: '{i18n>Changes.entityKey}';
   entity            : String                   @title: '{i18n>Changes.entity}';
   serviceEntity     : String                   @title: '{i18n>Changes.serviceEntity}';
+
+  objectID          : String                   @title: '{i18n>Changes.entityID}';
+  parentObjectID    : String                   @title: '{i18n>Changes.parentEntityID}';
 
   // Business meaningful parent object id
   parentEntityID    : String                   @title: '{i18n>Changes.parentEntityID}';
@@ -43,38 +47,10 @@ entity Changes : managed {
   };
 
   valueDataType     : String                   @title: '{i18n>Changes.valueDataType}';
-  changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}';
+  changes           : Composition of Changes on changes.entityKey = entityKey;
 }
 
-// REVISIT: Get rid of that
-entity ChangeLog : managed, cuid {
-  entity        : String @title: '{i18n>ChangeLog.entity}';
-  entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}';
-  serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}';
-  changes       : Composition of many Changes on changes.changeLog = $self;
-}
-
-// REVISIT: Get rid of that
-view ChangeView as
-  select from Changes {
-    ID                  as ID                @UI.Hidden,
-    attribute           as attribute,
-    entityID            as objectID,
-    entity              as entity,
-    serviceEntity       as serviceEntity,
-    parentEntityID      as parentObjectID,
-    parentKey           as parentKey,
-    valueChangedFrom    as valueChangedFrom,
-    valueChangedTo      as valueChangedTo,
-    modification        as modification,
-    createdBy           as createdBy,
-    createdAt           as createdAt,
-    changeLog.entityKey as entityKey,
-    serviceEntityPath   as serviceEntityPath @UI.Hidden,
-  };
-
-
-annotate ChangeView with @(UI: {
+annotate Changes with @(UI: {
   PresentationVariant: {
     Visualizations: ['@UI.LineItem'],
     RequestAtLeast: [
