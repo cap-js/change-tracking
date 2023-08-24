@@ -12,28 +12,20 @@ aspect aspect @(
     Target: 'changes/@UI.PresentationVariant'
   }]
 ) {
-  changes : Association to many ChangeView on changes.entityKey = ID;
+  changes : Association to many ChangeLog on changes.entityKey = ID;
   key ID : UUID;
 }
 
 
-entity Changes : managed {
-
-  key ID            : UUID                    @UI.Hidden;
+type Changes :  {
+  // TODO: Which of these is the Business meaningful object id?
+  entityKey          : String                   @title: '{i18n>Changes.entityID}';
   keys              : String                   @title: '{i18n>Changes.keys}';
   attribute         : String                   @title: '{i18n>Changes.attribute}';
   valueChangedFrom  : String                   @title: '{i18n>Changes.valueChangedFrom}';
   valueChangedTo    : String                   @title: '{i18n>Changes.valueChangedTo}';
-
-  // Business meaningful object id
-  entityID          : String                   @title: '{i18n>Changes.entityID}';
-  entity            : String                   @title: '{i18n>Changes.entity}';
+  entityName        : String                   @title: '{i18n>Changes.entity}';
   serviceEntity     : String                   @title: '{i18n>Changes.serviceEntity}';
-
-  // Business meaningful parent object id
-  parentEntityID    : String                   @title: '{i18n>Changes.parentEntityID}';
-  parentKey         : UUID                     @title: '{i18n>Changes.parentKey}';
-  serviceEntityPath : String                   @title: '{i18n>Changes.serviceEntityPath}';
 
   @title: '{i18n>Changes.modification}'
   modification      : String enum {
@@ -41,46 +33,28 @@ entity Changes : managed {
     update = 'Edit';
     delete = 'Delete';
   };
-
-  valueDataType     : String                   @title: '{i18n>Changes.valueDataType}';
-  changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}';
 }
 
-// REVISIT: Get rid of that
+//TODO: Move Business meaingful key to ChangeLog Table
+@cds.autoexpose
 entity ChangeLog : managed, cuid {
   entity        : String @title: '{i18n>ChangeLog.entity}';
   entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}';
   serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}';
-  changes       : Composition of many Changes on changes.changeLog = $self;
+  @cds.api.ignore
+  changes       : many Changes;
+  changeslist: Composition of many changeslist;
 }
 
-// REVISIT: Get rid of that
-view ChangeView as
-  select from Changes {
-    ID                  as ID                @UI.Hidden,
-    attribute           as attribute,
-    entityID            as objectID,
-    entity              as entity,
-    serviceEntity       as serviceEntity,
-    parentEntityID      as parentObjectID,
-    parentKey           as parentKey,
-    valueChangedFrom    as valueChangedFrom,
-    valueChangedTo      as valueChangedTo,
-    modification        as modification,
-    createdBy           as createdBy,
-    createdAt           as createdAt,
-    changeLog.entityKey as entityKey,
-    serviceEntityPath   as serviceEntityPath @UI.Hidden,
-  };
+@cds.persistence.skip
+entity changeslist: Changes {};
 
-
-annotate ChangeView with @(UI: {
+annotate ChangeLog with @(UI: {
   PresentationVariant: {
     Visualizations: ['@UI.LineItem'],
     RequestAtLeast: [
-      parentKey,
-      serviceEntity,
-      serviceEntityPath
+      entityKey,
+      entity
     ],
     SortOrder     : [{
       Property  : createdAt,
@@ -88,15 +62,10 @@ annotate ChangeView with @(UI: {
     }],
   },
   LineItem           : [
-    { Value: objectID },
+    { Value: entityKey },
     { Value: entity },
-    { Value: parentObjectID },
-    { Value: attribute },
-    { Value: valueChangedTo },
-    { Value: valueChangedFrom },
     { Value: createdBy },
-    { Value: createdAt },
-    { Value: modification }
+    { Value: createdAt }
   ],
   DeleteHidden       : true,
 });
