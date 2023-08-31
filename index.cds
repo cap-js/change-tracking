@@ -41,13 +41,15 @@ entity ChangeLog : managed, cuid {
   entity        : String @title: '{i18n>ChangeLog.entity}';
   entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}';
   serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}';
+  valueChangedFrom  : String @title: '{i18n>Changes.valueChangedFrom}';
+  valueChangedTo    : String @title: '{i18n>Changes.valueChangedTo}';
+  @Aggregation.ApplySupported : {
+      Transformations: ['aggregate', 'groupby', 'expand'],
+      GroupableProperties: [createdAt, createdBy]
+  }
   @cds.api.ignore
   changes       : many Changes;
-  changeslist: Composition of many changeslist;
 }
-
-@cds.persistence.skip
-entity changeslist: Changes {};
 
 annotate ChangeLog with @(UI: {
   PresentationVariant: {
@@ -56,16 +58,18 @@ annotate ChangeLog with @(UI: {
       entityKey,
       entity
     ],
+    GroupBy: [createdAt, createdBy],
     SortOrder     : [{
       Property  : createdAt,
       Descending: true
     }],
   },
   LineItem           : [
-    { Value: entityKey },
     { Value: entity },
     { Value: createdBy },
-    { Value: createdAt }
+    { Value: createdAt },
+    { Value: valueChangedFrom, Label: '{i18n>Changes.valueChangedFrom}' },
+    { Value: valueChangedTo,  Label: '{i18n>Changes.valueChangedTo}' }
   ],
   DeleteHidden       : true,
 });
