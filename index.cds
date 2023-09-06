@@ -41,13 +41,13 @@ entity ChangeLog : managed, cuid {
   entity        : String @title: '{i18n>ChangeLog.entity}';
   entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}';
   serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}';
-  @cds.api.ignore
+  //@cds.api.ignore
   changes       : many Changes;
-  changeslist: Composition of many changeslist;
+  //changeslist: Composition of many changeslist;
 }
 
-@cds.persistence.skip
-entity changeslist: Changes {};
+//@cds.persistence.skip
+//entity changeslist: Changes {};
 
 annotate ChangeLog with @(UI: {
   PresentationVariant: {
@@ -65,7 +65,14 @@ annotate ChangeLog with @(UI: {
     { Value: entityKey },
     { Value: entity },
     { Value: createdBy },
-    { Value: createdAt }
+    { Value: createdAt },
+    { Value: keys },
+    { Value: attribute },
+    { Value: valueChangedFrom },
+    { Value: valueChangedTo },
+    { Value: entityName },
+    { Value: serviceEntity },
+    { Value: changes}
   ],
   DeleteHidden       : true,
 });

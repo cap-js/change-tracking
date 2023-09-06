@@ -38,14 +38,31 @@ cds.on('loaded', m => {
   }
 })
 
+async function readHandler(req, next) {
+  const data = await next()
+  const origin = req.http.req.headers.origin
+
+  if (req.http.req.method === 'POST' && req.method === 'GET' && req.entity.endsWith('.ChangeLog')) {
+    data.map((d, i) => {
+      if (d && d.changes) {
+        Object.assign(d, ...d.changes)
+      }
+    })
+  }
+  return data
+}
+
 // Add generic change tracking handlers
-cds.on('served', () => {
+cds.on('served', (req) => {
   const { track_changes, _afterReadChangeView } = require("./lib/change-log")
   for (const srv of cds.services) {
     if (srv instanceof cds.ApplicationService) {
       let any = false
       for (const entity of Object.values(srv.entities)) {
         if (isChangeTracked(entity)) {
+          // TODO: Limit this further ---
+          srv.prepend(() => srv.on('READ', readHandler))
+          // ----------------------------
           cds.db.before("CREATE", entity, track_changes)
           cds.db.before("UPDATE", entity, track_changes)
           cds.db.before("DELETE", entity, track_changes)
