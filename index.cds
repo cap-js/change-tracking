@@ -7,8 +7,8 @@ namespace sap.changelog;
 aspect aspect @(
   UI.Facets: [{
     $Type : 'UI.ReferenceFacet',
-    ID    : 'ChangeHistoryFacet',
-    Label : '{i18n>ChangeHistoryList}',
+    ID    : 'ChangeLogFacet',
+    Label : '{i18n>ChangeLogList}',
     Target: 'changes/@UI.PresentationVariant'
   }]
 ) {
@@ -19,7 +19,7 @@ aspect aspect @(
 
 type Changes :  {
   // TODO: Which of these is the Business meaningful object id?
-  entityKey          : String                   @title: '{i18n>Changes.entityID}';
+  entityKey         : String                   @title: '{i18n>Changes.entityID}';
   keys              : String                   @title: '{i18n>Changes.keys}';
   attribute         : String                   @title: '{i18n>Changes.attribute}';
   valueChangedFrom  : String                   @title: '{i18n>Changes.valueChangedFrom}';
