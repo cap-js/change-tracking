@@ -40,16 +40,24 @@ cds.on('loaded', m => {
 
 async function readHandler(req, next) {
   const data = await next()
-  const origin = req.http.req.headers.origin
 
-  if (req.http.req.method === 'POST' && req.method === 'GET' && req.entity.endsWith('.ChangeLog')) {
-    data.map((d, i) => {
-      if (d && d.changes) {
-        Object.assign(d, ...d.changes)
-      }
-    })
+  if (req.entity.endsWith('.ChangeLog') && data.length > 0) {
+  const params = cds.context._params
+  const opts = cds._queryOptions
+  //req.results[0].createdBy = 'MARA'
+  //req.results[0].changes = 'asdlöfkölskdfölksadlöfksöldkö'
+  // data.forEach((d, i) => {
+  //   if (d && d.changes) {
+  //     //Object.assign(d, ...d.changes)
+  //     req.results[i].changes = ''
+  //     Object.entries(d.changes).forEach(([k, v]) => {
+  //       req.results[i].changes += k + ':' + v + ','
+  //     })
+  //      // res.send(req.results)
+  //   }
+  //})
   }
-  return data
+  //return data
 }
 
 // Add generic change tracking handlers
@@ -61,7 +69,7 @@ cds.on('served', (req) => {
       for (const entity of Object.values(srv.entities)) {
         if (isChangeTracked(entity)) {
           // TODO: Limit this further ---
-          srv.prepend(() => srv.on('READ', readHandler))
+          //srv.prepend(() => srv.on('READ', readHandler))
           // ----------------------------
           cds.db.before("CREATE", entity, track_changes)
           cds.db.before("UPDATE", entity, track_changes)
