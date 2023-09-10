@@ -38,26 +38,28 @@ cds.on('loaded', m => {
   }
 })
 
+// TODO: Remove this later. This demonstrates how to intercept
+// ODATA batch request to flatten Changes data
 async function readHandler(req, next) {
   const data = await next()
-
   if (req.entity.endsWith('.ChangeLog') && data.length > 0) {
-  const params = cds.context._params
-  const opts = cds._queryOptions
-  //req.results[0].createdBy = 'MARA'
-  //req.results[0].changes = 'asdlöfkölskdfölksadlöfksöldkö'
-  // data.forEach((d, i) => {
-  //   if (d && d.changes) {
-  //     //Object.assign(d, ...d.changes)
-  //     req.results[i].changes = ''
-  //     Object.entries(d.changes).forEach(([k, v]) => {
-  //       req.results[i].changes += k + ':' + v + ','
-  //     })
-  //      // res.send(req.results)
-  //   }
-  //})
+    //const params = cds.context._params
+    //const opts = cds.context._queryOptions
+    let flatData = []
+    for (const result of req.results) {
+      const entry = { ...result }
+      for (const change of result.changes) {
+        for (const key of Object.keys(change)) {
+          if (!entry[key]) {
+            entry[key] = change[key]
+          }
+        }
+      }
+      flatData.push(entry)
+      flatData.$count = flatData.length
+      req.results = flatData
+    }
   }
-  //return data
 }
 
 // Add generic change tracking handlers
@@ -69,7 +71,7 @@ cds.on('served', (req) => {
       for (const entity of Object.values(srv.entities)) {
         if (isChangeTracked(entity)) {
           // TODO: Limit this further ---
-          //srv.prepend(() => srv.on('READ', readHandler))
+          srv.prepend(() => srv.on('READ', readHandler))
           // ----------------------------
           cds.db.before("CREATE", entity, track_changes)
           cds.db.before("UPDATE", entity, track_changes)

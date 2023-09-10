@@ -42,45 +42,13 @@ entity ChangeLog : managed, cuid {
   entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}';
   serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}';
   changes       : many Changes;
+  // TODO: Get rid of these virtual keys
+  @virtual valueChangedFrom: String;
+  @virtual valueChangedTo: String;
+  @virtual attribute: String;
+  @virtual keys: String;
+  @virtual modification: String;
 }
-
-// annotate ChangeLog actions {
-//     @(
-//         Common.SideEffects : {
-//             TargetProperties : ['_it/entityKey'],
-//             TargetEntities : [_it]
-//         },
-//         cds.odata.bindingparameter.name : '_it'
-//     )
-//     listChanges(entityKey @(
-//         title : '{i18n>listChanges}',
-//         Common : {ValueListMapping : {
-//             Label : '{i18n>Changes}',
-//             CollectionPath : 'Changes',
-//             Parameters : [
-//                 {
-//                     $Type : 'Common.ValueListParameterInOut',
-//                     LocalDataProperty : order_ID,
-//                     ValueListProperty : 'ID'
-//                 },
-//                 {
-//                     $Type : 'Common.ValueListParameterDisplayOnly',
-//                     ValueListProperty : 'OrderNo'
-//                 },
-//                 {
-//                     $Type : 'Common.ValueListParameterDisplayOnly',
-//                     ValueListProperty : 'createdBy'
-//                 },
-//                 {
-//                     $Type : 'Common.ValueListParameterDisplayOnly',
-//                     ValueListProperty : 'createdAt'
-//                 }
-//             ],
-//         }}
-//     ),
-//     quantity @title : '{i18n>Quantity}'
-//     )
-// }
 
 annotate ChangeLog with @(UI: {
   PresentationVariant: {
@@ -97,23 +65,22 @@ annotate ChangeLog with @(UI: {
   },
   LineItem           : [
     { Value: entity },
+    { Value: serviceEntity },
     { Value: createdBy },
     { Value: createdAt },
-    {
-      $Type : 'UI.DataFieldForAction',
-      Action: 'ChangeLog.listChanges',
-      Label: '{i18n>listChanges}',
-      Inline: true,
-      Determining: true,
-      IconUrl: 'sap-icon://open-command-field'
-    }
-  // { Value: keys },
-  // { Value: attribute },
-  // { Value: valueChangedFrom },
-  // { Value: valueChangedTo },
-  // { Value: entityName },
-  // { Value: serviceEntity },
-  // { Value: changes}
-  ],
-  DeleteHidden       : true,
+    // {
+    //   $Type : 'UI.DataFieldForAction',
+    //   Action: 'ChangeLog.listChanges',
+    //   Label: '{i18n>listChanges}',
+    //   Inline: true,
+    //   Determining: true,
+    //   IconUrl: 'sap-icon://open-command-field'
+    // },
+    { Value: changes },
+    { Value: keys },
+    { Value: attribute },
+    { Value: valueChangedFrom },
+    { Value: valueChangedTo },
+    { Value: modification }
+  ]
 });
