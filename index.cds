@@ -8,15 +8,16 @@ namespace sap.changelog;
 /**
  * Used in cds-plugin.js as template for tracked entities
  */
-aspect aspect @(UI.Facets: [{
-  $Type : 'UI.ReferenceFacet',
-  ID    : 'ChangeHistoryFacet',
-  Label : '{i18n>ChangeHistoryList}',
-  Target: 'changes/@UI.PresentationVariant'
-}]) {
-  changes : Association to many ChangeLog
-              on changes.entityKey = ID;
-  key ID  : UUID;
+aspect aspect @(
+  UI.Facets: [{
+    $Type : 'UI.ReferenceFacet',
+    ID    : 'ChangeLogFacet',
+    Label : '{i18n>ChangeLogList}',
+    Target: 'changes/@UI.PresentationVariant'
+  }]
+) {
+  changes : Association to many ChangeLog on changes.entityKey = ID;
+  key ID : UUID;
 }
 
 type Changes {
@@ -26,7 +27,6 @@ type Changes {
   attribute        : String @title: '{i18n>Changes.attribute}';
   valueChangedFrom : String @title: '{i18n>Changes.valueChangedFrom}';
   valueChangedTo   : String @title: '{i18n>Changes.valueChangedTo}';
-
   @title: '{i18n>Changes.modification}'
   modification     : String enum {
     create = 'Create';
