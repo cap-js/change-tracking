@@ -1,5 +1,6 @@
 using { managed, cuid } from '@sap/cds/common';
 namespace sap.changelog;
+
 /**
  * Used in cds-plugin.js as template for tracked entities
  */
@@ -11,89 +12,80 @@ aspect aspect @(
     Target: 'changes/@UI.PresentationVariant'
   }]
 ) {
-  changes : Association to many ChangeView on changes.entityKey = ID;
+  changes : Association to many Changes on changes.entityKey = ID;
   key ID : UUID;
 }
 
-
-entity Changes : managed {
-
-  key ID            : UUID                    @UI.Hidden;
-  keys              : String                   @title: '{i18n>Changes.keys}';
-  attribute         : String                   @title: '{i18n>Changes.attribute}';
-  valueChangedFrom  : String                   @title: '{i18n>Changes.valueChangedFrom}';
-  valueChangedTo    : String                   @title: '{i18n>Changes.valueChangedTo}';
-
-  // Business meaningful object id
-  entityID          : String                   @title: '{i18n>Changes.entityID}';
-  entity            : String                   @title: '{i18n>Changes.entity}';
-  serviceEntity     : String                   @title: '{i18n>Changes.serviceEntity}';
-
-  // Business meaningful parent object id
-  parentEntityID    : String                   @title: '{i18n>Changes.parentEntityID}';
-  parentKey         : UUID                     @title: '{i18n>Changes.parentKey}';
-  serviceEntityPath : String                   @title: '{i18n>Changes.serviceEntityPath}';
-
-  @title: '{i18n>Changes.modification}'
-  modification      : String enum {
+@cds.autoexpose
+entity Changes : cuid, managed {
+  entityKey        : String @title: '{i18n>Changes.entityID}';
+  entity           : String @title: '{i18n>Changes.entity}';
+  serviceEntity    : String @title: '{i18n>Changes.serviceEntity}';
+  keys             : String @title: '{i18n>Changes.keys}';
+  attribute        : String @title: '{i18n>Changes.attribute}';
+  valueChangedFrom : String @title: '{i18n>Changes.valueChangedFrom}';
+  valueChangedTo   : String @title: '{i18n>Changes.valueChangedTo}';
+  modification     : String @title: '{i18n>Changes.modification}'
+  enum {
     create = 'Create';
     update = 'Edit';
     delete = 'Delete';
   };
+  parent            : Association to Changes;
+  children          : Composition of many Changes on children.parent = $self;
 
-  valueDataType     : String                   @title: '{i18n>Changes.valueDataType}';
-  changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}';
-}
+  hierarchyLevel    : Integer default 0;
+  drillState        : String default 'expanded';
+};
 
-// REVISIT: Get rid of that
-entity ChangeLog : managed, cuid {
-  entity        : String @title: '{i18n>ChangeLog.entity}';
-  entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}';
-  serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}';
-  changes       : Composition of many Changes on changes.changeLog = $self;
-}
-
-// REVISIT: Get rid of that
-view ChangeView as
-  select from Changes {
-    ID                  as ID                @UI.Hidden,
-    attribute           as attribute,
-    entityID            as objectID,
-    entity              as entity,
-    serviceEntity       as serviceEntity,
-    parentEntityID      as parentObjectID,
-    parentKey           as parentKey,
-    valueChangedFrom    as valueChangedFrom,
-    valueChangedTo      as valueChangedTo,
-    modification        as modification,
-    createdBy           as createdBy,
-    createdAt           as createdAt,
-    changeLog.entityKey as entityKey,
-    serviceEntityPath   as serviceEntityPath @UI.Hidden,
-  };
-
-
-annotate ChangeView with @(UI: {
+annotate Changes with @(UI: {
   PresentationVariant: {
-    Visualizations: [ '@UI.LineItem' ],
+    Visualizations: ['@UI.LineItem'],
     RequestAtLeast: [
-      parentKey,
-      serviceEntity,
-      serviceEntityPath
+      entityKey,
+      entity
     ],
     SortOrder     : [{
       Property  : createdAt,
       Descending: true
     }],
+    GroupBy       : [ createdAt ]
   },
-  LineItem           : [
-    { Value: entity },
-    { Value: attribute },
-    { Value: valueChangedTo },
-    { Value: valueChangedFrom },
-    { Value: createdBy },
-    { Value: createdAt },
-    { Value: modification }
-  ],
-  DeleteHidden       : true,
+  LineItem: [
+        {
+      $Type : 'UI.DataField',
+      Value: attribute,
+      Label: '{i18n>Changes.attribute}'
+    },
+    {
+       $Type : 'UI.DataField',
+       Value: valueChangedFrom,
+       Label: '{i18n>Changes.valueChangedFrom}'
+    },
+    {
+      $Type : 'UI.DataField',
+      Value: valueChangedTo,
+      Label: '{i18n>Changes.valueChangedTo}'
+    },
+    {
+      $Type : 'UI.DataField',
+      Value: entity,
+      Label: '{i18n>Changes.entity}'
+    },
+    {
+      $Type : 'UI.DataField',
+      Value: modification,
+      Label: '{i18n>Changes.modification}'
+    },
+    {
+      $Type : 'UI.DataField',
+      Value: createdBy,
+      Label: '{i18n>Changes.createdBy}'
+    },
+    {
+      $Type : 'UI.DataField',
+      Value: createdAt,
+      Label: '{i18n>Changes.createdAt}'
+    }
+  ]
 });
