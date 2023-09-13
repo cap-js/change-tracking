@@ -16,10 +16,11 @@ aspect aspect @(
   key ID : UUID;
 }
 
+@readonly
 @cds.autoexpose
 entity Changes : cuid, managed {
   entityKey        : String @title: '{i18n>Changes.entityID}';
-  entity           : String @title: '{i18n>Changes.entity}';
+  entityName       : String @title: '{i18n>Changes.entity}';
   serviceEntity    : String @title: '{i18n>Changes.serviceEntity}';
   keys             : String @title: '{i18n>Changes.keys}';
   attribute        : String @title: '{i18n>Changes.attribute}';
@@ -41,21 +42,33 @@ entity Changes : cuid, managed {
 annotate Changes with @(UI: {
   PresentationVariant: {
     Visualizations: ['@UI.LineItem'],
-    RequestAtLeast: [
-      entityKey,
-      entity
-    ],
+    RequestAtLeast: [entityKey],
     SortOrder     : [{
       Property  : createdAt,
       Descending: true
-    }],
-    GroupBy       : [ createdAt ]
+    },
+    {
+      Property  : hierarchyLevel,
+      Descending: false
+    }]
   },
   LineItem: [
-        {
+    {
       $Type : 'UI.DataField',
-      Value: attribute,
-      Label: '{i18n>Changes.attribute}'
+      Value: hierarchyLevel
+    },
+    {
+      $Type : 'UI.DataField',
+      Value: createdAt
+    },
+    {
+      $Type : 'UI.DataField',
+      Value: createdBy
+    },
+    {
+      $Type : 'UI.DataField',
+      Value: entityName,
+      Label: '{i18n>Changes.entity}'
     },
     {
        $Type : 'UI.DataField',
@@ -69,23 +82,13 @@ annotate Changes with @(UI: {
     },
     {
       $Type : 'UI.DataField',
-      Value: entity,
-      Label: '{i18n>Changes.entity}'
+      Value: attribute,
+      Label: '{i18n>Changes.attribute}'
     },
     {
       $Type : 'UI.DataField',
       Value: modification,
       Label: '{i18n>Changes.modification}'
-    },
-    {
-      $Type : 'UI.DataField',
-      Value: createdBy,
-      Label: '{i18n>Changes.createdBy}'
-    },
-    {
-      $Type : 'UI.DataField',
-      Value: createdAt,
-      Label: '{i18n>Changes.createdAt}'
     }
   ]
 });
