@@ -5,7 +5,6 @@ const isChangeTracked = (entity) => (
   || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])
 )
 
-
 // Unfold @changelog annotations in loaded model
 cds.on('loaded', m => {
 
@@ -22,7 +21,7 @@ cds.on('loaded', m => {
       const keys = [], { elements: elms } = entity
       for (let e in elms) if (elms[e].key) keys.push(e)
 
-      // Add association to ChangeView...
+      // Add association to Changes
       const on = [...changes.on]; keys.forEach((k, i) => { i && on.push('||'); on.push({ ref: [k] }) })
       const assoc = { ...changes, on }
       const query = entity.projection || entity.query?.SELECT
@@ -40,26 +39,31 @@ cds.on('loaded', m => {
 
 // TODO: Remove this later. This demonstrates how to intercept
 // ODATA batch request to flatten Changes data
-async function readHandler(req, next) {
-  const data = await next()
-  if (req.entity.endsWith('.ChangeLog') && data.length > 0) {
-    //const params = cds.context._params
-    //const opts = cds.context._queryOptions
+function afterReadHandler(results, req) {
+  if (results.length === 0) return;
+
+  if (results && results[0].changes) {
+    const changesDisplayKeys = ['valueChangedFrom', 'valueChangedTo']
     let flatData = []
+    let i = 0;
     for (const result of req.results) {
-      const entry = { ...result }
+      const changesDisplayValues = []
       for (const change of result.changes) {
-        for (const key of Object.keys(change)) {
-          if (!entry[key]) {
-            entry[key] = change[key]
-          }
+        const changeDisplay = {}
+        for (const key of changesDisplayKeys) {
+          changeDisplay[key] = change[key]
         }
+        changesDisplayValues.push(changeDisplay)
       }
-      flatData.push(entry)
-      flatData.$count = flatData.length
-      req.results = flatData
+      req.results[i].changelist = JSON.stringify(changesDisplayValues, null, 2)
+      i++
     }
+
   }
+}
+
+function actionHandler(req) {
+  console.log(req)
 }
 
 // Add generic change tracking handlers
@@ -67,12 +71,17 @@ cds.on('served', (req) => {
   const { track_changes, _afterReadChangeView } = require("./lib/change-log")
   for (const srv of cds.services) {
     if (srv instanceof cds.ApplicationService) {
+
+      /** Register READ handler to flatten changes */
+      srv.after('READ', `${srv.name}.ChangeLog`, afterReadHandler)
+
+      /** Register listChanges action */
+      srv.on('listChanges',  `${srv.name}.ChangeLog`, actionHandler)
+
       let any = false
       for (const entity of Object.values(srv.entities)) {
         if (isChangeTracked(entity)) {
-          // TODO: Limit this further ---
-          srv.prepend(() => srv.on('READ', readHandler))
-          // ----------------------------
+
           cds.db.before("CREATE", entity, track_changes)
           cds.db.before("UPDATE", entity, track_changes)
           cds.db.before("DELETE", entity, track_changes)
@@ -80,7 +89,7 @@ cds.on('served', (req) => {
         }
       }
       if (any && srv.entities.ChangeView) {
-        srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
+        //srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
       }
     }
   }

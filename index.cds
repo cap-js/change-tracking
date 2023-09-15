@@ -1,86 +1,108 @@
-using {
-  managed,
-  cuid
-} from '@sap/cds/common';
+using { managed, cuid } from '@sap/cds/common';
 
 namespace sap.changelog;
 
 /**
  * Used in cds-plugin.js as template for tracked entities
  */
-aspect aspect @(
-  UI.Facets: [{
-    $Type : 'UI.ReferenceFacet',
-    ID    : 'ChangeLogFacet',
-    Label : '{i18n>ChangeLogList}',
-    Target: 'changes/@UI.PresentationVariant'
-  }]
-) {
-  changes : Association to many ChangeLog on changes.entityKey = ID;
-  key ID : UUID;
+aspect aspect @(UI.Facets: [{
+  $Type : 'UI.ReferenceFacet',
+  ID    : 'ChangeLogFacet',
+  Label : '{i18n>ChangeLogList}',
+  Target: 'changes/@UI.PresentationVariant#changelog'
+}]) {
+  changes : Association to many ChangeLog
+              on changes.entityKey = ID;
+  key ID  : UUID;
 }
 
-type Changes {
-  // TODO: Which of these is the Business meaningful object id?
+/**
+ * Tracked (bulk) changes on draft are stored in ChangeLog
+ */
+@cds.autoexpose
+entity ChangeEntry : managed, cuid {
+  entityKey     :      UUID    @title     : '{i18n>ChangeLog.entityKey}';
+  entityName    :      String  @title     : '{i18n>ChangeLog.entityName}';
+  serviceEntity :      String  @title     : '{i18n>ChangeLog.serviceEntity}';
+  changes       : many Changes @odata.Type: 'Edm.String';
+  changelist    :      String  @title     : '{i18n>ChangeLog.changeList}';
+}
+@cds.autoexpose
+entity ChangeLog as projection on ChangeEntry actions {
+    action listChanges();
+};
+
+/**
+ * Details for every tracked change from ChangeLog are stored
+ * in Changes
+ */
+type Changes : {
   entityKey        : String @title: '{i18n>Changes.entityID}';
   keys             : String @title: '{i18n>Changes.keys}';
   attribute        : String @title: '{i18n>Changes.attribute}';
   valueChangedFrom : String @title: '{i18n>Changes.valueChangedFrom}';
   valueChangedTo   : String @title: '{i18n>Changes.valueChangedTo}';
-  @title: '{i18n>Changes.modification}'
-  modification     : String enum {
+  modification     : String @title: '{i18n>Changes.modification}' enum {
     create = 'Create';
     update = 'Edit';
     delete = 'Delete';
   };
 }
 
-//TODO: Move Business meaingful key to ChangeLog Table
-@cds.autoexpose
-entity ChangeLog : managed, cuid {
-  entity        : String @title: '{i18n>ChangeLog.entity}';
-  entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}';
-  serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}';
-  changes       : many Changes;
-  // TODO: Get rid of these virtual keys
-  @virtual valueChangedFrom: String;
-  @virtual valueChangedTo: String;
-  @virtual attribute: String;
-  @virtual keys: String;
-  @virtual modification: String;
-}
-
+/**
+ * UI representation of tracked changes
+ */
 annotate ChangeLog with @(UI: {
-  PresentationVariant: {
-    Visualizations: ['@UI.LineItem'],
-    RequestAtLeast: [
-      entityKey,
-      entity
-    ],
+  PresentationVariant #changelog: {
+    $Type         : 'UI.PresentationVariantType',
+    Visualizations: ['@UI.LineItem#changelog'],
     SortOrder     : [{
+      $Type     : 'Common.SortOrderType',
       Property  : createdAt,
-      Descending: true
+      Descending: true,
     }],
-    GroupBy       : [ createdBy ]
+    GroupBy       : [ID]
   },
-  LineItem           : [
-    { Value: entity },
-    { Value: serviceEntity },
-    { Value: createdBy },
-    { Value: createdAt },
+  LineItem #changelog           : [
+    {
+      $Type: 'UI.DataField',
+      Label: '{i18n>ChangeLog.ID}',
+      Value: ID,
+      ![@UI.Hidden]
+    },
+    {
+      $Type: 'UI.DataField',
+      Label: '{i18n>ChangeLog.entityName}',
+      Value: entityName,
+    },
+    {
+      $Type: 'UI.DataField',
+      Value: createdAt
+    },
+    {
+      $Type: 'UI.DataField',
+      Value: createdBy
+    },
+    /** Workaround: We put our stringified changes in here, as putting it into
+     * change directly will throw a runtime errors as type collection does not
+     * match the return type string
+     */
+    {
+      $Type: 'UI.DataField',
+      Label: '{i18n>ChangeLog.changelist}',
+      Value: changelist
+    },
+    /** Can we hide this (from UI only, as we still need to access its data)? */
+    {
+      $Type: 'UI.DataField',
+      Label: '{i18n>ChangeLog.changes}',
+      Value: changes
+    },
+    /** Want to disable an action button for 'expand/collaps' feature on changes */
     // {
-    //   $Type : 'UI.DataFieldForAction',
-    //   Action: 'ChangeLog.listChanges',
-    //   Label: '{i18n>listChanges}',
-    //   Inline: true,
-    //   Determining: true,
-    //   IconUrl: 'sap-icon://open-command-field'
-    // },
-    { Value: changes },
-    { Value: keys },
-    { Value: attribute },
-    { Value: valueChangedFrom },
-    { Value: valueChangedTo },
-    { Value: modification }
+    //   $Type: 'UI.DataFieldForAction',
+    //   Action: 'sap.changelog.listChanges',
+    //   Label: '{i18n>ChangeLog.changes}'
+    // }
   ]
 });
