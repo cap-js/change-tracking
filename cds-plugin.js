@@ -37,46 +37,39 @@ cds.on('loaded', m => {
   }
 })
 
-// TODO: Remove this later. This demonstrates how to intercept
-// ODATA batch request to flatten Changes data
-function afterReadHandler(results, req) {
+async function changelistHandler(results, req) {
   if (results.length === 0) return;
-
-  if (results && results[0].changes) {
-    const changesDisplayKeys = ['valueChangedFrom', 'valueChangedTo']
-    let flatData = []
-    let i = 0;
-    for (const result of req.results) {
-      const changesDisplayValues = []
-      for (const change of result.changes) {
-        const changeDisplay = {}
-        for (const key of changesDisplayKeys) {
-          changeDisplay[key] = change[key]
-        }
-        changesDisplayValues.push(changeDisplay)
+  /** For each data (ID) entry, get changes from database */
+  let i = 0
+  for (const result of results) {
+    const query = SELECT.from(req.target.name).where({ ID:result.ID })
+    const queryResult = await cds.db.run(query)
+   /** Write changes to (UI) table */
+    if (queryResult && queryResult[0].changes) {
+      const changes = []
+      for (const change of queryResult[0].changes) {
+        const entry = {}
+        const headers = ['attribute', 'modification', 'valueChangedFrom', 'valueChangedTo']
+        headers.forEach(h => { entry[h] = change[h] })
+        changes.push(entry)
       }
-      req.results[i].changelist = JSON.stringify(changesDisplayValues, null, 2)
+      /** Change are displayed as a string */
+      const changelist = JSON.stringify(changes, null, 2)
+        .replace( /[\[{",}\]]/g, '').replace(/\n+/g, '\n')
+      req.results[i].changelist = changelist
       i++
     }
-
   }
-}
-
-function actionHandler(req) {
-  console.log(req)
 }
 
 // Add generic change tracking handlers
 cds.on('served', (req) => {
-  const { track_changes, _afterReadChangeView } = require("./lib/change-log")
+  const { track_changes, _afterReadChangeLog } = require("./srv/changelog-service")
   for (const srv of cds.services) {
     if (srv instanceof cds.ApplicationService) {
 
       /** Register READ handler to flatten changes */
-      srv.after('READ', `${srv.name}.ChangeLog`, afterReadHandler)
-
-      /** Register listChanges action */
-      srv.on('listChanges',  `${srv.name}.ChangeLog`, actionHandler)
+      srv.after('READ', `${srv.name}.ChangeLog`, changelistHandler)
 
       let any = false
       for (const entity of Object.values(srv.entities)) {
@@ -88,8 +81,8 @@ cds.on('served', (req) => {
           any = true
         }
       }
-      if (any && srv.entities.ChangeView) {
-        //srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
+      if (any && srv.entities.ChangeLog) {
+        srv.after("READ", srv.entities.ChangeLog, _afterReadChangeLog)
       }
     }
   }
