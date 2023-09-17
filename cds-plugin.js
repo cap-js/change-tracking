@@ -1,9 +1,48 @@
 const cds = require('@sap/cds/lib')
 
+const Changelists = new Map();
+
 const isChangeTracked = (entity) => (
   entity['@changelog'] || entity['@changelog.keys']
   || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])
 )
+
+/** TODO: Preferable have this on the service, but how to we annotate this? */
+cds.on('bootstrap', async app => {
+  app.get('/changelist/', async (req, res) => {
+    const { ID, entityKey } = req.query
+    /** For each data (ID) entry, get changes from database */
+    if (!Changelists.get(ID)) {
+      if (req.query.ID) {
+        // TODO: Get service name instead of 'ProcessorService' string
+        const query = SELECT.from('ProcessorsService.ChangeLog').where({ID})
+        const queryResult = await cds.db.run(query)
+        if (queryResult) {
+          const changes = []
+          for (const change of queryResult[0].changes) {
+            const entry = {}
+            const headers = ['attribute', 'modification', 'valueChangedFrom', 'valueChangedTo']
+            headers.forEach(h => { entry[h] = change[h] })
+            changes.push(entry)
+          }
+          /** Change are displayed as a string */
+          const changelist = JSON.stringify(changes, null, 2)
+            .replace( /[\[{",}\]]/g, '').replace(/\n+/g, '\n')
+            Changelists.set(entityKey, { text: changelist, json: changes })
+        }
+      }
+    } else {
+      Changelists.delete(ID)
+    }
+
+    /** OPTION 1: Show table at new URL */
+    res.send(createTableFromObj(Changelists.get(entityKey).json))
+
+    /** OPTION 2: Show in changes column */
+    //const url = `/incidents/#/Incidents(ID=${entityKey},IsActiveEntity=true)`
+    //res.redirect(url)
+  })
+})
 
 // Unfold @changelog annotations in loaded model
 cds.on('loaded', m => {
@@ -37,30 +76,15 @@ cds.on('loaded', m => {
   }
 })
 
-async function changelistHandler(results, req) {
-  if (results.length === 0) return;
-  /** For each data (ID) entry, get changes from database */
-  let i = 0
-  for (const result of results) {
-    const query = SELECT.from(req.target.name).where({ ID:result.ID })
-    const queryResult = await cds.db.run(query)
-   /** Write changes to (UI) table */
-    if (queryResult && queryResult[0].changes) {
-      const changes = []
-      for (const change of queryResult[0].changes) {
-        const entry = {}
-        const headers = ['attribute', 'modification', 'valueChangedFrom', 'valueChangedTo']
-        headers.forEach(h => { entry[h] = change[h] })
-        changes.push(entry)
-      }
-      /** Change are displayed as a string */
-      const changelist = JSON.stringify(changes, null, 2)
-        .replace( /[\[{",}\]]/g, '').replace(/\n+/g, '\n')
-      req.results[i].changelist = changelist
-      i++
-    }
-  }
-}
+/** Need this for DISPLAY OPTION 2 */
+// async function changeViewHandler(results, req) {
+//   if (results.length === 0) return;
+//   if (!results[0].changelist) {
+//     results.forEach((result, i) => {
+//       req.results[i].changelist = Changelists.get(result.ID.text)
+//     })
+//   }
+// }
 
 // Add generic change tracking handlers
 cds.on('served', (req) => {
@@ -68,8 +92,9 @@ cds.on('served', (req) => {
   for (const srv of cds.services) {
     if (srv instanceof cds.ApplicationService) {
 
+      /** Need this for DISPLAY OPTION 2 */
       /** Register READ handler to flatten changes */
-      srv.after('READ', `${srv.name}.ChangeLog`, changelistHandler)
+      //srv.after('READ', `${srv.name}.ChangeLog`, changeViewHandler)
 
       let any = false
       for (const entity of Object.values(srv.entities)) {
@@ -87,3 +112,45 @@ cds.on('served', (req) => {
     }
   }
 })
+
+function createTableFromObj(obj) {
+  let html = ''
+  html += `<!DOCTYPE html><html><head><style>
+  #customers {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  #customers td, #customers th {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  #customers tr:nth-child(even){background-color: #f2f2f2;}
+  
+  #customers tr:hover {background-color: #ddd;}
+  
+  #customers th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: gray;
+    color: white;
+  }
+  </style></head><body>`
+  let body = '<tr>';
+  for (const key of Object.keys(obj[0])) {
+    body += '<th>' + key + '</th>'
+  }
+  body += '</tr>'
+  for (let i = 0; i < obj.length; i++) {
+    body += '<tr>'
+    for (const value of Object.values(obj[i])) {
+      body += '<td>' + value + '</td>'
+    }
+    body += '</tr>'
+  }
+  html +=  `<table id="customers">${body}</table></body></html>`
+  return html
+}

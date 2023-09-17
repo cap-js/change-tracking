@@ -61,6 +61,14 @@ annotate ChangeLog with @(UI: {
   LineItem #changelog           : [
     {
       $Type: 'UI.DataField',
+      Value: createdAt,
+    },
+    {
+      $Type: 'UI.DataField',
+      Value: createdBy,
+    },
+    {
+      $Type: 'UI.DataField',
       Label: 'ID',
       Value: ID
     },
@@ -74,32 +82,18 @@ annotate ChangeLog with @(UI: {
       Label: '{i18n>ChangeLog.entityName}',
       Value: entityName,
     },
+    /** Can we also use a url from the service here? */
+      //Url: `#/{path}(ID={entityKey},IsActiveEntity=true)?$select={entityKey}`,
     {
-      $Type: 'UI.DataField',
-      Label: '{i18n>ChangeLog.serviceEntity}',
-      Value: serviceEntity,
+      $Type  : 'UI.DataFieldWithUrl',
+      Label: 'Changes',
+      Value  : 'View Changes',
+      Url: '/changelist?ID={ID}&entityKey={entityKey}'
     },
-    {
-      $Type: 'UI.DataField',
-      Value: createdAt
-    },
-    {
-      $Type: 'UI.DataField',
-      Value: createdBy
-    },
-    {
-      $Type: 'UI.DataField',
-      Value: modifiedAt
-    },
-    {
-      $Type: 'UI.DataField',
-      Value: modifiedBy
-    },
-
     {
       $Type: 'UI.DataField',
       Label: '{i18n>ChangeLog.changelist}',
-      Value: changelist
+      Value: changelist,
     }
   ]
 });
