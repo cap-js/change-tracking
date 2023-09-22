@@ -38,8 +38,8 @@ entity ChangeLog : managed, cuid {
   serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
   entity        : String @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
   entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
-  createdAt     : managed:createdAt;
-  createdBy     : managed:createdBy;
+  createdAt     : managed:createdAt @title: 'On';
+  createdBy     : managed:createdBy @title: 'By';
   changes       : Composition of many Changes on changes.changeLog = $self;
 }
 
@@ -92,7 +92,7 @@ annotate ChangeView with @(UI: {
   },
   LineItem           : [
     { Value: modification, @HTML5.CssDefaults: {width:'9em'} },
-    { Value: createdAt, @HTML5.CssDefaults: {width:'11em'} },
+    { Value: createdAt, @HTML5.CssDefaults: {width:'12em'} },
     { Value: createdBy, @HTML5.CssDefaults: {width:'9em'} },
     { Value: objectID, @HTML5.CssDefaults: {width:'14em'} },
     { Value: parentObjectID, @HTML5.CssDefaults: {width:'14em'} },
