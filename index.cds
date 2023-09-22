@@ -23,6 +23,8 @@ view ChangeView as
     entityID            as objectID, // no clue why we have to rename this?
     parentEntityID      as parentObjectID, // no clue why we have to rename this?
     changeLog.entityKey as entityKey, // flattening assoc path -> this is the main reason for having this helper view
+    changeLog.createdAt as createdAt,
+    changeLog.createdBy as createdBy,
   }
   excluding {
     entityID,
@@ -36,8 +38,9 @@ entity ChangeLog : managed, cuid {
   serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
   entity        : String @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
   entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
-  changes       : Composition of many Changes
-                    on changes.changeLog = $self;
+  createdAt     : managed:createdAt;
+  createdBy     : managed:createdBy;
+  changes       : Composition of many Changes on changes.changeLog = $self;
 }
 
 
@@ -45,7 +48,7 @@ entity ChangeLog : managed, cuid {
  * Attribute-level Changes with simple capturing of one-level
  * composition trees in parent... elements.
  */
-entity Changes : managed {
+entity Changes {
 
   key ID                : UUID                     @UI.Hidden;
       keys              : String                   @title: '{i18n>Changes.keys}';
@@ -88,15 +91,14 @@ annotate ChangeView with @(UI: {
     }],
   },
   LineItem           : [
-    {Value: objectID},
-    {Value: entity},
-    {Value: parentObjectID},
-    {Value: attribute},
-    {Value: valueChangedTo},
-    {Value: valueChangedFrom},
-    {Value: createdBy},
-    {Value: createdAt},
-    {Value: modification}
+    { Value: modification, @HTML5.CssDefaults: {width:'9em'} },
+    { Value: createdAt, @HTML5.CssDefaults: {width:'11em'} },
+    { Value: createdBy, @HTML5.CssDefaults: {width:'9em'} },
+    { Value: objectID, @HTML5.CssDefaults: {width:'14em'} },
+    { Value: parentObjectID, @HTML5.CssDefaults: {width:'14em'} },
+    { Value: attribute, @HTML5.CssDefaults: {width:'9em'} },
+    { Value: valueChangedTo, @HTML5.CssDefaults: {width:'11em'} },
+    { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11em'} },
   ],
   DeleteHidden       : true,
 });
