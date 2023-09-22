@@ -4,75 +4,75 @@ namespace sap.changelog;
 /**
  * Used in cds-plugin.js as template for tracked entities
  */
-aspect aspect @(
-  UI.Facets: [{
-    $Type : 'UI.ReferenceFacet',
-    ID    : 'ChangeHistoryFacet',
-    Label : '{i18n>ChangeHistoryList}',
-    Target: 'changes/@UI.PresentationVariant'
-  }]
-) {
+aspect aspect @(UI.Facets: [{
+  $Type : 'UI.ReferenceFacet',
+  ID    : 'ChangeHistoryFacet',
+  Label : '{i18n>ChangeHistoryList}',
+  Target: 'changes/@UI.PresentationVariant'
+}]) {
+  // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
   changes : Association to many ChangeView on changes.entityKey = ID;
-  key ID : UUID;
+  key ID  : UUID;
 }
 
 
-entity Changes : managed {
-
-  key ID            : UUID                    @UI.Hidden;
-  keys              : String                   @title: '{i18n>Changes.keys}';
-  attribute         : String                   @title: '{i18n>Changes.attribute}';
-  valueChangedFrom  : String                   @title: '{i18n>Changes.valueChangedFrom}';
-  valueChangedTo    : String                   @title: '{i18n>Changes.valueChangedTo}';
-
-  // Business meaningful object id
-  entityID          : String                   @title: '{i18n>Changes.entityID}';
-  entity            : String                   @title: '{i18n>Changes.entity}';
-  serviceEntity     : String                   @title: '{i18n>Changes.serviceEntity}';
-
-  // Business meaningful parent object id
-  parentEntityID    : String                   @title: '{i18n>Changes.parentEntityID}';
-  parentKey         : UUID                     @title: '{i18n>Changes.parentKey}';
-  serviceEntityPath : String                   @title: '{i18n>Changes.serviceEntityPath}';
-
-  @title: '{i18n>Changes.modification}'
-  modification      : String enum {
-    create = 'Create';
-    update = 'Edit';
-    delete = 'Delete';
-  };
-
-  valueDataType     : String                   @title: '{i18n>Changes.valueDataType}';
-  changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}';
-}
-
-// REVISIT: Get rid of that
-entity ChangeLog : managed, cuid {
-  entity        : String @title: '{i18n>ChangeLog.entity}';
-  entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}';
-  serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}';
-  changes       : Composition of many Changes on changes.changeLog = $self;
-}
-
-// REVISIT: Get rid of that
+// This is a helper view to flatten the assoc path to the entityKey
 view ChangeView as
   select from Changes {
-    ID                  as ID                @UI.Hidden,
-    attribute           as attribute,
-    entityID            as objectID,
-    entity              as entity,
-    serviceEntity       as serviceEntity,
-    parentEntityID      as parentObjectID,
-    parentKey           as parentKey,
-    valueChangedFrom    as valueChangedFrom,
-    valueChangedTo      as valueChangedTo,
-    modification        as modification,
-    createdBy           as createdBy,
-    createdAt           as createdAt,
-    changeLog.entityKey as entityKey,
-    serviceEntityPath   as serviceEntityPath @UI.Hidden,
+    *,
+    entityID            as objectID, // no clue why we have to rename this?
+    parentEntityID      as parentObjectID, // no clue why we have to rename this?
+    changeLog.entityKey as entityKey, // flattening assoc path -> this is the main reason for having this helper view
+  }
+  excluding {
+    entityID,
+    parentEntityID,
   };
 
+/**
+ * Top-level changes entity, e.g. UPDATE Incident by, at, ...
+ */
+entity ChangeLog : managed, cuid {
+  serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
+  entity        : String @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
+  entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
+  changes       : Composition of many Changes
+                    on changes.changeLog = $self;
+}
+
+
+/**
+ * Attribute-level Changes with simple capturing of one-level
+ * composition trees in parent... elements.
+ */
+entity Changes : managed {
+
+  key ID                : UUID                     @UI.Hidden;
+      keys              : String                   @title: '{i18n>Changes.keys}';
+      attribute         : String                   @title: '{i18n>Changes.attribute}';
+      valueChangedFrom  : String                   @title: '{i18n>Changes.valueChangedFrom}';
+      valueChangedTo    : String                   @title: '{i18n>Changes.valueChangedTo}';
+
+      // Business meaningful object id
+      entityID          : String                   @title: '{i18n>Changes.entityID}';
+      entity            : String                   @title: '{i18n>Changes.entity}'; // similar to ChangeLog.entity, but could be nested entity in a composition tree
+      serviceEntity     : String                   @title: '{i18n>Changes.serviceEntity}'; // similar to ChangeLog.serviceEntity, but could be nested entity in a composition tree
+
+      // Business meaningful parent object id
+      parentEntityID    : String                   @title: '{i18n>Changes.parentEntityID}';
+      parentKey         : UUID                     @title: '{i18n>Changes.parentKey}';
+      serviceEntityPath : String                   @title: '{i18n>Changes.serviceEntityPath}';
+
+      @title: '{i18n>Changes.modification}'
+      modification      : String enum {
+        create = 'Create';
+        update = 'Edit';
+        delete = 'Delete';
+      };
+
+      valueDataType     : String                   @title: '{i18n>Changes.valueDataType}';
+      changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}';
+}
 
 annotate ChangeView with @(UI: {
   PresentationVariant: {
@@ -88,15 +88,15 @@ annotate ChangeView with @(UI: {
     }],
   },
   LineItem           : [
-    { Value: objectID },
-    { Value: entity },
-    { Value: parentObjectID },
-    { Value: attribute },
-    { Value: valueChangedTo },
-    { Value: valueChangedFrom },
-    { Value: createdBy },
-    { Value: createdAt },
-    { Value: modification }
+    {Value: objectID},
+    {Value: entity},
+    {Value: parentObjectID},
+    {Value: attribute},
+    {Value: valueChangedTo},
+    {Value: valueChangedFrom},
+    {Value: createdBy},
+    {Value: createdAt},
+    {Value: modification}
   ],
   DeleteHidden       : true,
 });
