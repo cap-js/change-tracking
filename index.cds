@@ -8,7 +8,8 @@ aspect aspect @(UI.Facets: [{
   $Type : 'UI.ReferenceFacet',
   ID    : 'ChangeHistoryFacet',
   Label : '{i18n>ChangeHistoryList}',
-  Target: 'changes/@UI.PresentationVariant'
+  Target: 'changes/@UI.PresentationVariant',
+  ![@UI.PartOfPreview] : true // This shows how to show/hide (i.e.setting to true/false) the entire facet
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
   changes : Association to many ChangeView on changes.entityKey = ID;
@@ -77,6 +78,9 @@ entity Changes {
       changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}';
 }
 
+// This shows how to add an (unbound) action
+action show() returns String;
+
 annotate ChangeView with @(UI: {
   PresentationVariant: {
     Visualizations: ['@UI.LineItem'],
@@ -99,6 +103,12 @@ annotate ChangeView with @(UI: {
     { Value: attribute, @HTML5.CssDefaults: {width:'9em'} },
     { Value: valueChangedTo, @HTML5.CssDefaults: {width:'11em'} },
     { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11em'} },
+    // This shows how to add a button above the table
+    {
+      $Type: 'UI.DataFieldForAction',
+      Action: 'sap.changelog.show',
+      Label: 'Show Changelogs'
+    }
   ],
   DeleteHidden       : true,
 });
