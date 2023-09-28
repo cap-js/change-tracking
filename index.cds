@@ -95,14 +95,17 @@ annotate ChangeView with @(UI: {
     }],
   },
   LineItem           : [
-    { Value: modification, @HTML5.CssDefaults: {width:'9em'} },
-    { Value: createdAt, @HTML5.CssDefaults: {width:'12em'} },
-    { Value: createdBy, @HTML5.CssDefaults: {width:'9em'} },
-    { Value: objectID, @HTML5.CssDefaults: {width:'14em'} },
-    { Value: parentObjectID, @HTML5.CssDefaults: {width:'14em'} },
-    { Value: attribute, @HTML5.CssDefaults: {width:'9em'} },
-    { Value: valueChangedTo, @HTML5.CssDefaults: {width:'11em'} },
-    { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11em'} },
+    { Value: modification, @HTML5.CssDefaults: {width:'6%'} },
+    { Value: createdAt, @HTML5.CssDefaults: {width:'12%'} },
+    { Value: createdBy, @HTML5.CssDefaults: {width:'9%'} },
+    { Value: objectID, @HTML5.CssDefaults: {width:'14%'} },
+    { Value: parentObjectID, @HTML5.CssDefaults: {width:'14%'} },
+    { Value: attribute, @HTML5.CssDefaults: {width:'9%'} },
+    { Value: valueChangedTo, @HTML5.CssDefaults: {width:'11%'} },
+    { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11%'} },
+    // IMPORTANT: If we omit field 'entity' below, objectID and parentObjetId are empty in the UI
+    // REVISIT: Find out and eliminate the reason for that
+    { Value: entity, @HTML5.CssDefaults: {width:'14%'} },
     // This shows how to add a button above the table
     {
       $Type: 'UI.DataFieldForAction',
