@@ -7,6 +7,9 @@
       "db": {
         "kind": "sql"
       }
+    },
+    "features": {
+      "serve_on_root": true
     }
   }
 }
