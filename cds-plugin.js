@@ -47,6 +47,11 @@ cds.on('loaded', m => {
 
       // Add UI.Facet for Change History List
       entity['@UI.Facets']?.push(facet)
+
+      // Add UI.Identification for Change History Button
+      const actionIdent = m.definitions['sap.changelog.ChangeView']['@UI.Identification']
+      actionIdent[0].Action = `${srv}.EntityContainer/show`
+      entity['@UI.Identification'] = entity['@UI.Identification'] ? entity['@UI.Identification'].push(actionIdent[0]) : actionIdent
     }
   }
 })
@@ -55,8 +60,9 @@ cds.on('loaded', m => {
 cds.on('served', () => {
   const { track_changes, _afterReadChangeView } = require("./lib/change-log")
   for (const srv of cds.services) {
-    srv.on("show", (req) => {
+    srv.on("show", async(req) => {
       req.notify('Triggered the unbound action "show".')
+      // TODO: Show/hide @UI.Facet for Change History
     })
     if (srv instanceof cds.ApplicationService) {
       let any = false

@@ -9,7 +9,8 @@ aspect aspect @(UI.Facets: [{
   ID    : 'ChangeHistoryFacet',
   Label : '{i18n>ChangeHistoryList}',
   Target: 'changes/@UI.PresentationVariant',
-  ![@UI.PartOfPreview] : true // This shows how to show/hide (i.e.setting to true/false) the entire facet
+  //![@UI.Hidden]: true
+  ![@UI.Hidden] : {$edmJson : {$Eq : [{$Path : 'status'}, 'visible']}}
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
   changes : Association to many ChangeView on changes.entityKey = ID;
@@ -79,9 +80,16 @@ entity Changes {
 }
 
 // This shows how to add an (unbound) action
-action show() returns String;
+action show() returns Boolean;
 
 annotate ChangeView with @(UI: {
+  Identification : [
+    {
+      $Type  : 'UI.DataFieldForAction',
+      Action : 'sap.changelog.show',
+      Label  : '{i18n>ShowChanges}'
+    },
+  ],
   PresentationVariant: {
     Visualizations: ['@UI.LineItem'],
     RequestAtLeast: [
@@ -106,12 +114,6 @@ annotate ChangeView with @(UI: {
     // IMPORTANT: If we omit field 'entity' below, objectID and parentObjetId are empty in the UI
     // REVISIT: Find out and eliminate the reason for that
     { Value: entity, @HTML5.CssDefaults: {width:'14%'} },
-    // This shows how to add a button above the table
-    {
-      $Type: 'UI.DataFieldForAction',
-      Action: 'sap.changelog.show',
-      Label: 'Show Changelogs'
-    }
   ],
   DeleteHidden       : true,
 });
