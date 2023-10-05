@@ -9,8 +9,7 @@ aspect aspect @(UI.Facets: [{
   ID    : 'ChangeHistoryFacet',
   Label : '{i18n>ChangeHistoryList}',
   Target: 'changes/@UI.PresentationVariant',
-  //![@UI.Hidden]: true
-  ![@UI.Hidden] : {$edmJson : {$Eq : [{$Path : 'status'}, 'visible']}}
+  ![@UI.PartOfPreview] : false
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
   changes : Association to many ChangeView on changes.entityKey = ID;
@@ -43,6 +42,7 @@ entity ChangeLog : managed, cuid {
   createdAt     : managed:createdAt @title: 'On';
   createdBy     : managed:createdBy @title: 'By';
   changes       : Composition of many Changes on changes.changeLog = $self;
+  show          : Boolean default false;
 }
 
 
@@ -78,9 +78,6 @@ entity Changes {
       valueDataType     : String                   @title: '{i18n>Changes.valueDataType}';
       changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}';
 }
-
-// This shows how to add an (unbound) action
-action show() returns Boolean;
 
 annotate ChangeView with @(UI: {
   Identification : [
