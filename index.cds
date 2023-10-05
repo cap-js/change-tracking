@@ -9,7 +9,7 @@ aspect aspect @(UI.Facets: [{
   ID    : 'ChangeHistoryFacet',
   Label : '{i18n>ChangeHistoryList}',
   Target: 'changes/@UI.PresentationVariant',
-  ![@UI.PartOfPreview] : false
+  ![@UI.PartOfPreview] : false // Lazy load Change History
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
   changes : Association to many ChangeView on changes.entityKey = ID;
@@ -42,7 +42,6 @@ entity ChangeLog : managed, cuid {
   createdAt     : managed:createdAt @title: 'On';
   createdBy     : managed:createdBy @title: 'By';
   changes       : Composition of many Changes on changes.changeLog = $self;
-  show          : Boolean default false;
 }
 
 
