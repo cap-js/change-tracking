@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: opentelemetry-instrumentation
+Upstream-Name: change-tracking
 Upstream-Contact: The CAP team <cap@sap.com>
-Source: https://github.com/cap-js/opentelemetry-instrumentation
+Source: https://github.com/cap-js/change-tracking
 Disclaimer: The code in this project may include calls to APIs ("API Calls") of
  SAP or third-party products or services developed outside of this project
  ("External Products").
@@ -25,5 +25,5 @@ Disclaimer: The code in this project may include calls to APIs ("API Calls") of
  parties the right to use of access any SAP External Product, through API Calls.
 
 Files: *
-Copyright: 2023 SAP SE or an SAP affiliate company and opentelemetry-instrumentation contributors.
+Copyright: 2023 SAP SE or an SAP affiliate company and change-tracking contributors.
 License: Apache-2.0
