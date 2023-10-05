@@ -11,8 +11,6 @@ cds.on('loaded', m => {
 
   // Get definitions from Dummy entity in our models
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
-  // Shows how to add an action
-  const { 'sap.changelog.show': action } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
   changes.on.pop() // remove ID -> filled in below
 
@@ -34,24 +32,8 @@ cds.on('loaded', m => {
         entity.elements.changes = assoc
       }
 
-      // Shows how to add an unbound action to the service
-      const srv = name.split('.')[0]
-      if (m.definitions[srv].kind === 'service' && !m.definitions[`${srv}.show`]) {
-        m.definitions[`${srv}.show`] = action;
-        m.definitions['sap.changelog.ChangeView']['@UI.LineItem'].forEach(l => {
-          if (l['$Type'] === 'UI.DataFieldForAction') {
-            l['Action'] = l['Action'].replace('sap.changelog.', `${srv}.EntityContainer/`)
-          }
-        })
-      }
-
       // Add UI.Facet for Change History List
       entity['@UI.Facets']?.push(facet)
-
-      // Add UI.Identification for Change History Button
-      const actionIdent = m.definitions['sap.changelog.ChangeView']['@UI.Identification']
-      actionIdent[0].Action = `${srv}.EntityContainer/show`
-      entity['@UI.Identification'] = entity['@UI.Identification'] ? entity['@UI.Identification'].push(actionIdent[0]) : actionIdent
     }
   }
 })
@@ -60,10 +42,6 @@ cds.on('loaded', m => {
 cds.on('served', () => {
   const { track_changes, _afterReadChangeView } = require("./lib/change-log")
   for (const srv of cds.services) {
-    srv.on("show", async(req) => {
-      req.notify('Triggered the unbound action "show".')
-      // TODO: Show/hide @UI.Facet for Change History
-    })
     if (srv instanceof cds.ApplicationService) {
       let any = false
       for (const entity of Object.values(srv.entities)) {

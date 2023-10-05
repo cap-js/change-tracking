@@ -80,13 +80,6 @@ entity Changes {
 }
 
 annotate ChangeView with @(UI: {
-  Identification : [
-    {
-      $Type  : 'UI.DataFieldForAction',
-      Action : 'sap.changelog.show',
-      Label  : '{i18n>ShowChanges}'
-    },
-  ],
   PresentationVariant: {
     Visualizations: ['@UI.LineItem'],
     RequestAtLeast: [
