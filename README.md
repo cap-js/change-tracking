@@ -2,7 +2,7 @@
 
 ## About this project
 
-`@cap-js/change-tracking` is a CDS plugin providing ...
+`@cap-js/change-tracking` is a CDS plugin providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities.
 
 Documentation can be found at [cap.cloud.sap](https://cap.cloud.sap/docs).
 
