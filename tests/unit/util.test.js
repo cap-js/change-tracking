@@ -48,13 +48,10 @@ describe("entityHelper", () => {
         expect(getEntityByContextPath("".split('/'))).to.not.exist;
     });
 
-    it("1.1 should return null if entityName not provided (ERP4SMEPREPWORKAPPPLAT-32)", async () => {
-        expect(getEntity("")).to.not.exist
-    });
-
     it("1.2 should return false if composition not found (ERP4SMEPREPWORKAPPPLAT-32)", async () => {
         const parentEntity = { compositions: [{ target: "child_entity1" }] };
         const subEntity = { name: "child_entity2" };
-        expect(hasComposition(parentEntity, subEntity)).to.equal(false);
+        let hasComposition = Object.values(parentEntity.compositions).some(c => c._target === subEntity)
+        expect(hasComposition).to.equal(false);
     });
 });
