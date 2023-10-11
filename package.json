@@ -11,7 +11,7 @@
   "scripts": {
     "build": "cds build",
     "start": "cds run",
-    "test": "npx jest"
+    "test": "npx jest --silent"
   },
   "devDependencies": {
     "@cap-js/sqlite": "*",
