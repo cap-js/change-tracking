@@ -1,7 +1,4 @@
 {
-  "dependencies": {
-    "@cap-js/change-tracking": "file:../.."
-  },
   "devDependencies": {
     "@cap-js/sqlite": "*"
   },
@@ -10,6 +7,9 @@
       "db": {
         "kind": "sql"
       }
+    },
+    "features": {
+      "serve_on_root": true
     }
   }
 }
