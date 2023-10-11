@@ -7,7 +7,7 @@ namespace sap.changelog;
 aspect aspect @(UI.Facets: [{
   $Type : 'UI.ReferenceFacet',
   ID    : 'ChangeHistoryFacet',
-  Label : '{i18n>ChangeHistoryList}',
+  Label : '{i18n>ChangeHistory}',
   Target: 'changes/@UI.PresentationVariant'
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
