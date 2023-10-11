@@ -11,6 +11,7 @@
   "scripts": {
     "build": "cds build",
     "start": "cds run",
+    "lint": "npx eslint .",
     "test": "npx jest --silent"
   },
   "devDependencies": {
