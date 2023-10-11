@@ -1,6 +1,9 @@
 {
   "dependencies": {
-    "@cap-js/change-tracking": "*"
+    "@cap-js/change-tracking": "file:../.."
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "*"
   },
   "cds": {
     "requires": {
