@@ -905,358 +905,150 @@ describe("change log integration test", () => {
             );
             bookElementChanges.push(bookChanges[0]);
         }
-      }
-    )
-    await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action)
 
-    const bookTypeChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.Books',
-        attribute: 'bookType'
-      })
-    )
-    expect(bookTypeChanges.length).to.equal(1)
+        // To do localization, attribute needs parameters attribute and service entity, so the localization could not be done
+        const bookChangeAttr = bookElementChanges[0];
+        expect(bookChangeAttr.attribute).to.equal("books");
 
-    const bookTypeChange = bookTypeChanges[0]
-    expect(bookTypeChange.modification).to.equal('Create')
-    expect(bookTypeChange.valueChangedFrom).to.equal('')
-    expect(bookTypeChange.valueChangedTo).to.equal('Management, Management Books')
+        // To do localization, modification only needs parameters modification itself, so the localization could be done
+        const bookChangeModification = bookElementChanges[1];
+        expect(bookChangeModification.modification).to.equal("Create");
 
-    const actionPH = PATCH.bind({}, `/admin/Books(ID=7e9d4199-4602-47f1-8767-85dae82ce639,IsActiveEntity=false)`, {
-      bookType: {
-        code: 'SCI'
-      }
-    })
+        // To do localization, entity only needs parameters entity itself, so the localization could be done
+        const bookChangeEntity = bookElementChanges[2];
+        expect(bookChangeEntity.entity).to.equal("Book Store");
 
-    await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', actionPH)
+        // To do localization, object id needs parameters entity (if no object id is annotated), so the localization could not be done
+        // If no object id is annotated, the real value stored in db of object id should be "".
+        const bookChangeObjectId = bookElementChanges[3];
+        expect(bookChangeObjectId.objectID).to.equal("");
 
-    const bookTypeUpdateChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.Books',
-        attribute: 'bookType',
-        modification: 'update'
-      })
-    )
-    expect(bookTypeUpdateChanges.length).to.equal(1)
+        cds.services.AdminService.entities.BookStores["@changelog.keys"] = [
+            {
+                "=": "name",
+            },
+        ];
+    });
 
-    const bookTypeUpdateChange = bookTypeUpdateChanges[0]
-    expect(bookTypeUpdateChange.modification).to.equal('Update')
-    expect(bookTypeUpdateChange.valueChangedFrom).to.equal('Management, Management Books')
-    expect(bookTypeUpdateChange.valueChangedTo).to.equal('Science, Science Books')
-  })
+    it("10.4 Composition of one node creation - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)", async () => {
+        const action = POST.bind({}, `/admin/BookStores`, {
+            ID: "01234567-89ab-cdef-0123-456789abcdef",
+            name: "Murder on the Orient Express",
+            registry: {
+                ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                code: "San Francisco-2",
+                validOn: "2022-01-01",
+                DraftAdministrativeData: {
+                    DraftUUID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                },
+            },
+        });
+        await utils.apiAction(
+            "admin",
+            "BookStores",
+            "01234567-89ab-cdef-0123-456789abcdef",
+            "AdminService",
+            action,
+            true
+        );
 
-  it('6.3 Attributes from the code list could be annotated as object ID (ERP4SMEPREPWORKAPPPLAT-1055)', async () => {
-    cds.services.AdminService.entities.BookStores['@changelog.keys'] = [
-      { '=': 'name' },
-      { '=': 'lifecycleStatus.name' }
-    ]
+        const registryChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.BookStoreRegistry",
+                attribute: "validOn",
+            })
+        );
 
-    const action = POST.bind({}, `/admin/BookStores`, {
-      ID: '01234567-89ab-cdef-0123-456789abcdef',
-      name: 'test name'
-    })
+        expect(registryChanges.length).to.equal(1);
+        const registryChange = registryChanges[0];
+        expect(registryChange.entityKey).to.equal("01234567-89ab-cdef-0123-456789abcdef");
+        expect(registryChange.attribute).to.equal("Valid On");
+        expect(registryChange.modification).to.equal("Create");
+        expect(registryChange.objectID).to.equal("San Francisco-2");
+        expect(registryChange.entity).to.equal("Book Store Registry");
+        expect(registryChange.valueChangedFrom).to.equal("");
+        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.parentKey).to.equal("01234567-89ab-cdef-0123-456789abcdef");
+        expect(registryChange.parentObjectID).to.equal("Murder on the Orient Express");
+    });
 
-    await utils.apiAction('admin', 'BookStores', '01234567-89ab-cdef-0123-456789abcdef', 'AdminService', action, true)
+    it("10.5.1 Composition of one node updated on root node - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)", async () => {
+        const action = PATCH.bind(
+            {},
+            `/admin/BookStores(ID=5ab2a87b-3a56-4d97-a697-7af72334a384,IsActiveEntity=false)`,
+            {
+                registry: {
+                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac120001",
+                    validOn: "2022-01-01",
+                    DraftAdministrativeData: {
+                        DraftUUID: "12ed5dd8-d45b-11ed-afa1-0242ac120004",
+                    },
+                },
+            }
+        );
+        await utils.apiAction("admin", "BookStores", "5ab2a87b-3a56-4d97-a697-7af72334a384", "AdminService", action);
 
-    const lifecycleStatusChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.BookStores',
-        attribute: 'lifecycleStatus',
-        modification: 'create'
-      })
-    )
-    expect(lifecycleStatusChanges.length).to.equal(1)
+        const registryChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.BookStoreRegistry",
+                attribute: "validOn",
+            })
+        );
+        expect(registryChanges.length).to.equal(1);
+        const registryChange = registryChanges[0];
+        expect(registryChange.attribute).to.equal("Valid On");
+        expect(registryChange.modification).to.equal("Update");
+        expect(registryChange.valueChangedFrom).to.equal("2022-10-15");
+        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.parentKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
+        expect(registryChange.parentObjectID).to.equal("The Strand");
+    });
 
-    const lifecycleStatusChange = lifecycleStatusChanges[0]
-    expect(lifecycleStatusChange.modification).to.equal('Create')
-    expect(lifecycleStatusChange.objectID).to.equal('test name, In Preparation')
+    it("10.5.2 Composition of one node updated on child node - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)", async () => {
+        // Update by calling API on child node
+        const action = PATCH.bind(
+            {},
+            `/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`,
+            {
+                validOn: "2022-01-01",
+            }
+        );
+        await utils.apiAction("admin", "BookStores", "8aaed432-8336-4b0d-be7e-3ef1ce7f13ea", "AdminService", action);
+        const registryChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.BookStoreRegistry",
+                attribute: "validOn",
+            })
+        );
+        expect(registryChanges.length).to.equal(1);
+        const registryChange = registryChanges[0];
+        expect(registryChange.attribute).to.equal("Valid On");
+        expect(registryChange.modification).to.equal("Update");
+        expect(registryChange.valueChangedFrom).to.equal("2018-09-01");
+        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.parentKey).to.equal("8aaed432-8336-4b0d-be7e-3ef1ce7f13ea");
+        expect(registryChange.parentObjectID).to.equal("City Lights Books");
+    });
 
-    cds.services.AdminService.entities.BookStores['@changelog.keys'] = [
-      { '=': 'lifecycleStatus.name' },
-      { '=': 'name' }
-    ]
-    const actionPH = PATCH.bind({}, `/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`, {
-      lifecycleStatus: {
-        code: 'CL'
-      },
-      name: 'new test name'
-    })
-
-    await utils.apiAction('admin', 'BookStores', '01234567-89ab-cdef-0123-456789abcdef', 'AdminService', actionPH)
-
-    const lifecycleStatusUpdateChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.BookStores',
-        attribute: 'lifecycleStatus',
-        modification: 'update'
-      })
-    )
-    expect(lifecycleStatusUpdateChanges.length).to.equal(1)
-
-    const lifecycleStatusUpdateChange = lifecycleStatusUpdateChanges[0]
-    expect(lifecycleStatusUpdateChange.modification).to.equal('Update')
-    expect(lifecycleStatusUpdateChange.objectID).to.equal('Closed, new test name')
-
-    cds.services.AdminService.entities.BookStores['@changelog.keys'] = [{ '=': 'name' }]
-  })
-
-  it('7.1 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993)', async () => {
-    cds.services.AdminService.entities.Books['@changelog.keys'] = [
-      { '=': 'bookStore.lifecycleStatus.name' },
-      { '=': 'bookStore.location' },
-      { '=': 'bookStore.city.name' },
-      { '=': 'bookStore.city.country.countryName.code' }
-    ]
-
-    const action = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
-      title: 'new title',
-      author_ID: '47f97f40-4f41-488a-b10b-a5725e762d5e'
-    })
-    await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action)
-
-    const titleChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.Books',
-        attribute: 'title'
-      })
-    )
-    expect(titleChanges.length).to.equal(1)
-    const titleChange = titleChanges[0]
-    expect(titleChange.objectID).to.equal('In Preparation, Paris, Paris, FR')
-
-    cds.services.AdminService.entities.Books['@changelog.keys'] = [
-      { '=': 'title' },
-      { '=': 'bookStore.lifecycleStatus.name' },
-      { '=': 'bookStore.city.country.countryName.name' }
-    ]
-
-    const deleteAction = DELETE.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`)
-    await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', deleteAction)
-
-    const deleteTitleChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.Books',
-        attribute: 'title',
-        modification: 'delete'
-      })
-    )
-    expect(deleteTitleChanges.length).to.equal(1)
-    const deleteTitleChange = deleteTitleChanges[0]
-    expect(deleteTitleChange.objectID).to.equal('new title, In Preparation, France')
-
-    cds.services.AdminService.entities.Books['@changelog.keys'] = [
-      { '=': 'title' },
-      { '=': 'author.name.firstName' },
-      { '=': 'author.name.lastName' }
-    ]
-  })
-
-  it('8.1 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094)', async () => {
-    const action = POST.bind({}, `/admin/BookStores`, {
-      ID: '01234567-89ab-cdef-0123-456789abcdef',
-      city_ID: 'bc21e0d9-a313-4f52-8336-c1be5f66e257'
-    })
-
-    await utils.apiAction('admin', 'BookStores', '01234567-89ab-cdef-0123-456789abcdef', 'AdminService', action, true)
-
-    const cityChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.BookStores',
-        attribute: 'city',
-        modification: 'create'
-      })
-    )
-    expect(cityChanges.length).to.equal(1)
-
-    const cityChange = cityChanges[0]
-    expect(cityChange.modification).to.equal('Create')
-    expect(cityChange.valueChangedFrom).to.equal('')
-    expect(cityChange.valueChangedTo).to.equal('Paris, FR')
-
-    const updateAction = PATCH.bind(
-      {},
-      `/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`,
-      {
-        city_ID: '60b4c55d-ec87-4edc-84cb-2e4ecd60de48'
-      }
-    )
-    await utils.apiAction('admin', 'BookStores', '01234567-89ab-cdef-0123-456789abcdef', 'AdminService', updateAction)
-
-    const updateCityChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.BookStores',
-        attribute: 'city',
-        modification: 'update'
-      })
-    )
-    expect(updateCityChanges.length).to.equal(1)
-    const updateCityChange = updateCityChanges[0]
-    expect(updateCityChange.valueChangedFrom).to.equal('Paris, FR')
-    expect(updateCityChange.valueChangedTo).to.equal('New York, USA')
-  })
-
-  it('9.1 Localization should handle the cases that reading the change view without required parameters obtained (ERP4SMEPREPWORKAPPPLAT-1414)', async () => {
-    delete cds.services.AdminService.entities.BookStores['@changelog.keys']
-    const action = POST.bind(
-      {},
-      `/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
-      {
-        ID: '9d703c23-54a8-4eff-81c1-cdce6b8376b2',
-        title: 'test title',
-        descr: 'test descr',
-        author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
-        stock: 1,
-        price: 1.0
-      }
-    )
-    await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action)
-
-    const selectedColumns = ['attribute', 'modification', 'entity', 'objectID']
-    const bookElementChanges = []
-    for (const selectedColumn of selectedColumns) {
-      const bookChanges = await adminService.run(
-        SELECT.from(ChangeView)
-          .where({
-            entity: 'sap.capire.bookshop.BookStores',
-            attribute: 'books'
-          })
-          .columns(`${selectedColumn}`)
-      )
-      bookElementChanges.push(bookChanges[0])
-    }
-
-    // To do localization, attribute needs parameters attribute and service entity, so the localization could not be done
-    const bookChangeAttr = bookElementChanges[0]
-    expect(bookChangeAttr.attribute).to.equal('books')
-
-    // To do localization, modification only needs parameters modification itself, so the localization could be done
-    const bookChangeModification = bookElementChanges[1]
-    expect(bookChangeModification.modification).to.equal('Create')
-
-    // To do localization, entity only needs parameters entity itself, so the localization could be done
-    const bookChangeEntity = bookElementChanges[2]
-    expect(bookChangeEntity.entity).to.equal('Book Store')
-
-    // To do localization, object id needs parameters entity (if no object id is annotated), so the localization could not be done
-    // If no object id is annotated, the real value stored in db of object id should be "".
-    const bookChangeObjectId = bookElementChanges[3]
-    expect(bookChangeObjectId.objectID).to.equal('')
-
-    cds.services.AdminService.entities.BookStores['@changelog.keys'] = [
-      {
-        '=': 'name'
-      }
-    ]
-  })
-
-  it('10.4 Composition of one node creation - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)', async () => {
-    const action = POST.bind({}, `/admin/BookStores`, {
-      ID: '01234567-89ab-cdef-0123-456789abcdef',
-      name: 'Murder on the Orient Express',
-      registry: {
-        ID: '12ed5dd8-d45b-11ed-afa1-0242ac120003',
-        code: 'San Francisco-2',
-        validOn: '2022-01-01',
-        DraftAdministrativeData: {
-          DraftUUID: '12ed5dd8-d45b-11ed-afa1-0242ac120003'
-        }
-      }
-    })
-    await utils.apiAction('admin', 'BookStores', '01234567-89ab-cdef-0123-456789abcdef', 'AdminService', action, true)
-
-    const registryChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.BookStoreRegistry',
-        attribute: 'validOn'
-      })
-    )
-
-    expect(registryChanges.length).to.equal(1)
-    const registryChange = registryChanges[0]
-    expect(registryChange.entityKey).to.equal('01234567-89ab-cdef-0123-456789abcdef')
-    expect(registryChange.attribute).to.equal('Valid On')
-    expect(registryChange.modification).to.equal('Create')
-    expect(registryChange.objectID).to.equal('San Francisco-2')
-    expect(registryChange.entity).to.equal('Book Store Registry')
-    expect(registryChange.valueChangedFrom).to.equal('')
-    expect(registryChange.valueChangedTo).to.equal('2022-01-01')
-    expect(registryChange.parentKey).to.equal('01234567-89ab-cdef-0123-456789abcdef')
-    expect(registryChange.parentObjectID).to.equal('Murder on the Orient Express')
-  })
-
-  it('10.5.1 Composition of one node updated on root node - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)', async () => {
-    const action = PATCH.bind({}, `/admin/BookStores(ID=5ab2a87b-3a56-4d97-a697-7af72334a384,IsActiveEntity=false)`, {
-      registry: {
-        ID: '12ed5dd8-d45b-11ed-afa1-0242ac120001',
-        validOn: '2022-01-01',
-        DraftAdministrativeData: {
-          DraftUUID: '12ed5dd8-d45b-11ed-afa1-0242ac120004'
-        }
-      }
-    })
-    await utils.apiAction('admin', 'BookStores', '5ab2a87b-3a56-4d97-a697-7af72334a384', 'AdminService', action)
-
-    const registryChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.BookStoreRegistry',
-        attribute: 'validOn'
-      })
-    )
-    expect(registryChanges.length).to.equal(1)
-    const registryChange = registryChanges[0]
-    expect(registryChange.attribute).to.equal('Valid On')
-    expect(registryChange.modification).to.equal('Update')
-    expect(registryChange.valueChangedFrom).to.equal('2022-10-15')
-    expect(registryChange.valueChangedTo).to.equal('2022-01-01')
-    expect(registryChange.parentKey).to.equal('5ab2a87b-3a56-4d97-a697-7af72334a384')
-    expect(registryChange.parentObjectID).to.equal('The Strand')
-  })
-
-  it('10.5.2 Composition of one node updated on child node - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)', async () => {
-    // Update by calling API on child node
-    const action = PATCH.bind(
-      {},
-      `/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`,
-      {
-        validOn: '2022-01-01'
-      }
-    )
-    await utils.apiAction('admin', 'BookStores', '8aaed432-8336-4b0d-be7e-3ef1ce7f13ea', 'AdminService', action)
-    const registryChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.BookStoreRegistry',
-        attribute: 'validOn'
-      })
-    )
-    expect(registryChanges.length).to.equal(1)
-    const registryChange = registryChanges[0]
-    expect(registryChange.attribute).to.equal('Valid On')
-    expect(registryChange.modification).to.equal('Update')
-    expect(registryChange.valueChangedFrom).to.equal('2018-09-01')
-    expect(registryChange.valueChangedTo).to.equal('2022-01-01')
-    expect(registryChange.parentKey).to.equal('8aaed432-8336-4b0d-be7e-3ef1ce7f13ea')
-    expect(registryChange.parentObjectID).to.equal('City Lights Books')
-  })
-
-  it('10.6 Composition of one node deleted - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)', async () => {
-    const action = DELETE.bind(
-      {},
-      `/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`
-    )
-    await utils.apiAction('admin', 'BookStores', '8aaed432-8336-4b0d-be7e-3ef1ce7f13ea', 'AdminService', action)
-    const registryChanges = await adminService.run(
-      SELECT.from(ChangeView).where({
-        entity: 'sap.capire.bookshop.BookStoreRegistry',
-        attribute: 'validOn'
-      })
-    )
-    expect(registryChanges.length).to.equal(1)
-    const registryChange = registryChanges[0]
-    expect(registryChange.attribute).to.equal('Valid On')
-    expect(registryChange.modification).to.equal('Delete')
-    expect(registryChange.valueChangedFrom).to.equal('2018-09-01')
-    expect(registryChange.valueChangedTo).to.equal('')
-    expect(registryChange.parentKey).to.equal('8aaed432-8336-4b0d-be7e-3ef1ce7f13ea')
-    expect(registryChange.parentObjectID).to.equal('City Lights Books')
-  })
-})
+    it("10.6 Composition of one node deleted - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)", async () => {
+        const action = DELETE.bind(
+            {},
+            `/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`
+        );
+        await utils.apiAction("admin", "BookStores", "8aaed432-8336-4b0d-be7e-3ef1ce7f13ea", "AdminService", action);
+        const registryChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.BookStoreRegistry",
+                attribute: "validOn",
+            })
+        );
+        expect(registryChanges.length).to.equal(1);
+        const registryChange = registryChanges[0];
+        expect(registryChange.attribute).to.equal("Valid On");
+        expect(registryChange.modification).to.equal("Delete");
+        expect(registryChange.valueChangedFrom).to.equal("2018-09-01");
+        expect(registryChange.valueChangedTo).to.equal("");
+        expect(registryChange.parentKey).to.equal("8aaed432-8336-4b0d-be7e-3ef1ce7f13ea");
+        expect(registryChange.parentObjectID).to.equal("City Lights Books");
+    });
+});
