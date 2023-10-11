@@ -2,19 +2,21 @@ const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
 const { expect, data } = cds.test(bookshop);
 
+// REVISIT: should be easier to load the plugin and its model
+cds.env.plugins["@cap-js/change-tracking"] = {
+    "impl": require("path").join(__dirname, "../../cds-plugin.js")
+}
+cds.env.roots.push("../../");
+
 jest.setTimeout(5 * 60 * 1000);
 
 let adminService = null;
 let ChangeView = null;
-let db = null;
-let ChangeEntity = null;
 
 describe("change log integration test", () => {
     beforeAll(async () => {
         adminService = await cds.connect.to("AdminService");
         ChangeView = adminService.entities.ChangeView;
-        db = await cds.connect.to("sql:my.db");
-        ChangeEntity = db.model.definitions["sap.changelog.Changes"];
     });
 
     beforeEach(async () => {
