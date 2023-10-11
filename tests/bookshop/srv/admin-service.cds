@@ -1,5 +1,6 @@
 using {sap.capire.bookshop as my} from '../db/schema';
 
+@path: '/admin'
 service AdminService {
   @odata.draft.enabled
   entity BookStores @(cds.autoexpose) as projection on my.BookStores;
