@@ -1,7 +1,7 @@
 const chai = require("chai");
 const { expect } = require("chai");
 const templateProcessor = require("../../lib/template-processor");
-const { getEntityByContextPath, getEntity, hasComposition } = require("../../lib/entity-helper");
+const { getEntityByContextPath } = require("../../lib/entity-helper");
 
 // Configure chai
 chai.should();
