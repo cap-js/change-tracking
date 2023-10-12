@@ -7,7 +7,7 @@ namespace sap.changelog;
 aspect aspect @(UI.Facets: [{
   $Type : 'UI.ReferenceFacet',
   ID    : 'ChangeHistoryFacet',
-  Label : '{i18n>ChangeHistoryList}',
+  Label : '{i18n>ChangeHistory}',
   Target: 'changes/@UI.PresentationVariant',
   //TODO: Use for lazy-loading once Fiori fixes bugs and v1.120 is released
   //![@UI.PartOfPreview]: false
@@ -93,17 +93,15 @@ annotate ChangeView with @(UI: {
     }],
   },
   LineItem           : [
-    { Value: modification, @HTML5.CssDefaults: {width:'6%'} },
+    { Value: modification, @HTML5.CssDefaults: {width:'9%'} },
     { Value: createdAt, @HTML5.CssDefaults: {width:'12%'} },
     { Value: createdBy, @HTML5.CssDefaults: {width:'9%'} },
     { Value: objectID, @HTML5.CssDefaults: {width:'14%'} },
     { Value: parentObjectID, @HTML5.CssDefaults: {width:'14%'} },
     { Value: attribute, @HTML5.CssDefaults: {width:'9%'} },
     { Value: valueChangedTo, @HTML5.CssDefaults: {width:'11%'} },
-    { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11%'} },
-    // IMPORTANT: If we omit field 'entity' below, objectID and parentObjetId are empty in the UI
-    // REVISIT: Find out and eliminate the reason for that
-    { Value: entity, @HTML5.CssDefaults: {width:'14%'} },
+    { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11%'} }
+    { Value: entity, @HTML5.CssDefaults: {width:'11%'} },
   ],
   DeleteHidden       : true,
 });
