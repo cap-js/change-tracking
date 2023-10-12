@@ -179,7 +179,7 @@ describe("change log draft disabled test", () => {
     });
 
     it("4.1 Annotate multiple native and attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
-        cds.services.AdminService.entities.OrderItem["@changelog.keys"] = [
+        cds.services.AdminService.entities.OrderItem["@changelog"] = [
             { "=": "customer.city" },
             { "=": "order.status" },
             { "=": "price" },
@@ -194,11 +194,11 @@ describe("change log draft disabled test", () => {
         const change = changes[0];
         expect(change.objectID).to.equal("Ōsaka, Post, 5, 14");
 
-        delete cds.services.AdminService.entities.OrderItem["@changelog.keys"];
+        delete cds.services.AdminService.entities.OrderItem["@changelog"];
     });
 
     it("4.2 Annotate multiple native attributes as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
-        cds.services.AdminService.entities.Authors["@changelog.keys"] = [
+        cds.services.AdminService.entities.Authors["@changelog"] = [
             { "=": "placeOfBirth" },
             { "=": "name.firstName" },
             { "=": "name.lastName" },
@@ -216,14 +216,14 @@ describe("change log draft disabled test", () => {
         const change = changes[0];
         expect(change.objectID).to.equal("new placeOfBirth, Emily, Brontë, Haworth, Yorkshire, 1848-12-19, 1818-07-30");
 
-        cds.services.AdminService.entities.Authors["@changelog.keys"] = [
+        cds.services.AdminService.entities.Authors["@changelog"] = [
             { "=": "name.firstName" },
             { "=": "name.lastName" },
         ];
     });
 
     it("4.3 Annotate multiple attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
-        cds.services.AdminService.entities.OrderItem["@changelog.keys"] = [
+        cds.services.AdminService.entities.OrderItem["@changelog"] = [
             { "=": "customer.city" },
             { "=": "order.status" },
             { "=": "customer.country" },
@@ -238,7 +238,7 @@ describe("change log draft disabled test", () => {
         const change = changes[0];
         expect(change.objectID).to.equal("Ōsaka, Post, Japan, Honda");
 
-        delete cds.services.AdminService.entities.OrderItem["@changelog.keys"];
+        delete cds.services.AdminService.entities.OrderItem["@changelog"];
     });
 
     it("5.1 value data type records data type of native attributes of the entity or attributes from association table which are annotated as the displayed value(ERP4SMEPREPWORKAPPPLAT-873)", async () => {
@@ -282,7 +282,7 @@ describe("change log draft disabled test", () => {
     });
 
     it("7.2 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993)", async () => {
-        cds.services.AdminService.entities.OrderItem["@changelog.keys"] = [
+        cds.services.AdminService.entities.OrderItem["@changelog"] = [
             { "=": "order.report.comment" },
             { "=": "order.status" },
             { "=": "customer.name" },
@@ -296,7 +296,7 @@ describe("change log draft disabled test", () => {
         const change = changes[0];
         expect(change.objectID).to.equal("some comment, Post, Honda");
 
-        delete cds.services.AdminService.entities.OrderItem["@changelog.keys"];
+        delete cds.services.AdminService.entities.OrderItem["@changelog"];
     });
 
     it("8.2 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094)", async () => {
@@ -332,7 +332,7 @@ describe("change log draft disabled test", () => {
     });
 
     it("10.2 Composition of one update by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
-        cds.services.AdminService.entities.Order["@changelog.keys"] = [{ "=": "status" }];
+        cds.services.AdminService.entities.Order["@changelog"] = [{ "=": "status" }];
         await PATCH(`/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)`, {
             header: {
                 ID: "8567d0de-d44f-11ed-afa1-0242ac120002",
@@ -352,12 +352,12 @@ describe("change log draft disabled test", () => {
         expect(headerChange.valueChangedTo).to.equal("Ordered");
         expect(headerChange.parentKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
         expect(headerChange.parentObjectID).to.equal("Post");
-        delete cds.services.AdminService.entities.Order["@changelog.keys"];
+        delete cds.services.AdminService.entities.Order["@changelog"];
     });
 
     it("10.3 Composition of one delete by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
         // Check if the object ID obtaining failed due to lacking parentKey would lead to dump
-        cds.services.AdminService.entities.Order["@changelog.keys"] = [{ "=": "status" }];
+        cds.services.AdminService.entities.Order["@changelog"] = [{ "=": "status" }];
         await DELETE(`/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/header`);
 
         const changes = await adminService.run(SELECT.from(ChangeView));
@@ -372,6 +372,6 @@ describe("change log draft disabled test", () => {
         expect(headerChange.valueChangedTo).to.equal("");
         expect(headerChange.parentKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
         expect(headerChange.parentObjectID).to.equal("Post");
-        delete cds.services.AdminService.entities.Order["@changelog.keys"];
+        delete cds.services.AdminService.entities.Order["@changelog"];
     });
 });
