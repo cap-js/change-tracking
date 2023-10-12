@@ -248,10 +248,10 @@ describe("change log integration test", () => {
     });
 
     it("2.4 Child entity update without objectID annotation - should log object type for object ID (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613 ERP4SMEPREPWORKAPPPLAT-538)", async () => {
-        delete cds.services.AdminService.entities.Books["@changelog.keys"];
-        delete cds.services.AdminService.entities.BookStores["@changelog.keys"];
-        delete cds.db.entities.Books["@changelog.keys"];
-        delete cds.db.entities.BookStores["@changelog.keys"];
+        delete cds.services.AdminService.entities.Books["@changelog"];
+        delete cds.services.AdminService.entities.BookStores["@changelog"];
+        delete cds.db.entities.Books["@changelog"];
+        delete cds.db.entities.BookStores["@changelog"];
 
         const action = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
             title: "new title",
@@ -271,12 +271,12 @@ describe("change log integration test", () => {
         expect(change.objectID).to.equal("Book");
         expect(change.parentObjectID).to.equal("Book Store");
 
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
             { "=": "author.name.firstName" },
             { "=": "author.name.lastName" },
         ];
-        cds.services.AdminService.entities.BookStores["@changelog.keys"] = [
+        cds.services.AdminService.entities.BookStores["@changelog"] = [
             {
                 "=": "name",
             },
@@ -286,7 +286,7 @@ describe("change log integration test", () => {
     it("4.1 Annotate multiple native and attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
         // After appending object id as below, the object ID sequence should be:
         // title, author.name.firstName, author.name.lastName, stock, bookStore.name, bookStore.location
-        cds.services.AdminService.entities.Books["@changelog.keys"].push(
+        cds.services.AdminService.entities.Books["@changelog"].push(
             { "=": "stock" },
             { "=": "bookStore.name" },
             { "=": "bookStore.location" }
@@ -330,7 +330,7 @@ describe("change log integration test", () => {
 
         // After adjusting object id as below, the object ID sequence should be:
         // title, bookStore.name, bookStore.location, stock, author.name.firstName, author.name.lastName
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
             { "=": "bookStore.name" },
             { "=": "bookStore.location" },
@@ -358,7 +358,7 @@ describe("change log integration test", () => {
 
         // After adjusting object id as below, the object ID sequence should be:
         // bookStore.name, title, bookStore.location, author.name.firstName, stock, author.name.lastName
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "bookStore.name" },
             { "=": "title" },
             { "=": "bookStore.location" },
@@ -383,7 +383,7 @@ describe("change log integration test", () => {
         expect(deleteTitleChange.objectID).to.equal("Shakespeare and Company, test title 1, Paris, Emily, 1, Brontë");
 
         // Recover the object ID of entity Books as defined in admin-service
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
             { "=": "author.name.firstName" },
             { "=": "author.name.lastName" },
@@ -391,7 +391,7 @@ describe("change log integration test", () => {
     });
 
     it("4.2 Annotate multiple native attributes as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "price" },
             { "=": "title" },
             { "=": "stock" },
@@ -415,7 +415,7 @@ describe("change log integration test", () => {
         const titleChange = titleChanges[0];
         expect(titleChange.objectID).to.equal("11.11, new title, 12");
 
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
             { "=": "author.name.firstName" },
             { "=": "author.name.lastName" },
@@ -423,7 +423,7 @@ describe("change log integration test", () => {
     });
 
     it("4.3 Annotate multiple attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "bookStore.location" },
             { "=": "author.name.lastName" },
             { "=": "author.name.firstName" },
@@ -449,7 +449,7 @@ describe("change log integration test", () => {
         const titleChange = titleChanges[0];
         expect(titleChange.objectID).to.equal("Paris, Brontë, Charlotte, Shakespeare and Company, 16");
 
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
             { "=": "author.name.firstName" },
             { "=": "author.name.lastName" },
@@ -694,7 +694,7 @@ describe("change log integration test", () => {
     });
 
     it("6.3 Attributes from the code list could be annotated as object ID (ERP4SMEPREPWORKAPPPLAT-1055)", async () => {
-        cds.services.AdminService.entities.BookStores["@changelog.keys"] = [
+        cds.services.AdminService.entities.BookStores["@changelog"] = [
             { "=": "name" },
             { "=": "lifecycleStatus.name" },
         ];
@@ -726,7 +726,7 @@ describe("change log integration test", () => {
         expect(lifecycleStatusChange.modification).to.equal("Create");
         expect(lifecycleStatusChange.objectID).to.equal("test name, In Preparation");
 
-        cds.services.AdminService.entities.BookStores["@changelog.keys"] = [
+        cds.services.AdminService.entities.BookStores["@changelog"] = [
             { "=": "lifecycleStatus.name" },
             { "=": "name" },
         ];
@@ -756,11 +756,11 @@ describe("change log integration test", () => {
         expect(lifecycleStatusUpdateChange.modification).to.equal("Update");
         expect(lifecycleStatusUpdateChange.objectID).to.equal("Closed, new test name");
 
-        cds.services.AdminService.entities.BookStores["@changelog.keys"] = [{ "=": "name" }];
+        cds.services.AdminService.entities.BookStores["@changelog"] = [{ "=": "name" }];
     });
 
     it("7.1 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993)", async () => {
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "bookStore.lifecycleStatus.name" },
             { "=": "bookStore.location" },
             { "=": "bookStore.city.name" },
@@ -783,7 +783,7 @@ describe("change log integration test", () => {
         const titleChange = titleChanges[0];
         expect(titleChange.objectID).to.equal("In Preparation, Paris, Paris, FR");
 
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
             { "=": "bookStore.lifecycleStatus.name" },
             { "=": "bookStore.city.country.countryName.name" },
@@ -812,7 +812,7 @@ describe("change log integration test", () => {
         const deleteTitleChange = deleteTitleChanges[0];
         expect(deleteTitleChange.objectID).to.equal("new title, In Preparation, France");
 
-        cds.services.AdminService.entities.Books["@changelog.keys"] = [
+        cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
             { "=": "author.name.firstName" },
             { "=": "author.name.lastName" },
@@ -877,7 +877,7 @@ describe("change log integration test", () => {
     });
 
     it("9.1 Localization should handle the cases that reading the change view without required parameters obtained (ERP4SMEPREPWORKAPPPLAT-1414)", async () => {
-        delete cds.services.AdminService.entities.BookStores["@changelog.keys"];
+        delete cds.services.AdminService.entities.BookStores["@changelog"];
         const action = POST.bind(
             {},
             `/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
@@ -923,7 +923,7 @@ describe("change log integration test", () => {
         const bookChangeObjectId = bookElementChanges[3];
         expect(bookChangeObjectId.objectID).to.equal("");
 
-        cds.services.AdminService.entities.BookStores["@changelog.keys"] = [
+        cds.services.AdminService.entities.BookStores["@changelog"] = [
             {
                 "=": "name",
             },

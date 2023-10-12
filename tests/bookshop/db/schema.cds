@@ -67,7 +67,7 @@ entity Authors : managed, cuid {
 }
 
 @title                  : '{i18n>volumns.objectTitle}'
-@changelog.keys : [title]
+@changelog : [title]
 entity Volumns : managed, cuid {
   @changelog
   @title : '{i18n>volumns.title}'
@@ -80,7 +80,7 @@ entity Volumns : managed, cuid {
 }
 
 @title                  : '{i18n>bookStoreRegistry.objectTitle}'
-@changelog.keys : [code]
+@changelog : [code]
 entity BookStoreRegistry : managed, cuid {
   @title : '{i18n>bookStoreRegistry.code}'
   code      : String;

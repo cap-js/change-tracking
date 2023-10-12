@@ -101,7 +101,7 @@ describe("change log integration test", () => {
     });
 
     it("10.8 Composition of one node deep updated by QL API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
-        cds.services.AdminService.entities.BookStoreRegistry["@changelog.keys"] = [
+        cds.services.AdminService.entities.BookStoreRegistry["@changelog"] = [
             { "=": "code" },
             { "=": "validOn" },
         ];
@@ -127,7 +127,7 @@ describe("change log integration test", () => {
         expect(changes[0].valueChangedTo).to.equal("2022-01-01");
         expect(changes[0].parentKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
         expect(changes[0].parentObjectID).to.equal("Shakespeare and Company");
-        cds.services.AdminService.entities.BookStoreRegistry["@changelog.keys"] = [{ "=": "code" }];
+        cds.services.AdminService.entities.BookStoreRegistry["@changelog"] = [{ "=": "code" }];
     });
 
     it("10.9 Child entity deep delete by QL API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
