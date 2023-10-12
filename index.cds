@@ -8,7 +8,9 @@ aspect aspect @(UI.Facets: [{
   $Type : 'UI.ReferenceFacet',
   ID    : 'ChangeHistoryFacet',
   Label : '{i18n>ChangeHistoryList}',
-  Target: 'changes/@UI.PresentationVariant'
+  Target: 'changes/@UI.PresentationVariant',
+  //TODO: Use for lazy-loading once Fiori fixes bugs and v1.120 is released
+  //![@UI.PartOfPreview]: false
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
   changes : Association to many ChangeView on changes.entityKey = ID;
