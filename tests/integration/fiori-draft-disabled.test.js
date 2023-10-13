@@ -2,12 +2,6 @@ const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
 const { expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
 
-// REVISIT: should be easier to load the plugin and its model
-cds.env.plugins["@cap-js/change-tracking"] = {
-    "impl": require("path").join(__dirname, "../../cds-plugin.js")
-}
-cds.env.roots.push("../../");
-
 jest.setTimeout(5 * 60 * 1000);
 
 let adminService = null;
