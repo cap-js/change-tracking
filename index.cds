@@ -19,6 +19,7 @@ aspect aspect @(UI.Facets: [{
 
 
 // This is a helper view to flatten the assoc path to the entityKey
+@readonly
 view ChangeView as
   select from Changes {
     *,
