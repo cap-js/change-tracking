@@ -17,7 +17,7 @@ annotate AdminService.Authors with {
   name @(Common.Label : '{i18n>serviceAuthors.name}');
 };
 
-annotate AdminService.BookStores with @changelog.keys : [name]{
+annotate AdminService.BookStores with @changelog : [name]{
   name            @changelog;
   location        @changelog;
   books           @changelog                              : [books.title];
@@ -29,7 +29,7 @@ annotate AdminService.BookStores with @changelog.keys : [name]{
 };
 
 
-annotate AdminService.Books with @changelog.keys : [
+annotate AdminService.Books with @changelog : [
   title,
   author.name.firstName,
   author.name.lastName
@@ -47,7 +47,7 @@ annotate AdminService.Books with @changelog.keys : [
   ];
 };
 
-annotate AdminService.Authors with @changelog.keys : [
+annotate AdminService.Authors with @changelog : [
   name.firstName,
   name.lastName
 ]{

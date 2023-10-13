@@ -1,7 +1,7 @@
 const cds = require('@sap/cds')
 
 const isChangeTracked = (entity) => (
-  entity['@changelog'] || entity['@changelog.keys']
+  entity['@changelog']
   || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])
 )
 
