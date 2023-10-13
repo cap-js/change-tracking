@@ -21,6 +21,7 @@
     "@sap/cds": "^7"
   },
   "devDependencies": {
+    "@cap-js/change-tracking": "file:.",
     "@cap-js/sqlite": "^1",
     "axios": "^1",
     "chai": "^4.3.10",
