@@ -23,7 +23,10 @@ npm add @cap-js/change-tracking
 Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
 ```cds
-using { sap.capire.incidents as my } from './processor-service';
+using {
+  sap.capire.incidents as my,
+  ProcessorService
+} from './processor-service';
 
 annotate my.Incidents with @title: 'Incidents';
 annotate my.Conversations with @title: 'Conversations';
