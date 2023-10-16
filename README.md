@@ -62,9 +62,7 @@ With the steps above, we have successfully set up change tracking for our refere
 
 ### Change History view
 
-<!--TODO: Add TABLE VIEW 1
-<img width="1328" alt="change-tracking" src="https://github.com/cap-js/change-tracking/assets/8320933/b7aba995-327b-43d9-9029-0cdde90b20e0">
--->
+<img width="1170" alt="change-history" src="https://github.com/cap-js/change-tracking/assets/8320933/40aa50db-b358-47da-ac98-83283ab26238">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
 
@@ -86,7 +84,7 @@ annotate sap.changelog.ChangeView with @(
 ```
 In the UI, the *Change History* table now contains 4 equally-spaced columns with the desired properties:
 
-<!--TODO: Add TABLE VIEW 2-->
+<img width="1312" alt="change-history-custom" src="https://github.com/cap-js/change-tracking/assets/8320933/d762b3c4-b16e-4478-98d9-29e0754d03b8">
 
 For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](http://localhost:5173/docs/advanced/fiori#fiori-annotations).
 
