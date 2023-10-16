@@ -1,6 +1,6 @@
 {
   "name": "@cap-js/change-tracking",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "CDS plugin providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities.",
   "repository": "cap-js/change-tracking",
   "author": "SAP SE (https://www.sap.com)",
