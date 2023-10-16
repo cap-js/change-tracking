@@ -16,6 +16,8 @@ To enable change tracking, simply add this plugin package to your project:
 
 ```sh
 npm add @cap-js/change-tracking
+```
+
 ### Annotate with `@changelog`
 
 Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
