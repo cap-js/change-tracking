@@ -45,6 +45,7 @@ However, as we can see in our file above, additional identifiers or labels may b
 The columns *Object ID* and *Parent Object ID* are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`. In our example, we have added `[ customer.name, createdAt ]` for incidents and `[ customer.name ]` for conversations entities to obtain columns consisting of the customer's name and timestamp or the author's name and timestamp respectively. This is similar for elements, where we have added `[ customer.name ]` to element `customer` to obtain human-readable *Old Value* and *New Value* records.
 
 #### Human-readable Fields and Types
+
 To obtain human-readable columns *Field* and *Object Type*, the respective entity or element needs with be annotated with either `@Common.Label` or `@title`. In our example, we have annotated the entities `Incidents` and `Conversations` with `@title: 'Incidents'` and `@title: 'Conversations'` respectively for human-readable *Object Type* records. Human-readable *Fields* records, `@Common.Label` annotations already exist and are coming from the existing [service model](https://github.com/cap-js/incidents-app/blob/main/app/incidents/annotations.cds).
 
 ### Test-drive Locally
