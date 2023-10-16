@@ -56,7 +56,6 @@ To obtain human-readable columns *Field* and *Object Type*, the respective entit
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
 1. **Start the server**:
-
   ```sh
   cds watch
   ```
