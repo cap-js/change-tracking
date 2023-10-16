@@ -1,12 +1,12 @@
 # Welcome to @cap-js/change-tracking
 
+
 ## About this project
 
 `@cap-js/change-tracking` is a CDS plugin providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities.
 
-In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to.
 
-## Add the Plugin
+## Installation
 
 To enable change tracking, simply add the [`@cap-js/change-tracking`](https://www.npmjs.com/package/@cap-js/change-tracking) plugin package to your project like so:
 
@@ -14,41 +14,43 @@ To enable change tracking, simply add the [`@cap-js/change-tracking`](https://ww
 npm add @cap-js/change-tracking
 ```
 
-## Annotate with `@changelog`
+## Usage
+
+In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to.
+
+### Annotate with `@changelog`
 
 Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](../domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_ as follows:
 
 ```cds
 using { ProcessorService as my } from '@capire/incidents';
+
+annotate sap.capire.incidents.Incidents @title: 'Incidents';
+annotate sap.capire.incidents.Conversations @title: 'Conversations';
+
 annotate my.Incidents @changelog: [ customer.name, createdAt ] {
   customer @changelog: [ customer.name ];
   title  @changelog;
   status @changelog;
 }
+
 annotate my.Conversations @changelog: [ author, timestamp ] {
   message  @changelog;
 }
 ```
 
-### Human-readable Types
+By adding the annotation `@changelog`, we already change-track both entities and elements. Next, we explain when additional identifiers or labels can be useful to obtain more human-readable change records.
 
-TODO:
+#### Human-readable IDs
+The columns *Ovject ID*/ *Parent Object ID* are already human-readable, unless the `@changelog` definition cannot be uniquely mapped, for example when referring to a type `enum` or `Association`. Here, an extra array of identifiers can be provided to make the resulting Object ID *human-readable*. Otherwise, the respective unique IDs will be used which can be very cryptic, so we advise against this.
 
-- via @title / @Common.Label + i18n
-- add screenshots
+#### Human-readable Fields and Types
+The columns *Field* and *Object Type* can be made human-readable by annotating the respective entity or element with either `@Common.Label` or `@title`.
 
-### Human-readable IDs
+#### Human-readable Values
+Similar to *IDs* above, human-readable values for elements can be achieved by adding an additional identifiers.
 
-By adding the annotation `@changelog`, we already change-track both entities and elements. Only for definitions that are not uniquely mapped, for example when referring to a type `enum` or `Association`, an extra array of identifiers can be provided to make the resulting Object ID *human-readable* in the [*Change History* view](#change-history-view). Otherwise, the respective unique IDs will be used which can be very cryptic, so we advise against this.
-
-### Human-readable Values
-
-TODO:
-
-- Via [...]
-- add screenshots
-
-## Test-drive Locally
+### Test-drive Locally
 
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
@@ -73,7 +75,7 @@ With the steps above, we have successfully set up change tracking for our refere
 2. **Make a change** on your change-tracked elements:
     Any change you make on the records which you have change-tracked will now be persisted in a database table `sap.changelog.ChangeLog` and a pre-defined view with Fiori elements annotations is available through `sap.changelog.ChangeView` as described in the next section.
 
-## Change History view
+### Change History view
 
 TODO: → add screenshots
 
@@ -99,13 +101,16 @@ In the UI, the *Change History* table now contains 4 equally-spaced columns with
 
 For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](http://localhost:5173/docs/advanced/fiori#fiori-annotations).
 
+
 ## Support, Feedback, Contributing
 
 This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/cap-js/change-tracking/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
 
+
 ## Code of Conduct
 
 We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone. By participating in this project, you agree to abide by its [Code of Conduct](CODE_OF_CONDUCT.md) at all times.
+
 
 ## Licensing
 
