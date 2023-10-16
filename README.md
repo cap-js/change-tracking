@@ -12,7 +12,7 @@ In this guide, we use the [Incidents Management reference sample app](https://gi
 
 ### Add the CDS Plugin
 
-To enable change tracking, simply add this plugin package to your project:
+To enable change tracking, simply add this self-configuring plugin package to your project:
 
 ```sh
 npm add @cap-js/change-tracking
