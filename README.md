@@ -72,7 +72,7 @@ If you have a Fiori Element application, the CDS plugin automatically provides a
 
 ### Customizations
 
-The view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 4 columns in equal spacing, we would extend _srv/change-tracking.cds_ as follows:
+The view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 4 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
 
 ```cds
 using from '@cap-js/change-tracking';
