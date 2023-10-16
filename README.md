@@ -23,7 +23,7 @@ In this guide, we use the [Incidents Management reference sample app](https://gi
 Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
 ```cds
-using { ProcessorService as my } from '@capire/incidents';
+using { ProcessorService as my } from './processor-service';
 
 annotate sap.capire.incidents.Incidents @title: 'Incidents';
 annotate sap.capire.incidents.Conversations @title: 'Conversations';
@@ -70,9 +70,11 @@ If you have a Fiori Element application, the CDS plugin automatically provides a
 
 ### Customizations
 
-The view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 4 columns in equal spacing, we would annotate as follows:
+The view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 4 columns in equal spacing, we would extend _srv/change-tracking.cds_ as follows:
 
 ```cds
+using from '@cap-js/change-tracking';
+
 annotate sap.changelog.ChangeView with @(
     UI.LineItem : [
       { Value: modification, @HTML5.CssDefaults: {width:'25%'}},
