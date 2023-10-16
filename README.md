@@ -29,13 +29,13 @@ annotate sap.capire.incidents.Incidents @title: 'Incidents';
 annotate sap.capire.incidents.Conversations @title: 'Conversations';
 
 annotate my.Incidents @changelog: [ customer.name, createdAt ] {
-  customer @changelog: [ customer.name ];
+  customer @changelog: [ customer.name ] @title: 'Customer';
   title  @changelog;
   status @changelog;
 }
 
 annotate my.Conversations @changelog: [ author, timestamp ] {
-  message  @changelog;
+  message  @changelog @Common.Label: 'Message';
 }
 ```
 
@@ -62,7 +62,7 @@ With the steps above, we have successfully set up change tracking for our refere
 
 ### Change History view
 
-<img width="1170" alt="change-history" src="https://github.com/cap-js/change-tracking/assets/8320933/40aa50db-b358-47da-ac98-83283ab26238">
+<img width="1311" alt="change-history" src="https://github.com/cap-js/change-tracking/assets/8320933/3e4924d4-c857-48bd-98b8-3d94c214cb7e">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
 
@@ -84,7 +84,7 @@ annotate sap.changelog.ChangeView with @(
 ```
 In the UI, the *Change History* table now contains 4 equally-spaced columns with the desired properties:
 
-<img width="1312" alt="change-history-custom" src="https://github.com/cap-js/change-tracking/assets/8320933/d762b3c4-b16e-4478-98d9-29e0754d03b8">
+<img width="1310" alt="change-history-custom" src="https://github.com/cap-js/change-tracking/assets/8320933/6019664b-ed14-4abb-880f-4f581c298a07">
 
 For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](http://localhost:5173/docs/advanced/fiori#fiori-annotations).
 
