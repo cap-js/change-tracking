@@ -48,7 +48,7 @@ However, as we can see in our file above, additional identifiers or labels may b
 
 #### Human-readable IDs and Values
 
-The columns *Object ID* and *Parent Object ID* are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`. In our example, we have added `[ customer.name, createdAt ]` for incidents and `[ customer.name ]` for conversations entities to obtain columns consisting of the customer's name and timestamp or the author's name and timestamp respectively. This is similar for elements, where we have added `[ customer.name ]` to element `customer` to obtain human-readable *Old Value* and *New Value* records.
+The columns *Object ID* and *Parent Object ID* are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`. In our example, we have added `[customer.name, createdAt]` for incidents and `[customer.name]` for conversations entities to obtain columns consisting of the customer's name and timestamp or the author's name and timestamp respectively. This is similar for elements, where we have added `[customer.name]` to element `customer` to obtain human-readable *Old Value* and *New Value* records.
 
 #### Human-readable Fields and Types
 
