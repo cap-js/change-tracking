@@ -86,6 +86,7 @@ annotate sap.changelog.ChangeView with @(
   ]
 );
 ```
+
 In the UI, the *Change History* table now contains 4 equally-spaced columns with the desired properties:
 
 <img width="1310" alt="change-history-custom" src="https://github.com/cap-js/change-tracking/assets/8320933/6019664b-ed14-4abb-880f-4f581c298a07">
