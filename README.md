@@ -74,11 +74,11 @@ The view can be easily adapted and configured to your own needs by simply changi
 using from '@cap-js/change-tracking';
 
 annotate sap.changelog.ChangeView with @(
-    UI.LineItem : [
-      { Value: modification, @HTML5.CssDefaults: {width:'25%'}},
-      { Value: createdAt, @HTML5.CssDefaults: {width:'25%'}},
-      { Value: createdBy, @HTML5.CssDefaults: {width:'25%'}},
-      { Value: objectID, @HTML5.CssDefaults: {width:'25%'}}
+  UI.LineItem : [
+    { Value: modification, @HTML5.CssDefaults: { width:'25%' }},
+    { Value: createdAt,    @HTML5.CssDefaults: { width:'25%' }},
+    { Value: createdBy,    @HTML5.CssDefaults: { width:'25%' }},
+    { Value: objectID,     @HTML5.CssDefaults: { width:'25%' }}
   ]
 );
 ```
