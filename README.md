@@ -8,7 +8,7 @@
 
 ## Installation
 
-To enable change tracking, simply add the [`@cap-js/change-tracking`](https://www.npmjs.com/package/@cap-js/change-tracking) plugin package to your project like so:
+To enable change tracking, simply add the [`@cap-js/change-tracking`](https://www.npmjs.com/package/@cap-js/change-tracking) plugin package to your project:
 
 ```sh
 npm add @cap-js/change-tracking
@@ -20,7 +20,7 @@ In this guide, we use the [Incidents Management reference sample app](https://gi
 
 ### Annotate with `@changelog`
 
-Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](../domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_ as follows:
+Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](../domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
 ```cds
 using { ProcessorService as my } from '@capire/incidents';
@@ -39,16 +39,17 @@ annotate my.Conversations @changelog: [ author, timestamp ] {
 }
 ```
 
-By adding the annotation `@changelog`, we already change-track both entities and elements. Next, we explain when additional identifiers or labels can be useful to obtain more human-readable change records.
+Note, that by adding the annotation `@changelog`, we are in principle already done and have change-tracked everything. However, as we can see in our example, sometimes additional identifiers or labels may be added to obtain better *human-readable* change records. These are described below.
 
-#### Human-readable IDs
-The columns *Ovject ID*/ *Parent Object ID* are already human-readable, unless the `@changelog` definition cannot be uniquely mapped, for example when referring to a type `enum` or `Association`. Here, an extra array of identifiers can be provided to make the resulting Object ID *human-readable*. Otherwise, the respective unique IDs will be used which can be very cryptic, so we advise against this.
+#### Human-readable IDs and Values
+The columns *Object ID*/ *Parent Object ID* are already human-readable, unless the `@changelog` definition cannot be uniquely mapped such as referring to a type `enum` or `Association`.
+
+In our example, we have added `[ customer.name, createdAt ]` for incidents and `[ customer.name ]` for conversations to obtain columns consisting of the customer's name and timestamp or the author's name and timestamp respectively.
 
 #### Human-readable Fields and Types
-The columns *Field* and *Object Type* can be made human-readable by annotating the respective entity or element with either `@Common.Label` or `@title`.
+For human-readable columns *Field* and *Object Type*, the respective entity or element needs with be annotated with either `@Common.Label` or `@title`.
 
-#### Human-readable Values
-Similar to *IDs* above, human-readable values for elements can be achieved by adding an additional identifiers.
+In our example, we have added annotated the entities `Incidents` and `Conversations` with `@title: 'Incidents'` and `@title: 'Conversations'` respectively for human-readable *Object Type* records. For human-readable *Fields*, `@Common.Label` annotations already exist and are coming from the existing [service model](https://github.com/cap-js/incidents-app/blob/main/app/incidents/annotations.cds).
 
 ### Test-drive Locally
 
@@ -73,11 +74,11 @@ With the steps above, we have successfully set up change tracking for our refere
   ```
 
 2. **Make a change** on your change-tracked elements:
-    Any change you make on the records which you have change-tracked will now be persisted in a database table `sap.changelog.ChangeLog` and a pre-defined view with Fiori elements annotations is available through `sap.changelog.ChangeView` as described in the next section.
+    Any change you make on the records which you have change-tracked will now be persisted in a database table `sap.changelog.ChangeLog` and a pre-defined view with Fiori elements annotations `sap.changelog.ChangeView` is also provided for your convenvience in the following section.
 
 ### Change History view
 
-TODO: → add screenshots
+<img width="1328" alt="change-tracking" src="https://github.com/cap-js/change-tracking/assets/8320933/b7aba995-327b-43d9-9029-0cdde90b20e0">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is added to the Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which helps you to view and search the stored change records of your modeled entities.
 
