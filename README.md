@@ -86,7 +86,7 @@ In the UI, the *Change History* table now contains 4 equally-spaced columns with
 
 <img width="1310" alt="change-history-custom" src="https://github.com/cap-js/change-tracking/assets/8320933/6019664b-ed14-4abb-880f-4f581c298a07">
 
-For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](http://localhost:5173/docs/advanced/fiori#fiori-annotations).
+For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](https://cap.cloud.sap/docs/advanced/fiori#fiori-annotations).
 
 
 ## Support, Feedback, Contributing
