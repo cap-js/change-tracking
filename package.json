@@ -11,7 +11,8 @@
     "lib",
     "_i18n",
     "index.cds",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "README.md"
   ],
   "scripts": {
     "lint": "npx eslint .",

@@ -9,8 +9,8 @@
 - [Usage](#usage)
   - [Add the CDS Plugin](#add-the-cds-plugin)
   - [Annotate with `@changelog`](#annotate-with-changelog)
-    - [Human-readable IDs](#human-readable-ids)
     - [Human-readable Types and Fields](#human-readable-types-and-fields)
+    - [Human-readable IDs](#human-readable-ids)
     - [Human-readable Values](#human-readable-values)
   - [Test-drive locally](#test-drive-locally)
   - [Change History view](#change-history-view)
@@ -34,7 +34,9 @@ npm add @cap-js/change-tracking
 
 ## Annotate with `@changelog`
 
-Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
+Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation.
+
+Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
 ```cds
 using {
@@ -57,56 +59,62 @@ annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
 }
 ```
 
-The minimal annotation we require to turn on change tracking is the annotation `@changelog` on an element, the annotation on the entity level is not required.
+The minimal annotation we require for change tracking is `@changelog` on an element. An annotation on the entity is not required.
 
-However, additional identifiers or labels may be necessary to obtain better *human-readable* change records. These are described below.
+Additional identifiers or labels may be necessary to obtain more *human-readable* change records. These are described below.
 
 Note, that for all annotations, the common i18n rules apply.
-
-
-### Human-readable IDs
-
-The columns *Object ID* and *Parent Object ID* are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
-
-If we were to only add the `@changelog` annotation without any additional identifiers , we would get simple IDs denoting the entity as we change the `message` property:
-
-```cds
-annotate ProcessorService.Conversations {
-```
-<img width="1300" alt="change-history-id" src="_assets/changes-id.png">
-
-However, this is not advisable as we would note be able to quickly distinguish individual changes. Hence, it is more appropriate to annotate as follows:
-
-```cds
-annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
-```
-<img width="1300" alt="change-history-id-hr" src="_assets/changes-id-hr.png">
-
-By choosing an additional identifiers on the changelog annotation `[author, timestamp]`, we can now more easily distinguish different change events by the the message's author and timestamp.
 
 
 ### Human-readable Types and Fields
 
 To obtain human-readable columns *Field* and *Object Type*, one can annotate with `@Common.Label` or `@title`.
 
-If we would not annotate the entity Conversations a title, the *Object Type* column would show the raw entity name:
+For example, if were to not annotate the `my.Conversations` with a title and change the `message` property, the *Object Type* column would show the raw entity name:
 
-<img width="1300" alt="change-history-type" src="_assets/changes-type.png">
+<img width="1300" alt="change-history-type" src="_assets/changes-type-wbox.png">
 
-As this contains much redundancy in the name, we better add a title, which leads to a more human-readable *Object Type*:
+As this is long and contains much redundancy, we annotate with a title for a better human-readable *Object Type*:
 
-<img width="1300" alt="change-history-type-hr" src="_assets/changes-type-hr.png">
+<img width="1300" alt="change-history-type-hr" src="_assets/changes-type-hr-wbox.png">
+
+
+### Human-readable IDs
+
+The changelog annotations for *Object ID* and *Parent Object ID* are defined at entity level.
+
+These are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
+
+For example, if we were to only add the `@changelog` annotation without any additional identifiers and change the `message` property, we would obtain simple entity IDs:
+
+```cds
+annotate ProcessorService.Conversations {
+```
+<img width="1300" alt="change-history-id" src="_assets/changes-id-wbox.png">
+
+However, this is not advisable as we cannot easily distinguish between changes. It is more appropriate to annotate as follows:
+
+```cds
+annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
+```
+<img width="1300" alt="change-history-id-hr" src="_assets/changes-id-hr-wbox.png">
+
+By expanding our changelog annotation by the additional identifiers `[author, timestamp]`, we can now better identify the `message` change events by their respective author and timestamp.
 
 
 ### Human-readable Values
 
-Since without additional identifiers, *New Value* and *Old Value* column entries can also be rather cryptic. If we were to annotate `ProcessorService.Incidents` on element level as follows, we would only see UUIDs display in the value columns:
+The changelog annotations for *New Value* and *Old Value* are defined at element level.
+
+They are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
+
+For example, if we were to only add the `@changelog` annotation on `ProcessorService.Incidents.message` without any additional identifiers on the element level and change the `message` property, we would only see UUIDs displayed in the value columns:
 
 ```cds
   customer @changelog;
 ```
 
-<img width="1300" alt="change-history-value" src="_assets/changes-value.png">
+<img width="1300" alt="change-history-value" src="_assets/changes-value-wbox.png">
 
 Hence, here it is essential to add a unique identifier to obtain human-readable value columns:
 
@@ -114,7 +122,7 @@ Hence, here it is essential to add a unique identifier to obtain human-readable 
   customer @changelog: [customer.name];
 ```
 
-<img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr.png">
+<img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
 
 
 ## Test-drive locally
