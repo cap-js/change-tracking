@@ -97,12 +97,12 @@ annotate ChangeView with @(UI: {
     { Value: modification, @HTML5.CssDefaults: {width:'9%'} },
     { Value: createdAt, @HTML5.CssDefaults: {width:'12%'} },
     { Value: createdBy, @HTML5.CssDefaults: {width:'9%'} },
+    { Value: entity, @HTML5.CssDefaults: {width:'11%'} },
     { Value: objectID, @HTML5.CssDefaults: {width:'14%'} },
-    { Value: parentObjectID, @HTML5.CssDefaults: {width:'14%'} },
     { Value: attribute, @HTML5.CssDefaults: {width:'9%'} },
     { Value: valueChangedTo, @HTML5.CssDefaults: {width:'11%'} },
     { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11%'} },
-    { Value: entity, @HTML5.CssDefaults: {width:'11%'} },
+    { Value: parentObjectID, @HTML5.CssDefaults: {width:'14%'}, ![@UI.Hidden]: true }
   ],
   DeleteHidden       : true,
 });

@@ -1,9 +1,26 @@
 # Welcome to @cap-js/change-tracking
 
-
 ## About this project
 
 `@cap-js/change-tracking` is a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities.
+
+## Table of Contents
+
+- [Welcome to @cap-js/change-tracking](#welcome-to-cap-jschange-tracking)
+  - [About this project](#about-this-project)
+  - [Table of Contents](#table-of-contents)
+  - [Usage](#usage)
+    - [Add the CDS Plugin](#add-the-cds-plugin)
+    - [Annotate with `@changelog`](#annotate-with-changelog)
+      - [Human-readable IDs](#human-readable-ids)
+      - [Human-readable Types and Fields](#human-readable-types-and-fields)
+      - [Human-readable Values](#human-readable-values)
+    - [Test-drive locally](#test-drive-locally)
+    - [Change History view](#change-history-view)
+    - [Customizations](#customizations)
+  - [Support, Feedback, Contributing](#support-feedback-contributing)
+  - [Code of Conduct](#code-of-conduct)
+  - [Licensing](#licensing)
 
 
 ## Usage
@@ -30,9 +47,10 @@ using {
 
 annotate my.Incidents with @title: 'Incidents';
 annotate my.Conversations with @title: 'Conversations';
+annotate my.Customers with @title: '{i18n>Customers}';
 
-annotate ProcessorService.Incidents with @changelog: [customer.name, createdAt] {
-  customer @changelog: [customer.name] @Common.Label: 'Customer';
+annotate ProcessorService.Incidents {
+  customer @changelog: [customer.name];
   title    @changelog;
   status   @changelog;
 }
@@ -42,19 +60,67 @@ annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
 }
 ```
 
-By adding the annotation `@changelog`, we have already change-tracked everything.
+The minimal annotation we require to turn on change tracking is the annotation `@changelog` on an element, the annotation on the entity level is not required.
 
-However, as we can see in our file above, additional identifiers or labels may be necessary to obtain better *human-readable* change records. These are described below.
+However, additional identifiers or labels may be necessary to obtain better *human-readable* change records. These are described below.
 
-#### Human-readable IDs and Values
+Note, that for all annotations, the common i18n rules apply.
 
-The columns *Object ID* and *Parent Object ID* are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`. In our example, we have added `[customer.name, createdAt]` for incidents and `[customer.name]` for conversations entities to obtain columns consisting of the customer's name and timestamp or the author's name and timestamp respectively. This is similar for elements, where we have added `[customer.name]` to element `customer` to obtain human-readable *Old Value* and *New Value* records.
 
-#### Human-readable Fields and Types
+#### Human-readable IDs
 
-To obtain human-readable columns *Field* and *Object Type*, one can annotate with `@Common.Label`. Entities can also use annotations `@title`. In our example, we have annotated the entities with `@title: 'Incidents'` and `@title: 'Conversations'` for human-readable *Object Type* records. Human-readable *Fields* records use `@Common.Label` annotations which already exist in the existing [service model](https://github.com/cap-js/incidents-app/blob/main/app/incidents/annotations.cds) except for `message` and `customer`, which we have annotated here.
+The columns *Object ID* and *Parent Object ID* are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
 
-### Test-drive Locally
+If we were to only add the `@changelog` annotation without any additional identifiers , we would get simple IDs denoting the entity as we change the `message` property:
+
+```cds
+annotate ProcessorService.Conversations {
+```
+<img width="1300" alt="change-history-id" src="_assets/changes-id.png">
+
+However, this is not advisable as we would note be able to quickly distinguish individual changes. Hence, it is more appropriate to annotate as follows:
+
+```cds
+annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
+```
+<img width="1300" alt="change-history-id-hr" src="_assets/changes-id-hr.png">
+
+By choosing an additional identifiers on the changelog annotation `[author, timestamp]`, we can now more easily distinguish different change events by the the message's author and timestamp.
+
+
+#### Human-readable Types and Fields
+
+To obtain human-readable columns *Field* and *Object Type*, one can annotate with `@Common.Label` or `@title`.
+
+If we would not annotate the entity Conversations a title, the *Object Type* column would show the raw entity name:
+
+<img width="1300" alt="change-history-type" src="_assets/changes-type.png">
+
+As this contains much redundancy in the name, we better add a title, which leads to a more human-readable *Object Type*:
+
+<img width="1300" alt="change-history-type-hr" src="_assets/changes-type-hr.png">
+
+
+#### Human-readable Values
+
+Since without additional identifiers, *New Value* and *Old Value* column entries can also be rather cryptic. If we were to annotate `ProcessorService.Incidents` on element level as follows, we would only see UUIDs display in the value columns:
+
+```cds
+  customer @changelog;
+```
+
+<img width="1300" alt="change-history-value" src="_assets/changes-value.png">
+
+Hence, here it is essential to add a unique identifier to obtain human-readable value columns:
+
+```cds
+  customer @changelog: [customer.name];
+```
+
+<img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr.png">
+
+
+### Test-drive locally
 
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
@@ -62,34 +128,35 @@ With the steps above, we have successfully set up change tracking for our refere
   ```sh
   cds watch
   ```
-2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenvience.
+2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
 
 ### Change History view
 
-<img width="1311" alt="change-history" src="https://github.com/cap-js/change-tracking/assets/8320933/3e4924d4-c857-48bd-98b8-3d94c214cb7e">
+<img width="1300" alt="change-history" src="_assets/changes.png">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
 
 ### Customizations
 
-The view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 4 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
+The view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 5 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
 
 ```cds
 using from '@cap-js/change-tracking';
 
 annotate sap.changelog.ChangeView with @(
   UI.LineItem : [
-    { Value: modification, @HTML5.CssDefaults: { width:'25%' }},
-    { Value: createdAt,    @HTML5.CssDefaults: { width:'25%' }},
-    { Value: createdBy,    @HTML5.CssDefaults: { width:'25%' }},
-    { Value: objectID,     @HTML5.CssDefaults: { width:'25%' }}
+    { Value: modification, @HTML5.CssDefaults: { width:'20%' }},
+    { Value: createdAt,    @HTML5.CssDefaults: { width:'20%' }},
+    { Value: createdBy,    @HTML5.CssDefaults: { width:'20%' }},
+    { Value: entity,       @HTML5.CssDefaults: { width:'20%' }},
+    { Value: objectID,     @HTML5.CssDefaults: { width:'20%' }}
   ]
 );
 ```
 
 In the UI, the *Change History* table now contains 4 equally-spaced columns with the desired properties:
 
-<img width="1310" alt="change-history-custom" src="https://github.com/cap-js/change-tracking/assets/8320933/6019664b-ed14-4abb-880f-4f581c298a07">
+<img width="1300" alt="change-history-custom" src="_assets/changes-custom.png">
 
 For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](https://cap.cloud.sap/docs/advanced/fiori#fiori-annotations).
 
