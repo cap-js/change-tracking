@@ -52,7 +52,7 @@ The columns *Object ID* and *Parent Object ID* are already human-readable by def
 
 #### Human-readable Fields and Types
 
-To obtain human-readable columns *Field* and *Object Type*, the respective entity or element needs with be annotated with either `@Common.Label` or `@title`. In our example, we have annotated the entities `Incidents` and `Conversations` with `@title: 'Incidents'` and `@title: 'Conversations'` respectively for human-readable *Object Type* records. Human-readable *Fields* records, `@Common.Label` annotations already exist and are coming from the existing [service model](https://github.com/cap-js/incidents-app/blob/main/app/incidents/annotations.cds).
+To obtain human-readable columns *Field* and *Object Type*, one can annotate with `@Common.Label`. Entities can also use annotations `@title`. In our example, we have annotated the entities with `@title: 'Incidents'` and `@title: 'Conversations'` for human-readable *Object Type* records. Human-readable *Fields* records use `@Common.Label` annotations which already exist in the existing [service model](https://github.com/cap-js/incidents-app/blob/main/app/incidents/annotations.cds) except for `message` and `customer`, which we have annotated here.
 
 ### Test-drive Locally
 
