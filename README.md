@@ -1,11 +1,8 @@
-# About this project
 
 `@cap-js/change-tracking` is a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities.
 
-## Table of Contents
+### Table of Contents
 
-- [About this project](#about-this-project)
-  - [Table of Contents](#table-of-contents)
 - [Usage](#usage)
   - [Add the CDS Plugin](#add-the-cds-plugin)
   - [Annotate with `@changelog`](#annotate-with-changelog)
