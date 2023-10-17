@@ -1,33 +1,30 @@
-# Welcome to @cap-js/change-tracking
-
-## About this project
+# About this project
 
 `@cap-js/change-tracking` is a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities.
 
 ## Table of Contents
 
-- [Welcome to @cap-js/change-tracking](#welcome-to-cap-jschange-tracking)
-  - [About this project](#about-this-project)
+- [About this project](#about-this-project)
   - [Table of Contents](#table-of-contents)
-  - [Usage](#usage)
-    - [Add the CDS Plugin](#add-the-cds-plugin)
-    - [Annotate with `@changelog`](#annotate-with-changelog)
-      - [Human-readable IDs](#human-readable-ids)
-      - [Human-readable Types and Fields](#human-readable-types-and-fields)
-      - [Human-readable Values](#human-readable-values)
-    - [Test-drive locally](#test-drive-locally)
-    - [Change History view](#change-history-view)
-    - [Customizations](#customizations)
-  - [Support, Feedback, Contributing](#support-feedback-contributing)
-  - [Code of Conduct](#code-of-conduct)
-  - [Licensing](#licensing)
+- [Usage](#usage)
+  - [Add the CDS Plugin](#add-the-cds-plugin)
+  - [Annotate with `@changelog`](#annotate-with-changelog)
+    - [Human-readable IDs](#human-readable-ids)
+    - [Human-readable Types and Fields](#human-readable-types-and-fields)
+    - [Human-readable Values](#human-readable-values)
+  - [Test-drive locally](#test-drive-locally)
+  - [Change History view](#change-history-view)
+  - [Customizations](#customizations)
+- [Support, Feedback, Contributing](#support-feedback-contributing)
+- [Code of Conduct](#code-of-conduct)
+- [Licensing](#licensing)
 
 
-## Usage
+# Usage
 
 In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to.
 
-### Add the CDS Plugin
+## Add the CDS Plugin
 
 To enable change tracking, simply add this self-configuring plugin package to your project:
 
@@ -35,7 +32,7 @@ To enable change tracking, simply add this self-configuring plugin package to yo
 npm add @cap-js/change-tracking
 ```
 
-### Annotate with `@changelog`
+## Annotate with `@changelog`
 
 Next, we need to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
@@ -67,7 +64,7 @@ However, additional identifiers or labels may be necessary to obtain better *hum
 Note, that for all annotations, the common i18n rules apply.
 
 
-#### Human-readable IDs
+### Human-readable IDs
 
 The columns *Object ID* and *Parent Object ID* are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
 
@@ -88,7 +85,7 @@ annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
 By choosing an additional identifiers on the changelog annotation `[author, timestamp]`, we can now more easily distinguish different change events by the the message's author and timestamp.
 
 
-#### Human-readable Types and Fields
+### Human-readable Types and Fields
 
 To obtain human-readable columns *Field* and *Object Type*, one can annotate with `@Common.Label` or `@title`.
 
@@ -101,7 +98,7 @@ As this contains much redundancy in the name, we better add a title, which leads
 <img width="1300" alt="change-history-type-hr" src="_assets/changes-type-hr.png">
 
 
-#### Human-readable Values
+### Human-readable Values
 
 Since without additional identifiers, *New Value* and *Old Value* column entries can also be rather cryptic. If we were to annotate `ProcessorService.Incidents` on element level as follows, we would only see UUIDs display in the value columns:
 
@@ -120,7 +117,7 @@ Hence, here it is essential to add a unique identifier to obtain human-readable 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr.png">
 
 
-### Test-drive locally
+## Test-drive locally
 
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
@@ -130,13 +127,13 @@ With the steps above, we have successfully set up change tracking for our refere
   ```
 2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
 
-### Change History view
+## Change History view
 
 <img width="1300" alt="change-history" src="_assets/changes.png">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
 
-### Customizations
+## Customizations
 
 The view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 5 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
 
@@ -161,16 +158,16 @@ In the UI, the *Change History* table now contains 4 equally-spaced columns with
 For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](https://cap.cloud.sap/docs/advanced/fiori#fiori-annotations).
 
 
-## Support, Feedback, Contributing
+# Support, Feedback, Contributing
 
 This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/cap-js/change-tracking/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
 
 
-## Code of Conduct
+# Code of Conduct
 
 We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone. By participating in this project, you agree to abide by its [Code of Conduct](CODE_OF_CONDUCT.md) at all times.
 
 
-## Licensing
+# Licensing
 
 Copyright 2023 SAP SE or an SAP affiliate company and contributors. Please see our [LICENSE](LICENSE) for copyright and license information. Detailed information including third-party components and their licensing/copyright information is available [via the REUSE tool](https://api.reuse.software/info/github.com/cap-js/change-tracking).
