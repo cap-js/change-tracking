@@ -32,7 +32,7 @@ annotate my.Incidents with @title: 'Incidents';
 annotate my.Conversations with @title: 'Conversations';
 
 annotate ProcessorService.Incidents with @changelog: [customer.name, createdAt] {
-  customer @changelog: [customer.name] @title: 'Customer';
+  customer @changelog: [customer.name] @Common.Label: 'Customer';
   title    @changelog;
   status   @changelog;
 }
