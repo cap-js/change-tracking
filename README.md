@@ -9,14 +9,11 @@ The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/do
     - [Human-readable Types and Fields](#human-readable-types-and-fields)
     - [Human-readable IDs](#human-readable-ids)
     - [Human-readable Values](#human-readable-values)
-
   - [Test-drive locally](#test-drive-locally)
   - [Change History View](#change-history-view)
   - [Customizations](#customizations)
-
 - [Contributing](#contributing)
   - [Code of Conduct](#code-of-conduct)
-
 - [Licensing](#licensing)
 
 
@@ -62,17 +59,17 @@ Additional identifiers or labels can be added to obtain more *human-readable* ch
 
 By default the implementation looks up *Object Type* names or *Field* namesfrom respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed. 
 
-For example, if without annotations, changes to conversation entries would show up with the technical entity name:
+For example, without the `@title` annotation, changes to conversation entries would show up with the technical entity name:
 
 <img width="1300" alt="change-history-type" src="_assets/changes-type-wbox.png">
 
-With an annotation, and possible i18n translations like that:
+With an annotation, and possible i18n translations like so:
 
 ```cds
 annotate Conversations with @title: 'Conversations';
 ```
 
-... we get a human-readable display for *Object Type*:
+We get a human-readable display for *Object Type*:
 
 <img width="1300" alt="change-history-type-hr" src="_assets/changes-type-hr-wbox.png">
 
@@ -83,7 +80,7 @@ The changelog annotations for *Object ID* are defined at entity level.
 
 These are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
 
-For example, if we were to only add the `@changelog` annotation without any additional identifiers and change the `message` property, we would obtain simple entity IDs:
+For example, having a `@changelog` annotation without any additional identifiers, changes to conversation entries would show up as simple entity IDs:
 
 ```cds
 annotate ProcessorService.Conversations {
@@ -97,7 +94,7 @@ annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
 ```
 <img width="1300" alt="change-history-id-hr" src="_assets/changes-id-hr-wbox.png">
 
-By expanding our changelog annotation by the additional identifiers `[author, timestamp]`, we can now better identify the `message` change events by their respective author and timestamp.
+Expanding the changelog annotation by additional identifiers `[author, timestamp]`, we can now better identify the `message` change events by their respective author and timestamp.
 
 
 #### Human-readable Values
@@ -106,7 +103,7 @@ The changelog annotations for *New Value* and *Old Value* are defined at element
 
 They are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
 
-For example, if we were to only add the `@changelog` annotation on `ProcessorService.Incidents.message` without any additional identifiers on the element level and change the `message` property, we would only see UUIDs displayed in the value columns:
+For example, having a `@changelog` annotation without any additional identifiers, changes to incident customer would show up as UUIDs:
 
 ```cds
   customer @changelog;
