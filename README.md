@@ -3,7 +3,7 @@ The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/do
 
 ### Table of Contents
 
-- [Preliminarien](#preliminarien)
+- [Preliminaries](#preliminaries)
 - [Setup](#setup)
 - [Add `@changelog` Annotations](#add-changelog-annotations)
   - [Human-readable Types and Fields](#human-readable-types-and-fields)
@@ -58,7 +58,7 @@ Additional identifiers or labels can be added to obtain more *human-readable* ch
 
 ### Human-readable Types and Fields
 
-By default the implementation looks up *Object Type* names or *Field* namesfrom respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed. 
+By default the implementation looks up *Object Type* names or *Field* namesfrom respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed.
 
 For example, without the `@title` annotation, changes to conversation entries would show up with the technical entity name:
 
