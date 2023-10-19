@@ -154,7 +154,7 @@ annotate sap.changelog.ChangeView with @(
 );
 ```
 
-In the UI, the *Change History* table now contains 4 equally-spaced columns with the desired properties:
+In the UI, the *Change History* table now contains 5 equally-spaced columns with the desired properties:
 
 <img width="1300" alt="change-history-custom" src="_assets/changes-custom.png">
 
