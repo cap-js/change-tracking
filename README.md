@@ -3,7 +3,7 @@
 The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities as simple as that:
 
 1. [Install the plugin: `npm add @cap-js/change-tracking`](#setup)
-2. [Add `@changelog` annotations to your model](#annotations)
+2. [Add `@changelog` annotations to your CDS models](#annotations)
 3. [Et voilà:](#change-history-view)
 
 <img width="1300" alt="change-history-custom" src="_assets/changes-custom.png">
@@ -38,7 +38,7 @@ npm i
 
 **Alternatively**, you can clone the incidents app including the prepared enhancements for change-tracking:
 
-```sh 
+```sh
 git clone https://github.com/cap-js/calesi
 cd calesi
 npm i
