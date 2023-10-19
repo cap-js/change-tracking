@@ -5,7 +5,7 @@ The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/do
 
 - [Preliminaries](#preliminaries)
 - [Setup](#setup)
-- [Add `@changelog` Annotations](#add-changelog-annotations)
+- [Annotations](#annotations)
   - [Human-readable Types and Fields](#human-readable-types-and-fields)
   - [Human-readable IDs](#human-readable-ids)
   - [Human-readable Values](#human-readable-values)
@@ -19,7 +19,25 @@ The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/do
 
 ## Preliminaries
 
-In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to.
+In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to. Clone the repository and apply the step-by-step instructions:
+
+```sh
+git clone https://github.com/cap-js/incidents-app
+cd incidents-app
+npm i
+```
+
+**Alternatively**, you can clone the incidents app including the prepared enhancements for change-tracking:
+
+```sh 
+git clone https://github.com/cap-js/calesi
+cd calesi
+npm i
+```
+
+```sh
+cap w samples/change-tracking
+```
 
 
 
@@ -33,7 +51,7 @@ npm add @cap-js/change-tracking
 
 
 
-## Add `@changelog` Annotations
+## Annotations
 
 All we need to do is to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
