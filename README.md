@@ -45,7 +45,7 @@ npm i
 ```
 
 ```sh
-cap w samples/change-tracking
+cds w samples/change-tracking
 ```
 
 
