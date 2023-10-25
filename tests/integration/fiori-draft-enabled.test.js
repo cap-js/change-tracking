@@ -886,7 +886,7 @@ describe("change log integration test", () => {
         );
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
 
-        const selectedColumns = ["attribute", "modification", "entity", "objectID"];
+        const selectedColumns = ["attribute", "modification", "entity", "objectID", "parentObjectID"];
         const bookElementChanges = [];
         for (const selectedColumn of selectedColumns) {
             const bookChanges = await adminService.run(
@@ -910,7 +910,7 @@ describe("change log integration test", () => {
 
         // To do localization, entity only needs parameters entity itself, so the localization could be done
         const bookChangeEntity = bookElementChanges[2];
-        expect(bookChangeEntity.entity).to.equal("Book Store");
+        expect(bookChangeEntity.entity).to.equal("sap.capire.bookshop.BookStores");
 
         // To do localization, object id needs parameters entity (if no object id is annotated), so the localization could not be done
         // If no object id is annotated, the real value stored in db of object id should be "".
