@@ -41,7 +41,7 @@ npm i
 **Alternatively**, you can clone the incidents app including the prepared enhancements for change-tracking:
 
 ```sh
-git clone https://github.com/cap-js/calesi
+git clone https://github.com/cap-js/calesi --recursive
 cd calesi
 npm i
 ```
