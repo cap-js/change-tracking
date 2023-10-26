@@ -1,54 +1,20 @@
-# Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)
 
-[![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
-
-The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities as simple as that:
-
-1. [Install the plugin: `npm add @cap-js/change-tracking`](#setup)
-2. [Add `@changelog` annotations to your CDS models](#annotations)
-3. [Et voilà:](#change-history-view)
-
-<img width="1300" alt="change-history-custom" src="_assets/changes-custom.png">
-
-
+The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) providing out-of-the box support for automated capturing, storing, and viewing of the change records of modeled entities.
 
 ### Table of Contents
 
-- [Preliminaries](#preliminaries)
 - [Setup](#setup)
-- [Annotations](#annotations)
-  - [Human-readable Types and Fields](#human-readable-types-and-fields)
-  - [Human-readable IDs](#human-readable-ids)
-  - [Human-readable Values](#human-readable-values)
-- [Test-drive locally](#test-drive-locally)
-- [Change History View](#change-history-view)
+- [Usage](#usage)
+  - [Add `@changelog` Annotations](#add-changelog-annotations)
+    - [Human-readable Types and Fields](#human-readable-types-and-fields)
+    - [Human-readable IDs](#human-readable-ids)
+    - [Human-readable Values](#human-readable-values)
+  - [Test-drive locally](#test-drive-locally)
+  - [Change History View](#change-history-view)
+  - [Customizations](#customizations)
 - [Contributing](#contributing)
-- [Code of Conduct](#code-of-conduct)
+  - [Code of Conduct](#code-of-conduct)
 - [Licensing](#licensing)
-
-
-
-## Preliminaries
-
-In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to. Clone the repository and apply the step-by-step instructions:
-
-```sh
-git clone https://github.com/cap-js/incidents-app
-cd incidents-app
-npm i
-```
-
-**Alternatively**, you can clone the incidents app including the prepared enhancements for change-tracking:
-
-```sh
-git clone https://github.com/cap-js/calesi --recursive
-cd calesi
-npm i
-```
-
-```sh
-cds w samples/change-tracking
-```
 
 
 
@@ -62,7 +28,11 @@ npm add @cap-js/change-tracking
 
 
 
-## Annotations
+## Usage
+
+In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to.
+
+### Add `@changelog` Annotations
 
 All we need to do is to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
@@ -85,9 +55,9 @@ The minimal annotation we require for change tracking is `@changelog` on element
 Additional identifiers or labels can be added to obtain more *human-readable* change records as described below.
 
 
-### Human-readable Types and Fields
+#### Human-readable Types and Fields
 
-By default the implementation looks up *Object Type* names or *Field* namesfrom respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed.
+By default the implementation looks up *Object Type* names or *Field* names from respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed. 
 
 For example, without the `@title` annotation, changes to conversation entries would show up with the technical entity name:
 
@@ -104,7 +74,7 @@ We get a human-readable display for *Object Type*:
 <img width="1300" alt="change-history-type-hr" src="_assets/changes-type-hr-wbox.png">
 
 
-### Human-readable IDs
+#### Human-readable IDs
 
 The changelog annotations for *Object ID* are defined at entity level.
 
@@ -127,7 +97,7 @@ annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
 Expanding the changelog annotation by additional identifiers `[author, timestamp]`, we can now better identify the `message` change events by their respective author and timestamp.
 
 
-### Human-readable Values
+#### Human-readable Values
 
 The changelog annotations for *New Value* and *Old Value* are defined at element level.
 
@@ -150,7 +120,7 @@ Hence, here it is essential to add a unique identifier to obtain human-readable 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
 
 
-## Test-drive locally
+### Test-drive locally
 
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
@@ -160,7 +130,7 @@ With the steps above, we have successfully set up change tracking for our refere
   ```
 2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
 
-## Change History View
+### Change History View
 
 <img width="1300" alt="change-history" src="_assets/changes.png">
 
@@ -196,7 +166,7 @@ For more information and examples on adding Fiori Annotations, see [Adding SAP F
 This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/cap-js/change-tracking/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
 
 
-## Code of Conduct
+### Code of Conduct
 
 We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone. By participating in this project, you agree to abide by its [Code of Conduct](CODE_OF_CONDUCT.md) at all times.
 
