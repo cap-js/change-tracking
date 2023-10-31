@@ -8,7 +8,7 @@ The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/do
 2. [Add `@changelog` annotations to your CDS models](#annotations)
 3. [Et voilà:](#change-history-view)
 
-<img width="1300" alt="change-history-custom" src="_assets/changes-custom.png">
+<img width="1300" alt="change-history-custom" src="_assets/changes.png">
 
 
 
