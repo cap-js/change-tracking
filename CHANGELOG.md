@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 
-- Use view of the full change-tracking table instead of the customized one for the main image.
+- In README, use view of the full change-tracking table instead of the customized one for the main image.
 
 ## Version 1.0.1 - 26.10.23
 
