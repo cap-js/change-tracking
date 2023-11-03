@@ -806,6 +806,43 @@ describe("change log integration test", () => {
         const deleteTitleChange = deleteTitleChanges[0];
         expect(deleteTitleChange.objectID).to.equal("new title, In Preparation, France");
 
+        // Check object ID "bookStore.city.country.countryName.code" when creating BookStores/Books
+        // (parent/child) at the same time.
+        cds.services.AdminService.entities.Books["@changelog"] = [
+            { "=": "bookStore.city.country.countryName.code" },
+        ];
+
+        const createBooksAndBookStoresAction = POST.bind({}, `/odata/v4/admin/BookStores`, {
+            ID: "48268451-8552-42a6-a3d7-67564be86634",
+            city_ID: "60b4c55d-ec87-4edc-84cb-2e4ecd60de48",
+            books: [
+                {
+                    ID: "12ed5dd8-d45b-11ed-afa1-1942bd119007",
+                    title: "New title",
+                },
+            ],
+        });
+
+        await utils.apiAction(
+            "admin",
+            "BookStores",
+            "48268451-8552-42a6-a3d7-67564be86634",
+            "AdminService",
+            createBooksAndBookStoresAction,
+            true,
+        );
+
+        const createBooksAndBookStoresChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Books",
+                attribute: "title",
+                modification: "create",
+            }),
+        );
+        expect(createBooksAndBookStoresChanges.length).to.equal(1);
+        const createBooksAndBookStoresChange = createBooksAndBookStoresChanges[0];
+        expect(createBooksAndBookStoresChange.objectID).to.equal("USA");
+
         cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
             { "=": "author.name.firstName" },
