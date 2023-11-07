@@ -164,14 +164,28 @@ With the steps above, we have successfully set up change tracking for our refere
 
 > [!IMPORTANT]
 > To ensure proper lazy loading of the Change History table, please be sure to use **SAPUI5 version 1.120.0** or later.
+> If you would like to disable lazy loading, add the following annotation:
+> ```cds
+> annotate sap.changelog.aspect @(UI.Facets: [{
+>    $Type : 'UI.ReferenceFacet',
+>    ID    : 'ChangeHistoryFacet',
+>    Label : '{i18n>ChangeHistory}',
+>    Target: 'changes/@UI.PresentationVariant',
+>     ![@UI.PartOfPreview]: true
+> }]);
+> ```
+
+> 
 
 <img width="1300" alt="change-history" src="_assets/changes.png">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
 
-### Customizations
+## Customizations
 
-The view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 5 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
+### Altered table view
+
+The *Change History* view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 5 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
 
 ```cds
 using from '@cap-js/change-tracking';
@@ -193,6 +207,24 @@ In the UI, the *Change History* table now contains 5 equally-spaced columns with
 
 For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](https://cap.cloud.sap/docs/advanced/fiori#fiori-annotations).
 
+### Disable lazy loading
+
+To disable the lazy loading feature of the *Change History* table, you can add the following annotation to your `srv/change-tracking.cds`:
+
+```cds
+using from '@cap-js/change-tracking';
+
+annotate sap.changelog.aspect @(UI.Facets: [{
+  $Type : 'UI.ReferenceFacet',
+  ID    : 'ChangeHistoryFacet',
+  Label : '{i18n>ChangeHistory}',
+  Target: 'changes/@UI.PresentationVariant',
+  ![@UI.PartOfPreview]
+}]);
+
+```
+
+The system now uses the SAPUI5 default setting for `![@UI.PartOfPreview]: true` such that the table will always shown when navigating to that respective Object page.
 
 ## Contributing
 
