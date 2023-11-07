@@ -162,6 +162,9 @@ With the steps above, we have successfully set up change tracking for our refere
 
 ## Change History View
 
+> [!IMPORTANT]
+> To ensure proper lazy loading of the Change History table, please be sure to use **SAPUI5 version 1.120.0** or later.
+
 <img width="1300" alt="change-history" src="_assets/changes.png">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
