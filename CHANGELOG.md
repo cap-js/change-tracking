@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Version 1.0.3 - 07.11.23
 
+### Added
+
+- Added note about using `SAPUI5 v1.120.0` or later for proper lazy loading of the *Change History* table.
+
 ### Changed
 
 - Support cases where parent/child entries are created simultaneously.
