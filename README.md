@@ -163,8 +163,8 @@ With the steps above, we have successfully set up change tracking for our refere
 ## Change History View
 
 > [!IMPORTANT]
-> To ensure proper lazy loading of the Change History table, please be sure to use **SAPUI5 version 1.120.0** or higher.
-> If you wish to disable this feature, please see the customizatoin section below on how to [disable lazy loading](#disable-lazy-loading).
+> To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.<br>
+> If you wish to *disable* this feature, please see the customization section on how to [disable lazy loading](#disable-lazy-loading).
 
 <img width="1300" alt="change-history" src="_assets/changes.png">
 
@@ -213,7 +213,7 @@ annotate sap.changelog.aspect @(UI.Facets: [{
 
 ```
 
-The system now uses the SAPUI5 default setting for `![@UI.PartOfPreview]: true` such that the table will always shown when navigating to that respective Object page.
+The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, such that the table will always shown when navigating to that respective Object page.
 
 ## Contributing
 
