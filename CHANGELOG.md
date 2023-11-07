@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.0.3 - TBD
+## Version 1.0.3 - 07.11.23
 
 ### Changed
 
 - Support cases where parent/child entries are created simultaneously.
+- Allow for lazy loading of change history table (with SAP UI5 release 1.120.0).
 
 ## Version 1.0.2 - 31.10.23
 
