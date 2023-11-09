@@ -8,23 +8,28 @@ The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/do
 2. [Add `@changelog` annotations to your CDS models](#annotations)
 3. [Et voilà:](#change-history-view)
 
-<img width="1300" alt="change-history-custom" src="_assets/changes.png">
+<img width="1300" alt="change-history-loading" src="_assets/change-history.gif">
 
 
 
 ### Table of Contents
 
-- [Preliminaries](#preliminaries)
-- [Setup](#setup)
-- [Annotations](#annotations)
-  - [Human-readable Types and Fields](#human-readable-types-and-fields)
-  - [Human-readable IDs](#human-readable-ids)
-  - [Human-readable Values](#human-readable-values)
-- [Test-drive locally](#test-drive-locally)
-- [Change History View](#change-history-view)
-- [Contributing](#contributing)
-- [Code of Conduct](#code-of-conduct)
-- [Licensing](#licensing)
+- [Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)](#change-tracking-plugin-for-sap-cloud-application-programming-model-cap)
+    - [Table of Contents](#table-of-contents)
+  - [Preliminaries](#preliminaries)
+  - [Setup](#setup)
+  - [Annotations](#annotations)
+    - [Human-readable Types and Fields](#human-readable-types-and-fields)
+    - [Human-readable IDs](#human-readable-ids)
+    - [Human-readable Values](#human-readable-values)
+  - [Test-drive locally](#test-drive-locally)
+  - [Change History View](#change-history-view)
+  - [Customizations](#customizations)
+    - [Altered table view](#altered-table-view)
+    - [Disable lazy loading](#disable-lazy-loading)
+  - [Contributing](#contributing)
+  - [Code of Conduct](#code-of-conduct)
+  - [Licensing](#licensing)
 
 
 
