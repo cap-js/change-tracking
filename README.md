@@ -69,6 +69,9 @@ npm add @cap-js/change-tracking
 
 ## Annotations
 
+> [!WARNING]
+> Please be aware that *sensitive* or [*personal* data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) should not be change tracked as their *changes* will not be protected.
+
 All we need to do is to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
 ```cds
