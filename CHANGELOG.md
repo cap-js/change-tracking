@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 
+- Fixed type issue when tracking non-string values on HANA
+
 ## Version 1.0.3 - 10.11.23
 
 ### Added
