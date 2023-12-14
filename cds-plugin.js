@@ -23,7 +23,9 @@ cds.on('loaded', m => {
       for (let e in elms) if (elms[e].key) keys.push(e)
 
       // Add association to ChangeView...
-      const on = [...changes.on]; keys.forEach((k, i) => { i && on.push('||'); on.push({ ref: [k] }) })
+      const on = [...changes.on]; keys.forEach((k, i) => { i && on.push('||'); on.push({
+        ref: k === 'up_' ? [k,'ID'] : [k] // REVISIT: up_ handling is a dirty hack for now
+      })})
       const assoc = { ...changes, on }
       const query = entity.projection || entity.query?.SELECT
       if (query) {
