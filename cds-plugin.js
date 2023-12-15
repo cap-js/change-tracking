@@ -1,8 +1,8 @@
 const cds = require('@sap/cds')
 
 const isChangeTracked = (entity) => (
-  entity['@changelog']
-  || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])
+  (entity['@changelog']
+  || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])) && entity.query?.SET?.op !== 'union'
 )
 
 
