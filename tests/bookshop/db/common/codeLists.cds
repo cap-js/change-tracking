@@ -10,3 +10,7 @@ entity LifecycleStatusCodes : CodeList {
 entity BookTypeCodes : CodeList {
     key code : String(3);
 }
+
+entity ActivationStatusCode : CodeList {
+    key code : String(20);
+}
