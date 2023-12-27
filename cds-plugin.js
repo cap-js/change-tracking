@@ -5,6 +5,24 @@ const isChangeTracked = (entity) => (
   || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])) && entity.query?.SET?.op !== 'union'
 )
 
+// Add the appropriate Side Effects attribute to the custom action
+const addSideEffects = (actions, flag, element) => {
+  for (const se of Object.values(actions)) {
+    const target = flag ? 'TargetProperties' : 'TargetEntities'
+    const sideEffectAttr = se[`@Common.SideEffects.${target}`]
+    const property = flag ? 'changes' : { '=': `${element}.changes` }
+    if (sideEffectAttr?.length >= 0) {
+      sideEffectAttr.findIndex(
+        (item) =>
+          (item['='] ? item['='] : item) ===
+          (property['='] ? property['='] : property)
+      ) === -1 && sideEffectAttr.push(property)
+    } else {
+      se[`@Common.SideEffects.${target}`] = [property]
+    }
+  }
+}
+
 
 // Unfold @changelog annotations in loaded model
 cds.on('loaded', m => {
@@ -36,6 +54,30 @@ cds.on('loaded', m => {
 
       // Add UI.Facet for Change History List
       entity['@UI.Facets']?.push(facet)
+
+      // The changehistory list should be refreshed after the custom action is triggered
+      if (entity.actions) {
+
+        // Update the changehistory list on the current entity when the custom action of the entity is triggered
+        if (entity['@UI.Facets']) {
+          addSideEffects(entity.actions, true)
+        }
+
+        // When the custom action of the child entity is performed, the change history list of the parent entity is updated
+        if (entity.elements) {
+          breakLoop: for (const [ele, eleValue] of Object.entries(entity.elements)) {
+            const parentEntity = m.definitions[eleValue.target]
+            if (parentEntity && parentEntity['@UI.Facets'] && eleValue.type === 'cds.Association') {
+              for (const value of Object.values(parentEntity.elements)) {
+                if (value.target === name) {
+                  addSideEffects(entity.actions, false, ele)
+                  break breakLoop
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 })
