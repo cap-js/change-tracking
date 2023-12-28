@@ -275,26 +275,82 @@ describe("change log draft disabled test", () => {
         expect(customerUpdateChangeInDb.valueDataType).to.equal("cds.String, cds.String, cds.String");
     });
 
-    it("7.2 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993)", async () => {
+    it("7.2 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993 ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
         cds.services.AdminService.entities.OrderItem["@changelog"] = [
             { "=": "order.report.comment" },
             { "=": "order.status" },
             { "=": "customer.name" },
         ];
-        await PATCH(`/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
+        await PATCH(`/odata/v4/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
             quantity: 14,
         });
 
-        let changes = await adminService.run(SELECT.from(ChangeView));
+        let changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.OrderItem",
+                attribute: "quantity",
+            }),
+        );
         expect(changes.length).to.equal(1);
         const change = changes[0];
         expect(change.objectID).to.equal("some comment, Post, Honda");
 
+        cds.services.AdminService.entities.Level3Order["@changelog"] = [
+            { "=": "parent.parent.parent.title" },
+        ];
+        await POST(
+            `/odata/v4/admin/RootOrder(ID=0a41a187-a2ff-4df6-bd12-fae8996e7e28)/child(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0802)/child(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/child`,
+            {
+                ID: "a670e8e1-ee06-4cad-9cbd-a2354dc25b8c",
+                parent_ID: "a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc",
+                title: "new L3 title",
+            },
+        );
+        const createChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Order",
+                attribute: "title",
+                modification: "create",
+            }),
+        );
+        expect(createChanges.length).to.equal(1);
+        const createChange = createChanges[0];
+        expect(createChange.objectID).to.equal("RootOrder title1");
+
+        await PATCH(`/odata/v4/admin/Level3Order(ID=a670e8e1-ee06-4cad-9cbd-a2354dc25b8c)`, {
+            title: "L3 title changed",
+        });
+        let updateChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Order",
+                attribute: "title",
+                modification: "update",
+            }),
+        );
+        expect(updateChanges.length).to.equal(1);
+        const updateChange = updateChanges[0];
+        expect(updateChange.objectID).to.equal("RootOrder title1");
+
+        await DELETE(
+            `/odata/v4/admin/RootOrder(ID=0a41a187-a2ff-4df6-bd12-fae8996e7e28)/child(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0802)/child(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/child(ID=a670e8e1-ee06-4cad-9cbd-a2354dc25b8c)`,
+        );
+        let deleteChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Order",
+                attribute: "title",
+                modification: "delete",
+            }),
+        );
+        expect(deleteChanges.length).to.equal(1);
+        const deleteChange = deleteChanges[0];
+        expect(deleteChange.objectID).to.equal("RootOrder title1");
+
         delete cds.services.AdminService.entities.OrderItem["@changelog"];
+        delete cds.services.AdminService.entities.Level3Order["@changelog"];
     });
 
-    it("8.2 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094)", async () => {
-        await PATCH(`/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
+    it("8.2 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094 ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
+        await PATCH(`/odata/v4/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
             order_ID: "6ac4afbf-deda-45ae-88e6-2883157cc010",
         });
 
@@ -302,6 +358,20 @@ describe("change log draft disabled test", () => {
         expect(changes.length).to.equal(1);
         const change = changes[0];
         expect(change.valueChangedTo).to.equal("some report comment, Post");
+
+        await PATCH(`/odata/v4/admin/Level3Order(ID=a40a9fd8-573d-4f41-1111-fb8ea0d8c5cc)`, {
+            parent_ID: "55bb60e4-ed86-46e6-9378-346153eba8d4",
+        });
+        let updateChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Order",
+                attribute: "parent",
+                modification: "update",
+            }),
+        );
+        expect(updateChanges.length).to.equal(1);
+        const updateChange = updateChanges[0];
+        expect(updateChange.valueChangedTo).to.equal("RootOrder title2");
     });
 
     it("10.1 Composition of one creatition by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {

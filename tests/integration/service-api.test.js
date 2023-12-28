@@ -69,6 +69,80 @@ describe("change log integration test", () => {
         expect(changes[0].parentObjectID).to.equal("Shakespeare and Company");
     });
 
+    it("7.3 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
+        const level3EntityData = [
+            {
+                ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321",
+                title: "Service api Level3 title",
+                parent_ID: "dd1fdd7d-da2a-4600-940b-0baf2946c4ff",
+            },
+        ];
+        await adminService.run(INSERT.into(adminService.entities.Level3Entity).entries(level3EntityData));
+        let createChanges = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level3Entity",
+            attribute: "title",
+            modification: "create",
+        });
+        expect(createChanges.length).to.equal(1);
+        const createChange = createChanges[0];
+        expect(createChange.objectID).to.equal("In Preparation");
+
+        await UPDATE(adminService.entities.Level3Entity, "12ed5dd8-d45b-11ed-afa1-0242ac654321").with({
+            title: "L3 title changed by QL API",
+        });
+        let updateChanges = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level3Entity",
+            attribute: "title",
+            modification: "update",
+        });
+        expect(createChanges.length).to.equal(1);
+        const updateChange = updateChanges[0];
+        expect(updateChange.objectID).to.equal("In Preparation");
+
+        await DELETE.from(adminService.entities.Level3Entity).where({ ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321" });
+        let deleteChanges = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level3Entity",
+            attribute: "title",
+            modification: "delete",
+        });
+        expect(deleteChanges.length).to.equal(1);
+        const deleteChange = deleteChanges[0];
+        expect(deleteChange.objectID).to.equal("In Preparation");
+    });
+
+    it("8.3 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
+        const rootEntityData = [
+            {
+                ID: "01234567-89ab-cdef-0123-456789dcbafe",
+                goods_ID: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
+            },
+        ];
+        await adminService.run(INSERT.into(adminService.entities.RootEntity).entries(rootEntityData));
+        let createChanges = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.RootEntity",
+            attribute: "goods",
+            modification: "create",
+        });
+        expect(createChanges.length).to.equal(1);
+        const createChange = createChanges[0];
+        expect(createChange.valueChangedFrom).to.equal("");
+        expect(createChange.valueChangedTo).to.equal("Super Mario1");
+
+        await UPDATE(adminService.entities.RootEntity, "01234567-89ab-cdef-0123-456789dcbafe").with({
+            goods_ID: "bc21e0d9-a313-4f52-8336-c1be5f44f435",
+        });
+
+        let updateChanges = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.RootEntity",
+            attribute: "goods",
+            modification: "update",
+        });
+        expect(updateChanges.length).to.equal(1);
+        const updateChange = updateChanges[0];
+        expect(updateChange.valueChangedFrom).to.equal("Super Mario1");
+        expect(updateChange.valueChangedTo).to.equal("Super Mario3");
+    });
+
     it("10.7 Composition of one node deep created by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
         const bookStoreData = {
             ID: "843b3681-8b32-4d30-82dc-937cdbc68b3a",
