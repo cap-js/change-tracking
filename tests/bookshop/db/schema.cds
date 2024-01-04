@@ -9,6 +9,8 @@ using {
   sap.capire.common.types.LifecycleStatusCode as LifecycleStatusCode,
   sap.capire.common.types.BookTypeCodes as BookTypeCodes,
 } from './common/types.cds';
+using {sap.capire.bookshop.ActivationStatusCode} from './codelists';
+using {sap.capire.bookshop.PaymentAgreementStatusCodes as PaymentAgreementStatusCodes} from './codelists';
 
 namespace sap.capire.bookshop;
 
@@ -77,6 +79,10 @@ entity Volumns : managed, cuid {
   @title : '{i18n>volumns.sequence}'
   sequence : Integer;
   book     : Association to one Books;
+  @title : '{i18n>Status}'
+  @changelog : [ActivationStatus.name]
+  ActivationStatus : Association to one ActivationStatusCode;
+  PaymentAgreementStatus : Association to one PaymentAgreementStatusCodes on PaymentAgreementStatus.code = ActivationStatus.code;
 }
 
 @title                  : '{i18n>bookStoreRegistry.objectTitle}'
@@ -140,6 +146,9 @@ entity OrderItem : cuid {
 entity OrderItemNote : cuid {
   orderItem : Association to one OrderItem;
   content   : String;
+  @title : '{i18n>Status}'
+  ActivationStatus : Association to one ActivationStatusCode;
+  PaymentAgreementStatus : Association to one PaymentAgreementStatusCodes on PaymentAgreementStatus.code = ActivationStatus.code;
 }
 
 entity City : cuid {

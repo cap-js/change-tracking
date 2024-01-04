@@ -368,4 +368,22 @@ describe("change log draft disabled test", () => {
         expect(headerChange.parentObjectID).to.equal("Post");
         delete cds.services.AdminService.entities.Order["@changelog"];
     });
+
+    it("11.2 The change log should be captured when a child entity in draft-disabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
+        await POST(
+            `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/AdminService.activate`,
+            {
+                ActivationStatus_code: "VALID",
+            },
+        );
+        let changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.OrderItemNote",
+            attribute: "ActivationStatus",
+        });
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("VALID");
+        expect(changes[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
+        expect(changes[0].parentKey).to.equal("9a61178f-bfb3-4c17-8d17-c6b4a63e0097");
+    });
 });
