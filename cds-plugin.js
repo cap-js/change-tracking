@@ -65,6 +65,7 @@ cds.on('loaded', m => {
 
         // When the custom action of the child entity is performed, the change history list of the parent entity is updated
         if (entity.elements) {
+          //ToDo: Revisit Breaklook with node.js Expert
           breakLoop: for (const [ele, eleValue] of Object.entries(entity.elements)) {
             const parentEntity = m.definitions[eleValue.target]
             if (parentEntity && parentEntity['@UI.Facets'] && eleValue.type === 'cds.Association') {
