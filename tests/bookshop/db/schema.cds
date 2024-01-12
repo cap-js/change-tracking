@@ -49,6 +49,7 @@ entity Books : managed, cuid {
   genre     : Association to Genres;
   stock     : Integer;
   price     : Decimal;
+  isUsed    : Boolean;
   image     : LargeBinary @Core.MediaType : 'image/png';
   @title :                                  '{i18n>books.bookType}'
   bookType  : BookTypeCodes;

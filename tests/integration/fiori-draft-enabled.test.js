@@ -35,6 +35,7 @@ describe("change log integration test", () => {
                 author_ID: "d4d4a1b3-5b83-4814-8a20-f039af6f0387",
                 stock: 1,
                 price: 1.0,
+                isUsed: true
             }
         );
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
@@ -88,6 +89,22 @@ describe("change log integration test", () => {
         expect(authorChange.entity).to.equal("Book");
         expect(authorChange.valueChangedFrom).to.equal("");
         expect(authorChange.valueChangedTo).to.equal("Emily, Brontë");
+
+        const isUsedChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Books",
+                attribute: "isUsed",
+            })
+        );
+        expect(isUsedChanges.length).to.equal(1);
+        const isUsedChange = isUsedChanges[0];
+        expect(isUsedChange.entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(isUsedChange.attribute).to.equal("isUsed");
+        expect(isUsedChange.modification).to.equal("Create");
+        expect(isUsedChange.objectID).to.equal("test title, Emily, Brontë");
+        expect(isUsedChange.entity).to.equal("Book");
+        expect(isUsedChange.valueChangedFrom).to.equal("");
+        expect(isUsedChange.valueChangedTo).to.equal("true");
     });
 
     it("2.2 Child entity update - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
@@ -95,6 +112,7 @@ describe("change log integration test", () => {
             title: "new title",
             author_ID: "47f97f40-4f41-488a-b10b-a5725e762d5e",
             genre_ID: 16,
+            isUsed: false
         });
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
         const bookChanges = await adminService.run(
@@ -166,6 +184,23 @@ describe("change log integration test", () => {
         expect(genreChange.entity).to.equal("Book");
         expect(genreChange.valueChangedFrom).to.equal("11");
         expect(genreChange.valueChangedTo).to.equal("16");
+
+        const isUsedChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Books",
+                attribute: "isUsed",
+            })
+        );
+        expect(isUsedChanges.length).to.equal(1);
+        const isUsedChange = isUsedChanges[0];
+        expect(isUsedChange.entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(isUsedChange.attribute).to.equal("isUsed");
+        expect(isUsedChange.modification).to.equal("Update");
+        expect(isUsedChange.objectID).to.equal("new title, Charlotte, Brontë");
+        expect(isUsedChange.entity).to.equal("Book");
+        expect(isUsedChange.valueChangedFrom).to.equal("true");
+        expect(isUsedChange.valueChangedTo).to.equal("false");
+
     });
 
     it("2.3 Child entity delete - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
