@@ -48,6 +48,7 @@ annotate AdminService.Books with @changelog : [
 ]{
   title    @changelog;
   descr    @changelog;
+  isUsed   @changelog;
   author   @changelog                                : [
     author.name.firstName,
     author.name.lastName
