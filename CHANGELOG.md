@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 1.0.5 - 15.01.24
+
+### Fixed
+
+- Error on HANA when logging Boolean or Numeric Data
+
+## Version 1.0.4 - 08.01.24
+
+### Added
+
+- Side effect annotation now allows automatic refresh after a custom action caused changes
+
+### Changed
+
+- Added a check to disable change tracking for views with a UNION
+
+### Fixed
+
+- Handling of associations within change tracked entities
+- Handling of change log when custom actions on child entities are called
+
 ## Version 1.0.3 - 10.11.23
 
 ### Added
@@ -37,3 +58,4 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 
 - Initial release
+

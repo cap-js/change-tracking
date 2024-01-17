@@ -1,4 +1,5 @@
 using {sap.capire.bookshop as my} from '../db/schema';
+using {sap.capire.bookshop.PaymentAgreementStatusCodes as PaymentAgreementStatusCodes} from '../db/codelists';
 
 service AdminService {
   @odata.draft.enabled
@@ -21,8 +22,19 @@ service AdminService {
   entity Report                       as projection on my.Report;
   entity Order                        as projection on my.Order;
   entity OrderItem                    as projection on my.OrderItem;
-  entity OrderItemNote                as projection on my.OrderItemNote;
-  entity Volumns                      as projection on my.Volumns;
+  
+  entity OrderItemNote                as projection on my.OrderItemNote actions {
+    @cds.odata.bindingparameter.name: 'self'
+    @Common.SideEffects             : {TargetEntities: [self]}
+    action activate();
+  };
+
+  entity Volumns                      as projection on my.Volumns actions {
+    @cds.odata.bindingparameter.name: 'self'
+    @Common.SideEffects             : {TargetEntities: [self]}
+    action activate();
+  };
+
   entity Customers                    as projection on my.Customers;
 }
 
@@ -103,6 +115,7 @@ annotate AdminService.Books with @changelog : [
 ]{
   title    @changelog;
   descr    @changelog;
+  isUsed   @changelog;
   author   @changelog                                : [
     author.name.firstName,
     author.name.lastName
@@ -149,6 +162,7 @@ annotate AdminService.OrderItem with {
 
 annotate AdminService.OrderItemNote with {
   content @changelog;
+  ActivationStatus @changelog : [ActivationStatus.name];
 }
 
 annotate AdminService.Customers with {
