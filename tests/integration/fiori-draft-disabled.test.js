@@ -345,7 +345,86 @@ describe("change log draft disabled test", () => {
         const deleteChange = deleteChanges[0];
         expect(deleteChange.objectID).to.equal("RootOrder title1");
 
+        // Test object id when parent and child nodes are created at the same time
+        cds.services.AdminService.entities.Level2Order["@changelog"] = [
+            { "=": "parent.parent.title" }
+        ];
+        await POST(
+            `/odata/v4/admin/RootOrder`,
+            {
+                ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
+                title: "new RootOrder title",
+                child: [
+                    {
+                        ID: "48268451-8552-42a6-a3d7-67564be97733",
+                        title: "new Level1Order title",
+                        child: [
+                            {
+                                ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
+                                title: "new Level2Order title",
+                            }
+                        ]
+                    }
+                ]
+            },
+        );
+
+        const createChangesMeanwhile = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Order",
+                attribute: "title",
+                modification: "create",
+            }),
+        );
+        expect(createChangesMeanwhile.length).to.equal(1);
+        const createChangeMeanwhile = createChangesMeanwhile[0];
+        expect(createChangeMeanwhile.objectID).to.equal("new RootOrder title");
+
+        // Test the object id when the parent node and child node are modified at the same time
+        await PATCH(`/odata/v4/admin/RootOrder(ID=a670e8e1-ee06-4cad-9cbd-a2354dc37c9d)`, {
+            title: "RootOrder title changed",
+            child: [
+                {
+                    ID: "48268451-8552-42a6-a3d7-67564be97733",
+                    child:[{
+                        ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
+                        title: "Level2Order title changed"
+                    }]
+                }
+            ]
+        });
+
+        const updateChangesMeanwhile = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Order",
+                attribute: "title",
+                modification: "update",
+            }),
+        );
+        expect(updateChangesMeanwhile.length).to.equal(1);
+        const updateChangeMeanwhile = updateChangesMeanwhile[0];
+        expect(updateChangeMeanwhile.objectID).to.equal("RootOrder title changed");
+
+        // Tests the object id when the parent node update and child node deletion occur simultaneously
+        await PATCH(`/odata/v4/admin/RootOrder(ID=a670e8e1-ee06-4cad-9cbd-a2354dc37c9d)`, {
+            title: "RootOrder title del",
+            child: []
+        });
+
+        const deleteChangesMeanwhile = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Order",
+                attribute: "title",
+                modification: "delete"
+            }),
+        );
+
+        expect(deleteChangesMeanwhile.length).to.equal(1);
+        const deleteChangeMeanwhile = deleteChangesMeanwhile[0];
+        expect(deleteChangeMeanwhile.objectID).to.equal("RootOrder title del");
+
         delete cds.services.AdminService.entities.OrderItem["@changelog"];
+        delete cds.services.AdminService.entities.Level2Order["@changelog"];
         delete cds.services.AdminService.entities.Level3Order["@changelog"];
     });
 

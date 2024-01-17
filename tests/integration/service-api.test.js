@@ -108,6 +108,93 @@ describe("change log integration test", () => {
         expect(deleteChanges.length).to.equal(1);
         const deleteChange = deleteChanges[0];
         expect(deleteChange.objectID).to.equal("In Preparation");
+
+        // Test object id when parent and child nodes are created at the same time
+        const RootEntityData = {
+            ID: "01234567-89ab-cdef-0123-987654fedcba",
+            name: "New name for RootEntity",
+            lifecycleStatus_code: "IP",
+            child: [
+                {
+                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                    title: "New name for Level1Entity",
+                    child: [
+                        {
+                            ID: "12ed5dd8-d45b-11ed-afa1-0242ac124446",
+                            title: "New name for Level2Entity"
+                        },
+                    ],
+                },
+            ],
+        };
+        await adminService.run(INSERT.into(adminService.entities.RootEntity).entries(RootEntityData));
+
+        const createEntityChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Entity",
+                attribute: "title",
+                modification: "create",
+            }),
+        );
+        expect(createEntityChanges.length).to.equal(1);
+        const createEntityChange = createEntityChanges[0];
+        expect(createEntityChange.objectID).to.equal("In Preparation");
+
+        // Test the object id when the parent node and child node are modified at the same time
+        await UPDATE(adminService.entities.RootEntity)
+        .with({
+            ID: "01234567-89ab-cdef-0123-987654fedcba",
+            name: "RootEntity name changed",
+            lifecycleStatus_code: "AC",
+            child: [
+                {
+                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                    parent_ID: "01234567-89ab-cdef-0123-987654fedcba",
+                    child: [
+                        {
+                            ID: "12ed5dd8-d45b-11ed-afa1-0242ac124446",
+                            parent_ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                            title : "Level2Entity title changed"
+                        },
+                    ],
+                },
+            ],
+        });
+        const updateEntityChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Entity",
+                attribute: "title",
+                modification: "update",
+            }),
+        );
+        expect(updateEntityChanges.length).to.equal(1);
+        const updateEntityChange = updateEntityChanges[0];
+        expect(updateEntityChange.objectID).to.equal("Open");
+
+        // Tests the object id when the parent node update and child node deletion occur simultaneously
+        await UPDATE(adminService.entities.RootEntity)
+        .with({
+            ID: "01234567-89ab-cdef-0123-987654fedcba",
+            name: "RootEntity name del",
+            lifecycleStatus_code: "CL",
+            child: [
+                {
+                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                    parent_ID: "01234567-89ab-cdef-0123-987654fedcba",
+                    child: [],
+                },
+            ],
+        });
+        const deleteEntityChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Entity",
+                attribute: "title",
+                modification: "delete",
+            }),
+        );
+        expect(deleteEntityChanges.length).to.equal(1);
+        const deleteEntityChange = deleteEntityChanges[0];
+        expect(deleteEntityChange.objectID).to.equal("Closed");
     });
 
     it("8.3 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
