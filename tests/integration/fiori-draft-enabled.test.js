@@ -789,6 +789,33 @@ describe("change log integration test", () => {
     });
 
     it("7.1 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993)", async () => {
+        cds.services.AdminService.entities.BookStores["@changelog"].push({ "=": "city.name" })
+        
+        const createBookStoresAction = POST.bind({}, `/odata/v4/admin/BookStores`, {
+            ID: "9d703c23-54a8-4eff-81c1-cdce6b6587c4",
+            name: "new name",
+        });
+        await utils.apiAction(
+            "admin",
+            "BookStores",
+            "9d703c23-54a8-4eff-81c1-cdce6b6587c4",
+            "AdminService",
+            createBookStoresAction,
+            true
+        );
+
+        const BookStoresChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.BookStores",
+                attribute: "name",
+            })
+        );
+        expect(BookStoresChanges.length).to.equal(1);
+        const BookStoresChange = BookStoresChanges[0];
+        expect(BookStoresChange.objectID).to.equal("new name");
+
+        delete cds.services.AdminService.entities.BookStores["@changelog"];
+
         cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "bookStore.lifecycleStatus.name" },
             { "=": "bookStore.location" },

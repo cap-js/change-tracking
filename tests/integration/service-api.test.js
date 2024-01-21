@@ -69,6 +69,26 @@ describe("change log integration test", () => {
         expect(changes[0].parentObjectID).to.equal("Shakespeare and Company");
     });
 
+    it("7.3 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
+        cds.services.AdminService.entities.BookStores["@changelog"].push({ "=": "city.name" })
+
+        const bookStoreData = {
+            ID: "9d703c23-54a8-4eff-81c1-cdce6b6587c4",
+            name: "new name",
+        };
+        await adminService.run(INSERT.into(adminService.entities.BookStores).entries(bookStoreData));
+        let createBookStoresChanges = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.BookStores",
+            attribute: "name",
+            modification: "create",
+        });
+        expect(createBookStoresChanges.length).to.equal(1);
+        const createBookStoresChange = createBookStoresChanges[0];
+        expect(createBookStoresChange.objectID).to.equal("new name");
+
+        cds.services.AdminService.entities.BookStores["@changelog"].pop();
+    });
+
     it("10.7 Composition of one node deep created by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
         const bookStoreData = {
             ID: "843b3681-8b32-4d30-82dc-937cdbc68b3a",
