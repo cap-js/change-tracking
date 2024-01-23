@@ -1056,7 +1056,7 @@ describe("change log integration test", () => {
 
         const createAction = POST.bind({}, `/odata/v4/admin/RootEntity`, {
             ID: "c56b392c-e476-41a2-a460-ce6123be090a",
-            goods_ID: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
+            info_ID: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
             child: [
                 {
                     ID: "1868758f-fb18-44e8-b6c5-ed552d6b3706",
@@ -1075,7 +1075,7 @@ describe("change log integration test", () => {
         const createChanges = await adminService.run(
             SELECT.from(ChangeView).where({
                 entity: "sap.capire.bookshop.RootEntity",
-                attribute: "goods",
+                attribute: "info",
                 modification: "create",
             }),
         );
@@ -1085,11 +1085,11 @@ describe("change log integration test", () => {
         expect(createChange.valueChangedFrom).to.equal("");
         expect(createChange.valueChangedTo).to.equal("Super Mario1");
 
-        const updateGoodsAction = PATCH.bind(
+        const updateInfoAction = PATCH.bind(
             {},
             `/odata/v4/admin/RootEntity(ID=c56b392c-e476-41a2-a460-ce6123be090a,IsActiveEntity=false)`,
             {
-                goods_ID: "bc21e0d9-a313-4f52-8336-c1be5f44f435",
+                info_ID: "bc21e0d9-a313-4f52-8336-c1be5f44f435",
                 child: [
                     {
                         ID: "1868758f-fb18-44e8-b6c5-ed552d6b3706",
@@ -1103,12 +1103,12 @@ describe("change log integration test", () => {
             "RootEntity",
             "c56b392c-e476-41a2-a460-ce6123be090a",
             "AdminService",
-            updateGoodsAction,
+            updateInfoAction,
         );
         const updateChanges = await adminService.run(
             SELECT.from(ChangeView).where({
                 entity: "sap.capire.bookshop.RootEntity",
-                attribute: "goods",
+                attribute: "info",
                 modification: "update",
             }),
         );

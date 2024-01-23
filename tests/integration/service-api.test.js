@@ -201,13 +201,13 @@ describe("change log integration test", () => {
         const rootEntityData = [
             {
                 ID: "01234567-89ab-cdef-0123-456789dcbafe",
-                goods_ID: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
+                info_ID: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
             },
         ];
         await adminService.run(INSERT.into(adminService.entities.RootEntity).entries(rootEntityData));
         let createChanges = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.RootEntity",
-            attribute: "goods",
+            attribute: "info",
             modification: "create",
         });
         expect(createChanges.length).to.equal(1);
@@ -216,12 +216,12 @@ describe("change log integration test", () => {
         expect(createChange.valueChangedTo).to.equal("Super Mario1");
 
         await UPDATE(adminService.entities.RootEntity, "01234567-89ab-cdef-0123-456789dcbafe").with({
-            goods_ID: "bc21e0d9-a313-4f52-8336-c1be5f44f435",
+            info_ID: "bc21e0d9-a313-4f52-8336-c1be5f44f435",
         });
 
         let updateChanges = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.RootEntity",
-            attribute: "goods",
+            attribute: "info",
             modification: "update",
         });
         expect(updateChanges.length).to.equal(1);

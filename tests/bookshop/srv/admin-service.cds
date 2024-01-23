@@ -8,22 +8,22 @@ service AdminService {
   @odata.draft.enabled
   entity RootEntity @(cds.autoexpose) as projection on my.RootEntity;
 
-  entity RootOrder                    as projection on my.RootOrder;
-  entity Level1Order                  as projection on my.Level1Order;
-  entity Level2Order                  as projection on my.Level2Order;
-  entity Level3Order                  as projection on my.Level3Order;
-  entity Level1Entity                 as projection on my.Level1Entity;
-  entity Level2Entity                 as projection on my.Level2Entity;
-  entity Level3Entity                 as projection on my.Level3Entity;
-  entity Lock                         as projection on my.Lock;
-  entity Door                         as projection on my.Door;
-  entity Room                         as projection on my.Room;
-  entity Authors                      as projection on my.Authors;
-  entity Report                       as projection on my.Report;
-  entity Order                        as projection on my.Order;
-  entity OrderItem                    as projection on my.OrderItem;
+  entity RootObject                    as projection on my.RootObject;
+  entity Level1Object                  as projection on my.Level1Object;
+  entity Level2Object                  as projection on my.Level2Object;
+  entity Level3Object                  as projection on my.Level3Object;
+  entity Level1Entity                  as projection on my.Level1Entity;
+  entity Level2Entity                  as projection on my.Level2Entity;
+  entity Level3Entity                  as projection on my.Level3Entity;
+  entity AssocOne                      as projection on my.AssocOne;
+  entity AssocTwo                      as projection on my.AssocTwo;
+  entity AssocThree                    as projection on my.AssocThree;
+  entity Authors                       as projection on my.Authors;
+  entity Report                        as projection on my.Report;
+  entity Order                         as projection on my.Order;
+  entity OrderItem                     as projection on my.OrderItem;
   
-  entity OrderItemNote                as projection on my.OrderItemNote actions {
+  entity OrderItemNote                 as projection on my.OrderItemNote actions {
     @cds.odata.bindingparameter.name: 'self'
     @Common.SideEffects             : {TargetEntities: [self]}
     action activate();
@@ -41,8 +41,8 @@ service AdminService {
 annotate AdminService.RootEntity with @changelog: [name] {
   name            @changelog;
   child           @changelog                    : [child.child.child.title];
-  lifecycleStatus @changelog                    : [lifecycleStatus.name];
-  goods           @changelog                    : [goods.goods.goods.name]
+  lifecycleStatus @changelog                    : [lifecycleStatus.name]; 
+  info            @changelog                    : [info.info.info.name];
 };
 
 annotate AdminService.Level1Entity with @changelog: [parent.lifecycleStatus.name] {
@@ -59,35 +59,35 @@ annotate AdminService.Level3Entity with @changelog: [parent.parent.parent.lifecy
   title @changelog;
 }
 
-annotate AdminService.Lock with {
+annotate AdminService.AssocOne with {
   name  @changelog;
-  goods @changelog: [goods.goods.name]
+  info  @changelog: [info.info.name]
 };
 
-annotate AdminService.Door with {
+annotate AdminService.AssocTwo with {
   name  @changelog;
-  goods @changelog: [goods.name]
+  info  @changelog: [info.name]
 };
 
-annotate AdminService.Room with {
+annotate AdminService.AssocThree with {
   name @changelog;
 };
 
-annotate AdminService.RootOrder with {
+annotate AdminService.RootObject with {
   title @changelog;
 }
 
-annotate AdminService.Level1Order with {
+annotate AdminService.Level1Object with {
   title @changelog;
   child @changelog: [child.title];
 }
 
-annotate AdminService.Level2Order with {
+annotate AdminService.Level2Object with {
   title @changelog;
   child @changelog: [child.title];
 };
 
-annotate AdminService.Level3Order with {
+annotate AdminService.Level3Object with {
   title  @changelog;
   parent @changelog: [parent.parent.parent.title]
 };

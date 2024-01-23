@@ -21,7 +21,7 @@ entity RootEntity @(cds.autoexpose) : managed, cuid {
   lifecycleStatus : LifecycleStatusCode;
   child           : Composition of many Level1Entity
                       on child.parent = $self;
-  goods           : Association to one Lock;
+  info            : Association to one AssocOne;
 }
 
 @title: '{i18n>Level1Entity.objectTitle}'
@@ -46,42 +46,42 @@ entity Level3Entity : managed, cuid {
   parent : Association to one Level2Entity;
 }
 
-entity Lock : cuid {
+entity AssocOne : cuid {
   name  : String;
-  goods : Association to one Door;
+  info : Association to one AssocTwo;
 }
 
-entity Door : cuid {
-  name  : String;
-  goods : Association to one Room;
+entity AssocTwo : cuid {
+  name     : String;
+  info     : Association to one AssocThree;
 }
 
-entity Room : cuid {
+entity AssocThree : cuid {
   name : String;
 }
 
-entity RootOrder : cuid {
-  child : Composition of many Level1Order
+entity RootObject : cuid {
+  child : Composition of many Level1Object
             on child.parent = $self;
   title : String;
 }
 
-entity Level1Order : cuid {
-  parent : Association to one RootOrder;
-  child  : Composition of many Level2Order
+entity Level1Object : cuid {
+  parent : Association to one RootObject;
+  child  : Composition of many Level2Object
              on child.parent = $self;
   title  : String;
 }
 
-entity Level2Order : cuid {
+entity Level2Object : cuid {
   title  : String;
-  parent : Association to one Level1Order;
-  child  : Composition of many Level3Order
+  parent : Association to one Level1Object;
+  child  : Composition of many Level3Object
              on child.parent = $self;
 }
 
-entity Level3Order : cuid {
-  parent : Association to one Level2Order;
+entity Level3Object : cuid {
+  parent : Association to one Level2Object;
   title  : String;
 }
 
