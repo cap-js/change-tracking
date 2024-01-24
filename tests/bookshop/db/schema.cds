@@ -15,6 +15,77 @@ using {sap.capire.bookshop.PaymentAgreementStatusCodes as PaymentAgreementStatus
 namespace sap.capire.bookshop;
 
 @fiori.draft.enabled
+@title: '{i18n>RootEntity.objectTitle}'
+entity RootEntity @(cds.autoexpose) : managed, cuid {
+  name            : String;
+  lifecycleStatus : LifecycleStatusCode;
+  child           : Composition of many Level1Entity
+                      on child.parent = $self;
+  info            : Association to one AssocOne;
+}
+
+@title: '{i18n>Level1Entity.objectTitle}'
+entity Level1Entity : managed, cuid {
+  title  : String;
+  parent : Association to one RootEntity;
+  child  : Composition of many Level2Entity
+             on child.parent = $self;
+}
+
+@title: '{i18n>Level2Entity.objectTitle}'
+entity Level2Entity : managed, cuid {
+  title  : String;
+  parent : Association to one Level1Entity;
+  child  : Composition of many Level3Entity
+             on child.parent = $self;
+}
+
+@title: '{i18n>Level3Entity.objectTitle}'
+entity Level3Entity : managed, cuid {
+  title  : String;
+  parent : Association to one Level2Entity;
+}
+
+entity AssocOne : cuid {
+  name  : String;
+  info : Association to one AssocTwo;
+}
+
+entity AssocTwo : cuid {
+  name     : String;
+  info     : Association to one AssocThree;
+}
+
+entity AssocThree : cuid {
+  name : String;
+}
+
+entity RootObject : cuid {
+  child : Composition of many Level1Object
+            on child.parent = $self;
+  title : String;
+}
+
+entity Level1Object : cuid {
+  parent : Association to one RootObject;
+  child  : Composition of many Level2Object
+             on child.parent = $self;
+  title  : String;
+}
+
+entity Level2Object : cuid {
+  title  : String;
+  parent : Association to one Level1Object;
+  child  : Composition of many Level3Object
+             on child.parent = $self;
+}
+
+entity Level3Object : cuid {
+  parent : Association to one Level2Object;
+  title  : String;
+}
+
+@fiori.draft.enabled
 @title : '{i18n>bookStore.objectTitle}'
 entity BookStores @(cds.autoexpose) : managed, cuid {
   @title : '{i18n>bookStore.name}'

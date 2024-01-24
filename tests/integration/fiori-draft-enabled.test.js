@@ -788,7 +788,7 @@ describe("change log integration test", () => {
         cds.services.AdminService.entities.BookStores["@changelog"] = [{ "=": "name" }];
     });
 
-    it("7.1 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993)", async () => {
+    it("7.1 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993 ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
         cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "bookStore.lifecycleStatus.name" },
             { "=": "bookStore.location" },
@@ -796,10 +796,14 @@ describe("change log integration test", () => {
             { "=": "bookStore.city.country.countryName.code" },
         ];
 
-        const action = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
-            title: "new title",
-            author_ID: "47f97f40-4f41-488a-b10b-a5725e762d5e",
-        });
+        const action = PATCH.bind(
+            {},
+            `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`,
+            {
+                title: "new title",
+                author_ID: "47f97f40-4f41-488a-b10b-a5725e762d5e",
+            },
+        );
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
 
         const titleChanges = await adminService.run(
@@ -820,7 +824,7 @@ describe("change log integration test", () => {
 
         const deleteAction = DELETE.bind(
             {},
-            `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`
+            `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`,
         );
         await utils.apiAction(
             "admin",
@@ -841,8 +845,7 @@ describe("change log integration test", () => {
         const deleteTitleChange = deleteTitleChanges[0];
         expect(deleteTitleChange.objectID).to.equal("new title, In Preparation, France");
 
-        // Check object ID "bookStore.city.country.countryName.code" when creating BookStores/Books
-        // (parent/child) at the same time.
+        // Check the object ID like "bookStore.city.country.countryName.code", could be captured when creating root entity and child entity in the same time.
         cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "bookStore.city.country.countryName.code" },
         ];
@@ -883,10 +886,120 @@ describe("change log integration test", () => {
             { "=": "author.name.firstName" },
             { "=": "author.name.lastName" },
         ];
+
+        // Test object id when parent and child nodes are created at the same time
+        const createAction = POST.bind({}, `/odata/v4/admin/RootEntity`, {
+            ID: "01234567-89ab-cdef-0123-987654fedcba",
+            name: "New name for RootEntity",
+            child: [
+                {
+                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                    title: "New name for Level1Entity",
+                    child: [
+                        {
+                            ID: "12ed5dd8-d45b-11ed-afa1-0242ac124446",
+                            title: "New name for Level2Entity",
+                            child: [
+                                {
+                                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac123335",
+                                    title: "New name for Level3Entity",
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+        await utils.apiAction(
+            "admin",
+            "RootEntity",
+            "01234567-89ab-cdef-0123-987654fedcba",
+            "AdminService",
+            createAction,
+            true,
+        );
+        const createEntityChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Entity",
+                modification: "create",
+            }),
+        );
+        expect(createEntityChanges.length).to.equal(1);
+        const createEntityChange = createEntityChanges[0];
+        expect(createEntityChange.objectID).to.equal("In Preparation");
+
+        // Test the object id when the parent node and child node are modified at the same time
+        const updateAction = PATCH.bind(
+            {},
+            `/odata/v4/admin/RootEntity(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=false)`,
+            {
+                lifecycleStatus_code: "AC",
+                child: [
+                    {
+                        ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                        child: [
+                            {
+                                ID: "12ed5dd8-d45b-11ed-afa1-0242ac124446",
+                                child: [
+                                    {
+                                        ID: "12ed5dd8-d45b-11ed-afa1-0242ac123335",
+                                        title: "Level3Entity title changed",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        );
+        await utils.apiAction(
+            "admin",
+            "RootEntity",
+            "01234567-89ab-cdef-0123-987654fedcba",
+            "AdminService",
+            updateAction,
+        );
+        const updateEntityChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Entity",
+                attribute: "title",
+                modification: "update",
+            }),
+        );
+        expect(updateEntityChanges.length).to.equal(1);
+        const updateEntityChange = updateEntityChanges[0];
+        expect(updateEntityChange.objectID).to.equal("Open");
+
+        // Tests the object id when the parent node update and child node deletion occur simultaneously
+        const deleteEntityAction = PATCH.bind(
+            {},
+            `/odata/v4/admin/RootEntity(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=false)`,
+            {
+                lifecycleStatus_code: "CL",
+                child: [],
+            },
+        );
+        await utils.apiAction(
+            "admin",
+            "RootEntity",
+            "01234567-89ab-cdef-0123-987654fedcba",
+            "AdminService",
+            deleteEntityAction,
+        );
+
+        const deleteEntityChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Entity",
+                modification: "delete",
+            }),
+        );
+        expect(deleteEntityChanges.length).to.equal(1);
+        const deleteEntityChange = deleteEntityChanges[0];
+        expect(deleteEntityChange.objectID).to.equal("Closed");
     });
 
-    it("8.1 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094)", async () => {
-        const action = POST.bind({}, `/admin/BookStores`, {
+    it("8.1 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094 ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
+        const action = POST.bind({}, `/odata/v4/admin/BookStores`, {
             ID: "01234567-89ab-cdef-0123-456789abcdef",
             city_ID: "bc21e0d9-a313-4f52-8336-c1be5f66e257",
         });
@@ -916,7 +1029,7 @@ describe("change log integration test", () => {
 
         const updateAction = PATCH.bind(
             {},
-            `/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`,
+            `/odata/v4/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`,
             {
                 city_ID: "60b4c55d-ec87-4edc-84cb-2e4ecd60de48",
             }
@@ -940,6 +1053,70 @@ describe("change log integration test", () => {
         const updateCityChange = updateCityChanges[0];
         expect(updateCityChange.valueChangedFrom).to.equal("Paris, FR");
         expect(updateCityChange.valueChangedTo).to.equal("New York, USA");
+
+        const createAction = POST.bind({}, `/odata/v4/admin/RootEntity`, {
+            ID: "c56b392c-e476-41a2-a460-ce6123be090a",
+            info_ID: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
+            child: [
+                {
+                    ID: "1868758f-fb18-44e8-b6c5-ed552d6b3706",
+                    title: "New name for Level1Entity",
+                },
+            ],
+        });
+        await utils.apiAction(
+            "admin",
+            "RootEntity",
+            "c56b392c-e476-41a2-a460-ce6123be090a",
+            "AdminService",
+            createAction,
+            true,
+        );
+        const createChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.RootEntity",
+                attribute: "info",
+                modification: "create",
+            }),
+        );
+        expect(createChanges.length).to.equal(1);
+        const createChange = createChanges[0];
+        expect(createChange.modification).to.equal("Create");
+        expect(createChange.valueChangedFrom).to.equal("");
+        expect(createChange.valueChangedTo).to.equal("Super Mario1");
+
+        const updateInfoAction = PATCH.bind(
+            {},
+            `/odata/v4/admin/RootEntity(ID=c56b392c-e476-41a2-a460-ce6123be090a,IsActiveEntity=false)`,
+            {
+                info_ID: "bc21e0d9-a313-4f52-8336-c1be5f44f435",
+                child: [
+                    {
+                        ID: "1868758f-fb18-44e8-b6c5-ed552d6b3706",
+                        title: "Level1Entity title changed",
+                    },
+                ],
+            },
+        );
+        await utils.apiAction(
+            "admin",
+            "RootEntity",
+            "c56b392c-e476-41a2-a460-ce6123be090a",
+            "AdminService",
+            updateInfoAction,
+        );
+        const updateChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.RootEntity",
+                attribute: "info",
+                modification: "update",
+            }),
+        );
+        expect(updateChanges.length).to.equal(1);
+        const updateChange = updateChanges[0];
+        expect(updateChange.modification).to.equal("Update");
+        expect(updateChange.valueChangedFrom).to.equal("Super Mario1");
+        expect(updateChange.valueChangedTo).to.equal("Super Mario3");
     });
 
     it("9.1 Localization should handle the cases that reading the change view without required parameters obtained (ERP4SMEPREPWORKAPPPLAT-1414)", async () => {

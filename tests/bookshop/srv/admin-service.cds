@@ -5,12 +5,25 @@ service AdminService {
   @odata.draft.enabled
   entity BookStores @(cds.autoexpose) as projection on my.BookStores;
 
-  entity Authors                      as projection on my.Authors;
-  entity Report                       as projection on my.Report;
-  entity Order                        as projection on my.Order;
-  entity OrderItem                    as projection on my.OrderItem;
+  @odata.draft.enabled
+  entity RootEntity @(cds.autoexpose) as projection on my.RootEntity;
+
+  entity RootObject                    as projection on my.RootObject;
+  entity Level1Object                  as projection on my.Level1Object;
+  entity Level2Object                  as projection on my.Level2Object;
+  entity Level3Object                  as projection on my.Level3Object;
+  entity Level1Entity                  as projection on my.Level1Entity;
+  entity Level2Entity                  as projection on my.Level2Entity;
+  entity Level3Entity                  as projection on my.Level3Entity;
+  entity AssocOne                      as projection on my.AssocOne;
+  entity AssocTwo                      as projection on my.AssocTwo;
+  entity AssocThree                    as projection on my.AssocThree;
+  entity Authors                       as projection on my.Authors;
+  entity Report                        as projection on my.Report;
+  entity Order                         as projection on my.Order;
+  entity OrderItem                     as projection on my.OrderItem;
   
-  entity OrderItemNote                as projection on my.OrderItemNote actions {
+  entity OrderItemNote                 as projection on my.OrderItemNote actions {
     @cds.odata.bindingparameter.name: 'self'
     @Common.SideEffects             : {TargetEntities: [self]}
     action activate();
@@ -24,6 +37,60 @@ service AdminService {
 
   entity Customers                    as projection on my.Customers;
 }
+
+annotate AdminService.RootEntity with @changelog: [name] {
+  name            @changelog;
+  child           @changelog                    : [child.child.child.title];
+  lifecycleStatus @changelog                    : [lifecycleStatus.name]; 
+  info            @changelog                    : [info.info.info.name];
+};
+
+annotate AdminService.Level1Entity with @changelog: [parent.lifecycleStatus.name] {
+  title @changelog;
+  child @changelog                                : [child.title];
+};
+
+annotate AdminService.Level2Entity with @changelog: [parent.parent.lifecycleStatus.name] {
+  title @changelog;
+  child @changelog                                : [child.title];
+};
+
+annotate AdminService.Level3Entity with @changelog: [parent.parent.parent.lifecycleStatus.name] {
+  title @changelog;
+}
+
+annotate AdminService.AssocOne with {
+  name  @changelog;
+  info  @changelog: [info.info.name]
+};
+
+annotate AdminService.AssocTwo with {
+  name  @changelog;
+  info  @changelog: [info.name]
+};
+
+annotate AdminService.AssocThree with {
+  name @changelog;
+};
+
+annotate AdminService.RootObject with {
+  title @changelog;
+}
+
+annotate AdminService.Level1Object with {
+  title @changelog;
+  child @changelog: [child.title];
+}
+
+annotate AdminService.Level2Object with {
+  title @changelog;
+  child @changelog: [child.title];
+};
+
+annotate AdminService.Level3Object with {
+  title  @changelog;
+  parent @changelog: [parent.parent.parent.title]
+};
 
 annotate AdminService.Authors with {
   name @(Common.Label : '{i18n>serviceAuthors.name}');
