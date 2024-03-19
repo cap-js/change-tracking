@@ -426,6 +426,31 @@ describe("change log draft disabled test", () => {
         delete cds.services.AdminService.entities.OrderItem["@changelog"];
         delete cds.services.AdminService.entities.Level2Object["@changelog"];
         delete cds.services.AdminService.entities.Level3Object["@changelog"];
+
+        cds.db.entities.Order["@changelog"] = [
+            { "=": "title" },
+            { "=": "type.title" },
+        ]
+        await POST(
+            `/odata/v4/admin/Order`,
+            {
+                ID: "0a41a187-a2ff-4df6-bd12-fae8996e7c44",
+                title: "test Order title",
+            },
+        );
+
+        const createOrderChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Order",
+                attribute: "title",
+                modification: "create",
+            }),
+        );
+
+        expect(createOrderChanges.length).to.equal(1);
+        const createOrderChange = createOrderChanges[0];
+        expect(createOrderChange.objectID).to.equal("test Order title");
+        delete cds.db.entities.Order["@changelog"];
     });
 
     it("8.2 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094 ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
