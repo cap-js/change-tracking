@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 1.0.6 - TBD
+
+### Fixed
+
+ -  Storage of wrong ObjectID in some special scenarios
+ -  Missing localization of managed fields
+
+### Added
+
+ - A method to disable automatic generation of the UI Facet
+
+### Changed
+
+ - Improved documentation of the @changelog Annotation
+
 ## Version 1.0.5 - 15.01.24
 
 ### Fixed
