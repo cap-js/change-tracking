@@ -185,12 +185,22 @@ entity Report : cuid {
 }
 
 entity Order : cuid {
+  @title     : '{i18n>title}'
+  @changelog
+  title      : String;
+  type       : Association to one OrderType;
   report     : Association to one Report;
   header     : Composition of one OrderHeader;
   orderItems : Composition of many OrderItem
                  on orderItems.order = $self;
   netAmount  : Decimal(19, 2);
   status     : String;
+}
+
+entity OrderType : cuid {
+  @title: '{i18n>title}'
+  @changelog
+  title : String;
 }
 
 entity Customers : cuid {
