@@ -42,7 +42,7 @@ cds.on('loaded', m => {
 
       // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
       if(keys.length === 0) {
-        return;
+        continue;
       }
 
       // Add association to ChangeView...
