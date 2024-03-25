@@ -326,7 +326,7 @@ entity Incidents : cuid, managed {
 }
 
 annotate ProcessorService.Incidents with @changelog: [title] {
-  conversation @changelog: [conversation.author, conversation.message];
+  conversation @changelog: [conversation.message];
 }
 
 ```
