@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
  -  Storage of wrong ObjectID in some special scenarios
  -  Missing localization of managed fields
+ -  Views without keys won't get the association and UI facet pushed anymore
 
 ### Added
 
