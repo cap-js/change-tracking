@@ -27,6 +27,10 @@ The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/do
   - [Customizations](#customizations)
     - [Altered table view](#altered-table-view)
     - [Disable lazy loading](#disable-lazy-loading)
+  - [Modelling Samples](#modelling-samples)
+    - [Specify Object ID](#specify-object-id)
+    - [Tracing Changes](#tracing-changes)
+    - [Don'ts](#donts)
   - [Contributing](#contributing)
   - [Code of Conduct](#code-of-conduct)
   - [Licensing](#licensing)
@@ -222,6 +226,281 @@ annotate sap.changelog.aspect @(UI.Facets: [{
 ```
 
 The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, such that the table will always shown when navigating to that respective Object page.
+
+
+## Modelling Samples
+
+This chapter describes more modelling cases for further reference, from simple to complex, including but not limited to the followings.
+
+### Specify Object ID
+
+Use cases for Object ID annotation
+
+#### Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID
+
+```cds
+entity Incidents : cuid, managed {
+  ...
+  customer       : Association to Customers;
+  title          : String @title: 'Title';
+  urgency        : Association to Urgency default 'M';
+  status         : Association to Status default 'N';
+  ...
+}
+
+annotate ProcessorService.Incidents with @changelog: [customer.name, urgency.code, status.criticality] {
+  title    @changelog;
+}
+
+```
+
+![AssociationID](_assets/AssociationID.png)
+
+#### Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID
+
+```cds
+entity Incidents : cuid, managed {
+  ...
+  customer       : Association to Customers;
+  title          : String @title: 'Title';
+  ...
+}
+
+entity Customers : cuid, managed {
+  ...
+  email          : EMailAddress;  // customized type
+  phone          : PhoneNumber;   // customized type
+  ...
+}
+
+annotate ProcessorService.Incidents with @changelog: [customer.email, customer.phone] {
+  title    @changelog;
+}
+
+```
+
+![CustomTypeID](_assets/CustomTypeID.png)
+
+#### Use Case 3: Annotate chained associated entities from the current entity as the Object ID
+
+```cds
+entity Incidents : cuid, managed {
+  ...
+  customer       : Association to Customers;
+  ...
+}
+
+entity Customers : cuid, managed {
+  ...
+  addresses : Association to Addresses;
+  ...
+}
+
+annotate ProcessorService.Incidents with @changelog: [customer.addresses.city, customer.addresses.postCode] {
+  title    @changelog;
+}
+
+```
+
+![ChainedAssociationID](_assets/ChainedAssociationID.png)
+
+> Change-tracking supports annotating chained associated entities from the current entity as object ID of current entity in case the entity in consumer applications is a pure relation table. However, the usage of chained associated entities is not recommended due to performance cost.
+
+### Tracing Changes
+
+Use cases for tracing changes
+
+#### Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)
+
+```cds
+entity Incidents : managed, cuid {
+  ...
+  title          : String @title: 'Title';
+  conversation   : Composition of many Conversation;
+  ...
+}
+
+aspect Conversation: managed, cuid {
+    ...
+    message   : String;
+}
+
+annotate ProcessorService.Incidents with @changelog: [title] {
+  conversation @changelog: [conversation.message];
+}
+
+```
+
+![CompositionChange](_assets/CompositionChange.png)
+
+#### Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)
+
+```cds
+entity Incidents : cuid, managed {
+  ...
+  customer       : Association to Customers;
+  title          : String @title: 'Title';
+  ...
+}
+
+entity Customers : cuid, managed {
+  ...
+  email          : EMailAddress;
+  ...
+}
+
+annotate ProcessorService.Incidents with @changelog: [title] {
+  customer @changelog: [customer.email];
+}
+
+```
+
+![AssociationChange](_assets/AssociationChange.png)
+
+#### Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data
+
+```cds
+type StatusType : Association to Status;
+
+entity Incidents : cuid, managed {
+  ...
+  title          : String @title: 'Title';
+  status         : StatusType default 'N';
+  ...
+}
+
+annotate ProcessorService.Incidents with @changelog: [title] {
+  status   @changelog: [status.code];
+}
+
+```
+
+![CustomTypeChange](_assets/CustomTypeChange.png)
+
+#### Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)
+
+```cds
+entity Incidents : cuid, managed {
+  ...
+  title          : String @title: 'Title';
+  customer       : Association to Customers;
+  ...
+}
+
+entity Customers : cuid, managed {
+  ...
+  addresses : Association to Addresses;
+  ...
+}
+
+annotate ProcessorService.Incidents with @changelog: [title] {
+  customer @changelog: [customer.addresses.city, customer.addresses.streetAddress];
+}
+
+```
+
+![ChainedAssociationChange](_assets/ChainedAssociationChange.png)
+
+> Change-tracking supports analyzing chained associated entities from the current entity in case the entity in consumer applications is a pure relation table. However, the usage of chained associated entities is not recommended due to performance cost.
+
+#### Use Case 5: Trace the changes of union entity and display the meaningful data
+
+`Payable.cds`:
+
+```cds
+entity Payables : cuid {
+    displayId    : String;
+    @changelog
+    name         : String;
+    cryptoAmount : Decimal;
+    fiatAmount   : Decimal;
+};
+
+```
+
+`Payment.cds`:
+
+```cds
+entity Payments : cuid {
+    displayId : String; //readable ID
+    @changelog
+    name      : String;
+};
+
+```
+
+Union entity in `BusinessTransaction.cds`:
+
+```cds
+entity BusinessTransactions          as(
+    select from payments.Payments{
+        key ID,
+            displayId,
+            name,
+            changes  : Association to many ChangeView
+                on changes.objectID = ID AND changes.entity = 'payments.Payments'
+    }
+)
+union all
+(
+    select from payables.Payables {
+        key ID,
+            displayId,
+            name,
+            changes  : Association to many ChangeView
+               on changes.objectID = ID AND changes.entity = 'payables.Payables'
+    }
+);
+
+```
+
+![UnionChange.png](_assets/UnionChange.png)
+
+### Don'ts
+
+Don'ts
+
+#### Use Case 1: Don't trace changes for field(s) with `Association to many`
+
+```cds
+entity Customers : cuid, managed {
+  ...
+  incidents : Association to many Incidents on incidents.customer = $self;
+}
+
+```
+
+The reason is that: the relationship: `Association to many` is only for modelling purpose and there is no concrete field in database table. In the above sample, there is no column for incidents in the table Customers, but there is a navigation property of incidents in Customers OData entity metadata.
+
+#### Use Case 2: Don't trace changes for field(s) with *Unmanaged Association*
+
+```cds
+entity AggregatedBusinessTransactionData @(cds.autoexpose) : cuid {
+    FootprintInventory: Association to one FootprintInventories
+                        on  FootprintInventory.month                      = month
+                        and FootprintInventory.year                       = year
+                        and FootprintInventory.FootprintInventoryScope.ID = FootprintInventoryScope.ID;
+    ...
+}
+
+```
+
+The reason is that: When deploying to relational databases, Associations are mapped to foreign keys. Yet, when mapped to non-relational databases they're just references. More details could be found in [Prefer Managed Associations](https://cap.cloud.sap/docs/guides/domain-models#managed-associations). In the above sample, there is no column for FootprintInventory in the table AggregatedBusinessTransactionData, but there is a navigation property FootprintInventoryof in OData entity metadata.
+
+#### Use Case 3: Don't trace changes for CUD on DB entity
+
+```cds
+this.on("UpdateActivationStatus", async (req) =>
+    // PaymentAgreementsOutgoingDb is the DB entity
+    await UPDATE.entity(PaymentAgreementsOutgoingDb)
+        .where({ ID: paymentAgreement.ID })
+        .set({ ActivationStatus_code: ActivationCodes.ACTIVE });
+);
+
+```
+
+The reason is that: Application level services are by design the only place where business logic is enforced. This by extension means, that it also is the only point where e.g. change-tracking would be enabled. The underlying method used to do change tracking is `req.diff` which is responsible to read the necessary before-image from the database, and this method is not available on DB level.
+
 
 ## Contributing
 
