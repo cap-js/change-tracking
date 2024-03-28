@@ -313,16 +313,16 @@ Use cases for tracing changes
 #### Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)
 
 ```cds
-entity Incidents : cuid, managed {
+entity Incidents : managed, cuid {
   ...
   title          : String @title: 'Title';
-  conversation   : Composition of many {
-    key ID    : UUID;
-    timestamp : type of managed:createdAt;
-    author    : type of managed:createdBy;
-    message   : String;
-  };
+  conversation   : Composition of many Conversation;
   ...
+}
+
+aspect Conversation: managed, cuid {
+    ...
+    message   : String;
 }
 
 annotate ProcessorService.Incidents with @changelog: [title] {
