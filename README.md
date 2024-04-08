@@ -238,6 +238,8 @@ Use cases for Object ID annotation
 
 #### Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID
 
+Modelling in `db/schema.cds`
+
 ```cds
 entity Incidents : cuid, managed {
   ...
@@ -248,6 +250,11 @@ entity Incidents : cuid, managed {
   ...
 }
 
+```
+
+Add the following `@changelog` annotations in `srv/change-tracking.cds`
+
+```cds
 annotate ProcessorService.Incidents with @changelog: [customer.name, urgency.code, status.criticality] {
   title    @changelog;
 }
@@ -257,6 +264,8 @@ annotate ProcessorService.Incidents with @changelog: [customer.name, urgency.cod
 ![AssociationID](_assets/AssociationID.png)
 
 #### Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID
+
+Modelling in `db/schema.cds`
 
 ```cds
 entity Incidents : cuid, managed {
@@ -273,6 +282,11 @@ entity Customers : cuid, managed {
   ...
 }
 
+```
+
+Add the following `@changelog` annotations in `srv/change-tracking.cds`
+
+```cds
 annotate ProcessorService.Incidents with @changelog: [customer.email, customer.phone] {
   title    @changelog;
 }
@@ -282,6 +296,8 @@ annotate ProcessorService.Incidents with @changelog: [customer.email, customer.p
 ![CustomTypeID](_assets/CustomTypeID.png)
 
 #### Use Case 3: Annotate chained associated entities from the current entity as the Object ID
+
+Modelling in `db/schema.cds`
 
 ```cds
 entity Incidents : cuid, managed {
@@ -296,6 +312,11 @@ entity Customers : cuid, managed {
   ...
 }
 
+```
+
+Add the following `@changelog` annotations in `srv/change-tracking.cds`
+
+```cds
 annotate ProcessorService.Incidents with @changelog: [customer.addresses.city, customer.addresses.postCode] {
   title    @changelog;
 }
@@ -312,6 +333,8 @@ Use cases for tracing changes
 
 #### Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)
 
+Modelling in `db/schema.cds`
+
 ```cds
 entity Incidents : managed, cuid {
   ...
@@ -325,6 +348,11 @@ aspect Conversation: managed, cuid {
     message   : String;
 }
 
+```
+
+Add the following `@changelog` annotations in `srv/change-tracking.cds`
+
+```cds
 annotate ProcessorService.Incidents with @changelog: [title] {
   conversation @changelog: [conversation.message];
 }
@@ -334,6 +362,8 @@ annotate ProcessorService.Incidents with @changelog: [title] {
 ![CompositionChange](_assets/CompositionChange.png)
 
 #### Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)
+
+Modelling in `db/schema.cds`
 
 ```cds
 entity Incidents : cuid, managed {
@@ -349,6 +379,11 @@ entity Customers : cuid, managed {
   ...
 }
 
+```
+
+Add the following `@changelog` annotations in `srv/change-tracking.cds`
+
+```cds
 annotate ProcessorService.Incidents with @changelog: [title] {
   customer @changelog: [customer.email];
 }
@@ -358,6 +393,8 @@ annotate ProcessorService.Incidents with @changelog: [title] {
 ![AssociationChange](_assets/AssociationChange.png)
 
 #### Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data
+
+Modelling in `db/schema.cds`
 
 ```cds
 type StatusType : Association to Status;
@@ -369,6 +406,11 @@ entity Incidents : cuid, managed {
   ...
 }
 
+```
+
+Add the following `@changelog` annotations in `srv/change-tracking.cds`
+
+```cds
 annotate ProcessorService.Incidents with @changelog: [title] {
   status   @changelog: [status.code];
 }
@@ -378,6 +420,8 @@ annotate ProcessorService.Incidents with @changelog: [title] {
 ![CustomTypeChange](_assets/CustomTypeChange.png)
 
 #### Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)
+
+Modelling in `db/schema.cds`
 
 ```cds
 entity Incidents : cuid, managed {
@@ -393,6 +437,11 @@ entity Customers : cuid, managed {
   ...
 }
 
+```
+
+Add the following `@changelog` annotations in `srv/change-tracking.cds`
+
+```cds
 annotate ProcessorService.Incidents with @changelog: [title] {
   customer @changelog: [customer.addresses.city, customer.addresses.streetAddress];
 }
