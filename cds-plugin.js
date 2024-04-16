@@ -40,6 +40,11 @@ cds.on('loaded', m => {
       const keys = [], { elements: elms } = entity
       for (let e in elms) if (elms[e].key) keys.push(e)
 
+      // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
+      if(keys.length === 0) {
+        continue;
+      }
+
       // Add association to ChangeView...
       const on = [...changes.on]; keys.forEach((k, i) => { i && on.push('||'); on.push({
         ref: k === 'up_' ? [k,'ID'] : [k] // REVISIT: up_ handling is a dirty hack for now
