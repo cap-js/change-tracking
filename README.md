@@ -1,33 +1,52 @@
 # Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)
 
+a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) for automatic capturing, storing, and viewing of the change records of modeled entities
+
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
-The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities as simple as that:
+## Quick Start
 
-1. [Install the plugin: `npm add @cap-js/change-tracking`](#setup)
-2. [Add `@changelog` annotations to your CDS models](#annotations)
-3. [Et voilà:](#change-history-view)
+1. Install the plugin: `npm add @cap-js/change-tracking`
 
-<img width="1300" alt="change-history-loading" src="_assets/change-history.gif">
+2. Add the annotations to your model:
 
+    ```cds
+    using { ProcessorService } from './processor-service';
 
+    annotate ProcessorService.Incidents {
+    customer @changelog: [customer.name];
+    title    @changelog;
+    status   @changelog;
+    }
+
+    annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
+    message  @changelog @Common.Label: 'Message';
+    }
+    ```
+
+3. Check the changelog in the UI:
+
+    <img width="1300" alt="change-history-loading" src="_assets/change-history.gif">
 
 ### Table of Contents
 
 - [Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)](#change-tracking-plugin-for-sap-cloud-application-programming-model-cap)
+    - [Quick Start](#quick-start)
     - [Table of Contents](#table-of-contents)
-  - [Preliminaries](#preliminaries)
+    - [Prerequisites](#prerequisites)
   - [Setup](#setup)
-  - [Annotations](#annotations)
-    - [Human-readable Types and Fields](#human-readable-types-and-fields)
-    - [Human-readable IDs](#human-readable-ids)
-    - [Human-readable Values](#human-readable-values)
-  - [Test-drive locally](#test-drive-locally)
+  - [How to Use](#how-to-use)
+    - [Annotations](#annotations)
+      - [Human-readable Types and Fields](#human-readable-types-and-fields)
+      - [Human-readable IDs](#human-readable-ids)
+      - [Human-readable Values](#human-readable-values)
+  - [Try it Locally](#try-it-locally)
   - [Change History View](#change-history-view)
-  - [Customizations](#customizations)
+  - [Advanced Options](#advanced-options)
     - [Altered table view](#altered-table-view)
     - [Disable lazy loading](#disable-lazy-loading)
-  - [Modelling Samples](#modelling-samples)
+  - [Examples](#examples)
+    - [Modelling Samples](#modelling-samples)
     - [Specify Object ID](#specify-object-id)
     - [Tracing Changes](#tracing-changes)
     - [Don'ts](#donts)
@@ -36,8 +55,7 @@ The `@cap-js/change-tracking` package is a [CDS plugin](https://cap.cloud.sap/do
   - [Licensing](#licensing)
 
 
-
-## Preliminaries
+## Prerequisites
 
 In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to. Clone the repository and apply the step-by-step instructions:
 
@@ -70,8 +88,8 @@ npm add @cap-js/change-tracking
 ```
 
 
-
-## Annotations
+## How to use
+### Annotations
 
 > [!WARNING]
 > Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) should not be change tracked, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
@@ -162,7 +180,7 @@ Hence, here it is essential to add a unique identifier to obtain human-readable 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
 
 
-## Test-drive locally
+## Try it Locally
 
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
@@ -172,7 +190,7 @@ With the steps above, we have successfully set up change tracking for our refere
   ```
 2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
 
-## Change History View
+### Change History View
 
 > [!IMPORTANT]
 > To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.<br>
@@ -182,7 +200,7 @@ With the steps above, we have successfully set up change tracking for our refere
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
 
-## Customizations
+## Advanced Options
 
 ### Altered table view
 
@@ -227,10 +245,13 @@ annotate sap.changelog.aspect @(UI.Facets: [{
 
 The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, such that the table will always shown when navigating to that respective Object page.
 
+## Examples
+### Modelling Samples
+This chapter describes modelling cases for further reference, from simple to complex, including but not limited to the following:
 
-## Modelling Samples
-
-This chapter describes more modelling cases for further reference, from simple to complex, including but not limited to the followings.
+  - [Specify Object ID](#specify-object-id)
+  - [Tracing Changes](#tracing-changes)
+  - [Don'ts](#donts)
 
 ### Specify Object ID
 
