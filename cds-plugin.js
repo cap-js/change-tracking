@@ -58,7 +58,8 @@ cds.on('loaded', m => {
       }
 
       // Add UI.Facet for Change History List
-      entity['@UI.Facets']?.push(facet)
+      if(!entity['@changelog.disable_facet'])
+        entity['@UI.Facets']?.push(facet)
 
       // The changehistory list should be refreshed after the custom action is triggered
       if (entity.actions) {
