@@ -31,33 +31,34 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 ### Table of Contents
 
 - [Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)](#change-tracking-plugin-for-sap-cloud-application-programming-model-cap)
-    - [Quick Start](#quick-start)
-    - [Table of Contents](#table-of-contents)
-    - [Prerequisites](#prerequisites)
-  - [Setup](#setup)
-  - [How to Use](#how-to-use)
-    - [Annotations](#annotations)
-      - [Human-readable Types and Fields](#human-readable-types-and-fields)
-      - [Human-readable IDs](#human-readable-ids)
-      - [Human-readable Values](#human-readable-values)
-  - [Try it Locally](#try-it-locally)
-  - [Change History View](#change-history-view)
-  - [Advanced Options](#advanced-options)
-    - [Altered table view](#altered-table-view)
-    - [Disable lazy loading](#disable-lazy-loading)
-  - [Examples](#examples)
-    - [Modelling Samples](#modelling-samples)
-    - [Specify Object ID](#specify-object-id)
-    - [Tracing Changes](#tracing-changes)
-    - [Don'ts](#donts)
-  - [Contributing](#contributing)
-  - [Code of Conduct](#code-of-conduct)
-  - [Licensing](#licensing)
+- [Try it Locally](#try-it-locally)
+- [Detailed Explanation](#how-to-use)
+  - [Annotations](#annotations)
+    - [Human-readable Types and Fields](#human-readable-types-and-fields)
+    - [Human-readable IDs](#human-readable-ids)
+    - [Human-readable Values](#human-readable-values)
+- [Advanced Options](#advanced-options)
+- [Examples](#examples)
+  - [Modelling Samples](#modelling-samples)
+  - [Specify Object ID](#specify-object-id)
+  - [Tracing Changes](#tracing-changes)
+  - [Don'ts](#donts)
+- [Contributing](#contributing)
+- [Code of Conduct](#code-of-conduct)
+- [Licensing](#licensing)
 
+## Try it Locally
 
-## Prerequisites
+In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to.
 
-In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to. Clone the repository and apply the step-by-step instructions:
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+- [Annotations](#annotations)
+- [Testing](#testing)
+
+### Prerequisites
+
+Clone the repository and apply the step-by-step instructions:
 
 ```sh
 git clone https://github.com/cap-js/incidents-app
@@ -77,9 +78,7 @@ npm i
 cds w samples/change-tracking
 ```
 
-
-
-## Setup
+### Setup
 
 To enable change tracking, simply add this self-configuring plugin package to your project:
 
@@ -87,8 +86,6 @@ To enable change tracking, simply add this self-configuring plugin package to yo
 npm add @cap-js/change-tracking
 ```
 
-
-## How to use
 ### Annotations
 
 > [!WARNING]
@@ -180,7 +177,7 @@ Hence, here it is essential to add a unique identifier to obtain human-readable 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
 
 
-## Try it Locally
+### Testing
 
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
@@ -190,7 +187,7 @@ With the steps above, we have successfully set up change tracking for our refere
   ```
 2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
 
-### Change History View
+#### Change History View
 
 > [!IMPORTANT]
 > To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.<br>
@@ -199,6 +196,8 @@ With the steps above, we have successfully set up change tracking for our refere
 <img width="1300" alt="change-history" src="_assets/changes.png">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
+
+## Detailed Explanation
 
 ## Advanced Options
 
