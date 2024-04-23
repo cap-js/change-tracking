@@ -2,6 +2,10 @@
 
 a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) for automatic capturing, storing, and viewing of the change records of modeled entities
 
+
+> [!WARNING]
+> Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) should not be change tracked, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
+
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
 ## Quick Start
@@ -30,16 +34,15 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 
 ### Table of Contents
 
-- [Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)](#change-tracking-plugin-for-sap-cloud-application-programming-model-cap)
 - [Try it Locally](#try-it-locally)
-- [Detailed Explanation](#how-to-use)
-  - [Annotations](#annotations)
-    - [Human-readable Types and Fields](#human-readable-types-and-fields)
-    - [Human-readable IDs](#human-readable-ids)
-    - [Human-readable Values](#human-readable-values)
+- [Detailed Explanation](#detailed-explanation)
+  - [Human-readable Types and Fields](#human-readable-types-and-fields)
+  - [Human-readable IDs](#human-readable-ids)
+  - [Human-readable Values](#human-readable-values)
 - [Advanced Options](#advanced-options)
+  - [Altered Table View](#altered-table-view)
+  - [Disable Lazy Loading](#disable-lazy-loading)
 - [Examples](#examples)
-  - [Modelling Samples](#modelling-samples)
   - [Specify Object ID](#specify-object-id)
   - [Tracing Changes](#tracing-changes)
   - [Don'ts](#donts)
@@ -51,12 +54,12 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 
 In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to.
 
-- [Prerequisites](#prerequisites)
-- [Setup](#setup)
-- [Annotations](#annotations)
-- [Testing](#testing)
+1. [Prerequisites](#1-prerequisites)
+2. [Setup](#2-setup)
+3. [Annotations](#3-annotations)
+4. [Testing](#4-testing)
 
-### Prerequisites
+### 1. Prerequisites
 
 Clone the repository and apply the step-by-step instructions:
 
@@ -78,7 +81,7 @@ npm i
 cds w samples/change-tracking
 ```
 
-### Setup
+### 2. Setup
 
 To enable change tracking, simply add this self-configuring plugin package to your project:
 
@@ -86,10 +89,7 @@ To enable change tracking, simply add this self-configuring plugin package to yo
 npm add @cap-js/change-tracking
 ```
 
-### Annotations
-
-> [!WARNING]
-> Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) should not be change tracked, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
+### 3. Annotations
 
 All we need to do is to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
@@ -111,10 +111,31 @@ The minimal annotation we require for change tracking is `@changelog` on element
 
 Additional identifiers or labels can be added to obtain more *human-readable* change records as described below.
 
+### 4. Testing
+
+With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
+
+1. **Start the server**:
+  ```sh
+  cds watch
+  ```
+2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
+
+#### Change History View
+
+> [!IMPORTANT]
+> To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.<br>
+> If you wish to *disable* this feature, please see the customization section on how to [disable lazy loading](#disable-lazy-loading).
+
+<img width="1300" alt="change-history" src="_assets/changes.png">
+
+If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
+
+## Detailed Explanation
 
 ### Human-readable Types and Fields
 
-By default the implementation looks up *Object Type* names or *Field* namesfrom respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed.
+By default the implementation looks up *Object Type* names or *Field* names from respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed.
 
 For example, without the `@title` annotation, changes to conversation entries would show up with the technical entity name:
 
@@ -139,9 +160,6 @@ These are already human-readable by default, unless the `@changelog` definition 
 
 For example, having a `@changelog` annotation without any additional identifiers, changes to conversation entries would show up as simple entity IDs:
 
-```cds
-annotate ProcessorService.Conversations {
-```
 <img width="1300" alt="change-history-id" src="_assets/changes-id-wbox.png">
 
 However, this is not advisable as we cannot easily distinguish between changes. It is more appropriate to annotate as follows:
@@ -175,29 +193,6 @@ Hence, here it is essential to add a unique identifier to obtain human-readable 
 ```
 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
-
-
-### Testing
-
-With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
-
-1. **Start the server**:
-  ```sh
-  cds watch
-  ```
-2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
-
-#### Change History View
-
-> [!IMPORTANT]
-> To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.<br>
-> If you wish to *disable* this feature, please see the customization section on how to [disable lazy loading](#disable-lazy-loading).
-
-<img width="1300" alt="change-history" src="_assets/changes.png">
-
-If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
-
-## Detailed Explanation
 
 ## Advanced Options
 
@@ -245,12 +240,23 @@ annotate sap.changelog.aspect @(UI.Facets: [{
 The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, such that the table will always shown when navigating to that respective Object page.
 
 ## Examples
-### Modelling Samples
-This chapter describes modelling cases for further reference, from simple to complex, including but not limited to the following:
+
+This section describes modelling cases for further reference, from simple to complex, including the following:
 
   - [Specify Object ID](#specify-object-id)
+    - [Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID](#use-case-1-annotate-single-fieldmultiple-fields-of-associated-tables-as-the-object-id)
+    - [Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID](#use-case-2-annotate-single-fieldmultiple-fields-of-project-customized-types-as-the-object-id)
+    - [Use Case 3: Annotate chained associated entities from the current entity as the Object ID](#use-case-3-annotate-chained-associated-entities-from-the-current-entity-as-the-object-id)
   - [Tracing Changes](#tracing-changes)
+    - [Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)](#use-case-1-trace-the-changes-of-child-nodes-from-the-current-entity-and-display-the-meaningful-data-from-child-nodes-composition-relation)
+    - [Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-2-trace-the-changes-of-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
+    - [Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data](#use-case-3-trace-the-changes-of-fields-defined-by-project-customized-types-and-display-the-meaningful-data)
+    - [Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-4-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
+    - [Use Case 5: Trace the changes of union entity and display the meaningful data](#use-case-5-trace-the-changes-of-union-entity-and-display-the-meaningful-data)
   - [Don'ts](#donts)
+    - [Use Case 1: Don't trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
+    - [Use Case 2: Don't trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
+    - [Use Case 3: Don't trace changes for CUD on DB entity](#use-case-3-dont-trace-changes-for-cud-on-db-entity)
 
 ### Specify Object ID
 
