@@ -227,6 +227,10 @@ annotate sap.changelog.aspect @(UI.Facets: [{
 
 The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, such that the table will always shown when navigating to that respective Object page.
 
+### Disable Facet
+
+To not show the changelog facet on compositions subsites, you can use `@changelog.disable_facet` for the facet to not show up.
+
 
 ## Modelling Samples
 
