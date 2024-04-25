@@ -229,7 +229,7 @@ The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, suc
 
 ### Disable Facet
 
-To not show the changelog facet on compositions subsites, you can use `@changelog.disale_facet` for the facet to not show up.
+To not show the changelog facet on compositions subsites, you can use `@changelog.disable_facet` for the facet to not show up.
 
 
 ## Modelling Samples
