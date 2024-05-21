@@ -8,30 +8,6 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
-## Quick Start
-
-1. Install the plugin: `npm add @cap-js/change-tracking`
-
-2. Add the annotations to your model:
-
-    ```cds
-    using { ProcessorService } from './processor-service';
-
-    annotate ProcessorService.Incidents {
-    customer @changelog: [customer.name];
-    title    @changelog;
-    status   @changelog;
-    }
-
-    annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
-    message  @changelog @Common.Label: 'Message';
-    }
-    ```
-
-3. Check the changelog in the UI:
-
-    <img width="1300" alt="change-history-loading" src="_assets/change-history.gif">
-
 ### Table of Contents
 
 - [Try it Locally](#try-it-locally)
