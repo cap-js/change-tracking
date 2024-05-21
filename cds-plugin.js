@@ -51,6 +51,8 @@ cds.on('loaded', m => {
       })})
       const assoc = { ...changes, on }
       const query = entity.projection || entity.query?.SELECT
+      if(!entity['@changelog.disable_assoc'])
+      {
       if (query) {
         (query.columns ??= ['*']).push({ as: 'changes', cast: assoc })
       } else {
@@ -58,8 +60,9 @@ cds.on('loaded', m => {
       }
 
       // Add UI.Facet for Change History List
-      entity['@UI.Facets']?.push(facet)
-
+      if(!entity['@changelog.disable_facet'])
+        entity['@UI.Facets']?.push(facet)
+      }
       // The changehistory list should be refreshed after the custom action is triggered
       if (entity.actions) {
 

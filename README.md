@@ -38,7 +38,6 @@ In this guide, we use the [Incidents Management reference sample app](https://gi
 ### 1. Prerequisites
 
 Clone the repository and apply the step-by-step instructions:
-
 ```sh
 git clone https://github.com/cap-js/incidents-app
 cd incidents-app
@@ -127,7 +126,6 @@ We get a human-readable display for *Object Type*:
 
 <img width="1300" alt="change-history-type-hr" src="_assets/changes-type-hr-wbox.png">
 
-
 ### Human-readable IDs
 
 The changelog annotations for *Object ID* are defined at entity level.
@@ -143,10 +141,10 @@ However, this is not advisable as we cannot easily distinguish between changes. 
 ```cds
 annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
 ```
+
 <img width="1300" alt="change-history-id-hr" src="_assets/changes-id-hr-wbox.png">
 
 Expanding the changelog annotation by additional identifiers `[author, timestamp]`, we can now better identify the `message` change events by their respective author and timestamp.
-
 
 ### Human-readable Values
 
@@ -157,7 +155,7 @@ They are already human-readable by default, unless the `@changelog` definition c
 For example, having a `@changelog` annotation without any additional identifiers, changes to incident customer would show up as UUIDs:
 
 ```cds
-  customer @changelog;
+customer @changelog;
 ```
 
 <img width="1300" alt="change-history-value" src="_assets/changes-value-wbox.png">
@@ -165,7 +163,7 @@ For example, having a `@changelog` annotation without any additional identifiers
 Hence, here it is essential to add a unique identifier to obtain human-readable value columns:
 
 ```cds
-  customer @changelog: [customer.name];
+customer @changelog: [customer.name];
 ```
 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
@@ -210,7 +208,6 @@ annotate sap.changelog.aspect @(UI.Facets: [{
   Target: 'changes/@UI.PresentationVariant',
   ![@UI.PartOfPreview]
 }]);
-
 ```
 
 The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, such that the table will always shown when navigating to that respective Object page.
@@ -251,7 +248,6 @@ entity Incidents : cuid, managed {
   status         : Association to Status default 'N';
   ...
 }
-
 ```
 
 Add the following `@changelog` annotations in `srv/change-tracking.cds`
@@ -260,7 +256,6 @@ Add the following `@changelog` annotations in `srv/change-tracking.cds`
 annotate ProcessorService.Incidents with @changelog: [customer.name, urgency.code, status.criticality] {
   title    @changelog;
 }
-
 ```
 
 ![AssociationID](_assets/AssociationID.png)
@@ -283,7 +278,6 @@ entity Customers : cuid, managed {
   phone          : PhoneNumber;   // customized type
   ...
 }
-
 ```
 
 Add the following `@changelog` annotations in `srv/change-tracking.cds`
@@ -292,7 +286,6 @@ Add the following `@changelog` annotations in `srv/change-tracking.cds`
 annotate ProcessorService.Incidents with @changelog: [customer.email, customer.phone] {
   title    @changelog;
 }
-
 ```
 
 ![CustomTypeID](_assets/CustomTypeID.png)
@@ -313,7 +306,6 @@ entity Customers : cuid, managed {
   addresses : Association to Addresses;
   ...
 }
-
 ```
 
 Add the following `@changelog` annotations in `srv/change-tracking.cds`
@@ -322,7 +314,6 @@ Add the following `@changelog` annotations in `srv/change-tracking.cds`
 annotate ProcessorService.Incidents with @changelog: [customer.addresses.city, customer.addresses.postCode] {
   title    @changelog;
 }
-
 ```
 
 ![ChainedAssociationID](_assets/ChainedAssociationID.png)
@@ -349,7 +340,6 @@ aspect Conversation: managed, cuid {
     ...
     message   : String;
 }
-
 ```
 
 Add the following `@changelog` annotations in `srv/change-tracking.cds`
@@ -358,7 +348,6 @@ Add the following `@changelog` annotations in `srv/change-tracking.cds`
 annotate ProcessorService.Incidents with @changelog: [title] {
   conversation @changelog: [conversation.message];
 }
-
 ```
 
 ![CompositionChange](_assets/CompositionChange.png)
@@ -380,7 +369,6 @@ entity Customers : cuid, managed {
   email          : EMailAddress;
   ...
 }
-
 ```
 
 Add the following `@changelog` annotations in `srv/change-tracking.cds`
@@ -389,7 +377,6 @@ Add the following `@changelog` annotations in `srv/change-tracking.cds`
 annotate ProcessorService.Incidents with @changelog: [title] {
   customer @changelog: [customer.email];
 }
-
 ```
 
 ![AssociationChange](_assets/AssociationChange.png)
@@ -407,7 +394,6 @@ entity Incidents : cuid, managed {
   status         : StatusType default 'N';
   ...
 }
-
 ```
 
 Add the following `@changelog` annotations in `srv/change-tracking.cds`
@@ -416,7 +402,6 @@ Add the following `@changelog` annotations in `srv/change-tracking.cds`
 annotate ProcessorService.Incidents with @changelog: [title] {
   status   @changelog: [status.code];
 }
-
 ```
 
 ![CustomTypeChange](_assets/CustomTypeChange.png)
@@ -438,7 +423,6 @@ entity Customers : cuid, managed {
   addresses : Association to Addresses;
   ...
 }
-
 ```
 
 Add the following `@changelog` annotations in `srv/change-tracking.cds`
@@ -447,7 +431,6 @@ Add the following `@changelog` annotations in `srv/change-tracking.cds`
 annotate ProcessorService.Incidents with @changelog: [title] {
   customer @changelog: [customer.addresses.city, customer.addresses.streetAddress];
 }
-
 ```
 
 ![ChainedAssociationChange](_assets/ChainedAssociationChange.png)
@@ -466,7 +449,6 @@ entity Payables : cuid {
     cryptoAmount : Decimal;
     fiatAmount   : Decimal;
 };
-
 ```
 
 `Payment.cds`:
@@ -477,7 +459,6 @@ entity Payments : cuid {
     @changelog
     name      : String;
 };
-
 ```
 
 Union entity in `BusinessTransaction.cds`:
@@ -502,7 +483,6 @@ union all
                on changes.objectID = ID AND changes.entity = 'payables.Payables'
     }
 );
-
 ```
 
 ![UnionChange.png](_assets/UnionChange.png)
@@ -518,7 +498,6 @@ entity Customers : cuid, managed {
   ...
   incidents : Association to many Incidents on incidents.customer = $self;
 }
-
 ```
 
 The reason is that: the relationship: `Association to many` is only for modelling purpose and there is no concrete field in database table. In the above sample, there is no column for incidents in the table Customers, but there is a navigation property of incidents in Customers OData entity metadata.
@@ -533,7 +512,6 @@ entity AggregatedBusinessTransactionData @(cds.autoexpose) : cuid {
                         and FootprintInventory.FootprintInventoryScope.ID = FootprintInventoryScope.ID;
     ...
 }
-
 ```
 
 The reason is that: When deploying to relational databases, Associations are mapped to foreign keys. Yet, when mapped to non-relational databases they're just references. More details could be found in [Prefer Managed Associations](https://cap.cloud.sap/docs/guides/domain-models#managed-associations). In the above sample, there is no column for FootprintInventory in the table AggregatedBusinessTransactionData, but there is a navigation property FootprintInventoryof in OData entity metadata.
@@ -547,22 +525,19 @@ this.on("UpdateActivationStatus", async (req) =>
         .where({ ID: paymentAgreement.ID })
         .set({ ActivationStatus_code: ActivationCodes.ACTIVE });
 );
-
 ```
 
 The reason is that: Application level services are by design the only place where business logic is enforced. This by extension means, that it also is the only point where e.g. change-tracking would be enabled. The underlying method used to do change tracking is `req.diff` which is responsible to read the necessary before-image from the database, and this method is not available on DB level.
-
 
 ## Contributing
 
 This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/cap-js/change-tracking/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
 
-
 ## Code of Conduct
 
 We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone. By participating in this project, you agree to abide by its [Code of Conduct](CODE_OF_CONDUCT.md) at all times.
 
-
 ## Licensing
 
 Copyright 2023 SAP SE or an SAP affiliate company and contributors. Please see our [LICENSE](LICENSE) for copyright and license information. Detailed information including third-party components and their licensing/copyright information is available [via the REUSE tool](https://api.reuse.software/info/github.com/cap-js/change-tracking).
+
