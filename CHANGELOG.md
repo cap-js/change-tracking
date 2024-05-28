@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.0.6 - TBD
+## Version 1.0.7 - 28.05.24
+
+### Changed
+
+- Peer dependency to @sap/cds changed to ">=7"
+
+## Version 1.0.6 - 29.04.24
 
 ### Fixed
 
