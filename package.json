@@ -18,7 +18,7 @@
     "test": "npx jest --silent"
   },
   "peerDependencies": {
-    "@sap/cds": "^7"
+    "@sap/cds": ">=7"
   },
   "devDependencies": {
     "@cap-js/change-tracking": "file:.",
