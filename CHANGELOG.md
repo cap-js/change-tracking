@@ -6,9 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Version 1.0.7 - 28.05.24
 
+
 ### Changed
 
 - Peer dependency to @sap/cds changed to ">=7"
+- Data marked as personal data using the data privacy annotations won't get changed tracked anymore to satisfy product standards
 
 ## Version 1.0.6 - 29.04.24
 
