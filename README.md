@@ -68,7 +68,7 @@ npm add @cap-js/change-tracking
 ## Annotations
 
 > [!WARNING]
-> Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) is **not change tracked**, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
+> Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) should not be change tracked, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
 
 All we need to do is to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
 
@@ -88,11 +88,11 @@ annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
 
 The minimal annotation we require for change tracking is `@changelog` on elements, as for the elements `title` and `status` in the sample snippet above.
 
-Additional identifiers or labels can be added to obtain more _human-readable_ change records as described below.
+Additional identifiers or labels can be added to obtain more *human-readable* change records as described below.
 
 ### Human-readable Types and Fields
 
-By default the implementation looks up _Object Type_ names or _Field_ namesfrom respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed.
+By default the implementation looks up *Object Type* names or *Field* namesfrom respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed.
 
 For example, without the `@title` annotation, changes to conversation entries would show up with the technical entity name:
 
@@ -104,13 +104,13 @@ With an annotation, and possible i18n translations like so:
 annotate Conversations with @title: 'Conversations';
 ```
 
-We get a human-readable display for _Object Type_:
+We get a human-readable display for *Object Type*:
 
 <img width="1300" alt="change-history-type-hr" src="_assets/changes-type-hr-wbox.png">
 
 ### Human-readable IDs
 
-The changelog annotations for _Object ID_ are defined at entity level.
+The changelog annotations for *Object ID* are defined at entity level.
 
 These are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
 
@@ -134,7 +134,7 @@ Expanding the changelog annotation by additional identifiers `[author, timestamp
 
 ### Human-readable Values
 
-The changelog annotations for _New Value_ and _Old Value_ are defined at element level.
+The changelog annotations for *New Value* and *Old Value* are defined at element level.
 
 They are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
 
@@ -170,17 +170,17 @@ cds watch
 
 > [!IMPORTANT]
 > To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.<br>
-> If you wish to _disable_ this feature, please see the customization section on how to [disable lazy loading](#disable-lazy-loading).
+> If you wish to *disable* this feature, please see the customization section on how to [disable lazy loading](#disable-lazy-loading).
 
 <img width="1300" alt="change-history" src="_assets/changes.png">
 
-If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the _Change History_ table which serves to help you to view and search the stored change records of your modeled entities.
+If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
 
 ## Customizations
 
 ### Altered table view
 
-The _Change History_ view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 5 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
+The *Change History* view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 5 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
 
 ```cds
 using from '@cap-js/change-tracking';
@@ -196,7 +196,7 @@ annotate sap.changelog.ChangeView with @(
 );
 ```
 
-In the UI, the _Change History_ table now contains 5 equally-spaced columns with the desired properties:
+In the UI, the *Change History* table now contains 5 equally-spaced columns with the desired properties:
 
 <img width="1300" alt="change-history-custom" src="_assets/changes-custom.png">
 
@@ -204,7 +204,7 @@ For more information and examples on adding Fiori Annotations, see [Adding SAP F
 
 ### Disable lazy loading
 
-To disable the lazy loading feature of the _Change History_ table, you can add the following annotation to your `srv/change-tracking.cds`:
+To disable the lazy loading feature of the *Change History* table, you can add the following annotation to your `srv/change-tracking.cds`:
 
 ```cds
 using from '@cap-js/change-tracking';
@@ -506,7 +506,7 @@ entity Customers : cuid, managed {
 
 The reason is that: the relationship: `Association to many` is only for modelling purpose and there is no concrete field in database table. In the above sample, there is no column for incidents in the table Customers, but there is a navigation property of incidents in Customers OData entity metadata.
 
-#### Use Case 2: Don't trace changes for field(s) with _Unmanaged Association_
+#### Use Case 2: Don't trace changes for field(s) with *Unmanaged Association*
 
 ```cds
 entity AggregatedBusinessTransactionData @(cds.autoexpose) : cuid {
