@@ -303,6 +303,26 @@ describe("change log integration test", () => {
         cds.services.AdminService.entities.BookStoreRegistry["@changelog"] = [{ "=": "code" }];
     });
 
+    it("10.9 Child entity deep delete by QL API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
+        await UPDATE(adminService.entities.BookStores).where({ ID: "64625905-c234-4d0d-9bc1-283ee8946770" }).with({
+            registry: null,
+            registry_ID: null,
+        });
+
+        const changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.BookStoreRegistry",
+            attribute: "validOn",
+        });
+
+        expect(changes.length).to.equal(1);
+        expect(changes[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(changes[0].objectID).to.equal("Paris-1");
+        expect(changes[0].modification).to.equal("delete");
+        expect(changes[0].parentObjectID).to.equal("Shakespeare and Company");
+        expect(changes[0].valueChangedFrom).to.equal("2012-01-01");
+        expect(changes[0].valueChangedTo).to.equal("");
+    });
+
     it("Do not change track personal data", async () => {
         const allCustomers = await SELECT.from(adminService.entities.Customers);
         await UPDATE(adminService.entities.Customers).where({ ID: allCustomers[0].ID }).with({
