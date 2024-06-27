@@ -358,4 +358,17 @@ describe("change log integration test", () => {
         expect(changes[0].valueChangedFrom).to.equal("2012-01-01");
         expect(changes[0].valueChangedTo).to.equal("");
     });
+
+    it("Do not change track personal data", async () => {
+        const allCustomers = await SELECT.from(adminService.entities.Customers);
+        await UPDATE(adminService.entities.Customers).where({ ID: allCustomers[0].ID }).with({
+            name: 'John Doe',
+        });
+
+        const changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Customers",
+        });
+
+        expect(changes.length).to.equal(0);
+    });
 });

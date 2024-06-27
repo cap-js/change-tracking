@@ -212,6 +212,13 @@ entity Customers : cuid {
                  on orderItems.customer = $self;
 }
 
+// do not change-track personal data
+annotate Customers with {
+  name @PersonalData.IsPotentiallyPersonal;
+  name @changelog 
+};
+
+
 entity OrderHeader : cuid {
   status : String;
 }
