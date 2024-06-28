@@ -12,12 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 
-- Wrong Objet ID captured when deleting root entities
+- Wrong Object ID captured when deleting root entities
 
 ### Changed
 
 - Peer dependency to @sap/cds changed to ">=7"
-- Data marked as personal data using the data privacy annotations won't get changed tracked anymore to satisfy product standards
+- Data marked as personal data using data privacy annotations won't get change-tracked anymore to satisfy product standards
 
 
 ## Version 1.0.6 - 29.04.24
