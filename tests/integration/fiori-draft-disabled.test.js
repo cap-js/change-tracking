@@ -89,6 +89,67 @@ describe("change log draft disabled test", () => {
         expect(afterChanges.length).to.equal(0);
     });
 
+    it("1.4 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
+        cds.env.requires["change-tracking"].preserveDeletes = true;
+        
+        cds.services.AdminService.entities.RootObject["@changelog"] = [
+            { "=": "title" }
+        ];
+        cds.services.AdminService.entities.Level1Object["@changelog"] = [
+            { "=": "parent.title" }
+        ];
+        cds.services.AdminService.entities.Level2Object["@changelog"] = [
+            { "=": "parent.parent.title" }
+        ];
+        const RootObject = await POST(
+            `/odata/v4/admin/RootObject`,
+            {
+                ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
+                title: "new RootObject title",
+                child: [
+                    {
+                        ID: "48268451-8552-42a6-a3d7-67564be97733",
+                        title: "new Level1Object title",
+                        child: [
+                            {
+                                ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
+                                title: "new Level2Object title",
+                            }
+                        ]
+                    }
+                ]
+            },
+        );
+
+        const beforeChanges = await adminService.run(SELECT.from(ChangeView));
+        expect(beforeChanges.length > 0).to.be.true;
+
+        // Test when the root and child entity deletion occur simultaneously
+        await DELETE(`/odata/v4/admin/RootObject(ID=${RootObject.data.ID})`);
+
+        const afterChanges = await adminService.run(SELECT.from(ChangeView));
+        expect(afterChanges.length).to.equal(8);
+
+        const changelogCreated = afterChanges.filter(ele=> ele.modification === "Create"); 
+        const changelogDeleted = afterChanges.filter(ele=> ele.modification === "Delete"); 
+
+        const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'parentKey', 'serviceEntityPath', 'valueDataType', 'objectID', 'parentObjectID', 'entityKey'];
+
+        let commonItems = changelogCreated.filter(beforeItem => {
+        return changelogDeleted.some(afterItem => {
+            return compareAttributes.every(attr => beforeItem[attr] === afterItem[attr])
+            && beforeItem['valueChangedFrom'] === afterItem['valueChangedTo']
+            && beforeItem['valueChangedTo'] === afterItem['valueChangedFrom'];
+            });
+        });
+
+        expect(commonItems.length > 0).to.be.true;
+
+        delete cds.services.AdminService.entities.RootObject["@changelog"];
+        delete cds.services.AdminService.entities.Level1Object["@changelog"];
+        delete cds.services.AdminService.entities.Level2Object["@changelog"];
+    });
+
     it("3.1 Composition creatition by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
         await POST(
             `/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes`,
@@ -450,6 +511,22 @@ describe("change log draft disabled test", () => {
         expect(createOrderChanges.length).to.equal(1);
         const createOrderChange = createOrderChanges[0];
         expect(createOrderChange.objectID).to.equal("test Order title");
+
+        await PATCH(`/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e7c44)`, {
+            title: "Order title changed"
+        });
+
+        const updateOrderChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Order",
+                attribute: "title",
+                modification: "update",
+            }),
+        );
+        expect(updateOrderChanges.length).to.equal(1);
+        const updateOrderChange = updateOrderChanges[0];
+        expect(updateOrderChange.objectID).to.equal("Order title changed");
+
         delete cds.db.entities.Order["@changelog"];
     });
 
