@@ -17,6 +17,24 @@ describe("change log integration test", () => {
         await data.reset();
     });
 
+    it("1.6 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
+        cds.env.requires["change-tracking"].preserveDeletes = true;
+        const level3EntityData = [
+            {
+                ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321",
+                title: "Service api Level3 title",
+                parent_ID: "dd1fdd7d-da2a-4600-940b-0baf2946c4ff",
+            },
+        ];
+        await adminService.run(INSERT.into(adminService.entities.Level3Entity).entries(level3EntityData));
+        let beforeChanges = await SELECT.from(ChangeView);
+        expect(beforeChanges.length > 0).to.be.true;
+
+        await adminService.run(DELETE.from(adminService.entities.RootEntity).where({ ID: "64625905-c234-4d0d-9bc1-283ee8940812" }));
+        let afterChanges = await SELECT.from(ChangeView);
+        expect(afterChanges.length).to.equal(11);
+    });    
+
     it("2.5 Root entity deep creation by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
         const bookStoreData = {
             ID: "843b3681-8b32-4d30-82dc-937cdbc68b3a",
@@ -85,6 +103,24 @@ describe("change log integration test", () => {
         expect(createBookStoresChanges.length).to.equal(1);
         const createBookStoresChange = createBookStoresChanges[0];
         expect(createBookStoresChange.objectID).to.equal("new name");
+
+        await UPDATE(adminService.entities.BookStores)
+        .where({ 
+            ID: "9d703c23-54a8-4eff-81c1-cdce6b6587c4"
+        })
+        .with({
+            name: "BookStores name changed"
+        });
+        const updateBookStoresChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.BookStores",
+                attribute: "name",
+                modification: "update",
+            }),
+        );
+        expect(updateBookStoresChanges.length).to.equal(1);
+        const updateBookStoresChange = updateBookStoresChanges[0];
+        expect(updateBookStoresChange.objectID).to.equal("BookStores name changed");
 
         cds.services.AdminService.entities.BookStores["@changelog"].pop();
         
@@ -321,5 +357,18 @@ describe("change log integration test", () => {
         expect(changes[0].parentObjectID).to.equal("Shakespeare and Company");
         expect(changes[0].valueChangedFrom).to.equal("2012-01-01");
         expect(changes[0].valueChangedTo).to.equal("");
+    });
+
+    it("Do not change track personal data", async () => {
+        const allCustomers = await SELECT.from(adminService.entities.Customers);
+        await UPDATE(adminService.entities.Customers).where({ ID: allCustomers[0].ID }).with({
+            name: 'John Doe',
+        });
+
+        const changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Customers",
+        });
+
+        expect(changes.length).to.equal(0);
     });
 });
