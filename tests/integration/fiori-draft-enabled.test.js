@@ -24,6 +24,64 @@ describe("change log integration test", () => {
         await data.reset();
     });
 
+    
+    it("1.5 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
+        cds.env.requires["change-tracking"].preserveDeletes = true;
+
+        // Root and child nodes are created at the same time
+        const createAction = POST.bind({}, `/odata/v4/admin/RootEntity`, {
+            ID: "01234567-89ab-cdef-0123-987654fedcba",
+            name: "New name for RootEntity",
+            child: [
+                {
+                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                    title: "New name for Level1Entity",
+                    child: [
+                        {
+                            ID: "12ed5dd8-d45b-11ed-afa1-0242ac124446",
+                            title: "New name for Level2Entity",
+                            child: [
+                                {
+                                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac123335",
+                                    title: "New name for Level3Entity",
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+        await utils.apiAction(
+            "admin",
+            "RootEntity",
+            "01234567-89ab-cdef-0123-987654fedcba",
+            "AdminService",
+            createAction,
+            true,
+        );
+        const beforeChanges = await adminService.run(SELECT.from(ChangeView));
+        expect(beforeChanges.length > 0).to.be.true; 
+    
+        await DELETE(`/admin/RootEntity(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=true)`);
+
+        const afterChanges = await adminService.run(SELECT.from(ChangeView));
+
+        const changelogCreated = afterChanges.filter(ele=> ele.modification === "Create"); 
+        const changelogDeleted = afterChanges.filter(ele=> ele.modification === "Delete"); 
+
+        const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'parentKey', 'serviceEntityPath', 'valueDataType', 'objectID', 'parentObjectID', 'entityKey'];
+
+        let commonItems = changelogCreated.filter(beforeItem => {
+        return changelogDeleted.some(afterItem => {
+            return compareAttributes.every(attr => beforeItem[attr] === afterItem[attr])
+            && beforeItem['valueChangedFrom'] === afterItem['valueChangedTo']
+            && beforeItem['valueChangedTo'] === afterItem['valueChangedFrom'];
+            });
+        });
+        expect(commonItems.length > 0).to.be.true;
+        expect(afterChanges.length).to.equal(14);
+    });
+
     it("2.1 Child entity creation - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
         const action = POST.bind(
             {},
@@ -813,6 +871,27 @@ describe("change log integration test", () => {
         expect(BookStoresChanges.length).to.equal(1);
         const BookStoresChange = BookStoresChanges[0];
         expect(BookStoresChange.objectID).to.equal("new name");
+
+        const updateBookStoresAction = PATCH.bind({}, `/admin/BookStores(ID=9d703c23-54a8-4eff-81c1-cdce6b6587c4,IsActiveEntity=false)`, {
+            name: "name update",
+        });
+        await utils.apiAction(
+            "admin",
+            "BookStores",
+            "9d703c23-54a8-4eff-81c1-cdce6b6587c4",
+            "AdminService",
+            updateBookStoresAction,
+        );
+        const updateBookStoresChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.BookStores",
+                attribute: "name",
+                modification: "update",
+            }),
+        );
+        expect(updateBookStoresChanges.length).to.equal(1);
+        const updateBookStoresChange = updateBookStoresChanges[0];
+        expect(updateBookStoresChange.objectID).to.equal("name update");
 
         delete cds.services.AdminService.entities.BookStores["@changelog"];
 
