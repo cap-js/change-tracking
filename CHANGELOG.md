@@ -4,7 +4,23 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.0.6 - TBD
+## Version 1.0.7 - 01.07.24
+
+### Added
+
+ - A global switch to preserve change logs for deleted data
+
+### Fixed
+
+- Wrong Objet ID captured when deleting root entities
+
+### Changed
+
+- Peer dependency to @sap/cds changed to ">=7"
+- Data marked as personal data using the data privacy annotations won't get changed tracked anymore to satisfy product standards
+
+
+## Version 1.0.6 - 29.04.24
 
 ### Fixed
 
