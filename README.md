@@ -2,10 +2,6 @@
 
 a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) for automatic capturing, storing, and viewing of the change records of modeled entities
 
-
-> [!WARNING]
-> Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) should not be change tracked, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
-
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
 ### Table of Contents
@@ -18,10 +14,12 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 - [Advanced Options](#advanced-options)
   - [Altered Table View](#altered-table-view)
   - [Disable Lazy Loading](#disable-lazy-loading)
+  - [Disable UI Facet generation](#disable-ui-facet-generation)
+    - [Disable Association to Changes Generation](#disable-association-to-changes-generation)
 - [Examples](#examples)
   - [Specify Object ID](#specify-object-id)
   - [Tracing Changes](#tracing-changes)
-  - [Don'ts](#donts)
+  - [Don&#39;ts](#donts)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
 - [Licensing](#licensing)
@@ -38,6 +36,7 @@ In this guide, we use the [Incidents Management reference sample app](https://gi
 ### 1. Prerequisites
 
 Clone the repository and apply the step-by-step instructions:
+
 ```sh
 git clone https://github.com/cap-js/incidents-app
 cd incidents-app
@@ -94,15 +93,17 @@ Additional identifiers or labels can be added to obtain more *human-readable* ch
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
 1. **Start the server**:
-  ```sh
-  cds watch
-  ```
+
+```sh
+cds watch
+```
+
 2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
 
 #### Change History View
 
 > [!IMPORTANT]
-> To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.<br>
+> To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.`<br>`
 > If you wish to *disable* this feature, please see the customization section on how to [disable lazy loading](#disable-lazy-loading).
 
 <img width="1300" alt="change-history" src="_assets/changes.png">
@@ -215,24 +216,57 @@ annotate sap.changelog.aspect @(UI.Facets: [{
 
 The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, such that the table will always shown when navigating to that respective Object page.
 
+### Disable UI Facet generation
+
+If you do not want the UI facet added to a specific UI, you can annotate the service entity with `@changelog.disable_facet`. This will disable the automatic addition of the UI faced to this specific entity, but also all views or further projections up the chain.
+
+### Disable Association to Changes Generation
+
+For some scenarios, e.g. when doing `UNION` and the `@changelog` annotion is still propageted, the automatic addition of the association to `changes` does not make sense. You can use `@changelog.disable_assoc`for this to be disabled on entity level.
+
+> [!IMPORTANT]
+> This will also supress the addition of the UI facet, since the change-view is not available as target entity anymore.
+
+### Preserve change logs of deleted data
+
+By default, deleting a record will also automatically delete all associated change logs. This helps reduce the impact on the size of the database.
+You can turn this behavior off globally by adding the following switch to the `package.json` of your project
+
+```
+...
+"cds": {
+  "requires": {
+    ...
+    "change-tracking": {
+      "preserveDeletes": true
+    }
+   ...
+  }
+}
+...
+```
+> [!IMPORTANT]
+> Preserving the change logs of deleted data can have a significant impact on the size of the change logging table, since now such data also survives automated data retention runs. 
+> You must implement an own **data retention strategy** for the change logging table in order to manage the size and performance of your database.
+
 ## Examples
 
 This section describes modelling cases for further reference, from simple to complex, including the following:
 
-  - [Specify Object ID](#specify-object-id)
-    - [Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID](#use-case-1-annotate-single-fieldmultiple-fields-of-associated-tables-as-the-object-id)
-    - [Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID](#use-case-2-annotate-single-fieldmultiple-fields-of-project-customized-types-as-the-object-id)
-    - [Use Case 3: Annotate chained associated entities from the current entity as the Object ID](#use-case-3-annotate-chained-associated-entities-from-the-current-entity-as-the-object-id)
-  - [Tracing Changes](#tracing-changes)
-    - [Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)](#use-case-1-trace-the-changes-of-child-nodes-from-the-current-entity-and-display-the-meaningful-data-from-child-nodes-composition-relation)
-    - [Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-2-trace-the-changes-of-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
-    - [Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data](#use-case-3-trace-the-changes-of-fields-defined-by-project-customized-types-and-display-the-meaningful-data)
-    - [Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-4-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
-    - [Use Case 5: Trace the changes of union entity and display the meaningful data](#use-case-5-trace-the-changes-of-union-entity-and-display-the-meaningful-data)
-  - [Don'ts](#donts)
-    - [Use Case 1: Don't trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
-    - [Use Case 2: Don't trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
-    - [Use Case 3: Don't trace changes for CUD on DB entity](#use-case-3-dont-trace-changes-for-cud-on-db-entity)
+- [Specify Object ID](#specify-object-id)
+  - [Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID](#use-case-1-annotate-single-fieldmultiple-fields-of-associated-tables-as-the-object-id)
+  - [Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID](#use-case-2-annotate-single-fieldmultiple-fields-of-project-customized-types-as-the-object-id)
+  - [Use Case 3: Annotate chained associated entities from the current entity as the Object ID](#use-case-3-annotate-chained-associated-entities-from-the-current-entity-as-the-object-id)
+- [Tracing Changes](#tracing-changes)
+  - [Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)](#use-case-1-trace-the-changes-of-child-nodes-from-the-current-entity-and-display-the-meaningful-data-from-child-nodes-composition-relation)
+  - [Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-2-trace-the-changes-of-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
+  - [Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data](#use-case-3-trace-the-changes-of-fields-defined-by-project-customized-types-and-display-the-meaningful-data)
+  - [Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-4-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
+  - [Use Case 5: Trace the changes of union entity and display the meaningful data](#use-case-5-trace-the-changes-of-union-entity-and-display-the-meaningful-data)
+- [Don&#39;ts](#donts)
+  - [Use Case 1: Don&#39;t trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
+  - [Use Case 2: Don&#39;t trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
+  - [Use Case 3: Don&#39;t trace changes for CUD on DB entity](#use-case-3-dont-trace-changes-for-cud-on-db-entity)
 
 ### Specify Object ID
 

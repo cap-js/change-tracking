@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.0.7 - 01.07.24
+## Version 1.0.7 - 09.07.24
 
 ### Added
 
@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 - Peer dependency to @sap/cds changed to ">=7"
 - Data marked as personal data using data privacy annotations won't get change-tracked anymore to satisfy product standards
+- Restructured Documentation
 
 
 ## Version 1.0.6 - 29.04.24
