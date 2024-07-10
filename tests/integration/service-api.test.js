@@ -26,11 +26,11 @@ describe("change log integration test", () => {
                 parent_ID: "dd1fdd7d-da2a-4600-940b-0baf2946c4ff",
             },
         ];
-        await adminService.run(INSERT.into(adminService.entities.Level3Entity).entries(level3EntityData));
+        await INSERT.into(adminService.entities.Level3Entity).entries(level3EntityData);
         let beforeChanges = await SELECT.from(ChangeView);
         expect(beforeChanges.length > 0).to.be.true;
 
-        await adminService.run(DELETE.from(adminService.entities.RootEntity).where({ ID: "64625905-c234-4d0d-9bc1-283ee8940812" }));
+        await DELETE.from(adminService.entities.RootEntity).where({ ID: "64625905-c234-4d0d-9bc1-283ee8940812" });
         let afterChanges = await SELECT.from(ChangeView);
         expect(afterChanges.length).to.equal(11);
     });    
@@ -50,7 +50,7 @@ describe("change log integration test", () => {
                 },
             ],
         };
-        await adminService.run(INSERT.into(adminService.entities.BookStores).entries(bookStoreData));
+        await INSERT.into(adminService.entities.BookStores).entries(bookStoreData);
 
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.BookStores",
@@ -94,7 +94,7 @@ describe("change log integration test", () => {
             ID: "9d703c23-54a8-4eff-81c1-cdce6b6587c4",
             name: "new name",
         };
-        await adminService.run(INSERT.into(adminService.entities.BookStores).entries(bookStoreData));
+        await INSERT.into(adminService.entities.BookStores).entries(bookStoreData);
         let createBookStoresChanges = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.BookStores",
             attribute: "name",
@@ -131,7 +131,7 @@ describe("change log integration test", () => {
                 parent_ID: "dd1fdd7d-da2a-4600-940b-0baf2946c4ff",
             },
         ];
-        await adminService.run(INSERT.into(adminService.entities.Level3Entity).entries(level3EntityData));
+        await INSERT.into(adminService.entities.Level3Entity).entries(level3EntityData);
         let createChanges = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.Level3Entity",
             attribute: "title",
@@ -181,7 +181,7 @@ describe("change log integration test", () => {
                 },
             ],
         };
-        await adminService.run(INSERT.into(adminService.entities.RootEntity).entries(RootEntityData));
+        await INSERT.into(adminService.entities.RootEntity).entries(RootEntityData);
 
         const createEntityChanges = await adminService.run(
             SELECT.from(ChangeView).where({
@@ -258,7 +258,7 @@ describe("change log integration test", () => {
                 info_ID: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
             },
         ];
-        await adminService.run(INSERT.into(adminService.entities.RootEntity).entries(rootEntityData));
+        await INSERT.into(adminService.entities.RootEntity).entries(rootEntityData);
         let createChanges = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.RootEntity",
             attribute: "info",
@@ -294,7 +294,7 @@ describe("change log integration test", () => {
                 validOn: "2022-01-01",
             },
         };
-        await adminService.run(INSERT.into(adminService.entities.BookStores).entries(bookStoreData));
+        await INSERT.into(adminService.entities.BookStores).entries(bookStoreData);
 
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.BookStoreRegistry",
