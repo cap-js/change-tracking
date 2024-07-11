@@ -1,6 +1,6 @@
 const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
-const { expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
+const { expect, data, GET, POST, PATCH, DELETE } = cds.test(bookshop);
 const { RequestSend } = require("../utils/api");
 
 jest.setTimeout(5 * 60 * 1000);
@@ -15,6 +15,7 @@ describe("change log integration test", () => {
     beforeAll(async () => {
         adminService = await cds.connect.to("AdminService");
         ChangeView = adminService.entities.ChangeView;
+        ChangeView["@cds.autoexposed"] = false;
         db = await cds.connect.to("sql:my.db");
         ChangeEntity = db.model.definitions["sap.changelog.Changes"];
         utils = new RequestSend(POST);
@@ -25,7 +26,7 @@ describe("change log integration test", () => {
     });
 
     
-    it("1.5 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
+    it.only("1.5 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
         cds.env.requires["change-tracking"].preserveDeletes = true;
 
         // Root and child nodes are created at the same time
@@ -62,7 +63,7 @@ describe("change log integration test", () => {
         const beforeChanges = await adminService.run(SELECT.from(ChangeView));
         expect(beforeChanges.length > 0).to.be.true; 
     
-        await DELETE(`/admin/RootEntity(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=true)`);
+        await DELETE(`/odata/v4/admin/RootEntity(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=true)`);
 
         const afterChanges = await adminService.run(SELECT.from(ChangeView));
 

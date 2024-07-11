@@ -21,7 +21,7 @@ describe("change log draft disabled test", () => {
         await data.reset();
     });
 
-    it.only("1.1 Root entity creation - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
+    it("1.1 Root entity creation - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
         const author = await POST(`/odata/v4/admin/Authors`, {
             name_firstName: "Sam",
             name_lastName: "Smiths",
