@@ -26,7 +26,7 @@ describe("change log integration test", () => {
     });
 
     
-    it.only("1.5 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
+    it("1.5 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
         cds.env.requires["change-tracking"].preserveDeletes = true;
 
         // Root and child nodes are created at the same time
@@ -1402,7 +1402,7 @@ describe("change log integration test", () => {
         expect(registryChange.parentObjectID).to.equal("City Lights Books");
     });
 
-    it("11.1 The change log should be captured when a child entity in draft-enabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
+    it.only("11.1 The change log should be captured when a child entity in draft-enabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
         await POST(
             `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=true)/books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=true)/volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf,IsActiveEntity=true)/AdminService.activate`,
             {
