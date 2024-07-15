@@ -20,20 +20,24 @@ describe("change log integration test", () => {
 
     it("1.6 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
         cds.env.requires["change-tracking"].preserveDeletes = true;
-        const level3EntityData = [
+
+        const authorData = [
             {
-                ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321",
-                title: "Service api Level3 title",
-                parent_ID: "dd1fdd7d-da2a-4600-940b-0baf2946c4ff",
-            },
-        ];
-        await INSERT.into(adminService.entities.Level3Entity).entries(level3EntityData);
-        let beforeChanges = await SELECT.from(ChangeView);
+                ID: "64625905-c234-4d0d-9bc1-283ee8940812",
+                name_firstName: "Sam",
+                name_lastName: "Smiths",
+                placeOfBirth: "test place",
+            }
+        ]
+
+        await INSERT.into(adminService.entities.Authors).entries(authorData);
+        const beforeChanges = await adminService.run(SELECT.from(ChangeView));
         expect(beforeChanges.length > 0).to.be.true;
 
-        await DELETE.from(adminService.entities.RootEntity).where({ ID: "64625905-c234-4d0d-9bc1-283ee8940812" });
-        let afterChanges = await SELECT.from(ChangeView);
-        expect(afterChanges.length).to.equal(11);
+        await DELETE.from(adminService.entities.Authors).where({ ID: "64625905-c234-4d0d-9bc1-283ee8940812" });
+
+        const afterChanges = await adminService.run(SELECT.from(ChangeView));
+        expect(afterChanges.length).to.equal(6);
     });    
 
     it("2.5 Root entity deep creation by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
@@ -155,15 +159,15 @@ describe("change log integration test", () => {
         const updateChange = updateChanges[0];
         expect(updateChange.objectID).to.equal("In Preparation");
 
-        // await DELETE.from(adminService.entities.Level3Entity).where({ ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321" });
-        // let deleteChanges = await SELECT.from(ChangeView).where({
-        //     entity: "sap.capire.bookshop.Level3Entity",
-        //     attribute: "title",
-        //     modification: "delete",
-        // });
-        // expect(deleteChanges.length).to.equal(1);
-        // const deleteChange = deleteChanges[0];
-        // expect(deleteChange.objectID).to.equal("In Preparation");
+        await DELETE.from(adminService.entities.Level3Entity).where({ ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321" });
+        let deleteChanges = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level3Entity",
+            attribute: "title",
+            modification: "delete",
+        });
+        expect(deleteChanges.length).to.equal(1);
+        const deleteChange = deleteChanges[0];
+        expect(deleteChange.objectID).to.equal("In Preparation");
 
         // Test object id when parent and child nodes are created at the same time
         const RootEntityData = {

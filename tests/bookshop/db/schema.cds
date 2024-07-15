@@ -150,6 +150,7 @@ entity Volumns : managed, cuid {
   @changelog
   @title : '{i18n>volumns.sequence}'
   sequence : Integer;
+  // @cds.api.ignore
   book     : Association to one Books;
   @title : '{i18n>Status}'
   @changelog : [ActivationStatus.name]

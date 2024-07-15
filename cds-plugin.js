@@ -23,6 +23,54 @@ const addSideEffects = (actions, flag, element) => {
   }
 }
 
+// const compositionParentAssociation = (entity, csn, entityName = '', facets = '') => {
+//   if (!entity || entity.kind !== "entity") {
+//     return;
+//   }
+//   let isAddedWrapper = {value: false };
+//   const elements = entity.elements ? entity.elements : {};
+//   const parentAssociation = Object.keys(elements).find((name) => {
+//     const element = elements[name];
+//     if (!isAddedWrapper.value && element.type === "cds.Association") {
+//       compositionParentElements({ csn, element, entity, entityName, isAddedWrapper }, name, facets)
+//     }
+//   });
+//   if (parentAssociation && !facets) {
+//     return elements[parentAssociation];
+//   }
+// }
+
+// const compositionParentElements = ({ csn, element, entity, entityName, isAddedWrapper = {} }, ele, facets) => {
+//   const parentDefinition = csn.definitions?.[element?.target]?.name
+//     ? csn.definitions[element.target]
+//     : { ...csn.definitions?.[element?.target], name: element?.target };
+
+//   const parentElements = parentDefinition?.elements
+//     ? parentDefinition.elements
+//     : {};
+
+//   const currentEntity = entity?.name
+//     ? entity
+//     : { ...entity, name: entityName };
+//   if (facets && parentDefinition[`${facets}`]) {
+//     //ToDo: Revisit Breaklook with node.js Expert
+//     breakLoop: for (const value of Object.values(parentElements)) {
+//       if (value.target === currentEntity.name) {
+//         addSideEffects(currentEntity.actions, false, ele)
+//         isAddedWrapper.value = true;
+//         break breakLoop
+//       }
+//     }
+//   } else {
+//     return !!Object.keys(parentElements).find((name) => {
+//       const parentElement = parentElements[name];
+//       if (parentElement.type === "cds.Composition") {
+//         return parentElement.target === entity.name;
+//       }
+//     });
+//   }
+// }
+
 
 // Unfold @changelog annotations in loaded model
 cds.on('loaded', m => {
@@ -85,6 +133,7 @@ cds.on('loaded', m => {
               }
             }
           }
+          // compositionParentAssociation(entity, m, name, '@UI.Facets')
         }
       }
     }
