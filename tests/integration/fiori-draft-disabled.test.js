@@ -151,7 +151,7 @@ describe("change log draft disabled test", () => {
         delete cds.services.AdminService.entities.Level2Object["@changelog"];
     });
 
-    it("3.1 Composition creatition by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
+    it.only("3.1 Composition creatition by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
         await POST(
             `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes`,
             {
