@@ -26,7 +26,7 @@ describe("change log integration test", () => {
     });
 
     
-    it.only("1.5 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
+    it("1.5 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
         cds.env.requires["change-tracking"].preserveDeletes = true;
 
         // Root and child nodes are created at the same time
