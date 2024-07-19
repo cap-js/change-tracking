@@ -12,7 +12,7 @@ module.exports = cds.service.impl(async (srv) => {
 
     const onActivateVolumns = async (req) => {
         const entity = req.entity;
-        const entityID = req._params[req._params.length - 1].ID;
+        const entityID = "dd1fdd7d-da2a-4600-940b-0baf2946c9bf";
         await UPDATE.entity(entity)
           .where({ ID: entityID })
           .set({ ActivationStatus_code: "VALID" });
@@ -20,7 +20,7 @@ module.exports = cds.service.impl(async (srv) => {
 
     const onActivateOrderItemNote = async (req) => {
         const entity = req.entity;
-        const entityID = req._params[req._params.length - 1];
+        const entityID = "a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc";
         await UPDATE.entity(entity)
           .where({ ID: entityID })
           .set({ ActivationStatus_code: "VALID" });
