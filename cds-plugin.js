@@ -73,6 +73,112 @@ const addSideEffects = (actions, flag, element) => {
 
 
 // Unfold @changelog annotations in loaded model
+
+function setRootEntityForChangeTracking(entity, csn) {
+  return csn.definitions[entity.name]['change-tracking-isRootEntity'] = true;
+}
+
+function setChangeTrackingIsRootEntity(entity, csn, val = true) {
+  if (csn.definitions && csn.definitions[entity.name]) {
+    csn.definitions[entity.name]['change-tracking-isRootEntity'] = val;
+  }
+}
+
+function checkAndSetRootEntity(parentEntity, entity, csn) {
+  if (entity['change-tracking-isRootEntity'] === false) {
+    return entity;
+  }
+  if (parentEntity) {
+    if (parentEntity['change-tracking-isRootEntity'] === true) {
+      return parentEntity;
+    } else {
+      return compositionRoot(parentEntity, csn);
+    }
+  } else {
+    // if (entity['change-tracking-isRootEntity'] === false) {
+    //   return entity;
+    // }
+    setChangeTrackingIsRootEntity(entity, csn);
+    return {...csn.definitions[entity.name], name: entity.name}
+    // return entity;
+  }
+}
+
+function compositionRoot(entity, csn) {
+  if (!entity || entity.kind !== "entity") {
+    return;
+  }
+  // const compositionEntity = setRootEntityForChangeTracking(entity, csn);
+  const parentEntity = compositionParent(entity, csn);
+  return checkAndSetRootEntity(parentEntity, entity, csn);
+  // return parentEntity ? compositionRoot(parentEntity, csn) : setChangeTrackingIsRootEntity(entity, csn);
+  // return parentEntity ? compositionRoot(parentEntity, csn) : entity;
+}
+
+function compositionParent(entity, csn) {
+  if (!entity || entity.kind !== "entity") {
+    return;
+  }
+  const parentAssociation = compositionParentAssociation(entity, csn);
+  
+  if (parentAssociation) {
+    const targetName = parentAssociation.target? parentAssociation.target : parentAssociation.name;
+    return { ...csn.definitions?.[targetName], name: targetName }
+  } else return null;
+  // return parentAssociation ? { ...csn.definitions?.[targetName], name: targetName } : null;
+  // return parentAssociation ? { ...csn.definitions?.[parentAssociation.target], name: parentAssociation.target } : null;
+}
+
+function compositionParentAssociation(entity, csn) {
+  if (!entity || entity.kind !== "entity") {
+    return;
+  }
+  const elements = entity.elements ? entity.elements : {};
+
+  for (const name in elements) {
+    const element = elements[name];
+    const target = element.target;
+    if (element.type === "cds.Composition" && name !== 'texts' && target !== entity.name && target['change-tracking-isRootEntity'] !== false) {
+      setChangeTrackingIsRootEntity({ ...csn.definitions[target], name: target }, csn, false)
+    } 
+  }
+  // Object.keys(elements).forEach((name)=>{
+  //   const element = elements[name];
+  //   if (element.type === "cds.Composition" && name !== 'texts' && element.target !== entity.name) {
+  //     setChangeTrackingIsRootEntity({ ...csn.definitions[element.target], name: element.target }, csn, false)
+  //   } 
+  // })
+  if (entity['change-tracking-isRootEntity'] !== false) {
+    const parentAssociation = Object.keys(elements).find((name) => {
+      const element = elements[name];
+      const target = element.target;
+      // if (element.type === "cds.Composition" && name !== 'texts' && target !== entity.name) {
+      //   setChangeTrackingIsRootEntity({ ...csn.definitions[target], name: target }, csn, false)
+      // } else 
+      if (element.type === "cds.Association" && target !== entity.name) {
+        const parentDefinition = csn.definitions[target];
+        const parentElements = parentDefinition.elements ? parentDefinition.elements : {};
+        // if (parentDefinition['change-tracking-isRootEntity'] === false) {
+        //   setChangeTrackingIsRootEntity(entity, csn, false)
+        //   loopStop.value = true;
+        //   return;
+        // }
+        return !!Object.keys(parentElements).find((name) => {
+          const parentElement = parentElements[name];
+          if (parentElement.type === "cds.Composition") {
+            return parentElement.target === entity.name;
+          }
+        });
+      }
+    });
+    if (parentAssociation) {
+      setChangeTrackingIsRootEntity(entity, csn, false);
+      return elements[parentAssociation];
+    } else return undefined;
+  }
+  return { ...csn.definitions?.[`${entity.name}`], name: entity.name };
+}
+
 cds.on('loaded', m => {
 
   // Get definitions from Dummy entity in our models
@@ -82,6 +188,8 @@ cds.on('loaded', m => {
 
   for (let name in m.definitions) {
     const entity = m.definitions[name]
+    const compositionEntity = {...m.definitions[name], name};
+    const rootEntity = compositionRoot(compositionEntity, m)
     if (isChangeTracked(entity)) {
 
       // Determine entity keys
@@ -133,7 +241,6 @@ cds.on('loaded', m => {
               }
             }
           }
-          // compositionParentAssociation(entity, m, name, '@UI.Facets')
         }
       }
     }
