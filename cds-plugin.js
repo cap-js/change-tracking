@@ -23,12 +23,6 @@ const addSideEffects = (actions, flag, element) => {
   }
 }
 
-// Unfold @changelog annotations in loaded model
-
-function setRootEntityForChangeTracking(entity, csn) {
-  return csn.definitions[entity.name]['change-tracking-isRootEntity'] = true;
-}
-
 function setChangeTrackingIsRootEntity(entity, csn, val = true) {
   if (csn.definitions && csn.definitions[entity.name]) {
     csn.definitions[entity.name]['change-tracking-isRootEntity'] = val;
@@ -54,7 +48,7 @@ function checkAndSetRootEntity(parentEntity, entity, csn) {
 }
 
 function compositionRoot(entity, csn) {
-  if (!entity || entity.kind !== "entity") {
+  if (!entity || entity.kind !== 'entity') {
     return;
   }
   const parentEntity = compositionParent(entity, csn);
@@ -62,7 +56,7 @@ function compositionRoot(entity, csn) {
 }
 
 function compositionParent(entity, csn) {
-  if (!entity || entity.kind !== "entity") {
+  if (!entity || entity.kind !== 'entity') {
     return;
   }
   const parentAssociation = compositionParentAssociation(entity, csn);
@@ -74,7 +68,7 @@ function compositionParent(entity, csn) {
 }
 
 function compositionParentAssociation(entity, csn) {
-  if (!entity || entity.kind !== "entity") {
+  if (!entity || entity.kind !== 'entity') {
     return;
   }
   const elements = entity.elements ? entity.elements : {};
@@ -82,7 +76,7 @@ function compositionParentAssociation(entity, csn) {
   for (const name in elements) {
     const element = elements[name];
     const target = element.target;
-    if (element.type === "cds.Composition" && name !== 'texts' && target !== entity.name && target['change-tracking-isRootEntity'] !== false) {
+    if (element.type === 'cds.Composition' && name !== 'texts' && target !== entity.name && target['change-tracking-isRootEntity'] !== false) {
       setChangeTrackingIsRootEntity({ ...csn.definitions[target], name: target }, csn, false)
     } 
   }
@@ -91,12 +85,12 @@ function compositionParentAssociation(entity, csn) {
     const parentAssociation = Object.keys(elements).find((name) => {
       const element = elements[name];
       const target = element.target;      
-      if (element.type === "cds.Association" && target !== entity.name) {
+      if (element.type === 'cds.Association' && target !== entity.name) {
         const parentDefinition = csn.definitions[target];
         const parentElements = parentDefinition.elements ? parentDefinition.elements : {};
         return !!Object.keys(parentElements).find((parentEntityName) => {
           const parentElement = parentElements[parentEntityName];
-          if (parentElement.type === "cds.Composition") {
+          if (parentElement.type === 'cds.Composition') {
             const isCompositionEntity = parentElement.target === entity.name;
             // When the custom action of the child entity is performed, the change history list of the parent entity is updated
             if (parentDefinition['@UI.Facets'] && isCompositionEntity) {
@@ -115,6 +109,7 @@ function compositionParentAssociation(entity, csn) {
   return { ...csn.definitions?.[`${entity.name}`], name: entity.name };
 }
 
+// Unfold @changelog annotations in loaded model
 cds.on('loaded', m => {
 
   // Get definitions from Dummy entity in our models
