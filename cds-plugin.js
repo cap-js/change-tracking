@@ -76,7 +76,7 @@ function compositionParentAssociation(entity, csn) {
   for (const name in elements) {
     const element = elements[name];
     const target = element.target;
-    if (element.type === 'cds.Composition' && name !== 'texts' && target !== entity.name && target['change-tracking-isRootEntity'] !== false) {
+    if (element.type === 'cds.Composition' && target !== entity.name && csn.definitions[target]?.['change-tracking-isRootEntity'] !== false) {
       setChangeTrackingIsRootEntity({ ...csn.definitions[target], name: target }, csn, false)
     } 
   }
