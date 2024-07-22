@@ -23,55 +23,6 @@ const addSideEffects = (actions, flag, element) => {
   }
 }
 
-// const compositionParentAssociation = (entity, csn, entityName = '', facets = '') => {
-//   if (!entity || entity.kind !== "entity") {
-//     return;
-//   }
-//   let isAddedWrapper = {value: false };
-//   const elements = entity.elements ? entity.elements : {};
-//   const parentAssociation = Object.keys(elements).find((name) => {
-//     const element = elements[name];
-//     if (!isAddedWrapper.value && element.type === "cds.Association") {
-//       compositionParentElements({ csn, element, entity, entityName, isAddedWrapper }, name, facets)
-//     }
-//   });
-//   if (parentAssociation && !facets) {
-//     return elements[parentAssociation];
-//   }
-// }
-
-// const compositionParentElements = ({ csn, element, entity, entityName, isAddedWrapper = {} }, ele, facets) => {
-//   const parentDefinition = csn.definitions?.[element?.target]?.name
-//     ? csn.definitions[element.target]
-//     : { ...csn.definitions?.[element?.target], name: element?.target };
-
-//   const parentElements = parentDefinition?.elements
-//     ? parentDefinition.elements
-//     : {};
-
-//   const currentEntity = entity?.name
-//     ? entity
-//     : { ...entity, name: entityName };
-//   if (facets && parentDefinition[`${facets}`]) {
-//     //ToDo: Revisit Breaklook with node.js Expert
-//     breakLoop: for (const value of Object.values(parentElements)) {
-//       if (value.target === currentEntity.name) {
-//         addSideEffects(currentEntity.actions, false, ele)
-//         isAddedWrapper.value = true;
-//         break breakLoop
-//       }
-//     }
-//   } else {
-//     return !!Object.keys(parentElements).find((name) => {
-//       const parentElement = parentElements[name];
-//       if (parentElement.type === "cds.Composition") {
-//         return parentElement.target === entity.name;
-//       }
-//     });
-//   }
-// }
-
-
 // Unfold @changelog annotations in loaded model
 
 function setRootEntityForChangeTracking(entity, csn) {
@@ -95,12 +46,10 @@ function checkAndSetRootEntity(parentEntity, entity, csn) {
       return compositionRoot(parentEntity, csn);
     }
   } else {
-    // if (entity['change-tracking-isRootEntity'] === false) {
-    //   return entity;
-    // }
     setChangeTrackingIsRootEntity(entity, csn);
+    // Update the changehistory list on the root entity when the custom action of the entity is triggered
+    if (entity.actions && entity['@UI.Facets']) addSideEffects(entity.actions, true)
     return {...csn.definitions[entity.name], name: entity.name}
-    // return entity;
   }
 }
 
@@ -108,11 +57,8 @@ function compositionRoot(entity, csn) {
   if (!entity || entity.kind !== "entity") {
     return;
   }
-  // const compositionEntity = setRootEntityForChangeTracking(entity, csn);
   const parentEntity = compositionParent(entity, csn);
   return checkAndSetRootEntity(parentEntity, entity, csn);
-  // return parentEntity ? compositionRoot(parentEntity, csn) : setChangeTrackingIsRootEntity(entity, csn);
-  // return parentEntity ? compositionRoot(parentEntity, csn) : entity;
 }
 
 function compositionParent(entity, csn) {
@@ -125,8 +71,6 @@ function compositionParent(entity, csn) {
     const targetName = parentAssociation.target? parentAssociation.target : parentAssociation.name;
     return { ...csn.definitions?.[targetName], name: targetName }
   } else return null;
-  // return parentAssociation ? { ...csn.definitions?.[targetName], name: targetName } : null;
-  // return parentAssociation ? { ...csn.definitions?.[parentAssociation.target], name: parentAssociation.target } : null;
 }
 
 function compositionParentAssociation(entity, csn) {
@@ -142,31 +86,23 @@ function compositionParentAssociation(entity, csn) {
       setChangeTrackingIsRootEntity({ ...csn.definitions[target], name: target }, csn, false)
     } 
   }
-  // Object.keys(elements).forEach((name)=>{
-  //   const element = elements[name];
-  //   if (element.type === "cds.Composition" && name !== 'texts' && element.target !== entity.name) {
-  //     setChangeTrackingIsRootEntity({ ...csn.definitions[element.target], name: element.target }, csn, false)
-  //   } 
-  // })
-  if (entity['change-tracking-isRootEntity'] !== false) {
+
+  if (entity['change-tracking-isRootEntity'] !== false || !!entity.actions) {
     const parentAssociation = Object.keys(elements).find((name) => {
       const element = elements[name];
-      const target = element.target;
-      // if (element.type === "cds.Composition" && name !== 'texts' && target !== entity.name) {
-      //   setChangeTrackingIsRootEntity({ ...csn.definitions[target], name: target }, csn, false)
-      // } else 
+      const target = element.target;      
       if (element.type === "cds.Association" && target !== entity.name) {
         const parentDefinition = csn.definitions[target];
         const parentElements = parentDefinition.elements ? parentDefinition.elements : {};
-        // if (parentDefinition['change-tracking-isRootEntity'] === false) {
-        //   setChangeTrackingIsRootEntity(entity, csn, false)
-        //   loopStop.value = true;
-        //   return;
-        // }
-        return !!Object.keys(parentElements).find((name) => {
-          const parentElement = parentElements[name];
+        return !!Object.keys(parentElements).find((parentEntityName) => {
+          const parentElement = parentElements[parentEntityName];
           if (parentElement.type === "cds.Composition") {
-            return parentElement.target === entity.name;
+            const isCompositionEntity = parentElement.target === entity.name;
+            // When the custom action of the child entity is performed, the change history list of the parent entity is updated
+            if (parentDefinition['@UI.Facets'] && isCompositionEntity) {
+              addSideEffects(entity.actions, false, name)
+            }
+            return isCompositionEntity;
           }
         });
       }
@@ -188,8 +124,7 @@ cds.on('loaded', m => {
 
   for (let name in m.definitions) {
     const entity = m.definitions[name]
-    const compositionEntity = {...m.definitions[name], name};
-    const rootEntity = compositionRoot(compositionEntity, m)
+    compositionRoot({...m.definitions[name], name}, m)
     if (isChangeTracked(entity)) {
 
       // Determine entity keys
@@ -218,30 +153,6 @@ cds.on('loaded', m => {
       // Add UI.Facet for Change History List
       if(!entity['@changelog.disable_facet'])
         entity['@UI.Facets']?.push(facet)
-      }
-      // The changehistory list should be refreshed after the custom action is triggered
-      if (entity.actions) {
-
-        // Update the changehistory list on the current entity when the custom action of the entity is triggered
-        if (entity['@UI.Facets']) {
-          addSideEffects(entity.actions, true)
-        }
-
-        // When the custom action of the child entity is performed, the change history list of the parent entity is updated
-        if (entity.elements) {
-          //ToDo: Revisit Breaklook with node.js Expert
-          breakLoop: for (const [ele, eleValue] of Object.entries(entity.elements)) {
-            const parentEntity = m.definitions[eleValue.target]
-            if (parentEntity && parentEntity['@UI.Facets'] && eleValue.type === 'cds.Association') {
-              for (const value of Object.values(parentEntity.elements)) {
-                if (value.target === name) {
-                  addSideEffects(entity.actions, false, ele)
-                  break breakLoop
-                }
-              }
-            }
-          }
-        }
       }
     }
   }
