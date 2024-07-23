@@ -42,8 +42,8 @@ function checkAndSetRootEntity(parentEntity, entity, csn) {
   } else {
     setChangeTrackingIsRootEntity(entity, csn);
     // Update the changehistory list on the root entity when the custom action of the entity is triggered
-    if (entity.actions && entity['@UI.Facets']) addSideEffects(entity.actions, true)
-    return {...csn.definitions[entity.name], name: entity.name}
+    if (entity.actions && entity['@UI.Facets']) addSideEffects(entity.actions, true);
+    return { ...csn.definitions[entity.name], name: entity.name };
   }
 }
 
@@ -60,10 +60,12 @@ function compositionParent(entity, csn) {
     return;
   }
   const parentAssociation = compositionParentAssociation(entity, csn);
-  
+
   if (parentAssociation) {
-    const targetName = parentAssociation.target? parentAssociation.target : parentAssociation.name;
-    return { ...csn.definitions?.[targetName], name: targetName }
+    const targetName = parentAssociation.target
+      ? parentAssociation.target
+      : parentAssociation.name;
+    return { ...csn.definitions?.[targetName], name: targetName };
   } else return null;
 }
 
@@ -76,25 +78,35 @@ function compositionParentAssociation(entity, csn) {
   for (const name in elements) {
     const element = elements[name];
     const target = element.target;
-    if (element.type === 'cds.Composition' && target !== entity.name && csn.definitions[target]?.['change-tracking-isRootEntity'] !== false) {
-      setChangeTrackingIsRootEntity({ ...csn.definitions[target], name: target }, csn, false)
-    } 
+    if (
+      element.type === 'cds.Composition' &&
+      target !== entity.name &&
+      csn.definitions[target]?.['change-tracking-isRootEntity'] !== false
+    ) {
+      setChangeTrackingIsRootEntity(
+        { ...csn.definitions[target], name: target },
+        csn,
+        false
+      );
+    }
   }
 
   if (entity['change-tracking-isRootEntity'] !== false || !!entity.actions) {
     const parentAssociation = Object.keys(elements).find((name) => {
       const element = elements[name];
-      const target = element.target;      
+      const target = element.target;
       if (element.type === 'cds.Association' && target !== entity.name) {
         const parentDefinition = csn.definitions[target];
-        const parentElements = parentDefinition.elements ? parentDefinition.elements : {};
+        const parentElements = parentDefinition.elements
+          ? parentDefinition.elements
+          : {};
         return !!Object.keys(parentElements).find((parentEntityName) => {
           const parentElement = parentElements[parentEntityName];
           if (parentElement.type === 'cds.Composition') {
             const isCompositionEntity = parentElement.target === entity.name;
             // When the custom action of the child entity is performed, the change history list of the parent entity is updated
             if (parentDefinition['@UI.Facets'] && isCompositionEntity) {
-              addSideEffects(entity.actions, false, name)
+              addSideEffects(entity.actions, false, name);
             }
             return isCompositionEntity;
           }
@@ -102,7 +114,9 @@ function compositionParentAssociation(entity, csn) {
       }
     });
     if (parentAssociation) {
-      setChangeTrackingIsRootEntity(entity, csn, false);
+      if (entity['change-tracking-isRootEntity'] !== false) {
+        setChangeTrackingIsRootEntity(entity, csn, false);
+      }
       return elements[parentAssociation];
     } else return undefined;
   }
