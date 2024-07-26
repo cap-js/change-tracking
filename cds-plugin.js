@@ -38,8 +38,9 @@ function checkAndSetRootEntity(parentEntity, entity, csn) {
   } else {
     setChangeTrackingIsRootEntity(entity, csn);
     // Update the changehistory list on the root entity when the custom action of the entity is triggered
-    if (entity.actions && entity['@UI.Facets'])
+    if (entity.actions && entity['@UI.Facets']) {
       addSideEffects(entity.actions, true);
+    }
     return { ...csn.definitions?.[entity.name], name: entity.name };
   }
 }
@@ -65,55 +66,51 @@ function compositionParentAssociation(entity, csn) {
   if (!entity || entity.kind !== 'entity') {
     return;
   }
-  const elements = entity.elements ? entity.elements : {};
+  const elements = entity.elements ?? {};
 
   for (const name in elements) {
     const element = elements[name];
     const target = element.target;
+    const definition = csn.definitions?.[target];
     if (
-      element.type === 'cds.Composition' &&
-      target !== entity.name &&
-      csn.definitions[target]?.['change-tracking-isRootEntity'] !== false
+      element.type !== "cds.Composition" ||
+      target === entity.name ||
+      !definition ||
+      definition["change-tracking-isRootEntity"] === false
     ) {
-      setChangeTrackingIsRootEntity(
-        { ...csn.definitions?.[target], name: target },
-        csn,
-        false
-      );
+      continue;
     }
+    setChangeTrackingIsRootEntity({ ...definition, name: target }, csn, false);
   }
 
-  if (entity['change-tracking-isRootEntity'] !== false || !!entity.actions) {
+  const isRootEntity = entity['change-tracking-isRootEntity'] !== false;
+  const hasActions = !!entity.actions;
+
+  if (isRootEntity || hasActions) {
     const parentAssociation = findParentAssociation(entity, csn, elements);
     if (parentAssociation) {
-      if (entity['change-tracking-isRootEntity'] !== false) {
+      const parentAssociationTarget = elements[parentAssociation]?.target;
+      if (isRootEntity) {
         setChangeTrackingIsRootEntity(entity, csn, false);
       }
-      const parentAssociationTarget = elements[parentAssociation]?.target;
       return {
-        ...csn.definitions?.[parentAssociationTarget],
+        ...csn.definitions[parentAssociationTarget],
         name: parentAssociationTarget
       };
-    } else return undefined;
+    }
   }
   return { ...csn.definitions?.[entity.name], name: entity.name };
 }
 
 function findParentAssociation(entity, csn, elements) {
   return Object.keys(elements).find((name) => {
-    const element = elements[name] ? elements[name] : {};
-    const target = element.target;
+    const element = elements[name];
+    const target = element?.target;
     if (element.type === 'cds.Association' && target !== entity.name) {
-      const parentDefinition = csn.definitions?.[target]
-        ? csn.definitions?.[target]
-        : {};
-      const parentElements = parentDefinition.elements
-        ? parentDefinition.elements
-        : {};
+      const parentDefinition = csn.definitions?.[target] ?? {};
+      const parentElements = parentDefinition?.elements ?? {};
       return !!Object.keys(parentElements).find((parentEntityName) => {
-        const parentElement = parentElements[parentEntityName]
-          ? parentElements[parentEntityName]
-          : {};
+        const parentElement = parentElements?.[parentEntityName] ?? {};
         if (parentElement.type === 'cds.Composition') {
           const isCompositionEntity = parentElement.target === entity.name;
           // When the custom action of the child entity is performed, the change history list of the parent entity is updated
