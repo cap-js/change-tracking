@@ -70,13 +70,13 @@ function compositionParentAssociation(entity, csn) {
 
   for (const name in elements) {
     const element = elements[name];
-    const target = element.target;
+    const target = element?.target;
     const definition = csn.definitions?.[target];
     if (
-      element.type !== "cds.Composition" ||
+      element.type !== 'cds.Composition' ||
       target === entity.name ||
       !definition ||
-      definition["change-tracking-isRootEntity"] === false
+      definition['change-tracking-isRootEntity'] === false
     ) {
       continue;
     }
