@@ -94,10 +94,10 @@ function compositionParentAssociation(entity, csn) {
         setChangeTrackingIsRootEntity(entity, csn, false);
       }
       return {
-        ...csn.definitions[parentAssociationTarget],
+        ...csn.definitions?.[parentAssociationTarget],
         name: parentAssociationTarget
       };
-    }
+    } else return;
   }
   return { ...csn.definitions?.[entity.name], name: entity.name };
 }
