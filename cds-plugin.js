@@ -83,14 +83,14 @@ function compositionParentAssociation(entity, csn) {
     setChangeTrackingIsRootEntity({ ...definition, name: target }, csn, false);
   }
 
-  const isRootEntity = entity['change-tracking-isRootEntity'] !== false;
+  const isChildEntity = entity['change-tracking-isRootEntity'] !== false;
   const hasActions = !!entity.actions;
 
-  if (isRootEntity || hasActions) {
+  if (isChildEntity || hasActions) {
     const parentAssociation = findParentAssociation(entity, csn, elements);
     if (parentAssociation) {
       const parentAssociationTarget = elements[parentAssociation]?.target;
-      if (isRootEntity) {
+      if (isChildEntity) {
         setChangeTrackingIsRootEntity(entity, csn, false);
       }
       return {
