@@ -35,10 +35,10 @@ function processEntities(m) {
     if (!isValidEntity(entity)) {
       return;
     }
-    const hasParent = entity[hasParent];
-    const entityName = hasParent?.entityName;
+    const hasParentInfo = entity[hasParent];
+    const entityName = hasParentInfo?.entityName;
     const parentEntity = m.definitions[entityName];
-    const associationName = hasParent?.associationName;
+    const associationName = hasParentInfo?.associationName;
     if (entity[isRoot] && entity['@UI.Facets']) {
       addSideEffects(entity.actions, true);
     } else if (parentEntity?.[isRoot] && parentEntity?.['@UI.Facets']) {
