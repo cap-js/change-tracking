@@ -9,12 +9,11 @@ const isChangeTracked = (entity) => (
 )
 
 // Add the appropriate Side Effects attribute to the custom action
-const addSideEffects = (entity, flag) => {
-  const { actions, associationName } = entity;
+const addSideEffects = (actions, flag, element) => {
   for (const se of Object.values(actions)) {
     const target = flag ? 'TargetProperties' : 'TargetEntities'
     const sideEffectAttr = se[`@Common.SideEffects.${target}`]
-    const property = flag ? 'changes' : { '=': `${associationName}.changes` }
+    const property = flag ? 'changes' : { '=': `${element}.changes` }
     if (sideEffectAttr?.length >= 0) {
       sideEffectAttr.findIndex(
         (item) =>
@@ -27,19 +26,25 @@ const addSideEffects = (entity, flag) => {
   }
 }
 
+function isValidEntity(entity) {
+  return isChangeTracked(entity) && entity.actions && entity.kind === 'entity';
+}
+
 function processEntities(m) {
-  // '/BookshopService.EntityContainer/Books/changes'
-  // parent.changes
-  for (let name in m.definitions) {
-    const entity = m.definitions[name]
-    if (isChangeTracked(entity) && entity.actions && entity.kind === 'entity') {
-      if (entity[isRoot] && entity['@UI.Facets']) {
-        addSideEffects(entity, true)
-      } else if (m.definitions[entity[hasParent]?.entityName][isRoot]) {
-        addSideEffects(entity, false)
-      }
+  Object.values(m.definitions).forEach(entity => {
+    if (!isValidEntity(entity)) {
+      return;
     }
-  }
+    const hasParent = entity[hasParent];
+    const entityName = hasParent?.entityName;
+    const parentEntity = m.definitions[entityName];
+    const associationName = hasParent?.associationName;
+    if (entity[isRoot] && entity['@UI.Facets']) {
+      addSideEffects(entity.actions, true);
+    } else if (parentEntity?.[isRoot] && parentEntity?.['@UI.Facets']) {
+      addSideEffects(entity.actions, false, associationName);
+    }
+  });
 }
 
 function setChangeTrackingIsRootEntity(entity, csn, val = true) {
