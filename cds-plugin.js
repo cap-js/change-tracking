@@ -37,12 +37,14 @@ function processEntities(m) {
     }
     const hasParentInfo = entity[hasParent];
     const entityName = hasParentInfo?.entityName;
-    const parentEntity = m.definitions[entityName];
-    const associationName = hasParentInfo?.associationName;
+    const parentEntity = entityName ? m.definitions[entityName] : null;
+    
+    const isParentRootAndHasFacets = parentEntity && parentEntity[isRoot] && parentEntity['@UI.Facets'];
+    
     if (entity[isRoot] && entity['@UI.Facets']) {
       addSideEffects(entity.actions, true);
-    } else if (parentEntity?.[isRoot] && parentEntity?.['@UI.Facets']) {
-      addSideEffects(entity.actions, false, associationName);
+    } else if (isParentRootAndHasFacets) {
+      addSideEffects(entity.actions, false, hasParentInfo?.associationName);
     }
   });
 }
