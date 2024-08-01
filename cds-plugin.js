@@ -187,8 +187,10 @@ cds.on('loaded', m => {
         const isParentRootAndHasFacets = parentEntity && parentEntity[isRoot] && parentEntity['@UI.Facets'];
         
         if (entity[isRoot] && entity['@UI.Facets']) {
+          // Add side effects for root entity
           addSideEffects(entity.actions, true);
         } else if (isParentRootAndHasFacets) {
+          // Add side effects for child entity
           addSideEffects(entity.actions, false, hasParentInfo?.associationName);
         }
       }
