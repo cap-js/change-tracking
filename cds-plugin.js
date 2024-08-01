@@ -10,6 +10,10 @@ const isChangeTracked = (entity) => (
 
 // Add the appropriate Side Effects attribute to the custom action
 const addSideEffects = (actions, flag, element) => {
+  if (!flag && (element === undefined || element === null)) {
+    return
+  }
+
   for (const se of Object.values(actions)) {
     const target = flag ? 'TargetProperties' : 'TargetEntities'
     const sideEffectAttr = se[`@Common.SideEffects.${target}`]
@@ -24,29 +28,6 @@ const addSideEffects = (actions, flag, element) => {
       se[`@Common.SideEffects.${target}`] = [property]
     }
   }
-}
-
-function isValidEntity(entity) {
-  return isChangeTracked(entity) && entity.actions && entity.kind === 'entity';
-}
-
-function processEntities(m) {
-  Object.values(m.definitions).forEach(entity => {
-    if (!isValidEntity(entity)) {
-      return;
-    }
-    const hasParentInfo = entity[hasParent];
-    const entityName = hasParentInfo?.entityName;
-    const parentEntity = entityName ? m.definitions[entityName] : null;
-    
-    const isParentRootAndHasFacets = parentEntity && parentEntity[isRoot] && parentEntity['@UI.Facets'];
-    
-    if (entity[isRoot] && entity['@UI.Facets']) {
-      addSideEffects(entity.actions, true);
-    } else if (isParentRootAndHasFacets) {
-      addSideEffects(entity.actions, false, hasParentInfo?.associationName);
-    }
-  });
 }
 
 function setChangeTrackingIsRootEntity(entity, csn, val = true) {
@@ -67,12 +48,15 @@ function checkAndSetRootEntity(parentEntity, entity, csn) {
   }
 }
 
-function compositionRoot(entity, csn) {
-  if (!entity || entity.kind !== 'entity') {
-    return;
+function compositionRoot(m) {
+  for (let name in m.definitions) {
+    let entity = {...m.definitions[name], name};
+    if (!entity || entity.kind !== 'entity') {
+      continue;
+    }
+    const parentEntity = compositionParent(entity, m);
+    checkAndSetRootEntity(parentEntity, entity, m);
   }
-  const parentEntity = compositionParent(entity, csn);
-  return checkAndSetRootEntity(parentEntity, entity, csn);
 }
 
 function compositionParent(entity, csn) {
@@ -92,15 +76,15 @@ function compositionParentAssociation(entity, csn) {
   // Add the change-tracking-isRootEntity attribute of the child entity
   processCompositionElements(entity, csn, elements);
 
-  const isChildEntity = entity[isRoot] !== false;
+  const hasChildFlag = entity[isRoot] !== false;
   const hasParentEntity = entity[hasParent];
 
-  if (isChildEntity || !hasParentEntity) {
+  if (hasChildFlag || !hasParentEntity) {
     // Find parent association of the entity
     const parentAssociation = findParentAssociation(entity, csn, elements);
     if (parentAssociation) {
       const parentAssociationTarget = elements[parentAssociation]?.target;
-      if (isChildEntity) setChangeTrackingIsRootEntity(entity, csn, false);
+      if (hasChildFlag) setChangeTrackingIsRootEntity(entity, csn, false);
       return {
         ...csn.definitions?.[parentAssociationTarget],
         name: parentAssociationTarget
@@ -159,11 +143,12 @@ cds.on('loaded', m => {
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
   changes.on.pop() // remove ID -> filled in below
+  
+  // Process entities to define the relationship
+  compositionRoot(m)
 
   for (let name in m.definitions) {
     const entity = m.definitions[name]
-    // Add the change-tracking-isRootEntity attribute of the entity
-    compositionRoot({...m.definitions[name], name}, m)
     if (isChangeTracked(entity)) {
 
       // Determine entity keys
@@ -193,11 +178,22 @@ cds.on('loaded', m => {
       if(!entity['@changelog.disable_facet'])
         entity['@UI.Facets']?.push(facet)
       }
+
+      if (entity.actions) {
+        const hasParentInfo = entity[hasParent];
+        const entityName = hasParentInfo?.entityName;
+        const parentEntity = entityName ? m.definitions[entityName] : null;
+        
+        const isParentRootAndHasFacets = parentEntity && parentEntity[isRoot] && parentEntity['@UI.Facets'];
+        
+        if (entity[isRoot] && entity['@UI.Facets']) {
+          addSideEffects(entity.actions, true);
+        } else if (isParentRootAndHasFacets) {
+          addSideEffects(entity.actions, false, hasParentInfo?.associationName);
+        }
+      }
     }
   }
-
-  // after all entities are processed, add the Side Effects attribute to the custom actions
-  processEntities(m)
 })
 
 // Add generic change tracking handlers
