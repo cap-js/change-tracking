@@ -88,7 +88,6 @@ entity Level3Object : cuid {
 @fiori.draft.enabled
 @title : '{i18n>bookStore.objectTitle}'
 entity BookStores @(cds.autoexpose) : managed, cuid {
-  key myID : UUID;
   @title : '{i18n>bookStore.name}'
   name            : String;
 
@@ -187,7 +186,6 @@ entity Report : cuid {
 }
 
 entity Order : cuid {
-  // key myID : UUID;
   @title     : '{i18n>title}'
   @changelog
   title      : String;

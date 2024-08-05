@@ -148,7 +148,7 @@ cds.on('loaded', m => {
   changes.on.pop() // remove ID -> filled in below
   
   // Process entities to define the relation
-  processEntities(model)
+  processEntities(m)
 
   for (let name in m.definitions) {
     const entity = m.definitions[name]

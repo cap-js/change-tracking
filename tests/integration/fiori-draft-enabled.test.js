@@ -10,6 +10,7 @@ let ChangeView = null;
 let db = null;
 let ChangeEntity = null;
 let utils = null;
+let ChangeLog = null;
 
 describe("change log integration test", () => {
     beforeAll(async () => {
@@ -18,6 +19,7 @@ describe("change log integration test", () => {
         ChangeView["@cds.autoexposed"] = false;
         db = await cds.connect.to("sql:my.db");
         ChangeEntity = db.model.definitions["sap.changelog.Changes"];
+        ChangeLog = db.model.definitions["sap.changelog.ChangeLog"];
         utils = new RequestSend(POST);
     });
 
@@ -1402,7 +1404,7 @@ describe("change log integration test", () => {
         expect(registryChange.parentObjectID).to.equal("City Lights Books");
     });
 
-    it.only("11.1 The change log should be captured when a child entity in draft-enabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
+    it("11.1 The change log should be captured when a child entity in draft-enabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
         await POST(
             `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,myID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=true)/books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=true)/volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf,IsActiveEntity=true)/AdminService.activate`
         );
@@ -1410,6 +1412,9 @@ describe("change log integration test", () => {
             entity: "sap.capire.bookshop.Volumns",
             attribute: "ActivationStatus",
         });
+
+        const TESTChangeView = await SELECT.from(ChangeView)
+        const changelog = await SELECT.from(ChangeLog)
         expect(changes.length).to.equal(1);
         expect(changes[0].valueChangedFrom).to.equal("");
         expect(changes[0].valueChangedTo).to.equal("VALID");
