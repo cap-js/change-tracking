@@ -48,15 +48,18 @@ function checkAndSetRootEntity(parentEntity, entity, csn) {
   }
 }
 
-function compositionRoot(m) {
+function processEntities(m) {
   for (let name in m.definitions) {
-    let entity = {...m.definitions[name], name};
-    if (!entity || entity.kind !== 'entity') {
-      continue;
-    }
-    const parentEntity = compositionParent(entity, m);
-    checkAndSetRootEntity(parentEntity, entity, m);
+    compositionRoot({...m.definitions[name], name}, m)
   }
+}
+
+function compositionRoot(entity, csn) {
+  if (!entity || entity.kind !== 'entity') {
+    return;
+  }
+  const parentEntity = compositionParent(entity, csn);
+  return checkAndSetRootEntity(parentEntity, entity, csn);
 }
 
 function compositionParent(entity, csn) {
@@ -144,8 +147,8 @@ cds.on('loaded', m => {
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
   changes.on.pop() // remove ID -> filled in below
   
-  // Process entities to define the relationship
-  compositionRoot(m)
+  // Process entities to define the relation
+  processEntities(model)
 
   for (let name in m.definitions) {
     const entity = m.definitions[name]
@@ -183,9 +186,9 @@ cds.on('loaded', m => {
         const hasParentInfo = entity[hasParent];
         const entityName = hasParentInfo?.entityName;
         const parentEntity = entityName ? m.definitions[entityName] : null;
-        
-        const isParentRootAndHasFacets = parentEntity && parentEntity[isRoot] && parentEntity['@UI.Facets'];
-        
+
+        const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets'];
+
         if (entity[isRoot] && entity['@UI.Facets']) {
           // Add side effects for root entity
           addSideEffects(entity.actions, true);
