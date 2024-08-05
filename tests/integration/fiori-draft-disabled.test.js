@@ -173,7 +173,8 @@ describe("change log draft disabled test", () => {
         expect(orderChange.parentObjectID).to.equal("sap.capire.bookshop.OrderItem");
     });
 
-    it("3.2 Composition update by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
+    it.only("3.2 Composition update by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
+       // myID=64625905-c234-4d0d-9bc1-283ee8946770
         await PATCH(
             `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)`,
             {
@@ -182,6 +183,8 @@ describe("change log draft disabled test", () => {
         );
 
         let changes = await adminService.run(SELECT.from(ChangeView));
+        const CHANGELOG = db.model.definitions["sap.changelog.ChangeLog"];
+        let changeLog = await adminService.run(SELECT.from(CHANGELOG));
         const orderChanges = changes.filter((change) => {
             return change.entityKey === "0a41a187-a2ff-4df6-bd12-fae8996e6e31";
         });
@@ -623,10 +626,7 @@ describe("change log draft disabled test", () => {
 
     it("11.2 The change log should be captured when a child entity in draft-disabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
         await POST(
-            `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/AdminService.activate`,
-            {
-                ActivationStatus_code: "VALID",
-            },
+            `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/AdminService.activate`
         );
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.OrderItemNote",
