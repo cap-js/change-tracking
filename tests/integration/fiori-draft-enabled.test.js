@@ -1413,12 +1413,18 @@ describe("change log integration test", () => {
             attribute: "ActivationStatus",
         });
 
-        const TESTChangeView = await SELECT.from(ChangeView)
-        const changelog = await SELECT.from(ChangeLog)
         expect(changes.length).to.equal(1);
         expect(changes[0].valueChangedFrom).to.equal("");
         expect(changes[0].valueChangedTo).to.equal("VALID");
         expect(changes[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
         expect(changes[0].parentKey).to.equal("9d703c23-54a8-4eff-81c1-cdce6b8376b1");
+
+        // Check the changeLog to make sure the entity information is root
+        const changelogs = await SELECT.from(ChangeLog)
+
+        expect(changelogs.length).to.equal(1);
+        expect(changelogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
+        expect(changelogs[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(changelogs[0].serviceEntity).to.equal("AdminService.BookStores");
     });
 });
