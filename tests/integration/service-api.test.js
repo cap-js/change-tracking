@@ -154,13 +154,13 @@ describe("change log integration test", () => {
         // Check the changeLog to make sure the entity information is root
         const changeLogs = await SELECT.from(ChangeLog).where({
             entity: "sap.capire.bookshop.RootEntity",
-            entityKey: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
+            entityKey: "64625905-c234-4d0d-9bc1-283ee8940812",
             serviceEntity: "AdminService.RootEntity",
         })
 
         expect(changeLogs.length).to.equal(1);
         expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.RootEntity");
-        expect(changeLogs[0].entityKey).to.equal("bc21e0d9-a313-4f52-8336-c1be5f88c346");
+        expect(changeLogs[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8940812");
         expect(changeLogs[0].serviceEntity).to.equal("AdminService.RootEntity");
 
         await UPDATE(adminService.entities.Level3Entity, "12ed5dd8-d45b-11ed-afa1-0242ac654321").with({

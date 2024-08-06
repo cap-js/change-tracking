@@ -16,10 +16,10 @@ module.exports = cds.service.impl(async (srv) => {
         await UPDATE.entity(entity, { ID: entityID })
           .set({ ActivationStatus_code: "VALID" });
 
-        const noteEntity = "AdminService.OrderItemNote";
-        const noteEntityID = "a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc";
-          await UPDATE.entity(noteEntity, { ID: noteEntityID })
-          .set({ ActivationStatus_code: "VALID" });
+        // const noteEntity = "AdminService.OrderItemNote";
+        // const noteEntityID = "a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc";
+        //   await UPDATE.entity(noteEntity, { ID: noteEntityID })
+        //   .set({ ActivationStatus_code: "VALID" });
     };
 
     const onActivateOrderItemNote = async (req) => {
@@ -30,7 +30,7 @@ module.exports = cds.service.impl(async (srv) => {
           .set({ ActivationStatus_code: "VALID" });
     };
 
-    // srv.on("activate", "Volumns", onActivateVolumns);
-    srv.on("activate", "*", onActivateVolumns);
-    srv.on("activate", "OrderItemNote", onActivateOrderItemNote);
+    // srv.on("activate", "*", onActivateVolumns);
+    srv.on("activate", "AdminService.Volumns", onActivateVolumns);
+    srv.on("activate", "AdminService.OrderItemNote", onActivateOrderItemNote);
 });
