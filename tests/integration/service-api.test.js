@@ -151,6 +151,18 @@ describe("change log integration test", () => {
         const createChange = createChanges[0];
         expect(createChange.objectID).to.equal("In Preparation");
 
+        // Check the changeLog to make sure the entity information is root
+        const changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.RootEntity",
+            entityKey: "bc21e0d9-a313-4f52-8336-c1be5f88c346",
+            serviceEntity: "AdminService.RootEntity",
+        })
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.RootEntity");
+        expect(changeLogs[0].entityKey).to.equal("bc21e0d9-a313-4f52-8336-c1be5f88c346");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.RootEntity");
+
         await UPDATE(adminService.entities.Level3Entity, "12ed5dd8-d45b-11ed-afa1-0242ac654321").with({
             title: "L3 title changed by QL API",
         });

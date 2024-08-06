@@ -1,6 +1,6 @@
 const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
-const { expect, data, GET, POST, PATCH, DELETE } = cds.test(bookshop);
+const { expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
 const { RequestSend } = require("../utils/api");
 
 jest.setTimeout(5 * 60 * 1000);
@@ -1420,11 +1420,11 @@ describe("change log integration test", () => {
         expect(changes[0].parentKey).to.equal("9d703c23-54a8-4eff-81c1-cdce6b8376b1");
 
         // Check the changeLog to make sure the entity information is root
-        const changelogs = await SELECT.from(ChangeLog)
+        const changeLogs = await SELECT.from(ChangeLog)
 
-        expect(changelogs.length).to.equal(1);
-        expect(changelogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
-        expect(changelogs[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
-        expect(changelogs[0].serviceEntity).to.equal("AdminService.BookStores");
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
+        expect(changeLogs[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.BookStores");
     });
 });

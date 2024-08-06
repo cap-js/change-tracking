@@ -173,6 +173,14 @@ describe("change log draft disabled test", () => {
         expect(orderChange.valueChangedTo).to.equal("new content");
         expect(orderChange.parentKey).to.equal("9a61178f-bfb3-4c17-8d17-c6b4a63e0097");
         expect(orderChange.parentObjectID).to.equal("sap.capire.bookshop.OrderItem");
+
+        // Check the changeLog to make sure the entity information is root
+        let changeLogs = await adminService.run(SELECT.from(ChangeLog));
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.Order");
+        expect(changeLogs[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.Order");
     });
 
     it("3.2 Composition update by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
@@ -184,8 +192,6 @@ describe("change log draft disabled test", () => {
         );
 
         let changes = await adminService.run(SELECT.from(ChangeView));
-        const CHANGELOG = db.model.definitions["sap.changelog.ChangeLog"];
-        let changeLog = await adminService.run(SELECT.from(CHANGELOG));
         const orderChanges = changes.filter((change) => {
             return change.entityKey === "0a41a187-a2ff-4df6-bd12-fae8996e6e31";
         });
@@ -198,6 +204,14 @@ describe("change log draft disabled test", () => {
         expect(orderChange.valueChangedTo).to.equal("new content");
         expect(orderChange.parentKey).to.equal("9a61178f-bfb3-4c17-8d17-c6b4a63e0097");
         expect(orderChange.parentObjectID).to.equal("sap.capire.bookshop.OrderItem");
+
+        // Check the changeLog to make sure the entity information is root
+        let changeLogs = await adminService.run(SELECT.from(ChangeLog));
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.Order");
+        expect(changeLogs[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.Order");
     });
 
     it("3.3 Composition delete by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
@@ -308,10 +322,9 @@ describe("change log draft disabled test", () => {
             customer_ID: "47f97f40-4f41-488a-b10b-a5725e762d57",
             quantity: 27,
         });
-        // // order_ID: "0a41a187-a2ff-4df6-bd12-fae8996e6e31",
 
-        // // valueDataType field only appears in db table Changes
-        // // there are no localization features for table Changes
+        // valueDataType field only appears in db table Changes
+        // there are no localization features for table Changes
         const customerChangesInDb = await SELECT.from(ChangeEntity).where({
             entity: "sap.capire.bookshop.OrderItem",
             attribute: "customer",
@@ -335,8 +348,7 @@ describe("change log draft disabled test", () => {
             attribute: "customer",
             modification: "update",
         });
-        const testChangeEnTITY = await SELECT.from(ChangeEntity);
-        const testChangeLog = await SELECT.from(ChangeLog);
+
         expect(customerUpdateChangesInDb.length).to.equal(1);
 
         const customerUpdateChangeInDb = customerUpdateChangesInDb[0];
@@ -368,179 +380,179 @@ describe("change log draft disabled test", () => {
         cds.services.AdminService.entities.Level3Object["@changelog"] = [
             { "=": "parent.parent.parent.title" },
         ];
-        // await POST(
-        //     `/odata/v4/admin/RootObject(ID=0a41a187-a2ff-4df6-bd12-fae8996e7e28)/child(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0802)/child(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/child`,
-        //     {
-        //         ID: "a670e8e1-ee06-4cad-9cbd-a2354dc25b8c",
-        //         parent_ID: "a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc",
-        //         title: "new L3 title",
-        //     },
-        // );
-        // const createChanges = await adminService.run(
-        //     SELECT.from(ChangeView).where({
-        //         entity: "sap.capire.bookshop.Level3Object",
-        //         attribute: "title",
-        //         modification: "create",
-        //     }),
-        // );
-        // expect(createChanges.length).to.equal(1);
-        // const createChange = createChanges[0];
-        // expect(createChange.objectID).to.equal("RootObject title1");
+        await POST(
+            `/odata/v4/admin/RootObject(ID=0a41a187-a2ff-4df6-bd12-fae8996e7e28)/child(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0802)/child(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/child`,
+            {
+                ID: "a670e8e1-ee06-4cad-9cbd-a2354dc25b8c",
+                parent_ID: "a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc",
+                title: "new L3 title",
+            },
+        );
+        const createChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Object",
+                attribute: "title",
+                modification: "create",
+            }),
+        );
+        expect(createChanges.length).to.equal(1);
+        const createChange = createChanges[0];
+        expect(createChange.objectID).to.equal("RootObject title1");
 
-        // await PATCH(`/odata/v4/admin/Level3Object(ID=a670e8e1-ee06-4cad-9cbd-a2354dc25b8c)`, {
-        //     title: "L3 title changed",
-        // });
-        // let updateChanges = await adminService.run(
-        //     SELECT.from(ChangeView).where({
-        //         entity: "sap.capire.bookshop.Level3Object",
-        //         attribute: "title",
-        //         modification: "update",
-        //     }),
-        // );
-        // expect(updateChanges.length).to.equal(1);
-        // const updateChange = updateChanges[0];
-        // expect(updateChange.objectID).to.equal("RootObject title1");
+        await PATCH(`/odata/v4/admin/Level3Object(ID=a670e8e1-ee06-4cad-9cbd-a2354dc25b8c)`, {
+            title: "L3 title changed",
+        });
+        let updateChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Object",
+                attribute: "title",
+                modification: "update",
+            }),
+        );
+        expect(updateChanges.length).to.equal(1);
+        const updateChange = updateChanges[0];
+        expect(updateChange.objectID).to.equal("RootObject title1");
 
-        // await DELETE(
-        //     `/odata/v4/admin/RootObject(ID=0a41a187-a2ff-4df6-bd12-fae8996e7e28)/child(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0802)/child(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/child(ID=a670e8e1-ee06-4cad-9cbd-a2354dc25b8c)`,
-        // );
-        // let deleteChanges = await adminService.run(
-        //     SELECT.from(ChangeView).where({
-        //         entity: "sap.capire.bookshop.Level3Object",
-        //         attribute: "title",
-        //         modification: "delete",
-        //     }),
-        // );
-        // expect(deleteChanges.length).to.equal(1);
-        // const deleteChange = deleteChanges[0];
-        // expect(deleteChange.objectID).to.equal("RootObject title1");
+        await DELETE(
+            `/odata/v4/admin/RootObject(ID=0a41a187-a2ff-4df6-bd12-fae8996e7e28)/child(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0802)/child(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/child(ID=a670e8e1-ee06-4cad-9cbd-a2354dc25b8c)`,
+        );
+        let deleteChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level3Object",
+                attribute: "title",
+                modification: "delete",
+            }),
+        );
+        expect(deleteChanges.length).to.equal(1);
+        const deleteChange = deleteChanges[0];
+        expect(deleteChange.objectID).to.equal("RootObject title1");
 
-        // // Test object id when parent and child nodes are created at the same time
-        // cds.services.AdminService.entities.Level2Object["@changelog"] = [
-        //     { "=": "parent.parent.title" }
-        // ];
-        // await POST(
-        //     `/odata/v4/admin/RootObject`,
-        //     {
-        //         ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
-        //         title: "new RootObject title",
-        //         child: [
-        //             {
-        //                 ID: "48268451-8552-42a6-a3d7-67564be97733",
-        //                 title: "new Level1Object title",
-        //                 parent_ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
-        //                 child: [
-        //                     {
-        //                         ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
-        //                         title: "new Level2Object title",
-        //                         parent_ID: "48268451-8552-42a6-a3d7-67564be97733"
-        //                     }
-        //                 ]
-        //             }
-        //         ]
-        //     },
-        // );
+        // Test object id when parent and child nodes are created at the same time
+        cds.services.AdminService.entities.Level2Object["@changelog"] = [
+            { "=": "parent.parent.title" }
+        ];
+        await POST(
+            `/odata/v4/admin/RootObject`,
+            {
+                ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
+                title: "new RootObject title",
+                child: [
+                    {
+                        ID: "48268451-8552-42a6-a3d7-67564be97733",
+                        title: "new Level1Object title",
+                        parent_ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
+                        child: [
+                            {
+                                ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
+                                title: "new Level2Object title",
+                                parent_ID: "48268451-8552-42a6-a3d7-67564be97733"
+                            }
+                        ]
+                    }
+                ]
+            },
+        );
 
-        // const createChangesMeanwhile = await adminService.run(
-        //     SELECT.from(ChangeView).where({
-        //         entity: "sap.capire.bookshop.Level2Object",
-        //         attribute: "title",
-        //         modification: "create",
-        //     }),
-        // );
-        // expect(createChangesMeanwhile.length).to.equal(1);
-        // const createChangeMeanwhile = createChangesMeanwhile[0];
-        // expect(createChangeMeanwhile.objectID).to.equal("new RootObject title");
+        const createChangesMeanwhile = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Object",
+                attribute: "title",
+                modification: "create",
+            }),
+        );
+        expect(createChangesMeanwhile.length).to.equal(1);
+        const createChangeMeanwhile = createChangesMeanwhile[0];
+        expect(createChangeMeanwhile.objectID).to.equal("new RootObject title");
 
-        // // Test the object id when the parent node and child node are modified at the same time
-        // await PATCH(`/odata/v4/admin/RootObject(ID=a670e8e1-ee06-4cad-9cbd-a2354dc37c9d)`, {
-        //     title: "RootObject title changed",
-        //     child: [
-        //         {
-        //             ID: "48268451-8552-42a6-a3d7-67564be97733",
-        //             parent_ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
-        //             child:[{
-        //                 ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
-        //                 title: "Level2Object title changed",
-        //                 parent_ID:"48268451-8552-42a6-a3d7-67564be97733"
-        //             }]
-        //         }
-        //     ]
-        // });
+        // Test the object id when the parent node and child node are modified at the same time
+        await PATCH(`/odata/v4/admin/RootObject(ID=a670e8e1-ee06-4cad-9cbd-a2354dc37c9d)`, {
+            title: "RootObject title changed",
+            child: [
+                {
+                    ID: "48268451-8552-42a6-a3d7-67564be97733",
+                    parent_ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
+                    child:[{
+                        ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
+                        title: "Level2Object title changed",
+                        parent_ID:"48268451-8552-42a6-a3d7-67564be97733"
+                    }]
+                }
+            ]
+        });
 
-        // const updateChangesMeanwhile = await adminService.run(
-        //     SELECT.from(ChangeView).where({
-        //         entity: "sap.capire.bookshop.Level2Object",
-        //         attribute: "title",
-        //         modification: "update",
-        //     }),
-        // );
-        // expect(updateChangesMeanwhile.length).to.equal(1);
-        // const updateChangeMeanwhile = updateChangesMeanwhile[0];
-        // expect(updateChangeMeanwhile.objectID).to.equal("RootObject title changed");
+        const updateChangesMeanwhile = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Object",
+                attribute: "title",
+                modification: "update",
+            }),
+        );
+        expect(updateChangesMeanwhile.length).to.equal(1);
+        const updateChangeMeanwhile = updateChangesMeanwhile[0];
+        expect(updateChangeMeanwhile.objectID).to.equal("RootObject title changed");
 
-        // // Tests the object id when the parent node update and child node deletion occur simultaneously
-        // await PATCH(`/odata/v4/admin/RootObject(ID=a670e8e1-ee06-4cad-9cbd-a2354dc37c9d)`, {
-        //     title: "RootObject title del",
-        //     child: []
-        // });
+        // Tests the object id when the parent node update and child node deletion occur simultaneously
+        await PATCH(`/odata/v4/admin/RootObject(ID=a670e8e1-ee06-4cad-9cbd-a2354dc37c9d)`, {
+            title: "RootObject title del",
+            child: []
+        });
 
-        // const deleteChangesMeanwhile = await adminService.run(
-        //     SELECT.from(ChangeView).where({
-        //         entity: "sap.capire.bookshop.Level2Object",
-        //         attribute: "title",
-        //         modification: "delete"
-        //     }),
-        // );
+        const deleteChangesMeanwhile = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2Object",
+                attribute: "title",
+                modification: "delete"
+            }),
+        );
 
-        // expect(deleteChangesMeanwhile.length).to.equal(1);
-        // const deleteChangeMeanwhile = deleteChangesMeanwhile[0];
-        // expect(deleteChangeMeanwhile.objectID).to.equal("RootObject title del");
+        expect(deleteChangesMeanwhile.length).to.equal(1);
+        const deleteChangeMeanwhile = deleteChangesMeanwhile[0];
+        expect(deleteChangeMeanwhile.objectID).to.equal("RootObject title del");
 
-        // delete cds.services.AdminService.entities.OrderItem["@changelog"];
-        // delete cds.services.AdminService.entities.Level2Object["@changelog"];
-        // delete cds.services.AdminService.entities.Level3Object["@changelog"];
+        delete cds.services.AdminService.entities.OrderItem["@changelog"];
+        delete cds.services.AdminService.entities.Level2Object["@changelog"];
+        delete cds.services.AdminService.entities.Level3Object["@changelog"];
 
-        // cds.db.entities.Order["@changelog"] = [
-        //     { "=": "title" },
-        //     { "=": "type.title" },
-        // ]
-        // await POST(
-        //     `/odata/v4/admin/Order`,
-        //     {
-        //         ID: "0a41a187-a2ff-4df6-bd12-fae8996e7c44",
-        //         title: "test Order title",
-        //     },
-        // );
+        cds.db.entities.Order["@changelog"] = [
+            { "=": "title" },
+            { "=": "type.title" },
+        ]
+        await POST(
+            `/odata/v4/admin/Order`,
+            {
+                ID: "0a41a187-a2ff-4df6-bd12-fae8996e7c44",
+                title: "test Order title",
+            },
+        );
 
-        // const createOrderChanges = await adminService.run(
-        //     SELECT.from(ChangeView).where({
-        //         entity: "sap.capire.bookshop.Order",
-        //         attribute: "title",
-        //         modification: "create",
-        //     }),
-        // );
+        const createOrderChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Order",
+                attribute: "title",
+                modification: "create",
+            }),
+        );
 
-        // expect(createOrderChanges.length).to.equal(1);
-        // const createOrderChange = createOrderChanges[0];
-        // expect(createOrderChange.objectID).to.equal("test Order title");
+        expect(createOrderChanges.length).to.equal(1);
+        const createOrderChange = createOrderChanges[0];
+        expect(createOrderChange.objectID).to.equal("test Order title");
 
-        // await PATCH(`/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e7c44)`, {
-        //     title: "Order title changed"
-        // });
+        await PATCH(`/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e7c44)`, {
+            title: "Order title changed"
+        });
 
-        // const updateOrderChanges = await adminService.run(
-        //     SELECT.from(ChangeView).where({
-        //         entity: "sap.capire.bookshop.Order",
-        //         attribute: "title",
-        //         modification: "update",
-        //     }),
-        // );
-        // expect(updateOrderChanges.length).to.equal(1);
-        // const updateOrderChange = updateOrderChanges[0];
-        // expect(updateOrderChange.objectID).to.equal("Order title changed");
+        const updateOrderChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Order",
+                attribute: "title",
+                modification: "update",
+            }),
+        );
+        expect(updateOrderChanges.length).to.equal(1);
+        const updateOrderChange = updateOrderChanges[0];
+        expect(updateOrderChange.objectID).to.equal("Order title changed");
 
-        // delete cds.db.entities.Order["@changelog"];
+        delete cds.db.entities.Order["@changelog"];
     });
 
     it("8.2 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094 ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
@@ -648,11 +660,11 @@ describe("change log draft disabled test", () => {
         expect(changes[0].parentKey).to.equal("9a61178f-bfb3-4c17-8d17-c6b4a63e0097");
 
         // Check the changeLog to make sure the entity information is root
-        const changelogs = await SELECT.from(ChangeLog)
+        const changeLogs = await SELECT.from(ChangeLog)
 
-        expect(changelogs.length).to.equal(1);
-        expect(changelogs[0].entity).to.equal("sap.capire.bookshop.Order");
-        expect(changelogs[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
-        expect(changelogs[0].serviceEntity).to.equal("AdminService.Order");
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.Order");
+        expect(changeLogs[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.Order");
     });
 });
