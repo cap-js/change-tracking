@@ -6,12 +6,16 @@ jest.setTimeout(5 * 60 * 1000);
 
 let adminService = null;
 let ChangeView = null;
+let ChangeLog = null;
+let db = null;
 
 describe("change log integration test", () => {
     beforeAll(async () => {
         adminService = await cds.connect.to("AdminService");
+        db = await cds.connect.to("sql:my.db");
         ChangeView = adminService.entities.ChangeView;
         ChangeView["@cds.autoexposed"] = false;
+        ChangeLog = db.model.definitions["sap.changelog.ChangeLog"];
     });
 
     beforeEach(async () => {
