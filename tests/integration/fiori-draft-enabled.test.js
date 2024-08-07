@@ -1420,11 +1420,38 @@ describe("change log integration test", () => {
         expect(changes[0].parentKey).to.equal("9d703c23-54a8-4eff-81c1-cdce6b8376b1");
 
         // Check the changeLog to make sure the entity information is root
-        const changeLogs = await SELECT.from(ChangeLog)
+        let changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.BookStores",
+            entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+            serviceEntity: "AdminService.BookStores",
+        });
 
         expect(changeLogs.length).to.equal(1);
         expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
         expect(changeLogs[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.BookStores");
+
+        changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Books",
+            attribute: "title",
+        });
+
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("Jane Eyre");
+        expect(changes[0].valueChangedTo).to.equal("Black Myth wukong");
+        expect(changes[0].entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
+        expect(changes[0].parentKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
+
+        // Check the changeLog to make sure the entity information is root
+        changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.BookStores",
+            entityKey: "5ab2a87b-3a56-4d97-a697-7af72334a384",
+            serviceEntity: "AdminService.BookStores",
+        });
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
+        expect(changeLogs[0].entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
         expect(changeLogs[0].serviceEntity).to.equal("AdminService.BookStores");
     });
 });

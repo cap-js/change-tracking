@@ -323,7 +323,7 @@ describe("change log integration test", () => {
         };
         await INSERT.into(adminService.entities.BookStores).entries(bookStoreData);
 
-        // CAP currently does not support run queries on the draft-enabled entity on application service (details in CAP/Issue#16292)
+        // REVISIT: CAP currently does not support run queries on the draft-enabled entity on application service (details in CAP/Issue#16292)
         // await adminService.run(INSERT.into(adminService.entities.BookStores).entries(bookStoreData));
 
         let changes = await SELECT.from(ChangeView).where({
