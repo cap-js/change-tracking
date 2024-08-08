@@ -153,6 +153,8 @@ describe("change log integration test", () => {
         expect(createChanges.length).to.equal(1);
         const createChange = createChanges[0];
         expect(createChange.objectID).to.equal("In Preparation");
+        expect(createChange.parentKey).to.equal("dd1fdd7d-da2a-4600-940b-0baf2946c4ff");
+        expect(createChange.parentObjectID).to.equal("In Preparation");
 
         // Check the changeLog to make sure the entity information is root
         const changeLogs = await SELECT.from(ChangeLog).where({
@@ -177,6 +179,8 @@ describe("change log integration test", () => {
         expect(createChanges.length).to.equal(1);
         const updateChange = updateChanges[0];
         expect(updateChange.objectID).to.equal("In Preparation");
+        expect(createChange.parentKey).to.equal("dd1fdd7d-da2a-4600-940b-0baf2946c4ff");
+        expect(createChange.parentObjectID).to.equal("In Preparation");
 
         await DELETE.from(adminService.entities.Level3Entity).where({ ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321" });
         let deleteChanges = await SELECT.from(ChangeView).where({
@@ -187,6 +191,8 @@ describe("change log integration test", () => {
         expect(deleteChanges.length).to.equal(1);
         const deleteChange = deleteChanges[0];
         expect(deleteChange.objectID).to.equal("In Preparation");
+        expect(createChange.parentKey).to.equal("dd1fdd7d-da2a-4600-940b-0baf2946c4ff");
+        expect(createChange.parentObjectID).to.equal("In Preparation");
 
         // Test object id when parent and child nodes are created at the same time
         const RootEntityData = {
