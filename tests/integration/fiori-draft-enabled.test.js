@@ -1406,7 +1406,7 @@ describe("change log integration test", () => {
 
     it("11.1 The change log should be captured when a child entity in draft-enabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
         await POST(
-            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,myID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=true)/books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=true)/volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf,IsActiveEntity=true)/AdminService.activate`
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=true)/books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=true)/volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf,IsActiveEntity=true)/AdminService.activate`
         );
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.Volumns",
