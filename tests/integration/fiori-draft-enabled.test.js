@@ -10,13 +10,16 @@ let ChangeView = null;
 let db = null;
 let ChangeEntity = null;
 let utils = null;
+let ChangeLog = null;
 
 describe("change log integration test", () => {
     beforeAll(async () => {
         adminService = await cds.connect.to("AdminService");
         ChangeView = adminService.entities.ChangeView;
+        ChangeView["@cds.autoexposed"] = false;
         db = await cds.connect.to("sql:my.db");
         ChangeEntity = db.model.definitions["sap.changelog.Changes"];
+        ChangeLog = db.model.definitions["sap.changelog.ChangeLog"];
         utils = new RequestSend(POST);
     });
 
@@ -62,7 +65,7 @@ describe("change log integration test", () => {
         const beforeChanges = await adminService.run(SELECT.from(ChangeView));
         expect(beforeChanges.length > 0).to.be.true; 
     
-        await DELETE(`/admin/RootEntity(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=true)`);
+        await DELETE(`/odata/v4/admin/RootEntity(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=true)`);
 
         const afterChanges = await adminService.run(SELECT.from(ChangeView));
 
@@ -85,7 +88,7 @@ describe("change log integration test", () => {
     it("2.1 Child entity creation - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
         const action = POST.bind(
             {},
-            `/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
             {
                 ID: "9d703c23-54a8-4eff-81c1-cdce6b8376b2",
                 title: "test title",
@@ -166,7 +169,7 @@ describe("change log integration test", () => {
     });
 
     it("2.2 Child entity update - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
-        const action = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
+        const action = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
             title: "new title",
             author_ID: "47f97f40-4f41-488a-b10b-a5725e762d5e",
             genre_ID: 16,
@@ -262,7 +265,7 @@ describe("change log integration test", () => {
     });
 
     it("2.3 Child entity delete - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
-        const action = DELETE.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`);
+        const action = DELETE.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`);
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
 
         const bookChanges = await adminService.run(
@@ -340,7 +343,7 @@ describe("change log integration test", () => {
         delete cds.db.entities.Books["@changelog"];
         delete cds.db.entities.BookStores["@changelog"];
 
-        const action = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
+        const action = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
             title: "new title",
         });
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
@@ -381,7 +384,7 @@ describe("change log integration test", () => {
 
         const action = POST.bind(
             {},
-            `/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
             {
                 ID: "9d703c23-54a8-4eff-81c1-cdce6b8376b2",
                 title: "test title",
@@ -426,7 +429,7 @@ describe("change log integration test", () => {
             { "=": "author.name.lastName" },
         ];
 
-        const actionPH = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b2,IsActiveEntity=false)`, {
+        const actionPH = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b2,IsActiveEntity=false)`, {
             title: "test title 1",
         });
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", actionPH);
@@ -454,7 +457,7 @@ describe("change log integration test", () => {
             { "=": "author.name.lastName" },
         ];
 
-        const actionDE = DELETE.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b2,IsActiveEntity=false)`);
+        const actionDE = DELETE.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b2,IsActiveEntity=false)`);
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", actionDE);
 
         const deleteTitleChanges = await adminService.run(
@@ -484,7 +487,7 @@ describe("change log integration test", () => {
             { "=": "stock" },
         ];
 
-        const action = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
+        const action = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
             title: "new title",
             author_ID: "47f97f40-4f41-488a-b10b-a5725e762d5e",
             genre_ID: 16,
@@ -518,7 +521,7 @@ describe("change log integration test", () => {
             { "=": "genre.ID" },
         ];
 
-        const action = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
+        const action = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
             title: "new title",
             author_ID: "47f97f40-4f41-488a-b10b-a5725e762d5e",
             genre_ID: 16,
@@ -558,7 +561,7 @@ describe("change log integration test", () => {
 
         const action = POST.bind(
             {},
-            `/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
             {
                 ID: "9d703c23-54a8-4eff-81c1-cdce6b8376b2",
                 author_ID: "d4d4a1b3-5b83-4814-8a20-f039af6f0387",
@@ -592,7 +595,7 @@ describe("change log integration test", () => {
             { "=": "author.name.lastName" },
         ];
 
-        const actionPH = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b2,IsActiveEntity=false)`, {
+        const actionPH = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b2,IsActiveEntity=false)`, {
             author_ID: "47f97f40-4f41-488a-b10b-a5725e762d5e",
         });
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", actionPH);
@@ -621,7 +624,7 @@ describe("change log integration test", () => {
 
         const action = POST.bind(
             {},
-            `/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
             {
                 ID: "9d703c23-54a8-4eff-81c1-cdce6b8376b2",
                 title: "test title",
@@ -652,7 +655,7 @@ describe("change log integration test", () => {
             { "=": "books.price" },
         ];
 
-        const actionPH = PATCH.bind({}, `/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b2,IsActiveEntity=false)`, {
+        const actionPH = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b2,IsActiveEntity=false)`, {
             stock: 3,
         });
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", actionPH);
@@ -677,7 +680,7 @@ describe("change log integration test", () => {
 
     it("6.1 Single attribute from the code list could be annotated as value (ERP4SMEPREPWORKAPPPLAT-1055)", async () => {
         // When BookStore is created, the lifecycle status will be set to "in preparation" by default
-        const action = POST.bind({}, `/admin/BookStores`, {
+        const action = POST.bind({}, `/odata/v4/admin/BookStores`, {
             ID: "01234567-89ab-cdef-0123-456789abcdef",
             name: "test name",
         });
@@ -706,7 +709,7 @@ describe("change log integration test", () => {
 
         const actionPH = PATCH.bind(
             {},
-            `/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`,
+            `/odata/v4/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`,
             {
                 lifecycleStatus: {
                     code: "CL",
@@ -734,7 +737,7 @@ describe("change log integration test", () => {
     it("6.2 Multiple attributes from the code list could be annotated as value (ERP4SMEPREPWORKAPPPLAT-1055)", async () => {
         const action = POST.bind(
             {},
-            `/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
             {
                 ID: "7e9d4199-4602-47f1-8767-85dae82ce639",
                 bookType: {
@@ -757,7 +760,7 @@ describe("change log integration test", () => {
         expect(bookTypeChange.valueChangedFrom).to.equal("");
         expect(bookTypeChange.valueChangedTo).to.equal("Management, Management Books");
 
-        const actionPH = PATCH.bind({}, `/admin/Books(ID=7e9d4199-4602-47f1-8767-85dae82ce639,IsActiveEntity=false)`, {
+        const actionPH = PATCH.bind({}, `/odata/v4/admin/Books(ID=7e9d4199-4602-47f1-8767-85dae82ce639,IsActiveEntity=false)`, {
             bookType: {
                 code: "SCI",
             },
@@ -786,7 +789,7 @@ describe("change log integration test", () => {
             { "=": "lifecycleStatus.name" },
         ];
 
-        const action = POST.bind({}, `/admin/BookStores`, {
+        const action = POST.bind({}, `/odata/v4/admin/BookStores`, {
             ID: "01234567-89ab-cdef-0123-456789abcdef",
             name: "test name",
         });
@@ -819,7 +822,7 @@ describe("change log integration test", () => {
         ];
         const actionPH = PATCH.bind(
             {},
-            `/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`,
+            `/odata/v4/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`,
             {
                 lifecycleStatus: {
                     code: "CL",
@@ -872,7 +875,7 @@ describe("change log integration test", () => {
         const BookStoresChange = BookStoresChanges[0];
         expect(BookStoresChange.objectID).to.equal("new name");
 
-        const updateBookStoresAction = PATCH.bind({}, `/admin/BookStores(ID=9d703c23-54a8-4eff-81c1-cdce6b6587c4,IsActiveEntity=false)`, {
+        const updateBookStoresAction = PATCH.bind({}, `/odata/v4/admin/BookStores(ID=9d703c23-54a8-4eff-81c1-cdce6b6587c4,IsActiveEntity=false)`, {
             name: "name update",
         });
         await utils.apiAction(
@@ -1229,7 +1232,7 @@ describe("change log integration test", () => {
         delete cds.services.AdminService.entities.BookStores["@changelog"];
         const action = POST.bind(
             {},
-            `/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
             {
                 ID: "9d703c23-54a8-4eff-81c1-cdce6b8376b2",
                 title: "test title",
@@ -1280,7 +1283,7 @@ describe("change log integration test", () => {
     });
 
     it("10.4 Composition of one node creation - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)", async () => {
-        const action = POST.bind({}, `/admin/BookStores`, {
+        const action = POST.bind({}, `/odata/v4/admin/BookStores`, {
             ID: "01234567-89ab-cdef-0123-456789abcdef",
             name: "Murder on the Orient Express",
             registry: {
@@ -1324,7 +1327,7 @@ describe("change log integration test", () => {
     it("10.5.1 Composition of one node updated on root node - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)", async () => {
         const action = PATCH.bind(
             {},
-            `/admin/BookStores(ID=5ab2a87b-3a56-4d97-a697-7af72334a384,IsActiveEntity=false)`,
+            `/odata/v4/admin/BookStores(ID=5ab2a87b-3a56-4d97-a697-7af72334a384,IsActiveEntity=false)`,
             {
                 registry: {
                     ID: "12ed5dd8-d45b-11ed-afa1-0242ac120001",
@@ -1357,7 +1360,7 @@ describe("change log integration test", () => {
         // Update by calling API on child node
         const action = PATCH.bind(
             {},
-            `/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`,
+            `/odata/v4/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`,
             {
                 validOn: "2022-01-01",
             }
@@ -1382,7 +1385,7 @@ describe("change log integration test", () => {
     it("10.6 Composition of one node deleted - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)", async () => {
         const action = DELETE.bind(
             {},
-            `/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`
+            `/odata/v4/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`
         );
         await utils.apiAction("admin", "BookStores", "8aaed432-8336-4b0d-be7e-3ef1ce7f13ea", "AdminService", action);
         const registryChanges = await adminService.run(
@@ -1403,19 +1406,52 @@ describe("change log integration test", () => {
 
     it("11.1 The change log should be captured when a child entity in draft-enabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
         await POST(
-            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=true)/books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=true)/volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf,IsActiveEntity=true)/AdminService.activate`,
-            {
-                ActivationStatus_code: "VALID",
-            },
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=true)/books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=true)/volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf,IsActiveEntity=true)/AdminService.activate`
         );
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.Volumns",
             attribute: "ActivationStatus",
         });
+
         expect(changes.length).to.equal(1);
         expect(changes[0].valueChangedFrom).to.equal("");
         expect(changes[0].valueChangedTo).to.equal("VALID");
         expect(changes[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
         expect(changes[0].parentKey).to.equal("9d703c23-54a8-4eff-81c1-cdce6b8376b1");
+
+        // Check the changeLog to make sure the entity information is root
+        let changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.BookStores",
+            entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+            serviceEntity: "AdminService.BookStores",
+        });
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
+        expect(changeLogs[0].entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.BookStores");
+
+        changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Books",
+            attribute: "title",
+        });
+
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("Jane Eyre");
+        expect(changes[0].valueChangedTo).to.equal("Black Myth wukong");
+        expect(changes[0].entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
+        expect(changes[0].parentKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
+
+        // Check the changeLog to make sure the entity information is root
+        changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.BookStores",
+            entityKey: "5ab2a87b-3a56-4d97-a697-7af72334a384",
+            serviceEntity: "AdminService.BookStores",
+        });
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
+        expect(changeLogs[0].entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.BookStores");
     });
 });

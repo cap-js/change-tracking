@@ -1,5 +1,4 @@
 using {sap.capire.bookshop as my} from '../db/schema';
-using {sap.capire.bookshop.PaymentAgreementStatusCodes as PaymentAgreementStatusCodes} from '../db/codelists';
 
 service AdminService {
   @odata.draft.enabled

@@ -1,5 +1,8 @@
 const cds = require('@sap/cds')
 
+const isRoot = 'change-tracking-isRootEntity'
+const hasParent = 'change-tracking-parentEntity'
+
 const isChangeTracked = (entity) => (
   (entity['@changelog']
   || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])) && entity.query?.SET?.op !== 'union'
@@ -7,6 +10,10 @@ const isChangeTracked = (entity) => (
 
 // Add the appropriate Side Effects attribute to the custom action
 const addSideEffects = (actions, flag, element) => {
+  if (!flag && (element === undefined || element === null)) {
+    return
+  }
+
   for (const se of Object.values(actions)) {
     const target = flag ? 'TargetProperties' : 'TargetEntities'
     const sideEffectAttr = se[`@Common.SideEffects.${target}`]
@@ -23,6 +30,114 @@ const addSideEffects = (actions, flag, element) => {
   }
 }
 
+function setChangeTrackingIsRootEntity(entity, csn, val = true) {
+  if (csn.definitions?.[entity.name]) {
+    csn.definitions[entity.name][isRoot] = val;
+  }
+}
+
+function checkAndSetRootEntity(parentEntity, entity, csn) {
+  if (entity[isRoot] === false) {
+    return entity;
+  }
+  if (parentEntity) {
+    return compositionRoot(parentEntity, csn);
+  } else {
+    setChangeTrackingIsRootEntity(entity, csn);
+    return { ...csn.definitions?.[entity.name], name: entity.name };
+  }
+}
+
+function processEntities(m) {
+  for (let name in m.definitions) {
+    compositionRoot({...m.definitions[name], name}, m)
+  }
+}
+
+function compositionRoot(entity, csn) {
+  if (!entity || entity.kind !== 'entity') {
+    return;
+  }
+  const parentEntity = compositionParent(entity, csn);
+  return checkAndSetRootEntity(parentEntity, entity, csn);
+}
+
+function compositionParent(entity, csn) {
+  if (!entity || entity.kind !== 'entity') {
+    return;
+  }
+  const parentAssociation = compositionParentAssociation(entity, csn);
+  return parentAssociation ?? null;
+}
+
+function compositionParentAssociation(entity, csn) {
+  if (!entity || entity.kind !== 'entity') {
+    return;
+  }
+  const elements = entity.elements ?? {};
+
+  // Add the change-tracking-isRootEntity attribute of the child entity
+  processCompositionElements(entity, csn, elements);
+
+  const hasChildFlag = entity[isRoot] !== false;
+  const hasParentEntity = entity[hasParent];
+
+  if (hasChildFlag || !hasParentEntity) {
+    // Find parent association of the entity
+    const parentAssociation = findParentAssociation(entity, csn, elements);
+    if (parentAssociation) {
+      const parentAssociationTarget = elements[parentAssociation]?.target;
+      if (hasChildFlag) setChangeTrackingIsRootEntity(entity, csn, false);
+      return {
+        ...csn.definitions?.[parentAssociationTarget],
+        name: parentAssociationTarget
+      };
+    } else return;
+  }
+  return { ...csn.definitions?.[entity.name], name: entity.name };
+}
+
+function processCompositionElements(entity, csn, elements) {
+  for (const name in elements) {
+    const element = elements[name];
+    const target = element?.target;
+    const definition = csn.definitions?.[target];
+    if (
+      element.type !== 'cds.Composition' ||
+      target === entity.name ||
+      !definition ||
+      definition[isRoot] === false
+    ) {
+      continue;
+    }
+    setChangeTrackingIsRootEntity({ ...definition, name: target }, csn, false);
+  }
+}
+
+function findParentAssociation(entity, csn, elements) {
+  return Object.keys(elements).find((name) => {
+    const element = elements[name];
+    const target = element?.target;
+    if (element.type === 'cds.Association' && target !== entity.name) {
+      const parentDefinition = csn.definitions?.[target] ?? {};
+      const parentElements = parentDefinition?.elements ?? {};
+      return !!Object.keys(parentElements).find((parentEntityName) => {
+        const parentElement = parentElements?.[parentEntityName] ?? {};
+        if (parentElement.type === 'cds.Composition') {
+          const isCompositionEntity = parentElement.target === entity.name;
+          // add parent information in the current entity
+          if (isCompositionEntity) {
+            csn.definitions[entity.name][hasParent] = {
+              associationName: name,
+              entityName: target
+            };
+          }
+          return isCompositionEntity;
+        }
+      });
+    }
+  });
+}
 
 // Unfold @changelog annotations in loaded model
 cds.on('loaded', m => {
@@ -31,6 +146,9 @@ cds.on('loaded', m => {
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
   changes.on.pop() // remove ID -> filled in below
+  
+  // Process entities to define the relation
+  processEntities(m)
 
   for (let name in m.definitions) {
     const entity = m.definitions[name]
@@ -63,28 +181,20 @@ cds.on('loaded', m => {
       if(!entity['@changelog.disable_facet'])
         entity['@UI.Facets']?.push(facet)
       }
-      // The changehistory list should be refreshed after the custom action is triggered
+
       if (entity.actions) {
+        const hasParentInfo = entity[hasParent];
+        const entityName = hasParentInfo?.entityName;
+        const parentEntity = entityName ? m.definitions[entityName] : null;
 
-        // Update the changehistory list on the current entity when the custom action of the entity is triggered
-        if (entity['@UI.Facets']) {
-          addSideEffects(entity.actions, true)
-        }
+        const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets'];
 
-        // When the custom action of the child entity is performed, the change history list of the parent entity is updated
-        if (entity.elements) {
-          //ToDo: Revisit Breaklook with node.js Expert
-          breakLoop: for (const [ele, eleValue] of Object.entries(entity.elements)) {
-            const parentEntity = m.definitions[eleValue.target]
-            if (parentEntity && parentEntity['@UI.Facets'] && eleValue.type === 'cds.Association') {
-              for (const value of Object.values(parentEntity.elements)) {
-                if (value.target === name) {
-                  addSideEffects(entity.actions, false, ele)
-                  break breakLoop
-                }
-              }
-            }
-          }
+        if (entity[isRoot] && entity['@UI.Facets']) {
+          // Add side effects for root entity
+          addSideEffects(entity.actions, true);
+        } else if (isParentRootAndHasFacets) {
+          // Add side effects for child entity
+          addSideEffects(entity.actions, false, hasParentInfo?.associationName);
         }
       }
     }
