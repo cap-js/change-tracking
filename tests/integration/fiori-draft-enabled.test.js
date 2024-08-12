@@ -373,6 +373,25 @@ describe("change log integration test", () => {
         ];
     });
 
+    it("2.7 Composition of inline entity for draft enabled entity", async () => {
+        const action = PATCH.bind({}, `/odata/v4/admin/BookStores_bookInventory(up__ID=64625905-c234-4d0d-9bc1-283ee8946770,ID=3ccf474c-3881-44b7-99fb-59a2a4668418,IsActiveEntity=false)`, {
+            title: "update title"
+        });
+
+        await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
+
+        const changes = await adminService.run(SELECT.from(ChangeView));
+        
+        expect(changes.length).to.equal(1);
+        const change = changes[0];
+        expect(change.attribute).to.equal("title");
+        expect(change.modification).to.equal("Update");
+        expect(change.valueChangedFrom).to.equal("Eleonora");
+        expect(change.valueChangedTo).to.equal("update title");
+        expect(change.parentKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(change.keys).to.equal("ID=3ccf474c-3881-44b7-99fb-59a2a4668418");
+    });
+
     it("4.1 Annotate multiple native and attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
         // After appending object id as below, the object ID sequence should be:
         // title, author.name.firstName, author.name.lastName, stock, bookStore.name, bookStore.location

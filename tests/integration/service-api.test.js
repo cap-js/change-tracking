@@ -100,6 +100,28 @@ describe("change log integration test", () => {
         expect(changes[0].parentObjectID).to.equal("Shakespeare and Company");
     });
 
+    it("3.6 Composition operation of inline entity operation by QL API", async () => {
+        await UPDATE(adminService.entities["Order.Items"])
+            .where({
+                up__ID: "3b23bb4b-4ac7-4a24-ac02-aa10cabd842c", 
+                ID: "2b23bb4b-4ac7-4a24-ac02-aa10cabd842c"
+            })
+            .with({
+                quantity: 12
+            });
+
+        const changes = await adminService.run(SELECT.from(ChangeView));
+        
+        expect(changes.length).to.equal(1);
+        const change = changes[0];
+        expect(change.attribute).to.equal("quantity");
+        expect(change.modification).to.equal("Update");
+        expect(change.valueChangedFrom).to.equal("10");
+        expect(change.valueChangedTo).to.equal("12");
+        expect(change.parentKey).to.equal("3b23bb4b-4ac7-4a24-ac02-aa10cabd842c");
+        expect(change.keys).to.equal("ID=2b23bb4b-4ac7-4a24-ac02-aa10cabd842c");
+    });
+
     it("7.3 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
         cds.services.AdminService.entities.BookStores["@changelog"].push({ "=": "city.name" })
 

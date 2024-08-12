@@ -252,6 +252,23 @@ describe("change log draft disabled test", () => {
         expect(orderChanges.length).to.equal(2);
     });
 
+    it("3.5 Composition of inline entity for draft disabled entity", async () => {
+        await PATCH(`/odata/v4/admin/Order_Items(up__ID=3b23bb4b-4ac7-4a24-ac02-aa10cabd842c,ID=2b23bb4b-4ac7-4a24-ac02-aa10cabd842c)`, {
+            quantity: 12.0
+        });
+
+        const changes = await adminService.run(SELECT.from(ChangeView));
+        
+        expect(changes.length).to.equal(1);
+        const change = changes[0];
+        expect(change.attribute).to.equal("quantity");
+        expect(change.modification).to.equal("Update");
+        expect(change.valueChangedFrom).to.equal("10");
+        expect(change.valueChangedTo).to.equal("12");
+        expect(change.parentKey).to.equal("3b23bb4b-4ac7-4a24-ac02-aa10cabd842c");
+        expect(change.keys).to.equal("ID=2b23bb4b-4ac7-4a24-ac02-aa10cabd842c");
+    });
+
     it("4.1 Annotate multiple native and attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
         cds.services.AdminService.entities.OrderItem["@changelog"] = [
             { "=": "customer.city" },

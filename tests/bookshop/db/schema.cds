@@ -105,6 +105,13 @@ entity BookStores @(cds.autoexpose) : managed, cuid {
 
   @title : '{i18n>bookStore.registry}'
   registry        : Composition of one BookStoreRegistry;
+
+  @title : '{i18n>bookStore.bookInventory}'
+  bookInventory   : Composition of many {
+    key ID    : UUID;
+    @changelog
+    title     : String;
+  }
 }
 
 @fiori.draft.enabled
@@ -195,6 +202,11 @@ entity Order : cuid {
                  on orderItems.order = $self;
   netAmount  : Decimal(19, 2);
   status     : String;
+  Items      : Composition of many {
+    key ID   : UUID;
+    @changelog
+    quantity : Integer;
+  }
 }
 
 entity OrderType : cuid {

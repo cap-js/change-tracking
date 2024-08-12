@@ -20,6 +20,7 @@ service AdminService {
   entity Authors                       as projection on my.Authors;
   entity Report                        as projection on my.Report;
   entity Order                         as projection on my.Order;
+  entity Order.Items                   as projection on my.Order.Items;
   entity OrderItem                     as projection on my.OrderItem;
   
   entity OrderItemNote                 as projection on my.OrderItemNote actions {
