@@ -14,6 +14,25 @@ using {sap.capire.bookshop.PaymentAgreementStatusCodes as PaymentAgreementStatus
 
 namespace sap.capire.bookshop;
 
+@odata.draft.enabled
+entity FirstEntity : managed, cuid {
+  name : String;
+  children : Composition of many Children on children.one = $self;
+}
+
+@odata.draft.enabled
+entity SecondEntity : managed, cuid {
+  name : String;
+  children : Composition of many Children on children.two = $self;
+}
+
+@changelog : [ID]
+entity Children : managed, cuid {
+  // key ID : UUID;
+  key one : Association to one FirstEntity;
+  key two : Association to one SecondEntity;
+}
+
 @fiori.draft.enabled
 @title: '{i18n>RootEntity.objectTitle}'
 entity RootEntity @(cds.autoexpose) : managed, cuid {
