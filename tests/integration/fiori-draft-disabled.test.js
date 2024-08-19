@@ -8,13 +8,16 @@ let adminService = null;
 let ChangeView = null;
 let db = null;
 let ChangeEntity = null;
+let ChangeLog = null;
 
 describe("change log draft disabled test", () => {
     beforeAll(async () => {
         adminService = await cds.connect.to("AdminService");
         ChangeView = adminService.entities.ChangeView;
+        ChangeView["@cds.autoexposed"] = false;
         db = await cds.connect.to("sql:my.db");
         ChangeEntity = db.model.definitions["sap.changelog.Changes"];
+        ChangeLog = db.model.definitions["sap.changelog.ChangeLog"];
     });
 
     beforeEach(async () => {
@@ -22,7 +25,7 @@ describe("change log draft disabled test", () => {
     });
 
     it("1.1 Root entity creation - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
-        const author = await POST(`/admin/Authors`, {
+        const author = await POST(`/odata/v4/admin/Authors`, {
             name_firstName: "Sam",
             name_lastName: "Smiths",
             placeOfBirth: "test place",
@@ -54,7 +57,7 @@ describe("change log draft disabled test", () => {
     });
 
     it("1.2 Root entity update - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
-        await PATCH(`/admin/Authors(ID=d4d4a1b3-5b83-4814-8a20-f039af6f0387)`, {
+        await PATCH(`/odata/v4/admin/Authors(ID=d4d4a1b3-5b83-4814-8a20-f039af6f0387)`, {
             placeOfBirth: "new placeOfBirth",
         });
 
@@ -74,7 +77,7 @@ describe("change log draft disabled test", () => {
     });
 
     it("1.3 Root entity delete - should delete related changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
-        const author = await POST(`/admin/Authors`, {
+        const author = await POST(`/odata/v4/admin/Authors`, {
             name_firstName: "Sam",
             name_lastName: "Smiths",
             placeOfBirth: "test place",
@@ -83,7 +86,7 @@ describe("change log draft disabled test", () => {
         const beforeChanges = await adminService.run(SELECT.from(ChangeView));
         expect(beforeChanges.length > 0).to.be.true;
 
-        await DELETE(`/admin/Authors(ID=${author.data.ID})`);
+        await DELETE(`/odata/v4/admin/Authors(ID=${author.data.ID})`);
 
         const afterChanges = await adminService.run(SELECT.from(ChangeView));
         expect(afterChanges.length).to.equal(0);
@@ -152,7 +155,7 @@ describe("change log draft disabled test", () => {
 
     it("3.1 Composition creatition by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
         await POST(
-            `/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes`,
+            `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes`,
             {
                 content: "new content",
             }
@@ -170,11 +173,19 @@ describe("change log draft disabled test", () => {
         expect(orderChange.valueChangedTo).to.equal("new content");
         expect(orderChange.parentKey).to.equal("9a61178f-bfb3-4c17-8d17-c6b4a63e0097");
         expect(orderChange.parentObjectID).to.equal("sap.capire.bookshop.OrderItem");
+
+        // Check the changeLog to make sure the entity information is root
+        let changeLogs = await adminService.run(SELECT.from(ChangeLog));
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.Order");
+        expect(changeLogs[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.Order");
     });
 
     it("3.2 Composition update by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
         await PATCH(
-            `/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)`,
+            `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)`,
             {
                 content: "new content",
             }
@@ -193,11 +204,19 @@ describe("change log draft disabled test", () => {
         expect(orderChange.valueChangedTo).to.equal("new content");
         expect(orderChange.parentKey).to.equal("9a61178f-bfb3-4c17-8d17-c6b4a63e0097");
         expect(orderChange.parentObjectID).to.equal("sap.capire.bookshop.OrderItem");
+
+        // Check the changeLog to make sure the entity information is root
+        let changeLogs = await adminService.run(SELECT.from(ChangeLog));
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.Order");
+        expect(changeLogs[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.Order");
     });
 
     it("3.3 Composition delete by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
         await DELETE(
-            `/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)`
+            `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)`
         );
 
         let changes = await adminService.run(SELECT.from(ChangeView));
@@ -218,7 +237,7 @@ describe("change log draft disabled test", () => {
     it("3.4 Composition create by odata request on draft disabled entity - should log changes for root entity if url path contains association entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
         // Report has association to many Orders, changes on OrderItem shall be logged on Order
         await POST(
-            `admin/Report(ID=0a41a666-a2ff-4df6-bd12-fae8996e6666)/orders(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems`,
+            `/odata/v4/admin/Report(ID=0a41a666-a2ff-4df6-bd12-fae8996e6666)/orders(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems`,
             {
                 order_ID: "0a41a187-a2ff-4df6-bd12-fae8996e6e31",
                 quantity: 10,
@@ -233,6 +252,23 @@ describe("change log draft disabled test", () => {
         expect(orderChanges.length).to.equal(2);
     });
 
+    it("3.5 Composition of inline entity for draft disabled entity", async () => {
+        await PATCH(`/odata/v4/admin/Order_Items(up__ID=3b23bb4b-4ac7-4a24-ac02-aa10cabd842c,ID=2b23bb4b-4ac7-4a24-ac02-aa10cabd842c)`, {
+            quantity: 12.0
+        });
+
+        const changes = await adminService.run(SELECT.from(ChangeView));
+        
+        expect(changes.length).to.equal(1);
+        const change = changes[0];
+        expect(change.attribute).to.equal("quantity");
+        expect(change.modification).to.equal("Update");
+        expect(change.valueChangedFrom).to.equal("10");
+        expect(change.valueChangedTo).to.equal("12");
+        expect(change.parentKey).to.equal("3b23bb4b-4ac7-4a24-ac02-aa10cabd842c");
+        expect(change.keys).to.equal("ID=2b23bb4b-4ac7-4a24-ac02-aa10cabd842c");
+    });
+
     it("4.1 Annotate multiple native and attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
         cds.services.AdminService.entities.OrderItem["@changelog"] = [
             { "=": "customer.city" },
@@ -240,7 +276,7 @@ describe("change log draft disabled test", () => {
             { "=": "price" },
             { "=": "quantity" },
         ];
-        await PATCH(`/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
+        await PATCH(`/odata/v4/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
             quantity: 14,
         });
 
@@ -261,7 +297,7 @@ describe("change log draft disabled test", () => {
             { "=": "dateOfDeath" },
             { "=": "dateOfBirth" },
         ];
-        await PATCH(`/admin/Authors(ID=d4d4a1b3-5b83-4814-8a20-f039af6f0387)`, {
+        await PATCH(`/odata/v4/admin/Authors(ID=d4d4a1b3-5b83-4814-8a20-f039af6f0387)`, {
             placeOfBirth: "new placeOfBirth",
         });
 
@@ -284,7 +320,7 @@ describe("change log draft disabled test", () => {
             { "=": "customer.country" },
             { "=": "customer.name" },
         ];
-        await PATCH(`/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
+        await PATCH(`/odata/v4/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
             quantity: 14,
         });
 
@@ -297,8 +333,9 @@ describe("change log draft disabled test", () => {
     });
 
     it("5.1 value data type records data type of native attributes of the entity or attributes from association table which are annotated as the displayed value(ERP4SMEPREPWORKAPPPLAT-873)", async () => {
-        await POST(`/admin/OrderItem`, {
+        await POST(`/odata/v4/admin/OrderItem`, {
             ID: "9a61178f-bfb3-4c17-8d17-c6b4a63e0422",
+            order_ID: "6ac4afbf-deda-45ae-88e6-2883157cc010",
             customer_ID: "47f97f40-4f41-488a-b10b-a5725e762d57",
             quantity: 27,
         });
@@ -317,7 +354,7 @@ describe("change log draft disabled test", () => {
         expect(customerChangeInDb.valueChangedTo).to.equal("Japan, Honda, Ōsaka");
         expect(customerChangeInDb.valueDataType).to.equal("cds.String, cds.String, cds.String");
 
-        await PATCH(`/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
+        await PATCH(`/odata/v4/admin/OrderItem(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)`, {
             customer_ID: "5c30d395-db0a-4095-bd7e-d4de3464660a",
         });
 
@@ -328,6 +365,7 @@ describe("change log draft disabled test", () => {
             attribute: "customer",
             modification: "update",
         });
+
         expect(customerUpdateChangesInDb.length).to.equal(1);
 
         const customerUpdateChangeInDb = customerUpdateChangesInDb[0];
@@ -419,10 +457,12 @@ describe("change log draft disabled test", () => {
                     {
                         ID: "48268451-8552-42a6-a3d7-67564be97733",
                         title: "new Level1Object title",
+                        parent_ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
                         child: [
                             {
                                 ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
                                 title: "new Level2Object title",
+                                parent_ID: "48268451-8552-42a6-a3d7-67564be97733"
                             }
                         ]
                     }
@@ -447,9 +487,11 @@ describe("change log draft disabled test", () => {
             child: [
                 {
                     ID: "48268451-8552-42a6-a3d7-67564be97733",
+                    parent_ID: "a670e8e1-ee06-4cad-9cbd-a2354dc37c9d",
                     child:[{
                         ID: "12ed5dd8-d45b-11ed-afa1-1942bd228115",
-                        title: "Level2Object title changed"
+                        title: "Level2Object title changed",
+                        parent_ID:"48268451-8552-42a6-a3d7-67564be97733"
                     }]
                 }
             ]
@@ -556,7 +598,7 @@ describe("change log draft disabled test", () => {
     });
 
     it("10.1 Composition of one creatition by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
-        await POST(`/admin/Order`, {
+        await POST(`/odata/v4/admin/Order`, {
             ID: "11234567-89ab-cdef-0123-456789abcdef",
             header: {
                 status: "Ordered",
@@ -578,7 +620,7 @@ describe("change log draft disabled test", () => {
 
     it("10.2 Composition of one update by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
         cds.services.AdminService.entities.Order["@changelog"] = [{ "=": "status" }];
-        await PATCH(`/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)`, {
+        await PATCH(`/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)`, {
             header: {
                 ID: "8567d0de-d44f-11ed-afa1-0242ac120002",
                 status: "Ordered",
@@ -603,7 +645,7 @@ describe("change log draft disabled test", () => {
     it("10.3 Composition of one delete by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)", async () => {
         // Check if the object ID obtaining failed due to lacking parentKey would lead to dump
         cds.services.AdminService.entities.Order["@changelog"] = [{ "=": "status" }];
-        await DELETE(`/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/header`);
+        await DELETE(`/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/header`);
 
         const changes = await adminService.run(SELECT.from(ChangeView));
         const headerChanges = changes.filter((change) => {
@@ -622,10 +664,7 @@ describe("change log draft disabled test", () => {
 
     it("11.2 The change log should be captured when a child entity in draft-disabled mode triggers a custom action (ERP4SMEPREPWORKAPPPLAT-6211)", async () => {
         await POST(
-            `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/AdminService.activate`,
-            {
-                ActivationStatus_code: "VALID",
-            },
+            `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes(ID=a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)/AdminService.activate`
         );
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.OrderItemNote",
@@ -636,5 +675,39 @@ describe("change log draft disabled test", () => {
         expect(changes[0].valueChangedTo).to.equal("VALID");
         expect(changes[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
         expect(changes[0].parentKey).to.equal("9a61178f-bfb3-4c17-8d17-c6b4a63e0097");
+
+        // Check the changeLog to make sure the entity information is root
+        let changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.Order",
+            entityKey: "0a41a187-a2ff-4df6-bd12-fae8996e6e31",
+            serviceEntity: "AdminService.Order",
+        });
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.Order");
+        expect(changeLogs[0].entityKey).to.equal("0a41a187-a2ff-4df6-bd12-fae8996e6e31");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.Order");
+
+        changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level2Object",
+            attribute: "title",
+        });
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("Level2Object title2");
+        expect(changes[0].valueChangedTo).to.equal("Game Science");
+        expect(changes[0].entityKey).to.equal("6ac4afbf-deda-45ae-88e6-2883157cd576");
+        expect(changes[0].parentKey).to.equal("ae0d8b10-84cf-4777-a489-a198d1717c75");
+
+        // Check the changeLog to make sure the entity information is root
+        changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.RootObject",
+            entityKey: "6ac4afbf-deda-45ae-88e6-2883157cd576",
+            serviceEntity: "AdminService.RootObject",
+        });
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.RootObject");
+        expect(changeLogs[0].entityKey).to.equal("6ac4afbf-deda-45ae-88e6-2883157cd576");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.RootObject");
     });
 });
