@@ -6,7 +6,9 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 
 > [!IMPORTANT]
 > This release establishes compatibility with CDS 8.
+> 
 > Since the prior release was using **APIs deprecated in CDS8**, the code was modified significantly to enable compatibility. While we tested extensively, there may still be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
+> 
 > See the changelog for a full list of changes
 
 
