@@ -4,15 +4,24 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.0.7 - 09.07.24
+## Version 1.0.7 - 20.08.24
 
 ### Added
 
  - A global switch to preserve change logs for deleted data
+ - For hierarchical entities, a method to determine their structure and a flag to indicate whether it is a root entity was introduced. For child entities, information about the parent is recorded.
+
 
 ### Fixed
 
-- Wrong Object ID captured when deleting root entities
+- CDS 8 does not support queries for draft-enabled entities on the application service anymore. This was causing: SqliteError: NOT NULL constraint failed: (...).DraftAdministrativeData_DraftUUID
+- CDS 8 deprecated cds.transaction, causing change logs of nested documents to be wrong, replaced with req.event
+- CDS 8 rejects all direct CRUD requests for auto-exposed Compositions in non-draft cases. This was affecting test cases, since the ChangeView falls into this category
+- req._params and req.context are not official APIs and stopped working with CDS 8, replaced with official APIs
+- When running test cases in CDS 8, some requests failed with a status code of 404
+- ServiceEntity is not captured in the ChangeLog table in some cases
+- When modeling an inline entity, a non-existent association and parent ID was recorded
+- Fixed handling, when reqData was undefined
 
 ### Changed
 
