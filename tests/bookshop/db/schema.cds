@@ -103,6 +103,10 @@ entity BookStores @(cds.autoexpose) : managed, cuid {
   books           : Composition of many Books
                       on books.bookStore = $self;
 
+  @changelog: [bookOfTheMonth.title]
+  bookOfTheMonthID: UUID;
+  bookOfTheMonth: Association to one Books on bookOfTheMonth.ID = bookOfTheMonthID;
+
   @title : '{i18n>bookStore.registry}'
   registry        : Composition of one BookStoreRegistry;
 

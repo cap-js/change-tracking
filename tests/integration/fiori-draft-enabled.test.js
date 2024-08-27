@@ -85,6 +85,28 @@ describe("change log integration test", () => {
         expect(afterChanges.length).to.equal(14);
     });
 
+    it("unmanaged child entity update without objectID annotation - should log object type for object ID", async () => {
+
+
+        const changeUnmanagedAssociationId = PATCH.bind(
+            {},
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)`,
+            {
+                bookOfTheMonthID: "676059d4-8851-47f1-b558-3bdc461bf7d5"
+            }
+        );
+        await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", changeUnmanagedAssociationId);
+
+        const bookChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.BookStores",
+                attribute: "bookOfTheMonthID",
+            })
+        );
+        expect(bookChanges.length).to.equal(1);
+        expect(bookChanges[0].valueChangedTo).to.equal("Jane Eyre");
+    })
+
     it("2.1 Child entity creation - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
         const action = POST.bind(
             {},
