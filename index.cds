@@ -44,7 +44,9 @@ entity ChangeLog : managed, cuid {
   createdBy     : managed:createdBy;
   changes       : Composition of many Changes on changes.changeLog = $self;
 }
-
+annotate Changelog with {
+  ID: @UI.Hidden;
+}
 
 /**
  * Attribute-level Changes with simple capturing of one-level
