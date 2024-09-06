@@ -44,9 +44,6 @@ entity ChangeLog : managed, cuid {
   createdBy     : managed:createdBy;
   changes       : Composition of many Changes on changes.changeLog = $self;
 }
-annotate Changelog with {
-  ID: @UI.Hidden;
-}
 
 /**
  * Attribute-level Changes with simple capturing of one-level
@@ -78,7 +75,7 @@ entity Changes {
       };
 
       valueDataType     : String                   @title: '{i18n>Changes.valueDataType}';
-      changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}';
+      changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}' @UI.Hidden;
 }
 
 annotate ChangeView with @(UI: {
