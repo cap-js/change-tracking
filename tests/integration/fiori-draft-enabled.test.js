@@ -72,6 +72,9 @@ describe("change log integration test", () => {
         const changelogCreated = afterChanges.filter(ele=> ele.modification === "Create"); 
         const changelogDeleted = afterChanges.filter(ele=> ele.modification === "Delete"); 
 
+        expect(changelogCreated.length).to.equal(7);
+        expect(changelogDeleted.length).to.equal(7);
+
         const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'parentKey', 'serviceEntityPath', 'valueDataType', 'objectID', 'parentObjectID', 'entityKey'];
 
         let commonItems = changelogCreated.filter(beforeItem => {
