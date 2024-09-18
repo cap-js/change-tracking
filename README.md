@@ -28,6 +28,7 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
   - [Specify Object ID](#specify-object-id)
   - [Tracing Changes](#tracing-changes)
   - [Don&#39;ts](#donts)
+- [Limitations](#limitations)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
 - [Licensing](#licensing)
@@ -573,6 +574,23 @@ this.on("UpdateActivationStatus", async (req) =>
 ```
 
 The reason is that: Application level services are by design the only place where business logic is enforced. This by extension means, that it also is the only point where e.g. change-tracking would be enabled. The underlying method used to do change tracking is `req.diff` which is responsible to read the necessary before-image from the database, and this method is not available on DB level.
+
+## Limitations
+
+Currently, change-tracking is not fully compatible with the [@sap/cds-mtxs](https://www.npmjs.com/package/@sap/cds-mtxs) package which is used to provide [CAP Feature Toggles](https://cap.cloud.sap/docs/guides/extensibility/feature-toggles#enable-feature-toggles). 
+
+When activating the features toggles in the `package.json` or `.cdsrc.json` using:
+
+```json
+"cds":{
+  "requires": {
+    "toggles": true
+  }
+}
+```
+
+The generated facets and associations will not be present in the metadata provided by the service. Therefore, it will not work out of the box. 
+A possible mitigation is to add the association and facet manually to the service entity. *Beware* that the association cannot be named `changes` as it conflicts with the generated one.
 
 ## Contributing
 
