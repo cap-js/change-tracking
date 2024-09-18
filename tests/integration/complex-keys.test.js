@@ -1,7 +1,8 @@
 const cds = require("@sap/cds");
-const { assert } = require("console");
+//const { assert } = require("console");
 const complexkeys = require("path").resolve(__dirname, "./complex-keys/");
-const { expect, data, POST, GET } = cds.test(complexkeys);
+//const { expect, data, POST, GET } = cds.test(complexkeys);
+const { expect, data, POST } = cds.test(complexkeys);
 
 let service = null;
 let ChangeView = null;
