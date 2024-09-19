@@ -1,20 +1,14 @@
 const cds = require("@sap/cds");
-//const { assert } = require("console");
 const complexkeys = require("path").resolve(__dirname, "./complex-keys/");
-//const { expect, data, POST, GET } = cds.test(complexkeys);
 const { expect, data, POST } = cds.test(complexkeys);
 
-//let service = null;
 let ChangeView = null;
 let db = null;
-//let ChangeEntity = null;
 
 describe("change log with complex keys", () => {
     beforeAll(async () => {
-        //service = await cds.connect.to("complexkeys.ComplexKeys");
         db = await cds.connect.to("sql:my.db");
         ChangeView = db.model.definitions["sap.changelog.ChangeView"];
-        //ChangeEntity = db.model.definitions["sap.changelog.Changes"];
     });
 
     beforeEach(async () => {
