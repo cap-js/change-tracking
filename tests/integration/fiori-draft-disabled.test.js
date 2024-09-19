@@ -231,6 +231,7 @@ describe("change log draft disabled test", () => {
         expect(orderChange.valueChangedFrom).to.equal("note 1");
         expect(orderChange.valueChangedTo).to.equal("");
         expect(orderChange.parentKey).to.equal("9a61178f-bfb3-4c17-8d17-c6b4a63e0097");
+        expect(orderChange.serviceEntityPath).to.equal('AdminService.Order(0a41a187-a2ff-4df6-bd12-fae8996e6e31)/AdminService.OrderItem(9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/AdminService.OrderItemNote(a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc)');
         expect(orderChange.parentObjectID).to.equal("sap.capire.bookshop.OrderItem");
     });
 
