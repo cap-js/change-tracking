@@ -113,6 +113,7 @@ describe("change log integration test", () => {
 
         const bookChange = bookChanges[0];
         expect(bookChange.entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(bookChange.serviceEntityPath).to.equal("AdminService.BookStores(64625905-c234-4d0d-9bc1-283ee8946770)");
         expect(bookChange.attribute).to.equal("Books");
         expect(bookChange.modification).to.equal("Create");
         expect(bookChange.objectID).to.equal("Shakespeare and Company");
@@ -130,6 +131,7 @@ describe("change log integration test", () => {
 
         const titleChange = titleChanges[0];
         expect(titleChange.entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(titleChange.serviceEntityPath).to.equal("AdminService.BookStores(64625905-c234-4d0d-9bc1-283ee8946770)/AdminService.Books(9d703c23-54a8-4eff-81c1-cdce6b8376b2)");
         expect(titleChange.attribute).to.equal("Title");
         expect(titleChange.modification).to.equal("Create");
         expect(titleChange.objectID).to.equal("test title, Emily, Brontë");
@@ -147,6 +149,7 @@ describe("change log integration test", () => {
 
         const authorChange = authorChanges[0];
         expect(authorChange.entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(authorChange.serviceEntityPath).to.equal("AdminService.BookStores(64625905-c234-4d0d-9bc1-283ee8946770)/AdminService.Books(9d703c23-54a8-4eff-81c1-cdce6b8376b2)");
         expect(authorChange.attribute).to.equal("Author");
         expect(authorChange.modification).to.equal("Create");
         expect(authorChange.objectID).to.equal("test title, Emily, Brontë");
@@ -163,6 +166,7 @@ describe("change log integration test", () => {
         expect(isUsedChanges.length).to.equal(1);
         const isUsedChange = isUsedChanges[0];
         expect(isUsedChange.entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8946770");
+        expect(isUsedChange.serviceEntityPath).to.equal("AdminService.BookStores(64625905-c234-4d0d-9bc1-283ee8946770)/AdminService.Books(9d703c23-54a8-4eff-81c1-cdce6b8376b2)");
         expect(isUsedChange.attribute).to.equal("isUsed");
         expect(isUsedChange.modification).to.equal("Create");
         expect(isUsedChange.objectID).to.equal("test title, Emily, Brontë");
