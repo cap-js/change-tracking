@@ -85,6 +85,88 @@ describe("change log integration test", () => {
         expect(afterChanges.length).to.equal(14);
     });
 
+    it("1.7 When creating or deleting a record with a numeric type of 0 and a boolean type of false, a changelog should also be generated", async () => {
+        cds.services.AdminService.entities.Books.elements.price["@changelog"] = true;
+
+        let action = POST.bind(
+            {},
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            {
+                ID: "01234567-89ab-cdef-0123-987654fedcba",
+                price: 0,
+                isUsed: false
+            }
+        );
+        await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
+        let changes = await adminService.run(SELECT.from(ChangeView));
+        expect(changes).to.have.length(2);
+        expect(
+            changes.map((change) => ({
+              entityKey: change.entityKey,
+              entity: change.entity,
+              valueChangedFrom: change.valueChangedFrom,
+              valueChangedTo: change.valueChangedTo,
+              modification: change.modification,
+              attribute: change.attribute
+            }))
+          ).to.have.deep.members([
+            {
+              entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+              modification: "Create",
+              entity: "Book",
+              attribute: "price",
+              valueChangedFrom: "",
+              valueChangedTo: "0"
+            },
+            {
+              entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+              modification: "Create",
+              entity: "Book",
+              attribute: "isUsed",
+              valueChangedFrom: "",
+              valueChangedTo: "false"
+            },
+        ]);
+
+        action = DELETE.bind({}, `/odata/v4/admin/Books(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=false)`);
+        await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                modification: "delete",
+            })
+        );
+        expect(changes).to.have.length(2);
+        expect(
+            changes.map((change) => ({
+              entityKey: change.entityKey,
+              entity: change.entity,
+              valueChangedFrom: change.valueChangedFrom,
+              valueChangedTo: change.valueChangedTo,
+              modification: change.modification,
+              attribute: change.attribute
+            }))
+          ).to.have.deep.members([
+            {
+              entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+              modification: "Delete",
+              entity: "Book",
+              attribute: "price",
+              valueChangedFrom: "0",
+              valueChangedTo: ""
+            },
+            {
+              entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+              modification: "Delete",
+              entity: "Book",
+              attribute: "isUsed",
+              valueChangedFrom: "false",
+              valueChangedTo: ""
+            },
+        ]);
+
+        delete cds.services.AdminService.entities.Books.elements.price["@changelog"];
+    });
+
     it("2.1 Child entity creation - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
         const action = POST.bind(
             {},

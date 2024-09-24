@@ -153,6 +153,89 @@ describe("change log draft disabled test", () => {
         delete cds.services.AdminService.entities.Level2Object["@changelog"];
     });
 
+    it("1.7 When creating or deleting a record with a numeric type of 0 and a boolean type of false, a changelog should also be generated", async () => {
+        cds.env.requires["change-tracking"].preserveDeletes = true;
+        cds.services.AdminService.entities.Order.elements.netAmount["@changelog"] = true;
+        cds.services.AdminService.entities.Order.elements.isUsed["@changelog"] = true;
+        
+        await POST(`/odata/v4/admin/Order`, {
+            ID: "3e745e35-5974-4383-b60a-2f5c9bdd31ac",
+            isUsed: false,
+            netAmount: 0,
+        });
+
+        let changes = await adminService.run(SELECT.from(ChangeView));
+
+        expect(changes).to.have.length(2);
+        expect(
+            changes.map((change) => ({
+              entityKey: change.entityKey,
+              entity: change.entity,
+              valueChangedFrom: change.valueChangedFrom,
+              valueChangedTo: change.valueChangedTo,
+              modification: change.modification,
+              attribute: change.attribute
+            }))
+          ).to.have.deep.members([
+            {
+              entityKey: "3e745e35-5974-4383-b60a-2f5c9bdd31ac",
+              modification: "Create",
+              entity: "sap.capire.bookshop.Order",
+              attribute: "netAmount",
+              valueChangedFrom: "",
+              valueChangedTo: "0"
+            },
+            {
+              entityKey: "3e745e35-5974-4383-b60a-2f5c9bdd31ac",
+              modification: "Create",
+              entity: "sap.capire.bookshop.Order",
+              attribute: "isUsed",
+              valueChangedFrom: "",
+              valueChangedTo: "false"
+            },
+        ]);
+
+        await DELETE("/odata/v4/admin/Order(ID=3e745e35-5974-4383-b60a-2f5c9bdd31ac)");
+
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                modification: "delete",
+            })
+        );
+
+        expect(changes).to.have.length(2);
+        expect(
+            changes.map((change) => ({
+              entityKey: change.entityKey,
+              entity: change.entity,
+              valueChangedFrom: change.valueChangedFrom,
+              valueChangedTo: change.valueChangedTo,
+              modification: change.modification,
+              attribute: change.attribute
+            }))
+          ).to.have.deep.members([
+            {
+              entityKey: "3e745e35-5974-4383-b60a-2f5c9bdd31ac",
+              modification: "Delete",
+              entity: "sap.capire.bookshop.Order",
+              attribute: "netAmount",
+              valueChangedFrom: "0",
+              valueChangedTo: ""
+            },
+            {
+              entityKey: "3e745e35-5974-4383-b60a-2f5c9bdd31ac",
+              modification: "Delete",
+              entity: "sap.capire.bookshop.Order",
+              attribute: "isUsed",
+              valueChangedFrom: "false",
+              valueChangedTo: ""
+            },
+        ]);
+        
+        delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
+        delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
+    });
+
     it("3.1 Composition creatition by odata request on draft disabled entity - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-670)", async () => {
         await POST(
             `/odata/v4/admin/Order(ID=0a41a187-a2ff-4df6-bd12-fae8996e6e31)/orderItems(ID=9a61178f-bfb3-4c17-8d17-c6b4a63e0097)/notes`,
