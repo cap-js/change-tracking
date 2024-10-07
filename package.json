@@ -37,5 +37,8 @@
         "model": "@cap-js/change-tracking"
       }
     }
+  },
+  "dependencies": {
+    "dataloader": "^2.2.2"
   }
 }
