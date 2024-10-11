@@ -42,6 +42,89 @@ describe("change log integration test", () => {
 
         const afterChanges = await adminService.run(SELECT.from(ChangeView));
         expect(afterChanges.length).to.equal(6);
+    });
+
+    it("1.8 When creating or deleting a record with a numeric type of 0 and a boolean type of false, a changelog should also be generated", async () => {
+        cds.env.requires["change-tracking"].preserveDeletes = true;
+        cds.services.AdminService.entities.Order.elements.netAmount["@changelog"] = true;
+        cds.services.AdminService.entities.Order.elements.isUsed["@changelog"] = true;
+
+        const ordersData = {
+            ID: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+            isUsed: false,
+            netAmount: 0
+        };
+        
+        await INSERT.into(adminService.entities.Order).entries(ordersData);
+        let changes = await adminService.run(SELECT.from(ChangeView));
+
+        expect(changes).to.have.length(2);
+        expect(
+            changes.map((change) => ({
+              entityKey: change.entityKey,
+              entity: change.entity,
+              valueChangedFrom: change.valueChangedFrom,
+              valueChangedTo: change.valueChangedTo,
+              modification: change.modification,
+              attribute: change.attribute
+            }))
+          ).to.have.deep.members([
+            {
+              entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+              modification: "Create",
+              entity: "sap.capire.bookshop.Order",
+              attribute: "netAmount",
+              valueChangedFrom: "",
+              valueChangedTo: "0"
+            },
+            {
+              entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+              modification: "Create",
+              entity: "sap.capire.bookshop.Order",
+              attribute: "isUsed",
+              valueChangedFrom: "",
+              valueChangedTo: "false"
+            },
+        ]);
+
+        await DELETE.from(adminService.entities.Order).where({ ID: "0faaff2d-7e0e-4494-97fe-c815ee973fa1" });
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                modification: "delete",
+            })
+        );
+
+        expect(changes).to.have.length(2);
+        expect(
+            changes.map((change) => ({
+              entityKey: change.entityKey,
+              entity: change.entity,
+              valueChangedFrom: change.valueChangedFrom,
+              valueChangedTo: change.valueChangedTo,
+              modification: change.modification,
+              attribute: change.attribute
+            }))
+          ).to.have.deep.members([
+            {
+              entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+              modification: "Delete",
+              entity: "sap.capire.bookshop.Order",
+              attribute: "netAmount",
+              valueChangedFrom: "0",
+              valueChangedTo: ""
+            },
+            {
+              entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+              modification: "Delete",
+              entity: "sap.capire.bookshop.Order",
+              attribute: "isUsed",
+              valueChangedFrom: "false",
+              valueChangedTo: ""
+            },
+        ]);
+        
+        delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
+        delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
     });    
 
     it("2.5 Root entity deep creation by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
