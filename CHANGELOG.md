@@ -13,7 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 
-- 
+- Handling of numeric and boolean fields was faulty, when specific values were supplied
+- Missing UI Label for one attribute of the Changes UI facet
 
 ### Changed
 
