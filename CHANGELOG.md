@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 1.0.8 - TBD
+
+### Added
+
+ - Support for multiple non-ID keys
+
+
+### Fixed
+
+- Handling of numeric and boolean fields was faulty, when an initial value of `0` for numeric or `false` for boolean was supplied
+- Decimal values were handled differently for HANA and SQlite
+- Missing UI Label for one attribute (`ChangeLog.ID`) of the Changes UI facet
+
+### Changed
+
+- Added warning and mitigation for multi-tenant deployments with MTX
+
+
 ## Version 1.0.7 - 20.08.24
 
 ### Added
