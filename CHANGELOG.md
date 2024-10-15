@@ -13,7 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 
-- Handling of numeric and boolean fields was faulty, when an initial value of `0` for numeric or `false` for boolean was supplied 
+- Handling of numeric and boolean fields was faulty, when an initial value of `0` for numeric or `false` for boolean was supplied
+- Decimal values were handled differently for HANA and SQlite
 - Missing UI Label for one attribute (`ChangeLog.ID`) of the Changes UI facet
 
 ### Changed
