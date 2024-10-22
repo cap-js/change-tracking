@@ -1,6 +1,7 @@
 const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
-const { expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
+const { expect: expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
+const { expect: jestExpect } = require('@jest/globals'); 
 const { RequestSend } = require("../utils/api");
 
 jest.setTimeout(5 * 60 * 1000);
@@ -1554,5 +1555,51 @@ describe("change log integration test", () => {
         expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
         expect(changeLogs[0].entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
         expect(changeLogs[0].serviceEntity).to.equal("AdminService.BookStores");
+    });
+
+    it("Issues-30 Should only optimize reads to the DB", async () => {
+        const action1 = POST.bind(
+            {},
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            {
+                ID: "9d703c23-54a8-4eff-81c1-cdce6b8376b2",
+                title: "test title 1",
+                descr: "test descr",
+                author_ID: "d4d4a1b3-5b83-4814-8a20-f039af6f0387",
+                stock: 1,
+                price: 1.0,
+                isUsed: true
+            }
+        );
+        const action2 = POST.bind(
+            {},
+            `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
+            {
+                ID: "3e53bf3b-53f7-4db8-87ce-8bb0818574d8",
+                title: "test title 2",
+                descr: "test descr",
+                author_ID: "d4d4a1b3-5b83-4814-8a20-f039af6f0387",
+                stock: 1,
+                price: 1.0,
+                isUsed: true
+            }
+        );
+        const cdsRunSpy = jest.spyOn(cds.db, "run");
+        await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", [action1, action2]);
+        jestExpect(cdsRunSpy).toHaveBeenCalledWith(jestExpect.objectContaining({
+            SELECT: jestExpect.objectContaining({
+                from: jestExpect.objectContaining({ ref: ["AdminService.Books"] }),
+                where: jestExpect.arrayContaining([
+                    jestExpect.objectContaining({ ref: ["ID"] }),
+                    "in",
+                    {
+                        list: [
+                            { val: "9d703c23-54a8-4eff-81c1-cdce6b8376b2" },
+                            { val: "3e53bf3b-53f7-4db8-87ce-8bb0818574d8" }
+                        ]
+                    }
+                ])
+            })
+        }));
     });
 });

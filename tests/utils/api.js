@@ -8,7 +8,13 @@ class RequestSend {
                 PreserveChanges: true,
             });
         }
-        await action();
+        if (Array.isArray(action)) {
+            for (const act of action) {
+                await act();
+            }
+        } else {
+            await action();
+        }
         await this.post(`/odata/v4/${serviceName}/${entityName}(ID=${id},IsActiveEntity=false)/${path}.draftPrepare`, {
             SideEffectsQualifier: "",
         });
