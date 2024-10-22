@@ -1,6 +1,6 @@
 const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
-const { expect: expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
+const { expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
 const { expect: jestExpect } = require('@jest/globals'); 
 const { RequestSend } = require("../utils/api");
 
