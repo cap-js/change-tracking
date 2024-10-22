@@ -1499,7 +1499,7 @@ describe("change log integration test", () => {
         const registryChange = registryChanges[0];
         expect(registryChange.attribute).to.equal("Valid On");
         expect(registryChange.modification).to.equal("Delete");
-        expect(registryChange.valueChangedFrom).to.equal("Sep 01, 2018");
+        expect(registryChange.valueChangedFrom).to.equal("Sep 1, 2018");
         expect(registryChange.valueChangedTo).to.equal("");
         expect(registryChange.parentKey).to.equal("8aaed432-8336-4b0d-be7e-3ef1ce7f13ea");
         expect(registryChange.parentObjectID).to.equal("City Lights Books");
