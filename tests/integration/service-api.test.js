@@ -125,7 +125,39 @@ describe("change log integration test", () => {
         
         delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
         delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
-    });    
+    });
+    
+    it("1.9 For DateTime and Timestamp, support for input via Date objects.", async () => {
+        cds.env.requires["change-tracking"].preserveDeletes = true;
+        cds.services.AdminService.entities.RootEntity.elements.dateTime["@changelog"] = true;
+        cds.services.AdminService.entities.RootEntity.elements.timestamp["@changelog"] = true;
+        const rootEntityData = [
+            {
+                ID: "64625905-c234-4d0d-9bc1-283ee8940717",
+                dateTime: new Date("2024-10-16T08:53:48Z"),
+                timestamp: new Date("2024-10-23T08:53:54.000Z")
+            }
+        ]
+        await INSERT.into(adminService.entities.RootEntity).entries(rootEntityData);
+        let changes = await adminService.run(SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.RootEntity",
+            attribute: "dateTime",
+        }));
+        expect(changes.length).to.equal(1);
+        let change = changes[0];
+        expect(change.entityKey).to.equal("64625905-c234-4d0d-9bc1-283ee8940717");
+        expect(change.attribute).to.equal("dateTime");
+        expect(change.modification).to.equal("Create");
+        expect(change.valueChangedFrom).to.equal("");
+        /**
+         * REVISIT: Currently, when using '@cap-js/sqlite' or '@cap-js/hana' and inputting values of type Date in javascript,
+         * there is an issue with inconsistent formats before and after, which requires a fix from cds-dbs (Issue-873).
+         */
+        expect(change.valueChangedTo).to.equal(`${new Date("2024-10-16T08:53:48Z")}`);
+        delete cds.services.AdminService.entities.RootEntity.elements.dateTime["@changelog"];
+        delete cds.services.AdminService.entities.RootEntity.elements.timestamp["@changelog"];
+        cds.env.requires["change-tracking"].preserveDeletes = false;
+    });
 
     it("2.5 Root entity deep creation by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
         const bookStoreData = {
