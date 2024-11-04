@@ -84,7 +84,7 @@ function compositionParentAssociation(entity, csn) {
 
   if (hasChildFlag || !hasParentEntity) {
     // Find parent association of the entity
-    const parentAssociation = findParentAssociation(entity, csn, elements);
+    const parentAssociation = findParentAssociations(entity, csn, elements);
     if (parentAssociation) {
       const parentAssociationTarget = elements[parentAssociation]?.target;
       if (hasChildFlag) setChangeTrackingIsRootEntity(entity, csn, false);
@@ -114,29 +114,61 @@ function processCompositionElements(entity, csn, elements) {
   }
 }
 
-function findParentAssociation(entity, csn, elements) {
-  return Object.keys(elements).find((name) => {
+// function findParentAssociation(entity, csn, elements) {
+//   return Object.keys(elements).find((name) => {
+//     const element = elements[name];
+//     const target = element?.target;
+//     if (element.type === 'cds.Association' && target !== entity.name) {
+//       const parentDefinition = csn.definitions?.[target] ?? {};
+//       const parentElements = parentDefinition?.elements ?? {};
+//       return !!Object.keys(parentElements).find((parentEntityName) => {
+//         const parentElement = parentElements?.[parentEntityName] ?? {};
+//         if (parentElement.type === 'cds.Composition') {
+//           const isCompositionEntity = parentElement.target === entity.name;
+//           // add parent information in the current entity
+//           if (isCompositionEntity) {
+//             csn.definitions[entity.name][hasParent] = {
+//               associationName: name,
+//               entityName: target
+//             };
+//           }
+//           return isCompositionEntity;
+//         }
+//       });
+//     }
+//   });
+// }
+
+function findParentAssociations(entity, csn, elements) {
+  const parentInfo = [];
+
+  Object.keys(elements).forEach((name) => {
     const element = elements[name];
     const target = element?.target;
+
     if (element.type === 'cds.Association' && target !== entity.name) {
       const parentDefinition = csn.definitions?.[target] ?? {};
       const parentElements = parentDefinition?.elements ?? {};
-      return !!Object.keys(parentElements).find((parentEntityName) => {
+
+      Object.keys(parentElements).forEach((parentEntityName) => {
         const parentElement = parentElements?.[parentEntityName] ?? {};
-        if (parentElement.type === 'cds.Composition') {
-          const isCompositionEntity = parentElement.target === entity.name;
-          // add parent information in the current entity
-          if (isCompositionEntity) {
-            csn.definitions[entity.name][hasParent] = {
-              associationName: name,
-              entityName: target
-            };
-          }
-          return isCompositionEntity;
+
+        if (parentElement.type === 'cds.Composition' && parentElement.target === entity.name) {
+          parentInfo.push({
+            associationName: name,
+            entityName: target
+          });
         }
       });
     }
   });
+
+  // add parent information in the current entity
+  if (parentInfo.length > 0) {
+    csn.definitions[entity.name][hasParent] = parentInfo;
+  }
+
+  return parentInfo.length > 0;
 }
 
 // Unfold @changelog annotations in loaded model
@@ -184,7 +216,8 @@ cds.on('loaded', m => {
 
       if (entity.actions) {
         const hasParentInfo = entity[hasParent];
-        const entityName = hasParentInfo?.entityName;
+        // const entityName = hasParentInfo[0]?.entityName;
+        const entityName = hasParentInfo[0]?.entityName;
         const parentEntity = entityName ? m.definitions[entityName] : null;
 
         const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets'];
