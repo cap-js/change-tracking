@@ -156,7 +156,18 @@ cds.on('loaded', m => {
 
       // Determine entity keys
       const keys = [], { elements: elms } = entity
-      for (let e in elms) if (elms[e].key) keys.push(e)
+      for (let e in elms) {
+        if (elms[e].key) {
+          if (elms[e].type === 'cds.Association') {
+            keys.push({
+              e,
+              val: elms[e]
+            });
+          } else {
+            keys.push(e);
+          }
+        }
+      }
 
       // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
       if(keys.length === 0) {
@@ -164,9 +175,13 @@ cds.on('loaded', m => {
       }
 
       // Add association to ChangeView...
-      const on = [...changes.on]; keys.forEach((k, i) => { i && on.push('||'); on.push({
-        ref: k === 'up_' ? [k,'ID'] : [k] // REVISIT: up_ handling is a dirty hack for now
-      })})
+      const on = [...changes.on];
+      keys.forEach((k, i) => {
+        i && on.push("||");
+        on.push({
+          ref: k?.val?.type === "cds.Association" ? [k.e, k.val.keys?.[0]?.ref?.[0]] : [k]
+        });
+      });
       const assoc = { ...changes, on }
       const query = entity.projection || entity.query?.SELECT
       if(!entity['@changelog.disable_assoc'])
