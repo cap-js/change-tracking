@@ -1,4 +1,5 @@
 const cds = require("@sap/cds");
+const { SELECT } = require("@sap/cds/lib/ql/cds-ql");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
 const { expect, data } = cds.test(bookshop);
 
@@ -164,6 +165,20 @@ describe("change log integration test", () => {
         delete cds.services.AdminService.entities.RootEntity.elements.dateTime["@changelog"];
         delete cds.services.AdminService.entities.RootEntity.elements.timestamp["@changelog"];
         cds.env.requires["change-tracking"].preserveDeletes = false;
+    });
+
+    it.only("diff", async () => {
+        cds.env.requires["change-tracking"].preserveDeletes = true;
+        cds.services.AdminService.entities.Books.elements.stock["@changelog"] = true;
+        const quantity = 2;
+        const ID = "9d703c23-54a8-4eff-81c1-cdce6b8376b1";
+
+        const beforeData = await SELECT.from('AdminService.Books').where({ ID: "9d703c23-54a8-4eff-81c1-cdce6b8376b1" });
+        await UPDATE `AdminService.Books` .set `stock = stock - ${quantity}` .where `ID=${ID}`
+        const afterData = await SELECT.from('AdminService.Books').where({ ID: "9d703c23-54a8-4eff-81c1-cdce6b8376b1" });
+    
+        cds.env.requires["change-tracking"].preserveDeletes = false;
+        delete cds.services.AdminService.entities.Books.elements.stock["@changelog"];
     });
 
     it("2.5 Root entity deep creation by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
