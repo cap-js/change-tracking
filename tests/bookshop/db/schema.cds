@@ -126,7 +126,7 @@ entity Books : managed, cuid {
   @title :                                  '{i18n>books.genre}'
   genre     : Association to Genres;
   stock     : Integer;
-  price     : Decimal;
+  price     : Decimal(11, 4);
   isUsed    : Boolean;
   image     : LargeBinary @Core.MediaType : 'image/png';
   @title :                                  '{i18n>books.bookType}'
@@ -201,6 +201,7 @@ entity Order : cuid {
   orderItems : Composition of many OrderItem
                  on orderItems.order = $self;
   netAmount  : Decimal(19, 2);
+  isUsed     : Boolean;
   status     : String;
   Items      : Composition of many {
     key ID   : UUID;
