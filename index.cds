@@ -54,8 +54,8 @@ entity Changes {
   key ID                : UUID                     @UI.Hidden;
       keys              : String                   @title: '{i18n>Changes.keys}';
       attribute         : String                   @title: '{i18n>Changes.attribute}';
-      valueChangedFrom  : String                   @title: '{i18n>Changes.valueChangedFrom}';
-      valueChangedTo    : String                   @title: '{i18n>Changes.valueChangedTo}';
+      valueChangedFrom  : String                   @title: '{i18n>Changes.valueChangedFrom}' @UI.MultiLineText;
+      valueChangedTo    : String                   @title: '{i18n>Changes.valueChangedTo}' @UI.MultiLineText;
 
       // Business meaningful object id
       entityID          : String                   @title: '{i18n>Changes.entityID}';
