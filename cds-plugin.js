@@ -209,6 +209,7 @@ cds.on('served', () => {
       let any = false
       for (const entity of Object.values(srv.entities)) {
         if (isChangeTracked(entity)) {
+          cds.db.before("UPSERT", entity, track_changes)
           cds.db.before("CREATE", entity, track_changes)
           cds.db.before("UPDATE", entity, track_changes)
           cds.db.before("DELETE", entity, track_changes)

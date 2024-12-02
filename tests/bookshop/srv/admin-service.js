@@ -11,29 +11,36 @@ module.exports = cds.service.impl(async (srv) => {
     });
 
     const onActivateVolumns = async (req) => {
-        const entity = req.entity;
-        const entityID = "dd1fdd7d-da2a-4600-940b-0baf2946c9bf";
-        await UPDATE.entity(entity)
-          .where({ ID: entityID })
-          .set({ ActivationStatus_code: "VALID" });
+        // const entity = req.entity;
+        // const entityID = "dd1fdd7d-da2a-4600-940b-0baf2946c9bf";
+        // await UPDATE.entity(entity)
+        //   .where({ ID: entityID })
+        //   .set({ ActivationStatus_code: "VALID" });
 
         const booksEntity = "AdminService.Books";
         const booksID = "676059d4-8851-47f1-b558-3bdc461bf7d5";
-        await UPDATE.entity(booksEntity, { ID: booksID })
-          .set({ title: "Black Myth wukong" });
+        const before = await SELECT.from(booksEntity).where({ ID: "676059d4-8851-47f1-b558-3bdc461bc468" });
+        await UPSERT.into(booksEntity)
+          .entries([{ ID: "676059d4-8851-47f1-b558-3bdc461bc468", title: "Black Myth wukong" }]);
+        const after1 = await SELECT.from(booksEntity);
+        const after = await SELECT.from(booksEntity).where({ ID: "676059d4-8851-47f1-b558-3bdc461bc468" });
     };
 
     const onActivateOrderItemNote = async (req) => {
-        const entity = req.entity;
-        const entityID = "a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc";
-        await UPDATE.entity(entity)
-          .where({ ID: entityID })
-          .set({ ActivationStatus_code: "VALID" });
+        // const entity = req.entity;
+        // const entityID = "a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc";
+        // await UPDATE.entity(entity)
+        //   .where({ ID: entityID })
+        //   .set({ ActivationStatus_code: "VALID" });
         
         const Level2Object = "AdminService.Level2Object";
         const Level2ObjectID = "55bb60e4-ed86-46e6-9378-346153eba8d4";
-        await UPDATE.entity(Level2Object, { ID: Level2ObjectID })
-          .set({ title: "Game Science" });
+        // await UPDATE.entity(Level2Object, { ID: Level2ObjectID })
+        //   .set({ title: "Game Science" });
+        const before = await SELECT.from(Level2Object).where({ ID: "55bb60e4-ed86-46e6-9378-346153ebc457" });
+        await UPSERT.into(Level2Object)
+        .entries([{ID: "55bb60e4-ed86-46e6-9378-346153ebc457", title: "Game Science" }]);
+        const after = await SELECT.from(Level2Object).where({ ID: "55bb60e4-ed86-46e6-9378-346153ebc457" });
     };
 
     srv.on("activate", "AdminService.Volumns", onActivateVolumns);
