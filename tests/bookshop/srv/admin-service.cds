@@ -40,7 +40,7 @@ service AdminService {
 
 annotate AdminService.RootEntity with @changelog: [name] {
   name            @changelog;
-  child           @changelog                    : [child.child.child.title];
+  child           @changelog                    : [child.title];
   lifecycleStatus @changelog                    : [lifecycleStatus.name]; 
   info            @changelog                    : [info.info.info.name];
 };

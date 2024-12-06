@@ -72,8 +72,8 @@ describe("change log integration test", () => {
         const changelogCreated = afterChanges.filter(ele=> ele.modification === "Create"); 
         const changelogDeleted = afterChanges.filter(ele=> ele.modification === "Delete"); 
 
-        expect(changelogCreated.length).to.equal(7);
-        expect(changelogDeleted.length).to.equal(7);
+        expect(changelogCreated.length).to.equal(8);
+        expect(changelogDeleted.length).to.equal(8);
 
         const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'parentKey', 'serviceEntityPath', 'valueDataType', 'objectID', 'parentObjectID', 'entityKey'];
 
@@ -85,7 +85,7 @@ describe("change log integration test", () => {
             });
         });
         expect(commonItems.length > 0).to.be.true;
-        expect(afterChanges.length).to.equal(14);
+        expect(afterChanges.length).to.equal(16);
     });
 
     it("1.7 When creating or deleting a record with a numeric type of 0 and a boolean type of false, a changelog should also be generated", async () => {
