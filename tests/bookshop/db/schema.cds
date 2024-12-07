@@ -18,6 +18,8 @@ namespace sap.capire.bookshop;
 @title: '{i18n>RootEntity.objectTitle}'
 entity RootEntity @(cds.autoexpose) : managed, cuid {
   name            : String;
+  dateTime        : DateTime;
+  timestamp       : Timestamp;
   lifecycleStatus : LifecycleStatusCode;
   child           : Composition of many Level1Entity
                       on child.parent = $self;
