@@ -139,19 +139,22 @@ function findParentAssociation(entity, csn, elements) {
   });
 }
 
+const _enhanced = Symbol('cds.changelog.enhanced')
+
 // Unfold @changelog annotations in loaded model
-cds.on('loaded', m => {
+function enhanceModel (csn) {
 
   // Get definitions from Dummy entity in our models
-  const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
+  if (csn.meta?.[ _enhanced ]) return
+  const { 'sap.changelog.aspect': aspect } = csn.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
   changes.on.pop() // remove ID -> filled in below
-  
-  // Process entities to define the relation
-  processEntities(m)
 
-  for (let name in m.definitions) {
-    const entity = m.definitions[name]
+  // Process entities to define the relation
+  processEntities(csn)
+
+  for (let name in csn.definitions) {
+    const entity = csn.definitions[name]
     if (isChangeTracked(entity)) {
 
       // Determine entity keys
@@ -160,7 +163,7 @@ cds.on('loaded', m => {
         if (elms[e].key) {
           if (elms[e].type === 'cds.Association') {
             keys.push({
-              e,
+              e, // REVISIT: this looks just wrong?!
               val: elms[e]
             });
           } else {
@@ -200,7 +203,7 @@ cds.on('loaded', m => {
       if (entity.actions) {
         const hasParentInfo = entity[hasParent];
         const entityName = hasParentInfo?.entityName;
-        const parentEntity = entityName ? m.definitions[entityName] : null;
+        const parentEntity = entityName ? csn.definitions[entityName] : null;
 
         const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets'];
 
@@ -214,12 +217,13 @@ cds.on('loaded', m => {
       }
     }
   }
-})
+  (csn.meta??={})[ _enhanced ] = true
+}
 
 // Add generic change tracking handlers
-cds.on('served', () => {
+function addGenericHandlers (services) {
   const { track_changes, _afterReadChangeView } = require("./lib/change-log")
-  for (const srv of cds.services) {
+  for (const srv of services) {
     if (srv instanceof cds.ApplicationService) {
       let any = false
       for (const entity of Object.values(srv.entities)) {
@@ -235,4 +239,11 @@ cds.on('served', () => {
       }
     }
   }
-})
+}
+
+
+// Register plugin hooks
+cds.on('compile.for.runtime', enhanceModel)
+cds.on('compile.to.edmx', enhanceModel)
+cds.on('compile.to.dbx', enhanceModel)
+cds.on('served', addGenericHandlers)
