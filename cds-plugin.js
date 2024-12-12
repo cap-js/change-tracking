@@ -139,7 +139,7 @@ function findParentAssociation(entity, csn, elements) {
   });
 }
 
-const _enhanced = Symbol('cds.changelog.enhanced')
+const _enhanced = 'sap.changelog.enhanced'
 
 // Unfold @changelog annotations in loaded model
 function enhanceModel (csn) {
