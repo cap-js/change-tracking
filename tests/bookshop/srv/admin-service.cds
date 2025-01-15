@@ -7,6 +7,9 @@ service AdminService {
   @odata.draft.enabled
   entity RootEntity @(cds.autoexpose) as projection on my.RootEntity;
 
+  @odata.draft.enabled
+  entity Schools @(cds.autoexpose)     as projection on my.Schools;
+
   entity RootObject                    as projection on my.RootObject;
   entity Level1Object                  as projection on my.Level1Object;
   entity Level2Object                  as projection on my.Level2Object;
@@ -171,3 +174,7 @@ annotate AdminService.Customers with {
   country @changelog;
   age     @changelog;
 }
+
+annotate AdminService.Schools with {
+  classes @changelog : [classes.name, classes.teacher]
+};
