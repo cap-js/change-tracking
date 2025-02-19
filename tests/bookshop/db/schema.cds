@@ -263,3 +263,21 @@ entity City : cuid {
 entity Country : cuid {
   countryName : CountryName;
 }
+
+entity FirstEntity : managed, cuid {
+  name : String;
+  children : Association to one Children;
+}
+
+entity SecondEntity : managed, cuid {
+  name : String;
+  children : Association to one Children;
+}
+
+@changelog : [one_ID]
+entity Children : managed {
+  @changelog
+  key one : Association to one FirstEntity;
+  @changelog
+  key two : Association to one SecondEntity;
+}
