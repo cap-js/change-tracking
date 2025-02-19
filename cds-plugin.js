@@ -5,10 +5,9 @@ const isRoot = 'change-tracking-isRootEntity'
 const hasParent = 'change-tracking-parentEntity'
 
 const isChangeTracked = (entity) => {
-  if (entity.query?.SET?.op === 'union') return false
-  if (entity['@cds.autoexposed']) return false // REVISIT
+  if (entity.query?.SET?.op === 'union') return false // REVISIT: should that be an error or warning?
   if (entity['@changelog']) return true
-  if (entity.elements && Object.values(entity.elements).some(e => e['@changelog'])) return true
+  if (Object.values(entity.elements).some(e => e['@changelog'])) return true
 }
 
 // Add the appropriate Side Effects attribute to the custom action
@@ -144,8 +143,6 @@ function findParentAssociation (entity, csn, elements) {
 
 
 
-const _enhanced = 'sap.changelog.enhanced'
-
 /**
  * Returns an expression for the key of the given entity, which we can use as the right-hand-side of an ON condition.
  */
@@ -164,10 +161,10 @@ function entityKey4 (entity) {
 // Unfold @changelog annotations in loaded model
 function enhanceModel (m) {
 
-  // if (!m.definitions?.[changes.target]) return // no change tracking in this model
+  const _enhanced = 'sap.changelog.enhanced'
   if (m.meta?.[_enhanced]) return // already enhanced
 
-  // Process entities to define the relation
+  // Get definitions from Dummy entity in our models
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
   if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
@@ -177,7 +174,7 @@ function enhanceModel (m) {
   for (let name in m.definitions) {
 
     const entity = m.definitions[name]
-    if (isChangeTracked(entity)) {
+    if (entity.kind === 'entity' && !entity['@cds.autoexposed'] && isChangeTracked(entity)) {
 
       if (!entity['@changelog.disable_assoc']) {
 
@@ -185,7 +182,8 @@ function enhanceModel (m) {
         const keys = entityKey4(entity); if (!keys.length) continue // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
         const assoc = { ...changes, on: [ ...changes.on, ...keys ] }
 
-        // Add auto-exposed projection on ChangeView to service if applicable
+        // --------------------------------------------------------------------
+        // PARKED: Add auto-exposed projection on ChangeView to service if applicable
         // const namespace = name.match(/^(.*)\.[^.]+$/)[1]
         // const service = m.definitions[namespace]
         // if (service) {
@@ -199,6 +197,7 @@ function enhanceModel (m) {
         //     }
         //   `.replace(/ {10}/g,''))
         // }
+        // --------------------------------------------------------------------
 
         DEBUG?.(`\n
           extend ${name} with {
