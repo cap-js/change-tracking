@@ -1,6 +1,21 @@
 using { managed, cuid } from '@sap/cds/common';
 namespace sap.changelog;
 
+/**
+ * Used in cds-plugin.js as template for tracked entities
+ */
+aspect aspect @(UI.Facets: [{
+  $Type : 'UI.ReferenceFacet',
+  ID    : 'ChangeHistoryFacet',
+  Label : '{i18n>ChangeHistory}',
+  Target: 'changes/@UI.PresentationVariant',
+  ![@UI.PartOfPreview]: false
+}]) {
+  // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
+  changes : Association to many ChangeView on changes.entityKey = ID;
+  key ID  : UUID;
+}
+
 
 // This is a helper view to flatten the assoc path to the entityKey
 @readonly

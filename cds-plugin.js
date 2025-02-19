@@ -6,7 +6,7 @@ const hasParent = 'change-tracking-parentEntity'
 
 const isChangeTracked = (entity) => {
   if (entity.query?.SET?.op === 'union') return false
-  if (entity['@cds.autoexposed']) return false
+  if (entity['@cds.autoexposed']) return false // REVISIT
   if (entity['@changelog']) return true
   if (entity.elements && Object.values(entity.elements).some(e => e['@changelog'])) return true
 }
@@ -145,21 +145,6 @@ function findParentAssociation (entity, csn, elements) {
 
 
 const _enhanced = 'sap.changelog.enhanced'
-const namespace = 'sap.changelog'
-const Changes = 'ChangeView'
-const changes = {
-  type: 'cds.Association', target: namespace +'.' + Changes,
-  on: [ {ref:['changes','entityKey']}, '=', /* filled in below */ ],
-  cardinality: { max:'*' },
-}
-const UIFacet = {
-  $Type  : 'UI.ReferenceFacet',
-  Target : 'changes/@UI.PresentationVariant',
-  Label  : '{i18n>ChangeHistory}',
-  // ID     : 'ChangeHistoryFacet',
-  '@UI.PartOfPreview': false
-}
-
 
 /**
  * Returns an expression for the key of the given entity, which we can use as the right-hand-side of an ON condition.
@@ -177,39 +162,43 @@ function entityKey4 (entity) {
 
 
 // Unfold @changelog annotations in loaded model
-function enhanceModel (csn) {
+function enhanceModel (m) {
 
-  if (!csn.definitions?.[changes.target]) return // no change tracking in this model
-  if (csn.meta?.[_enhanced]) return // already enhanced
+  // if (!m.definitions?.[changes.target]) return // no change tracking in this model
+  if (m.meta?.[_enhanced]) return // already enhanced
 
   // Process entities to define the relation
-  processEntities(csn) // REVISIT: why is that required ?!?
+  const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
+  const { '@UI.Facets': [facet], elements: { changes } } = aspect
+  if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
 
-  for (let name in csn.definitions) {
+  processEntities(m) // REVISIT: why is that required ?!?
 
-    const entity = csn.definitions[name]
+  for (let name in m.definitions) {
+
+    const entity = m.definitions[name]
     if (isChangeTracked(entity)) {
 
-      if (!entity['@changelog.disable_assoc']) { // REVISIT: why do we need that annotation?
+      if (!entity['@changelog.disable_assoc']) {
 
         // Add association to ChangeView...
-        const assoc = { ...changes, on: [ ...changes.on, ...entityKey4(entity) ] } // clone the changes assoc
-        if (assoc.on < 3) continue // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
+        const keys = entityKey4(entity); if (!keys.length) continue // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
+        const assoc = { ...changes, on: [ ...changes.on, ...keys ] }
 
         // Add auto-exposed projection on ChangeView to service if applicable
-        const namespace = name.match(/^(.*)\.[^.]+$/)[1]
-        const service = csn.definitions[namespace]
-        if (service) {
-          const projection = {from:{ref:[assoc.target]}}
-          csn.definitions[assoc.target = namespace + '.' + Changes] = {
-            '@cds.autoexposed':true, kind:'entity', projection
-          }
-          DEBUG?.(`\n
-            extend service ${namespace} with {
-              entity ${Changes} as projection on ${projection.from.ref[0]};
-            }
-          `.replace(/ {10}/g,''))
-        }
+        // const namespace = name.match(/^(.*)\.[^.]+$/)[1]
+        // const service = m.definitions[namespace]
+        // if (service) {
+        //   const projection = {from:{ref:[assoc.target]}}
+        //   m.definitions[assoc.target = namespace + '.' + Changes] = {
+        //     '@cds.autoexposed':true, kind:'entity', projection
+        //   }
+        //   DEBUG?.(`\n
+        //     extend service ${namespace} with {
+        //       entity ${Changes} as projection on ${projection.from.ref[0]};
+        //     }
+        //   `.replace(/ {10}/g,''))
+        // }
 
         DEBUG?.(`\n
           extend ${name} with {
@@ -218,17 +207,17 @@ function enhanceModel (csn) {
         `.replace(/ {8}/g,''))
         const query = entity.projection || entity.query?.SELECT
         if (query) (query.columns ??= ['*']).push({ as: 'changes', cast: assoc })
-        if (entity.elements) entity.elements.changes = assoc
+        else if (entity.elements) entity.elements.changes = assoc
 
         // Add UI.Facet for Change History List
-        if (!entity['@changelog.disable_facet']) // REVISIT: why do we need that annotation?
-          entity['@UI.Facets']?.push(UIFacet)
+        if (!entity['@changelog.disable_facet'])
+          entity['@UI.Facets']?.push(facet)
       }
 
       if (entity.actions) {
         const hasParentInfo = entity[hasParent]
         const entityName = hasParentInfo?.entityName
-        const parentEntity = entityName ? csn.definitions[entityName] : null
+        const parentEntity = entityName ? m.definitions[entityName] : null
         const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets']
         if (entity[isRoot] && entity['@UI.Facets']) {
           // Add side effects for root entity
@@ -240,13 +229,13 @@ function enhanceModel (csn) {
       }
     }
   }
-  (csn.meta ??= {})[_enhanced] = true
+  (m.meta ??= {})[_enhanced] = true
 }
 
 // Add generic change tracking handlers
-function addGenericHandlers (services) {
+function addGenericHandlers() {
   const { track_changes, _afterReadChangeView } = require("./lib/change-log")
-  for (const srv of services) {
+  for (const srv of cds.services) {
     if (srv instanceof cds.ApplicationService) {
       let any = false
       for (const entity of Object.values(srv.entities)) {
