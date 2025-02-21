@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Added
 
-- Support for multiple non-ID keys
 - Added @UI.MultiLineText to value fields
 
 ### Fixed
@@ -24,6 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Changed
 
 - Added warning and mitigation for multi-tenant deployments with MTX
+- Added a disclaimer of upcoming new version having a minimum requirement of CDS 8.6 for multitenancy fix
 
 
 ## Version 1.0.7 - 20.08.24
