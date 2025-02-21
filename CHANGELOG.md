@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Missing UI Label for one attribute (`ChangeLog.ID`) of the Changes UI facet
 - Support for @UI.HeaderInfo.TypeName as fallback for the UI Label of the key
 - Support scenarios when an association is used as a key
+- Fixed handling of unmanaged composition of many
 
 
 ### Changed
