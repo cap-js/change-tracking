@@ -1,12 +1,14 @@
 const cds = require('@sap/cds')
+const DEBUG = cds.debug('changelog')
 
 const isRoot = 'change-tracking-isRootEntity'
 const hasParent = 'change-tracking-parentEntity'
 
-const isChangeTracked = (entity) => (
-  (entity['@changelog']
-    || entity.elements && Object.values(entity.elements).some(e => e['@changelog'])) && entity.query?.SET?.op !== 'union'
-)
+const isChangeTracked = (entity) => {
+  if (entity.query?.SET?.op === 'union') return false // REVISIT: should that be an error or warning?
+  if (entity['@changelog']) return true
+  if (Object.values(entity.elements).some(e => e['@changelog'])) return true
+}
 
 // Add the appropriate Side Effects attribute to the custom action
 const addSideEffects = (actions, flag, element) => {
@@ -139,57 +141,72 @@ function findParentAssociation (entity, csn, elements) {
   })
 }
 
+
+
+/**
+ * Returns an expression for the key of the given entity, which we can use as the right-hand-side of an ON condition.
+ */
+function entityKey4 (entity) {
+  const xpr = []
+  for (let k in entity.elements) {
+    const e = entity.elements[k]; if (!e.key) continue
+    if (xpr.length) xpr.push('||')
+    if (e.type === 'cds.Association') xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] })
+    else xpr.push({ ref:[k] })
+  }
+  return xpr
+}
+
+
 // Unfold @changelog annotations in loaded model
-cds.on('loaded', m => {
+function enhanceModel (m) {
+
+  const _enhanced = 'sap.changelog.enhanced'
+  if (m.meta?.[_enhanced]) return // already enhanced
 
   // Get definitions from Dummy entity in our models
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
-  changes.on.pop() // remove ID -> filled in below
+  if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
 
-  // Process entities to define the relation
-  processEntities(m)
+  processEntities(m) // REVISIT: why is that required ?!?
 
   for (let name in m.definitions) {
+
     const entity = m.definitions[name]
-    if (isChangeTracked(entity)) {
+    if (entity.kind === 'entity' && !entity['@cds.autoexposed'] && isChangeTracked(entity)) {
 
-      // Determine entity keys
-      const keys = [], { elements: elms } = entity
-      for (let e in elms) {
-        if (elms[e].key) {
-          if (elms[e].type === 'cds.Association') {
-            keys.push({
-              e,
-              val: elms[e]
-            })
-          } else {
-            keys.push(e)
-          }
-        }
-      }
-
-      // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
-      if (keys.length === 0) {
-        continue
-      }
-
-      // Add association to ChangeView...
-      const on = [...changes.on]
-      keys.forEach((k, i) => {
-        i && on.push("||")
-        on.push({
-          ref: k?.val?.type === "cds.Association" ? [k.e, k.val.keys?.[0]?.ref?.[0]] : [k]
-        })
-      })
-      const assoc = { ...changes, on }
-      const query = entity.projection || entity.query?.SELECT
       if (!entity['@changelog.disable_assoc']) {
-        if (query) {
-          (query.columns ??= ['*']).push({ as: 'changes', cast: assoc })
-        } else {
-          entity.elements.changes = assoc
-        }
+
+        // Add association to ChangeView...
+        const keys = entityKey4(entity); if (!keys.length) continue // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
+        const assoc = { ...changes, on: [ ...changes.on, ...keys ] }
+
+        // --------------------------------------------------------------------
+        // PARKED: Add auto-exposed projection on ChangeView to service if applicable
+        // const namespace = name.match(/^(.*)\.[^.]+$/)[1]
+        // const service = m.definitions[namespace]
+        // if (service) {
+        //   const projection = {from:{ref:[assoc.target]}}
+        //   m.definitions[assoc.target = namespace + '.' + Changes] = {
+        //     '@cds.autoexposed':true, kind:'entity', projection
+        //   }
+        //   DEBUG?.(`\n
+        //     extend service ${namespace} with {
+        //       entity ${Changes} as projection on ${projection.from.ref[0]};
+        //     }
+        //   `.replace(/ {10}/g,''))
+        // }
+        // --------------------------------------------------------------------
+
+        DEBUG?.(`\n
+          extend ${name} with {
+            changes : Association to many ${assoc.target} on ${ assoc.on.map(x => x.ref?.join('.') || x).join(' ') };
+          }
+        `.replace(/ {8}/g,''))
+        const query = entity.projection || entity.query?.SELECT
+        if (query) (query.columns ??= ['*']).push({ as: 'changes', cast: assoc })
+        else if (entity.elements) entity.elements.changes = assoc
 
         // Add UI.Facet for Change History List
         if (!entity['@changelog.disable_facet'])
@@ -200,9 +217,7 @@ cds.on('loaded', m => {
         const hasParentInfo = entity[hasParent]
         const entityName = hasParentInfo?.entityName
         const parentEntity = entityName ? m.definitions[entityName] : null
-
         const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets']
-
         if (entity[isRoot] && entity['@UI.Facets']) {
           // Add side effects for root entity
           addSideEffects(entity.actions, true)
@@ -213,10 +228,11 @@ cds.on('loaded', m => {
       }
     }
   }
-})
+  (m.meta ??= {})[_enhanced] = true
+}
 
 // Add generic change tracking handlers
-cds.on('served', () => {
+function addGenericHandlers() {
   const { track_changes, _afterReadChangeView } = require("./lib/change-log")
   for (const srv of cds.services) {
     if (srv instanceof cds.ApplicationService) {
@@ -234,4 +250,11 @@ cds.on('served', () => {
       }
     }
   }
-})
+}
+
+
+// Register plugin hooks
+cds.on('compile.for.runtime', csn => { DEBUG?.('on','compile.for.runtime'); enhanceModel(csn) })
+cds.on('compile.to.edmx', csn => { DEBUG?.('on','compile.to.edmx'); enhanceModel(csn) })
+cds.on('compile.to.dbx', csn => { DEBUG?.('on','compile.to.dbx'); enhanceModel(csn) })
+cds.on('served', addGenericHandlers)
