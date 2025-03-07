@@ -248,14 +248,44 @@ describe("change log integration test", () => {
         expect(isUsedChange.entity).to.equal("Book");
         expect(isUsedChange.valueChangedFrom).to.equal("");
         expect(isUsedChange.valueChangedTo).to.equal("true");
+
+        // Test for Unmanaged entity(Create)
+        const unmanagedAction = POST.bind(
+            {},
+            `/odata/v4/admin/Schools(ID=5ab2a87b-3a56-4d97-a697-7af72333c123,IsActiveEntity=false)/classes`,
+            {
+                ID: "9d703c23-54a8-4eff-81c1-cdec5c4267c5",
+                name: "Biology 101",
+                teacher: "Mr. Smith",
+                up__ID: "9d703c23-54a8-4eff-81c1-cdce6b0528c4"
+            }
+        );
+        await utils.apiAction("admin", "Schools", "5ab2a87b-3a56-4d97-a697-7af72333c123", "AdminService", unmanagedAction);
+        const schoolChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Schools",
+                attribute: "classes",
+            })
+        );
+
+        expect(schoolChanges.length).to.equal(1);
+        const schoolChange = schoolChanges[0];
+        expect(schoolChange.entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72333c123");
+        expect(schoolChange.attribute).to.equal("classes");
+        expect(schoolChange.modification).to.equal("Create");
+        expect(schoolChange.valueChangedFrom).to.equal("");
+        expect(schoolChange.valueChangedTo).to.equal("Biology 101, Mr. Smith");
     });
 
     it("2.2 Child entity update - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
+        cds.services.AdminService.entities.Books.elements.price["@changelog"] = true;
+        
         const action = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
             title: "new title",
             author_ID: "47f97f40-4f41-488a-b10b-a5725e762d5e",
             genre_ID: 16,
-            isUsed: false
+            isUsed: false,
+            price: 3000
         });
         await utils.apiAction("admin", "BookStores", "64625905-c234-4d0d-9bc1-283ee8946770", "AdminService", action);
         const bookChanges = await adminService.run(
@@ -344,6 +374,44 @@ describe("change log integration test", () => {
         expect(isUsedChange.valueChangedFrom).to.equal("true");
         expect(isUsedChange.valueChangedTo).to.equal("false");
 
+        // The current price is 3000.0000, and update operation via OData service is price: 3000. In this case, a changelog should not be generated.
+        const priceChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Books",
+                attribute: "price",
+            })
+        );
+
+        expect(priceChanges.length).to.equal(0);
+
+        // Test for Unmanaged entity(Create)
+        const unmanagedAction = POST.bind(
+            {},
+            `/odata/v4/admin/Schools(ID=5ab2a87b-3a56-4d97-a697-7af72333c123,IsActiveEntity=false)/classes`,
+            {
+                ID: "9d703c23-54a8-4eff-81c1-cdec5c4267c5",
+                name: "Biology 101",
+                teacher: "Mr. Smith",
+                up__ID: "9d703c23-54a8-4eff-81c1-cdce6b0528c4"
+            }
+        );
+        await utils.apiAction("admin", "Schools", "5ab2a87b-3a56-4d97-a697-7af72333c123", "AdminService", unmanagedAction);
+        const schoolChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Schools",
+                attribute: "classes",
+            })
+        );
+
+        expect(schoolChanges.length).to.equal(1);
+        const schoolChange = schoolChanges[0];
+        expect(schoolChange.entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72333c123");
+        expect(schoolChange.attribute).to.equal("classes");
+        expect(schoolChange.modification).to.equal("Create");
+        expect(schoolChange.valueChangedFrom).to.equal("");
+        expect(schoolChange.valueChangedTo).to.equal("Biology 101, Mr. Smith");
+
+        delete cds.services.AdminService.entities.Books.elements.price["@changelog"];
     });
 
     it("2.3 Child entity delete - should log basic data type changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
@@ -417,6 +485,24 @@ describe("change log integration test", () => {
         expect(volumnTitleChange.entity).to.equal("Volumn");
         expect(volumnTitleChange.valueChangedFrom).to.equal("Wuthering Heights I");
         expect(volumnTitleChange.valueChangedTo).to.equal("");
+
+        // Test for Unmanaged entity(Delete)
+        const unmanagedAction = DELETE.bind({},`/odata/v4/admin/Schools_classes(up__ID=5ab2a87b-3a56-4d97-a697-7af72333c123,ID=9d703c23-54a8-4eff-81c1-cdec5a0422c3,IsActiveEntity=false)`);
+        await utils.apiAction("admin", "Schools", "5ab2a87b-3a56-4d97-a697-7af72333c123", "AdminService", unmanagedAction);
+        const schoolChanges = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Schools",
+                attribute: "classes",
+            })
+        );
+
+        expect(schoolChanges.length).to.equal(1);
+        const schoolChange = schoolChanges[0];
+        expect(schoolChange.entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72333c123");
+        expect(schoolChange.attribute).to.equal("classes");
+        expect(schoolChange.modification).to.equal("Delete");
+        expect(schoolChange.valueChangedFrom).to.equal("Physics 500, Mrs. Johnson");
+        expect(schoolChange.valueChangedTo).to.equal("");
     });
 
     it("2.4 Child entity update without objectID annotation - should log object type for object ID (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613 ERP4SMEPREPWORKAPPPLAT-538)", async () => {
@@ -604,7 +690,7 @@ describe("change log integration test", () => {
         expect(titleChanges.length).to.equal(1);
 
         const titleChange = titleChanges[0];
-        expect(titleChange.objectID).to.equal("11.11, new title, 12");
+        expect(titleChange.objectID).to.equal("3000, new title, 12");
 
         cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "title" },
