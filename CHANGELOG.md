@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 
 - Added @UI.MultiLineText to value fields
+- Added support for Multi-Tenancy
 
 ### Fixed
 
