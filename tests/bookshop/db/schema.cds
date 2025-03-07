@@ -281,3 +281,17 @@ entity Children : managed {
   @changelog
   key two : Association to one SecondEntity;
 }
+
+// Test for Unmanaged entity
+entity Schools : managed, cuid {
+  @title: '{i18n>Schools.name}'
+  name      : String;
+  location  : String;
+  classes   : Composition of many {
+    key ID  : UUID;
+    @title: '{i18n>Classes.name}'
+    name    : String;
+    @title: '{i18n>Classes.teacher}'
+    teacher : String;
+  };
+}
