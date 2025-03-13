@@ -5,18 +5,16 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
 > [!IMPORTANT]
-> This release establishes compatibility with CDS 8.
+> This release establishes support for multi-tenant deployments using MTX and extensibility.
 > 
-> Since the prior release was using **APIs deprecated in CDS8**, the code was modified significantly to enable compatibility. While we tested extensively, there may still be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
+> Since the code was modified significantly to enable compatibility. While we tested extensively, there may still be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
 > 
 > See the changelog for a full list of changes
 
 > [!Warning]
 >
->Currently, change-tracking is not fully compatible with the [@sap/cds-mtxs](https://www.npmjs.com/package/@sap/cds-mtxs) package which is used to provide extensibility and [CAP Feature Toggles](https://cap.cloud.sap/docs/guides/extensibility/feature-toggles#enable-feature-toggles). 
->
->When using multi-tenancy with MTX, the generated facets and associations will not be present in the metadata provided by the service. Therefore, it will not work out of the box. 
->Until this gap in MTX is closed, we suggest using the `@changelog.disable_assoc` ([see here](#disable-association-to-changes-generation)) for all tracked entities and to add the association and facet manually to the service entity.
+> When using multi-tenancy with MTX, the generated facets and associations have to be created by the model provider of the MTX component. Therefore, the plugin also must be added to the `package.json` of the MTX sidecar. 
+>Although we tested this scenario extensively, there still might be cases where the automatic generation will not work as expected. If this happends in your scenario, we suggest using the `@changelog.disable_assoc` ([see here](#disable-association-to-changes-generation)) for all tracked entities and to add the association and facet manually to the service entity.
 
 
 ### Table of Contents
@@ -77,6 +75,7 @@ To enable change tracking, simply add this self-configuring plugin package to yo
 ```sh
 npm add @cap-js/change-tracking
 ```
+If you use multi-tenancy, please add the plugin also to the MTX poroject.
 
 ### 3. Annotations
 
@@ -268,20 +267,42 @@ You can turn this behavior off globally by adding the following switch to the `p
 
 This section describes modelling cases for further reference, from simple to complex, including the following:
 
-- [Specify Object ID](#specify-object-id)
-  - [Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID](#use-case-1-annotate-single-fieldmultiple-fields-of-associated-tables-as-the-object-id)
-  - [Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID](#use-case-2-annotate-single-fieldmultiple-fields-of-project-customized-types-as-the-object-id)
-  - [Use Case 3: Annotate chained associated entities from the current entity as the Object ID](#use-case-3-annotate-chained-associated-entities-from-the-current-entity-as-the-object-id)
-- [Tracing Changes](#tracing-changes)
-  - [Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)](#use-case-1-trace-the-changes-of-child-nodes-from-the-current-entity-and-display-the-meaningful-data-from-child-nodes-composition-relation)
-  - [Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-2-trace-the-changes-of-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
-  - [Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data](#use-case-3-trace-the-changes-of-fields-defined-by-project-customized-types-and-display-the-meaningful-data)
-  - [Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-4-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
-  - [Use Case 5: Trace the changes of union entity and display the meaningful data](#use-case-5-trace-the-changes-of-union-entity-and-display-the-meaningful-data)
-- [Don&#39;ts](#donts)
-  - [Use Case 1: Don&#39;t trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
-  - [Use Case 2: Don&#39;t trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
-  - [Use Case 3: Don&#39;t trace changes for CUD on DB entity](#use-case-3-dont-trace-changes-for-cud-on-db-entity)
+- [Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)](#change-tracking-plugin-for-sap-cloud-application-programming-model-cap)
+    - [Table of Contents](#table-of-contents)
+  - [Try it Locally](#try-it-locally)
+    - [1. Prerequisites](#1-prerequisites)
+    - [2. Setup](#2-setup)
+    - [3. Annotations](#3-annotations)
+    - [4. Testing](#4-testing)
+      - [Change History View](#change-history-view)
+  - [Detailed Explanation](#detailed-explanation)
+    - [Human-readable Types and Fields](#human-readable-types-and-fields)
+    - [Human-readable IDs](#human-readable-ids)
+    - [Human-readable Values](#human-readable-values)
+  - [Advanced Options](#advanced-options)
+    - [Altered table view](#altered-table-view)
+    - [Disable lazy loading](#disable-lazy-loading)
+    - [Disable UI Facet generation](#disable-ui-facet-generation)
+    - [Disable Association to Changes Generation](#disable-association-to-changes-generation)
+    - [Preserve change logs of deleted data](#preserve-change-logs-of-deleted-data)
+  - [Examples](#examples)
+    - [Specify Object ID](#specify-object-id)
+      - [Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID](#use-case-1-annotate-single-fieldmultiple-fields-of-associated-tables-as-the-object-id)
+      - [Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID](#use-case-2-annotate-single-fieldmultiple-fields-of-project-customized-types-as-the-object-id)
+      - [Use Case 3: Annotate chained associated entities from the current entity as the Object ID](#use-case-3-annotate-chained-associated-entities-from-the-current-entity-as-the-object-id)
+    - [Tracing Changes](#tracing-changes)
+      - [Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)](#use-case-1-trace-the-changes-of-child-nodes-from-the-current-entity-and-display-the-meaningful-data-from-child-nodes-composition-relation)
+      - [Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-2-trace-the-changes-of-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
+      - [Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data](#use-case-3-trace-the-changes-of-fields-defined-by-project-customized-types-and-display-the-meaningful-data)
+      - [Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-4-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
+      - [Use Case 5: Trace the changes of union entity and display the meaningful data](#use-case-5-trace-the-changes-of-union-entity-and-display-the-meaningful-data)
+    - [Don'ts](#donts)
+      - [Use Case 1: Don't trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
+      - [Use Case 2: Don't trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
+      - [Use Case 3: Don't trace changes for CUD on DB entity](#use-case-3-dont-trace-changes-for-cud-on-db-entity)
+  - [Contributing](#contributing)
+  - [Code of Conduct](#code-of-conduct)
+  - [Licensing](#licensing)
 
 ### Specify Object ID
 
