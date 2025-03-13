@@ -7,7 +7,7 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 > [!IMPORTANT]
 > This release establishes support for multi-tenant deployments using MTX and extensibility.
 > 
-> Since the code was modified significantly to enable compatibility. While we tested extensively, there may still be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
+> To achieve this, the code was modified significantly. While we tested extensively, there still may be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
 > 
 > See the changelog for a full list of changes
 
