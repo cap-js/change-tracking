@@ -272,24 +272,20 @@ You can turn this behavior off globally by adding the following switch to the `p
 
 This section describes modelling cases for further reference, from simple to complex, including the following:
 
-  - [Examples](#examples)
-    - [Specify Object ID](#specify-object-id)
-      - [Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID](#use-case-1-annotate-single-fieldmultiple-fields-of-associated-tables-as-the-object-id)
-      - [Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID](#use-case-2-annotate-single-fieldmultiple-fields-of-project-customized-types-as-the-object-id)
-      - [Use Case 3: Annotate chained associated entities from the current entity as the Object ID](#use-case-3-annotate-chained-associated-entities-from-the-current-entity-as-the-object-id)
-    - [Tracing Changes](#tracing-changes)
-      - [Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)](#use-case-1-trace-the-changes-of-child-nodes-from-the-current-entity-and-display-the-meaningful-data-from-child-nodes-composition-relation)
-      - [Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-2-trace-the-changes-of-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
-      - [Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data](#use-case-3-trace-the-changes-of-fields-defined-by-project-customized-types-and-display-the-meaningful-data)
-      - [Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-4-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
-      - [Use Case 5: Trace the changes of union entity and display the meaningful data](#use-case-5-trace-the-changes-of-union-entity-and-display-the-meaningful-data)
-    - [Don'ts](#donts)
-      - [Use Case 1: Don't trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
-      - [Use Case 2: Don't trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
-      - [Use Case 3: Don't trace changes for CUD on DB entity](#use-case-3-dont-trace-changes-for-cud-on-db-entity)
-  - [Contributing](#contributing)
-  - [Code of Conduct](#code-of-conduct)
-  - [Licensing](#licensing)
+- [Specify Object ID](#specify-object-id)
+  - [Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID](#use-case-1-annotate-single-fieldmultiple-fields-of-associated-tables-as-the-object-id)
+  - [Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID](#use-case-2-annotate-single-fieldmultiple-fields-of-project-customized-types-as-the-object-id)
+  - [Use Case 3: Annotate chained associated entities from the current entity as the Object ID](#use-case-3-annotate-chained-associated-entities-from-the-current-entity-as-the-object-id)
+- [Tracing Changes](#tracing-changes)
+  - [Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)](#use-case-1-trace-the-changes-of-child-nodes-from-the-current-entity-and-display-the-meaningful-data-from-child-nodes-composition-relation)
+  - [Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-2-trace-the-changes-of-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
+  - [Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data](#use-case-3-trace-the-changes-of-fields-defined-by-project-customized-types-and-display-the-meaningful-data)
+  - [Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-4-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
+  - [Use Case 5: Trace the changes of union entity and display the meaningful data](#use-case-5-trace-the-changes-of-union-entity-and-display-the-meaningful-data)
+- [Don&#39;ts](#donts)
+  - [Use Case 1: Don&#39;t trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
+  - [Use Case 2: Don&#39;t trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
+  - [Use Case 3: Don&#39;t trace changes for CUD on DB entity](#use-case-3-dont-trace-changes-for-cud-on-db-entity)
 
 ### Specify Object ID
 
