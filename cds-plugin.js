@@ -257,4 +257,5 @@ function addGenericHandlers() {
 cds.on('compile.for.runtime', csn => { DEBUG?.('on','compile.for.runtime'); enhanceModel(csn) })
 cds.on('compile.to.edmx', csn => { DEBUG?.('on','compile.to.edmx'); enhanceModel(csn) })
 cds.on('compile.to.dbx', csn => { DEBUG?.('on','compile.to.dbx'); enhanceModel(csn) })
+cds.on('loaded', csn => { enhanceModel(csn) })
 cds.on('served', addGenericHandlers)
