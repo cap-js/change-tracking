@@ -37,8 +37,8 @@ view ChangeView as
  * Top-level changes entity, e.g. UPDATE Incident by, at, ...
  */
 entity ChangeLog : managed, cuid {
-  serviceEntity : String @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
-  entity        : String @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
+  serviceEntity : String(5000) @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
+  entity        : String(5000) @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
   entityKey     : UUID   @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
   createdAt     : managed:createdAt;
   createdBy     : managed:createdBy;
@@ -52,20 +52,20 @@ entity ChangeLog : managed, cuid {
 entity Changes {
 
   key ID                : UUID                     @UI.Hidden;
-      keys              : String                   @title: '{i18n>Changes.keys}';
-      attribute         : String                   @title: '{i18n>Changes.attribute}';
-      valueChangedFrom  : String                   @title: '{i18n>Changes.valueChangedFrom}' @UI.MultiLineText;
-      valueChangedTo    : String                   @title: '{i18n>Changes.valueChangedTo}' @UI.MultiLineText;
+      keys              : String(5000)             @title: '{i18n>Changes.keys}';
+      attribute         : String(5000)             @title: '{i18n>Changes.attribute}';
+      valueChangedFrom  : String(5000)             @title: '{i18n>Changes.valueChangedFrom}' @UI.MultiLineText;
+      valueChangedTo    : String(5000)             @title: '{i18n>Changes.valueChangedTo}' @UI.MultiLineText;
 
       // Business meaningful object id
-      entityID          : String                   @title: '{i18n>Changes.entityID}';
-      entity            : String                   @title: '{i18n>Changes.entity}'; // similar to ChangeLog.entity, but could be nested entity in a composition tree
-      serviceEntity     : String                   @title: '{i18n>Changes.serviceEntity}'; // similar to ChangeLog.serviceEntity, but could be nested entity in a composition tree
+      entityID          : String(5000)             @title: '{i18n>Changes.entityID}';
+      entity            : String(5000)             @title: '{i18n>Changes.entity}'; // similar to ChangeLog.entity, but could be nested entity in a composition tree
+      serviceEntity     : String(5000)             @title: '{i18n>Changes.serviceEntity}'; // similar to ChangeLog.serviceEntity, but could be nested entity in a composition tree
 
       // Business meaningful parent object id
-      parentEntityID    : String                   @title: '{i18n>Changes.parentEntityID}';
+      parentEntityID    : String(5000)             @title: '{i18n>Changes.parentEntityID}';
       parentKey         : UUID                     @title: '{i18n>Changes.parentKey}';
-      serviceEntityPath : String                   @title: '{i18n>Changes.serviceEntityPath}';
+      serviceEntityPath : String(5000)             @title: '{i18n>Changes.serviceEntityPath}';
 
       @title: '{i18n>Changes.modification}'
       modification      : String enum {
@@ -74,7 +74,7 @@ entity Changes {
         delete = 'Delete';
       };
 
-      valueDataType     : String                   @title: '{i18n>Changes.valueDataType}';
+      valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}';
       changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}' @UI.Hidden;
 }
 
