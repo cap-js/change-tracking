@@ -84,7 +84,8 @@ annotate ChangeView with @(UI: {
     RequestAtLeast: [
       parentKey,
       serviceEntity,
-      serviceEntityPath
+      serviceEntityPath,
+      valueDataType
     ],
     SortOrder     : [{
       Property  : createdAt,
