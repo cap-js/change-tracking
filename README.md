@@ -246,6 +246,24 @@ For some scenarios, e.g. when doing `UNION` and the `@changelog` annotion is sti
 > [!IMPORTANT]
 > This will also supress the addition of the UI facet, since the change-view is not available as target entity anymore.
 
+### Select types of changes to track
+
+If you do not want to track some types of changes, you can disable them using `disableCreateTracking`, `disableUpdateTracking`
+and `disableDeleteTracking` configs in your project settings:
+```json
+{
+  "cds": {
+    "requires": {
+      "change-tracking": {
+        "disableCreateTracking": true,
+        "disableUpdateTracking": false,
+        "disableDeleteTracking": true
+      }
+    }
+  }
+}
+```
+
 ### Preserve change logs of deleted data
 
 By default, deleting a record will also automatically delete all associated change logs. This helps reduce the impact on the size of the database.
