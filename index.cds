@@ -4,7 +4,7 @@ namespace sap.changelog;
 /**
  * Used in cds-plugin.js as template for tracked entities
  */
-aspect aspect @(UI.Facets: [{
+@cds.persistence.skip entity aspect @(UI.Facets: [{
   $Type : 'UI.ReferenceFacet',
   ID    : 'ChangeHistoryFacet',
   Label : '{i18n>ChangeHistory}',
