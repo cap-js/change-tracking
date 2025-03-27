@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 - Added @UI.MultiLineText to value fields
 - Added support for Multi-Tenancy
+- Added configuration options to disable tracking of CREATE/UPDATE/DELETE operations on a project level
 
 ### Fixed
 
