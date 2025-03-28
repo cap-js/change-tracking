@@ -32,14 +32,28 @@ const addSideEffects = (actions, flag, element) => {
   }
 }
 
-function setChangeTrackingIsRootEntity (entity, csn, val = true) {
+// function setChangeTrackingIsRootEntity (entity, csn, val = true) {
+//   if (csn.definitions?.[entity.name]) {
+//     csn.definitions[entity.name][isRoot] = val
+//   }
+// }
+
+function setChangeTrackingIsRootEntity(entity, csn, val = true) {
   if (csn.definitions?.[entity.name]) {
-    csn.definitions[entity.name][isRoot] = val
+    const definition = csn.definitions[entity.name];
+    if (!Object.prototype.hasOwnProperty.call(definition, isRoot)) {
+      Object.defineProperty(definition, isRoot, {
+        value: val,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      });
+    }
   }
 }
 
 function checkAndSetRootEntity (parentEntity, entity, csn) {
-  if (entity[isRoot] === false) {
+  if (Object.prototype.hasOwnProperty.call(entity, isRoot) && entity[isRoot] === false) {
     return entity
   }
   if (parentEntity) {
@@ -49,6 +63,18 @@ function checkAndSetRootEntity (parentEntity, entity, csn) {
     return { ...csn.definitions?.[entity.name], name: entity.name }
   }
 }
+
+// function checkAndSetRootEntity (parentEntity, entity, csn) {
+//   if (entity[isRoot] === false) {
+//     return entity
+//   }
+//   if (parentEntity) {
+//     return compositionRoot(parentEntity, csn)
+//   } else {
+//     setChangeTrackingIsRootEntity(entity, csn)
+//     return { ...csn.definitions?.[entity.name], name: entity.name }
+//   }
+// }
 
 function processEntities (m) {
   for (let name in m.definitions) {
@@ -168,7 +194,11 @@ function enhanceModel (m) {
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
   if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
-
+  // const moldes = {
+  //   definitions: {
+  //     "AdminService.Books": m.definitions["AdminService.Books"]
+  //   }
+  // }
   processEntities(m) // REVISIT: why is that required ?!?
 
   for (let name in m.definitions) {
