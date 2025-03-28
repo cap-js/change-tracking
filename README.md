@@ -13,6 +13,10 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 
 > [!Warning]
 >
+> Please note that if your project is multi-tenant, then the CDS version must be higher than 8.6 and the mtx version higher than 2.5 for change-tracking to work.
+
+> [!Warning]
+>
 > When using multi-tenancy with MTX, the generated facets and associations have to be created by the model provider of the MTX component. Therefore, the plugin also must be added to the `package.json` of the MTX sidecar. 
 >Although we tested this scenario extensively, there still might be cases where the automatic generation will not work as expected. If this happends in your scenario, we suggest using the `@changelog.disable_assoc` ([see here](#disable-association-to-changes-generation)) for all tracked entities and to add the association and facet manually to the service entity.
 
@@ -75,8 +79,7 @@ To enable change tracking, simply add this self-configuring plugin package to yo
 ```sh
 npm add @cap-js/change-tracking
 ```
-If you use multi-tenancy, please add the plugin also to the MTX poroject.
-If you use multi-tenancy, please add the plugin also to the MTX poroject.
+If you use multi-tenancy, please add the plugin also to the MTX poroject(The mtx version must be higher than 2.5).
 
 ### 3. Annotations
 
