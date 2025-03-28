@@ -69,9 +69,9 @@ entity Changes {
 
       @title: '{i18n>Changes.modification}'
       modification      : String enum {
-        create = 'Create';
-        update = 'Edit';
-        delete = 'Delete';
+        Create = 'create';
+        Update = 'update';
+        Delete = 'delete';
       };
 
       valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}';
