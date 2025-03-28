@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Added warning and mitigation for multi-tenant deployments with MTX
 - Added a disclaimer of upcoming new version having a minimum requirement of CDS 8.6 for multitenancy fix
 - Changed the default limit on non-HANA databases from 255 to 5000 characters for all String values
+- Updated peer dependency from CDS7 to CDS8
 
 
 ## Version 1.0.7 - 20.08.24
