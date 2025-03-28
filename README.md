@@ -6,17 +6,13 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 
 > [!IMPORTANT]
 > This release establishes support for multi-tenant deployments using MTX and extensibility.
-> This release establishes support for multi-tenant deployments using MTX and extensibility.
 > 
-> To achieve this, the code was modified significantly. While we tested extensively, there still may be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
 > To achieve this, the code was modified significantly. While we tested extensively, there still may be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
 > 
 > See the changelog for a full list of changes
 
 > [!Warning]
 >
-> When using multi-tenancy with MTX, the generated facets and associations have to be created by the model provider of the MTX component. Therefore, the plugin also must be added to the `package.json` of the MTX sidecar. 
->Although we tested this scenario extensively, there still might be cases where the automatic generation will not work as expected. If this happends in your scenario, we suggest using the `@changelog.disable_assoc` ([see here](#disable-association-to-changes-generation)) for all tracked entities and to add the association and facet manually to the service entity.
 > When using multi-tenancy with MTX, the generated facets and associations have to be created by the model provider of the MTX component. Therefore, the plugin also must be added to the `package.json` of the MTX sidecar. 
 >Although we tested this scenario extensively, there still might be cases where the automatic generation will not work as expected. If this happends in your scenario, we suggest using the `@changelog.disable_assoc` ([see here](#disable-association-to-changes-generation)) for all tracked entities and to add the association and facet manually to the service entity.
 

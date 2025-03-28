@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.0.8 - TBD
+## Version 1.0.8 - 28.03.25
 
 ### Added
 
@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Support for @UI.HeaderInfo.TypeName as fallback for the UI Label of the key
 - Compilation error when an association is used as a key
 - Fixed handling of unmanaged composition of many
+- Proper casing of the operation enum type
 
 
 ### Changed
