@@ -18,8 +18,6 @@ namespace sap.capire.bookshop;
 @title: '{i18n>RootEntity.objectTitle}'
 entity RootEntity @(cds.autoexpose) : managed, cuid {
   name            : String;
-  dateTime        : DateTime;
-  timestamp       : Timestamp;
   lifecycleStatus : LifecycleStatusCode;
   child           : Composition of many Level1Entity
                       on child.parent = $self;
@@ -128,7 +126,7 @@ entity Books : managed, cuid {
   @title :                                  '{i18n>books.genre}'
   genre     : Association to Genres;
   stock     : Integer;
-  price     : Decimal(11, 4);
+  price     : Decimal;
   isUsed    : Boolean;
   image     : LargeBinary @Core.MediaType : 'image/png';
   @title :                                  '{i18n>books.bookType}'
@@ -203,7 +201,6 @@ entity Order : cuid {
   orderItems : Composition of many OrderItem
                  on orderItems.order = $self;
   netAmount  : Decimal(19, 2);
-  isUsed     : Boolean;
   status     : String;
   Items      : Composition of many {
     key ID   : UUID;
@@ -262,36 +259,4 @@ entity City : cuid {
 
 entity Country : cuid {
   countryName : CountryName;
-}
-
-entity FirstEntity : managed, cuid {
-  name : String;
-  children : Association to one Children;
-}
-
-entity SecondEntity : managed, cuid {
-  name : String;
-  children : Association to one Children;
-}
-
-@changelog : [one_ID]
-entity Children : managed {
-  @changelog
-  key one : Association to one FirstEntity;
-  @changelog
-  key two : Association to one SecondEntity;
-}
-
-// Test for Unmanaged entity
-entity Schools : managed, cuid {
-  @title: '{i18n>Schools.name}'
-  name      : String;
-  location  : String;
-  classes   : Composition of many {
-    key ID  : UUID;
-    @title: '{i18n>Classes.name}'
-    name    : String;
-    @title: '{i18n>Classes.teacher}'
-    teacher : String;
-  };
 }

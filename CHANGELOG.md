@@ -4,33 +4,6 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.0.8 - 28.03.25
-
-### Added
-
-- Added @UI.MultiLineText to value fields
-- Added support for Multi-Tenancy
-- Added configuration options to disable tracking of CREATE/UPDATE/DELETE operations on a project level
-
-### Fixed
-
-- Handling of numeric and boolean fields was faulty, when an initial value of `0` for numeric or `false` for boolean was supplied
-- Decimal values were handled differently for HANA and SQlite
-- Missing UI Label for one attribute (`ChangeLog.ID`) of the Changes UI facet
-- Support for @UI.HeaderInfo.TypeName as fallback for the UI Label of the key
-- Compilation error when an association is used as a key
-- Fixed handling of unmanaged composition of many
-- Proper casing of the operation enum type
-
-
-### Changed
-
-- Added warning and mitigation for multi-tenant deployments with MTX
-- Added a disclaimer of upcoming new version having a minimum requirement of CDS 8.6 for multitenancy fix
-- Changed the default limit on non-HANA databases from 255 to 5000 characters for all String values
-- Updated peer dependency from CDS7 to CDS8
-
-
 ## Version 1.0.7 - 20.08.24
 
 ### Added

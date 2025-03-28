@@ -5,23 +5,11 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
 > [!IMPORTANT]
-> Following the CAP best practices, the new release now requires CDS8 as minimum version in the peer dependencies. If you want to use the plugin with an older version of CAP (CDS7), you will need to manually update the peer dependency in `package.json`. Please be aware that there will be no support for this version of the plugin with a CDS version below 8!
-
-> [!IMPORTANT]
-> This release establishes support for multi-tenant deployments using MTX and extensibility.
+> This release establishes compatibility with CDS 8.
 > 
-> To achieve this, the code was modified significantly. While we tested extensively, there still may be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
+> Since the prior release was using **APIs deprecated in CDS8**, the code was modified significantly to enable compatibility. While we tested extensively, there may still be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
 > 
 > See the changelog for a full list of changes
-
-> [!Warning]
->
-> Please note that if your project is multi-tenant, then the CDS version must be higher than 8.6 and the mtx version higher than 2.5 for change-tracking to work.
-
-> [!Warning]
->
-> When using multi-tenancy with MTX, the generated facets and associations have to be created by the model provider of the MTX component. Therefore, the plugin also must be added to the `package.json` of the MTX sidecar. 
->Although we tested this scenario extensively, there still might be cases where the automatic generation will not work as expected. If this happends in your scenario, we suggest using the `@changelog.disable_assoc` ([see here](#disable-association-to-changes-generation)) for all tracked entities and to add the association and facet manually to the service entity.
 
 
 ### Table of Contents
@@ -82,7 +70,6 @@ To enable change tracking, simply add this self-configuring plugin package to yo
 ```sh
 npm add @cap-js/change-tracking
 ```
-If you use multi-tenancy, please add the plugin also to the MTX poroject(The mtx version must be higher than 2.5).
 
 ### 3. Annotations
 
@@ -247,24 +234,6 @@ For some scenarios, e.g. when doing `UNION` and the `@changelog` annotion is sti
 
 > [!IMPORTANT]
 > This will also supress the addition of the UI facet, since the change-view is not available as target entity anymore.
-
-### Select types of changes to track
-
-If you do not want to track some types of changes, you can disable them using `disableCreateTracking`, `disableUpdateTracking`
-and `disableDeleteTracking` configs in your project settings:
-```json
-{
-  "cds": {
-    "requires": {
-      "change-tracking": {
-        "disableCreateTracking": true,
-        "disableUpdateTracking": false,
-        "disableDeleteTracking": true
-      }
-    }
-  }
-}
-```
 
 ### Preserve change logs of deleted data
 
@@ -604,7 +573,6 @@ this.on("UpdateActivationStatus", async (req) =>
 ```
 
 The reason is that: Application level services are by design the only place where business logic is enforced. This by extension means, that it also is the only point where e.g. change-tracking would be enabled. The underlying method used to do change tracking is `req.diff` which is responsible to read the necessary before-image from the database, and this method is not available on DB level.
-
 
 ## Contributing
 
