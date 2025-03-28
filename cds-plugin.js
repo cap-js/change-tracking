@@ -32,9 +32,17 @@ const addSideEffects = (actions, flag, element) => {
   }
 }
 
-function setChangeTrackingIsRootEntity (entity, csn, val = true) {
+function setChangeTrackingIsRootEntity(entity, csn, val = true) {
   if (csn.definitions?.[entity.name]) {
-    csn.definitions[entity.name][isRoot] = val
+    const definition = csn.definitions[entity.name];
+    if (!Object.prototype.hasOwnProperty.call(definition, isRoot)) {
+      Object.defineProperty(definition, isRoot, {
+        value: val,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      });
+    }
   }
 }
 
