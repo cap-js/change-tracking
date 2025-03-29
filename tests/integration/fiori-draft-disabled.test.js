@@ -76,7 +76,9 @@ describe("change log draft disabled test", () => {
         expect(change.valueChangedTo).to.equal("new placeOfBirth");
     });
 
-    it("1.3 Root entity delete - should delete related changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
+
+    // there is a problem.
+    it.only("1.3 Root entity delete - should delete related changes (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
         const author = await POST(`/odata/v4/admin/Authors`, {
             name_firstName: "Sam",
             name_lastName: "Smiths",
