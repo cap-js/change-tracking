@@ -786,6 +786,7 @@ describe("change log integration test", () => {
             }
         ]);
 
+        cds.env.requires["change-tracking"].preserveDeletes = false;
         delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
         delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
     });
