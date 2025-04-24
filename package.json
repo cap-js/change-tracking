@@ -21,13 +21,8 @@
     "@sap/cds": ">=8"
   },
   "devDependencies": {
-    "@cap-js/change-tracking": "file:.",
     "@cap-js/sqlite": "^1",
-    "axios": "^1",
-    "chai": "^4.3.10",
-    "chai-as-promised": "^7.1.1",
-    "chai-subset": "^1.6.0",
-    "eslint": "^8",
+    "@cap-js/cds-test": "*",
     "express": "^4",
     "jest": "^29"
   },
