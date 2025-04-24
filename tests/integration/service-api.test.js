@@ -620,4 +620,174 @@ describe("change log integration test", () => {
 
         expect(changes.length).to.equal(0);
     });
+
+    it("When creating multiple root records, change tracking for each entity should also be generated", async () => {
+        cds.env.requires["change-tracking"].preserveDeletes = true;
+        cds.services.AdminService.entities.Order.elements.netAmount["@changelog"] = true;
+        cds.services.AdminService.entities.Order.elements.isUsed["@changelog"] = true;
+
+        const ordersData = [
+            {
+                ID: "fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1",
+                isUsed: false,
+                netAmount: 0,
+                orderItems: [
+                    {
+                        ID: "f35b2d4c-9b21-4b9a-9b3c-ca1ad32a0d1a",
+                        quantity: 10,
+                    },
+                    {
+                        ID: "f35b2d4c-9b21-4b9a-9b3c-ca1ad32a1c2b",
+                        quantity: 12,
+                    }
+                ],
+            },
+            {
+                ID: "ec365b25-b346-4444-8f03-8f5b7d94f040",
+                isUsed: true,
+                netAmount: 10,
+                orderItems: [
+                    {
+                        ID: "f35b2d4c-9b21-4b9a-9b3c-ca1ad32a2c2a",
+                        quantity: 10,
+                    },
+                    {
+                        ID: "f35b2d4c-9b21-4b9a-9b3c-ca1ad32a2b3b",
+                        quantity: 12,
+                    }
+                ],
+            },
+            {
+                ID: "ab9e5510-a60b-4dfc-b026-161c5c2d4056",
+                isUsed: false,
+                netAmount: 20,
+                orderItems: [
+                    {
+                        ID: "f35b2d4c-9b21-4b9a-9b3c-ca1ad32a2c1a",
+                        quantity: 10,
+                    },
+                    {
+                        ID: "f35b2d4c-9b21-4b9a-9b3c-ca1ad32a4c1b",
+                        quantity: 12,
+                    }
+                ],
+            }
+        ];
+
+        await INSERT.into(adminService.entities.Order).entries(ordersData);
+        let changes = await adminService.run(SELECT.from(ChangeView));
+
+        expect(changes).to.have.length(12);
+        expect(
+            changes.map((change) => ({
+                entityKey: change.entityKey,
+                entity: change.entity,
+                valueChangedFrom: change.valueChangedFrom,
+                valueChangedTo: change.valueChangedTo,
+                modification: change.modification,
+                attribute: change.attribute
+            }))
+        ).to.have.deep.members([
+            {
+                entityKey: "fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1",
+                modification: "Create",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "netAmount",
+                valueChangedFrom: "",
+                valueChangedTo: "0"
+            },
+            {
+                entityKey: "fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1",
+                modification: "Create",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "isUsed",
+                valueChangedFrom: "",
+                valueChangedTo: "false"
+            },
+            {
+                entityKey: "fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1",
+                modification: "Create",
+                entity: "sap.capire.bookshop.OrderItem",
+                attribute: "quantity",
+                valueChangedFrom: "",
+                valueChangedTo: "10"
+            },
+            {
+                entityKey: "fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1",
+                modification: "Create",
+                entity: "sap.capire.bookshop.OrderItem",
+                attribute: "quantity",
+                valueChangedFrom: "",
+                valueChangedTo: "12"
+            },
+            {
+                entityKey: "ec365b25-b346-4444-8f03-8f5b7d94f040",
+                modification: "Create",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "netAmount",
+                valueChangedFrom: "",
+                valueChangedTo: "10"
+            },
+            {
+                entityKey: "ec365b25-b346-4444-8f03-8f5b7d94f040",
+                modification: "Create",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "isUsed",
+                valueChangedFrom: "",
+                valueChangedTo: "true"
+            },
+            {
+                entityKey: "ec365b25-b346-4444-8f03-8f5b7d94f040",
+                modification: "Create",
+                entity: "sap.capire.bookshop.OrderItem",
+                attribute: "quantity",
+                valueChangedFrom: "",
+                valueChangedTo: "10"
+            },
+            {
+                entityKey: "ec365b25-b346-4444-8f03-8f5b7d94f040",
+                modification: "Create",
+                entity: "sap.capire.bookshop.OrderItem",
+                attribute: "quantity",
+                valueChangedFrom: "",
+                valueChangedTo: "12"
+            },
+            {
+                entityKey: "ab9e5510-a60b-4dfc-b026-161c5c2d4056",
+                modification: "Create",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "netAmount",
+                valueChangedFrom: "",
+                valueChangedTo: "20"
+            },
+            {
+                entityKey: "ab9e5510-a60b-4dfc-b026-161c5c2d4056",
+                modification: "Create",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "isUsed",
+                valueChangedFrom: "",
+                valueChangedTo: "false"
+            },
+            {
+                entityKey: "ab9e5510-a60b-4dfc-b026-161c5c2d4056",
+                modification: "Create",
+                entity: "sap.capire.bookshop.OrderItem",
+                attribute: "quantity",
+                valueChangedFrom: "",
+                valueChangedTo: "10"
+            },
+            {
+                entityKey: "ab9e5510-a60b-4dfc-b026-161c5c2d4056",
+                modification: "Create",
+                entity: "sap.capire.bookshop.OrderItem",
+                attribute: "quantity",
+                valueChangedFrom: "",
+                valueChangedTo: "12"
+            }
+        ]);
+
+        cds.env.requires["change-tracking"].preserveDeletes = false;
+        delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
+        delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
+    });
 });
