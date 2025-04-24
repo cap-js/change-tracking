@@ -12,8 +12,7 @@
       }
     },
     "features": {
-      "serve_on_root": true,
-      "restrict_service_scope": false
+      "serve_on_root": true
     }
   }
 }
