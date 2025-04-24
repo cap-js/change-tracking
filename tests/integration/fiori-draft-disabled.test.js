@@ -258,7 +258,7 @@ describe("change log draft disabled test", () => {
         expect(orderChange.parentObjectID).to.equal("sap.capire.bookshop.OrderItem");
 
         // Check the changeLog to make sure the entity information is root
-        let changeLogs = await adminService.run(SELECT.from(ChangeLog));
+        let changeLogs = await SELECT.from(ChangeLog);
 
         expect(changeLogs.length).to.equal(1);
         expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.Order");
@@ -289,7 +289,7 @@ describe("change log draft disabled test", () => {
         expect(orderChange.parentObjectID).to.equal("sap.capire.bookshop.OrderItem");
 
         // Check the changeLog to make sure the entity information is root
-        let changeLogs = await adminService.run(SELECT.from(ChangeLog));
+        let changeLogs = await SELECT.from(ChangeLog);
 
         expect(changeLogs.length).to.equal(1);
         expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.Order");
