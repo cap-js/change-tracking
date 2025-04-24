@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 1.0.9 - TBD
+
+### Added
+
+- 
+
+### Fixed
+
+- Handling of multiple records in one request
+
+
+### Changed
+
+- 
+
 ## Version 1.0.8 - 28.03.25
 
 ### Added
