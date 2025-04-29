@@ -1,11 +1,7 @@
-const chai = require("chai");
-const { expect } = require("chai");
+const cds = require("@sap/cds");
+const { expect } = cds.test
 const templateProcessor = require("../../lib/template-processor");
 const { getEntityByContextPath } = require("../../lib/entity-helper");
-
-// Configure chai
-chai.should();
-chai.expect();
 
 const _processorFn = (changeMap) => {
     return ({ row, key, element }) => {
