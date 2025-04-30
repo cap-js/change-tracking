@@ -21,6 +21,7 @@
     "@sap/cds": ">=8"
   },
   "devDependencies": {
+    "@cap-js/change-tracking": "file:.",
     "@cap-js/sqlite": "^1",
     "@cap-js/cds-test": "*",
     "express": "^4"
