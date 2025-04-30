@@ -23,13 +23,8 @@
   "devDependencies": {
     "@cap-js/change-tracking": "file:.",
     "@cap-js/sqlite": "^1",
-    "axios": "^1",
-    "chai": "^4.3.10",
-    "chai-as-promised": "^7.1.1",
-    "chai-subset": "^1.6.0",
-    "eslint": "^8",
-    "express": "^4",
-    "jest": "^29"
+    "@cap-js/cds-test": "*",
+    "express": "^4"
   },
   "cds": {
     "requires": {
