@@ -2,6 +2,9 @@ const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
 const { expect, data } = cds.test(bookshop);
 
+// Enable locale fallback to simulate end user requests
+cds.env.features.locale_fallback = true
+
 jest.setTimeout(5 * 60 * 1000);
 
 let adminService = null;

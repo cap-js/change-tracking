@@ -2,6 +2,9 @@ const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
 const { expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
 
+// Enable locale fallback to simulate end user requests
+cds.env.features.locale_fallback = true
+
 jest.setTimeout(5 * 60 * 1000);
 
 let adminService = null;
@@ -94,7 +97,7 @@ describe("change log draft disabled test", () => {
 
     it("1.4 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
         cds.env.requires["change-tracking"].preserveDeletes = true;
-        
+
         cds.services.AdminService.entities.RootObject["@changelog"] = [
             { "=": "title" }
         ];
@@ -133,8 +136,8 @@ describe("change log draft disabled test", () => {
         const afterChanges = await adminService.run(SELECT.from(ChangeView));
         expect(afterChanges.length).to.equal(8);
 
-        const changelogCreated = afterChanges.filter(ele=> ele.modification === "Create"); 
-        const changelogDeleted = afterChanges.filter(ele=> ele.modification === "Delete"); 
+        const changelogCreated = afterChanges.filter(ele=> ele.modification === "Create");
+        const changelogDeleted = afterChanges.filter(ele=> ele.modification === "Delete");
 
         const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'parentKey', 'serviceEntityPath', 'valueDataType', 'objectID', 'parentObjectID', 'entityKey'];
 
@@ -157,7 +160,7 @@ describe("change log draft disabled test", () => {
         cds.env.requires["change-tracking"].preserveDeletes = true;
         cds.services.AdminService.entities.Order.elements.netAmount["@changelog"] = true;
         cds.services.AdminService.entities.Order.elements.isUsed["@changelog"] = true;
-        
+
         await POST(`/odata/v4/admin/Order`, {
             ID: "3e745e35-5974-4383-b60a-2f5c9bdd31ac",
             isUsed: false,
@@ -231,7 +234,7 @@ describe("change log draft disabled test", () => {
               valueChangedTo: ""
             },
         ]);
-        
+
         delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
         delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
     });
@@ -341,7 +344,7 @@ describe("change log draft disabled test", () => {
         });
 
         const changes = await adminService.run(SELECT.from(ChangeView));
-        
+
         expect(changes.length).to.equal(1);
         const change = changes[0];
         expect(change.attribute).to.equal("quantity");

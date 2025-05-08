@@ -3,6 +3,9 @@ const { expect } = cds.test
 const templateProcessor = require("../../lib/template-processor");
 const { getEntityByContextPath } = require("../../lib/entity-helper");
 
+// Enable locale fallback to simulate end user requests
+cds.env.features.locale_fallback = true
+
 const _processorFn = (changeMap) => {
     return ({ row, key, element }) => {
         if (!row || !key || !element) {
