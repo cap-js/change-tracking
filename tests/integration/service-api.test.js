@@ -367,9 +367,8 @@ describe("change log integration test", () => {
         expect(createEntityChange.objectID).to.equal("In Preparation");
 
         // Test the object id when the parent node and child node are modified at the same time
-        await UPDATE(adminService.entities.RootEntity)
+        await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
         .with({
-            ID: "01234567-89ab-cdef-0123-987654fedcba",
             name: "RootEntity name changed",
             lifecycleStatus_code: "AC",
             child: [
@@ -395,12 +394,11 @@ describe("change log integration test", () => {
         );
         expect(updateEntityChanges.length).to.equal(1);
         const updateEntityChange = updateEntityChanges[0];
-        expect(updateEntityChange.objectID).to.equal("Open");
+        expect(updateEntityChange.objectID).to.equal("Open"); // FIXME: Now fails here
 
         // Tests the object id when the parent node update and child node deletion occur simultaneously
-        await UPDATE(adminService.entities.RootEntity)
+        await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
         .with({
-            ID: "01234567-89ab-cdef-0123-987654fedcba",
             name: "RootEntity name del",
             lifecycleStatus_code: "CL",
             child: [
@@ -420,7 +418,7 @@ describe("change log integration test", () => {
         );
         expect(deleteEntityChanges.length).to.equal(1);
         const deleteEntityChange = deleteEntityChanges[0];
-        expect(deleteEntityChange.objectID).to.equal("Closed");
+        expect(deleteEntityChange.objectID).to.equal("Closed"); // FIXME: Now fails here
     });
 
     it("8.3 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
