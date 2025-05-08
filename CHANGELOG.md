@@ -8,16 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Added
 
-- 
+- License entry
 
 ### Fixed
 
 - Handling of multiple records in one request
 
-
 ### Changed
 
-- 
+- prepare for CDS9 in tests
 
 ## Version 1.0.8 - 28.03.25
 
