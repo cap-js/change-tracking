@@ -367,7 +367,7 @@ describe("change log integration test", () => {
         expect(createEntityChange.objectID).to.equal("In Preparation");
 
         // Test the object id when the parent node and child node are modified at the same time
-        await UPDATE(adminService.entities.RootEntity)
+        await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
         .with({
             ID: "01234567-89ab-cdef-0123-987654fedcba",
             name: "RootEntity name changed",
@@ -398,7 +398,7 @@ describe("change log integration test", () => {
         expect(updateEntityChange.objectID).to.equal("Open");
 
         // Tests the object id when the parent node update and child node deletion occur simultaneously
-        await UPDATE(adminService.entities.RootEntity)
+        await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
         .with({
             ID: "01234567-89ab-cdef-0123-987654fedcba",
             name: "RootEntity name del",
