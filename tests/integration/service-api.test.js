@@ -369,6 +369,7 @@ describe("change log integration test", () => {
         // Test the object id when the parent node and child node are modified at the same time
         await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
         .with({
+            ID: "01234567-89ab-cdef-0123-987654fedcba",
             name: "RootEntity name changed",
             lifecycleStatus_code: "AC",
             child: [
@@ -399,6 +400,7 @@ describe("change log integration test", () => {
         // Tests the object id when the parent node update and child node deletion occur simultaneously
         await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
         .with({
+            ID: "01234567-89ab-cdef-0123-987654fedcba",
             name: "RootEntity name del",
             lifecycleStatus_code: "CL",
             child: [
