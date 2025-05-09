@@ -395,7 +395,7 @@ describe("change log integration test", () => {
         );
         expect(updateEntityChanges.length).to.equal(1);
         const updateEntityChange = updateEntityChanges[0];
-        expect(updateEntityChange.objectID).to.equal("Open"); // FIXME: Now fails here
+        expect(updateEntityChange.objectID).to.equal("Open");
 
         // Tests the object id when the parent node update and child node deletion occur simultaneously
         await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
@@ -420,7 +420,7 @@ describe("change log integration test", () => {
         );
         expect(deleteEntityChanges.length).to.equal(1);
         const deleteEntityChange = deleteEntityChanges[0];
-        expect(deleteEntityChange.objectID).to.equal("Closed"); // FIXME: Now fails here
+        expect(deleteEntityChange.objectID).to.equal("Closed");
     });
 
     it("8.3 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
