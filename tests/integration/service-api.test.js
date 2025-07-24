@@ -156,7 +156,7 @@ describe("change log integration test", () => {
          * REVISIT: Currently, when using '@cap-js/sqlite' or '@cap-js/hana' and inputting values of type Date in javascript,
          * there is an issue with inconsistent formats before and after, which requires a fix from cds-dbs (Issue-873).
          */
-        expect(change.valueChangedTo).to.equal(`${new Date("2024-10-16T08:53:48Z")}`);
+        expect(change.valueChangedTo).to.equal("Oct 16, 2024, 04:53:48 PM");
         delete cds.services.AdminService.entities.RootEntity.elements.dateTime["@changelog"];
         delete cds.services.AdminService.entities.RootEntity.elements.timestamp["@changelog"];
         cds.env.requires["change-tracking"].preserveDeletes = false;
