@@ -1,11 +1,10 @@
-const chai = require("chai");
-const { expect } = require("chai");
+const cds = require("@sap/cds");
+const { expect } = cds.test
 const templateProcessor = require("../../lib/template-processor");
 const { getEntityByContextPath } = require("../../lib/entity-helper");
 
-// Configure chai
-chai.should();
-chai.expect();
+// Enable locale fallback to simulate end user requests
+cds.env.features.locale_fallback = true
 
 const _processorFn = (changeMap) => {
     return ({ row, key, element }) => {
