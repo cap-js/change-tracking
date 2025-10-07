@@ -1,0 +1,20 @@
+{
+  "collections": [
+    {
+      "collectionName": "cds",
+      "folders": [
+        {
+          "startingFolderPath": "_i18n/**",
+          "sourceFilters": ["*.properties"]
+        }
+      ]
+    }
+  ],
+  "defaultConfiguration": {
+    "targetFolderPath": ".",
+    "xlfFolderPath": "/.dummy/xlf",
+    "oneQFolderPath": "/_i18n",
+    "pseudoLocFolderPath": "/_i18n",
+    "targetFileNamingConvention": "[filename]_[langCode].[extension]"
+  }
+}
