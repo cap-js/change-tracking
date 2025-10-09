@@ -167,7 +167,7 @@ function enhanceModel (m) {
   // Get definitions from Dummy entity in our models
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
-  if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
+  // if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
 
   processEntities(m) // REVISIT: why is that required ?!?
 
@@ -180,7 +180,12 @@ function enhanceModel (m) {
 
         // Add association to ChangeView...
         const keys = entityKey4(entity); if (!keys.length) continue // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
-        const assoc = { ...changes, on: [ ...changes.on, ...keys ] }
+        const on = [];
+        for (const part of changes.on) {
+          if (part?.ref && part.ref[0] === 'ID') on.push(...keys)
+          else on.push(part)
+        }
+        const assoc = { ...changes, on }
 
         // --------------------------------------------------------------------
         // PARKED: Add auto-exposed projection on ChangeView to service if applicable
@@ -239,9 +244,9 @@ function addGenericHandlers() {
       let any = false
       for (const entity of Object.values(srv.entities)) {
         if (isChangeTracked(entity)) {
-          cds.db.before("CREATE", entity, track_changes)
-          cds.db.before("UPDATE", entity, track_changes)
-          cds.db.before("DELETE", entity, track_changes)
+          // cds.db.before("CREATE", entity, track_changes)
+          // cds.db.before("UPDATE", entity, track_changes)
+          // cds.db.before("DELETE", entity, track_changes)
           any = true
         }
       }
