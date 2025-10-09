@@ -174,7 +174,7 @@ function enhanceModel (m) {
   for (let name in m.definitions) {
 
     const entity = m.definitions[name]
-    if (entity.kind === 'entity' && !entity['@cds.autoexposed'] && isChangeTracked(entity)) {
+    if (entity.kind === 'entity' && isChangeTracked(entity)) {
 
       if (!entity['@changelog.disable_assoc']) {
 
