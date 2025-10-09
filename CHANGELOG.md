@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 
 - License entry
+- Added translations for the UI labels for more languages
 
 ### Fixed
 
