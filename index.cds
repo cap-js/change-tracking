@@ -12,7 +12,7 @@ namespace sap.changelog;
   ![@UI.PartOfPreview]: false
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
-  changes : Association to many ChangeView on changes.entityKey = ID OR changes.parentKey = ID;
+  changes : Association to many ChangeView on changes.entityKey = ID OR changes.parentObjectID = ID;
   key ID  : UUID;
 }
 
