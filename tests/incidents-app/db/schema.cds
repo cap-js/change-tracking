@@ -30,11 +30,12 @@ entity Addresses : cuid, managed {
 /**
  * Incidents created by Customers.
  */
+@changelog : [title]
 entity Incidents : cuid, managed {
-  customer       : Association to Customers;
+  customer       : Association to Customers @changelog : [customer.name];
   title          : String @title: 'Title';
   urgency        : Association to Urgency default 'M';
-  status         : Association to Status default 'N';
+  status         : Association to Status default 'N' @changelog : [status.descr];
   conversation   : Composition of many {
     key ID    : UUID;
     timestamp : type of managed:createdAt;
