@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Fixed
 
 - Handling of multiple records in one request
+- Handle cases where the key contains '/'
 
 ### Changed
 
