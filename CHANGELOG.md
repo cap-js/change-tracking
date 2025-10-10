@@ -15,10 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 - Handling of multiple records in one request
 - Handle cases where the key contains '/'
+- Instantiate the changes association correctly so it does not impact other `@cap-js` plugins
 
 ### Changed
 
-- prepare for CDS9 in tests
+- Prepare for CDS9 in tests
 
 ## Version 1.0.8 - 28.03.25
 
