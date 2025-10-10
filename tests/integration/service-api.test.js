@@ -793,4 +793,58 @@ describe("change log integration test", () => {
         delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
         delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
     });
+
+    it("Special Character Handling in service-api - issue#187", async () => {
+        const sampleData = {
+            ID: "/three",
+            title: "RootSample title3",
+            child: [
+                {
+                    ID: "/level1three",
+                    title: "Level1Sample title3",
+                    child: [
+                        {
+                            ID: "/level2three",
+                            title: "Level2Sample title3",
+                        },
+                    ]
+                },
+            ],
+        };
+
+        await adminService.run(INSERT.into(adminService.entities.RootSample).entries(sampleData));
+
+        let changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.RootSample",
+            attribute: "title",
+        });
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("RootSample title3");
+        expect(changes[0].entityKey).to.equal("/three");
+        expect(changes[0].parentKey).to.equal("");
+        expect(changes[0].objectID).to.equal("/three, RootSample title3");
+
+        changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level1Sample",
+            attribute: "title",
+        });
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("Level1Sample title3");
+        expect(changes[0].entityKey).to.equal("/three");
+        expect(changes[0].parentKey).to.equal("/three");
+        expect(changes[0].objectID).to.equal("/level1three, Level1Sample title3, /three");
+
+        changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level2Sample",
+            attribute: "title",
+        });
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("Level2Sample title3");
+        expect(changes[0].entityKey).to.equal("/three");
+        expect(changes[0].parentKey).to.equal("/level1three");
+        expect(changes[0].objectID).to.equal("/level2three, Level2Sample title3, /three");
+    });
 });

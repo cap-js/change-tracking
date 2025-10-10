@@ -36,6 +36,20 @@ module.exports = cds.service.impl(async (srv) => {
           .set({ title: "Game Science" });
     };
 
+    const onActivateLevel2Sample = async (req) => {
+        const entity = req.entity;
+        const entityID = "/level2one";
+        await UPDATE.entity(entity)
+          .where({ ID: entityID })
+          .set({ title: "special title" });
+
+        const rootSampleEntity = "AdminService.RootSample";
+        const rootSampleID = "/two";
+        await UPDATE.entity(rootSampleEntity, { ID: rootSampleID })
+          .set({ title: "Black Myth Zhong Kui" });
+    };
+
     srv.on("activate", "AdminService.Volumns", onActivateVolumns);
     srv.on("activate", "AdminService.OrderItemNote", onActivateOrderItemNote);
+    srv.on("activate", "AdminService.Level2Sample", onActivateLevel2Sample);
 });
