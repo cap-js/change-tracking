@@ -20,8 +20,12 @@
   "peerDependencies": {
     "@sap/cds": ">=9"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "@cap-js/change-tracking": "file:.",
+    "@cap-js/attachments": "^2",
     "@cap-js/sqlite": "^1 || ^2",
     "@cap-js/cds-test": "*",
     "express": "^4"

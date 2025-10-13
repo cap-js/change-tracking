@@ -5,7 +5,7 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
 > [!IMPORTANT]
-> Following the CAP best practices, the new release now requires CDS8 as minimum version in the peer dependencies. If you want to use the plugin with an older version of CAP (CDS7), you will need to manually update the peer dependency in `package.json`. Please be aware that there will be no support for this version of the plugin with a CDS version below 8!
+> Following the CAP best practices, the new release now requires CDS8 or CDS9 as minimum versions. If you want to use the plugin with an older version of CAP (CDS7), you will need to manually update the peer dependency in `package.json`. Please be aware that there will be no support for this version of the plugin with a CDS version below 8!
 
 > [!IMPORTANT]
 > This release establishes support for multi-tenant deployments using MTX and extensibility.
