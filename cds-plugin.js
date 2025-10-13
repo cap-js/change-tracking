@@ -4,6 +4,8 @@ const DEBUG = cds.debug('changelog')
 const isRoot = 'change-tracking-isRootEntity'
 const hasParent = 'change-tracking-parentEntity'
 
+const { generateTriggersForEntity, _changes, _change_logs } = require('./lib/hdi-utils.js')
+
 const isChangeTracked = (entity) => {
   if (entity.query?.SET?.op === 'union') return false // REVISIT: should that be an error or warning?
   if (entity['@changelog']) return true
@@ -32,13 +34,13 @@ const addSideEffects = (actions, flag, element) => {
   }
 }
 
-function setChangeTrackingIsRootEntity (entity, csn, val = true) {
+function setChangeTrackingIsRootEntity(entity, csn, val = true) {
   if (csn.definitions?.[entity.name]) {
     csn.definitions[entity.name][isRoot] = val
   }
 }
 
-function checkAndSetRootEntity (parentEntity, entity, csn) {
+function checkAndSetRootEntity(parentEntity, entity, csn) {
   if (entity[isRoot] === false) {
     return entity
   }
@@ -50,13 +52,13 @@ function checkAndSetRootEntity (parentEntity, entity, csn) {
   }
 }
 
-function processEntities (m) {
+function processEntities(m) {
   for (let name in m.definitions) {
     compositionRoot({ ...m.definitions[name], name }, m)
   }
 }
 
-function compositionRoot (entity, csn) {
+function compositionRoot(entity, csn) {
   if (!entity || entity.kind !== 'entity') {
     return
   }
@@ -64,7 +66,7 @@ function compositionRoot (entity, csn) {
   return checkAndSetRootEntity(parentEntity, entity, csn)
 }
 
-function compositionParent (entity, csn) {
+function compositionParent(entity, csn) {
   if (!entity || entity.kind !== 'entity') {
     return
   }
@@ -72,7 +74,7 @@ function compositionParent (entity, csn) {
   return parentAssociation ?? null
 }
 
-function compositionParentAssociation (entity, csn) {
+function compositionParentAssociation(entity, csn) {
   if (!entity || entity.kind !== 'entity') {
     return
   }
@@ -99,7 +101,7 @@ function compositionParentAssociation (entity, csn) {
   return { ...csn.definitions?.[entity.name], name: entity.name }
 }
 
-function processCompositionElements (entity, csn, elements) {
+function processCompositionElements(entity, csn, elements) {
   for (const name in elements) {
     const element = elements[name]
     const target = element?.target
@@ -116,7 +118,7 @@ function processCompositionElements (entity, csn, elements) {
   }
 }
 
-function findParentAssociation (entity, csn, elements) {
+function findParentAssociation(entity, csn, elements) {
   return Object.keys(elements).find((name) => {
     const element = elements[name]
     const target = element?.target
@@ -146,20 +148,20 @@ function findParentAssociation (entity, csn, elements) {
 /**
  * Returns an expression for the key of the given entity, which we can use as the right-hand-side of an ON condition.
  */
-function entityKey4 (entity) {
+function entityKey4(entity) {
   const xpr = []
   for (let k in entity.elements) {
     const e = entity.elements[k]; if (!e.key) continue
     if (xpr.length) xpr.push('||')
     if (e.type === 'cds.Association') xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] })
-    else xpr.push({ ref:[k] })
+    else xpr.push({ ref: [k] })
   }
   return xpr
 }
 
 
 // Unfold @changelog annotations in loaded model
-function enhanceModel (m) {
+function enhanceModel(m) {
 
   const _enhanced = 'sap.changelog.enhanced'
   if (m.meta?.[_enhanced]) return // already enhanced
@@ -206,9 +208,9 @@ function enhanceModel (m) {
 
         DEBUG?.(`\n
           extend ${name} with {
-            changes : Association to many ${assoc.target} on ${ assoc.on.map(x => x.ref?.join('.') || x).join(' ') };
+            changes : Association to many ${assoc.target} on ${assoc.on.map(x => x.ref?.join('.') || x).join(' ')};
           }
-        `.replace(/ {8}/g,''))
+        `.replace(/ {8}/g, ''))
         const query = entity.projection || entity.query?.SELECT
         if (query) (query.columns ??= ['*']).push({ as: 'changes', cast: assoc })
         else if (entity.elements) entity.elements.changes = assoc
@@ -259,7 +261,29 @@ function addGenericHandlers() {
 
 
 // Register plugin hooks
-cds.on('compile.for.runtime', csn => { DEBUG?.('on','compile.for.runtime'); enhanceModel(csn) })
-cds.on('compile.to.edmx', csn => { DEBUG?.('on','compile.to.edmx'); enhanceModel(csn) })
-cds.on('compile.to.dbx', csn => { DEBUG?.('on','compile.to.dbx'); enhanceModel(csn) })
+cds.on('compile.for.runtime', csn => { DEBUG?.('on', 'compile.for.runtime'); enhanceModel(csn) })
+cds.on('compile.to.edmx', csn => { DEBUG?.('on', 'compile.to.edmx'); enhanceModel(csn) })
+cds.on('compile.to.dbx', csn => { DEBUG?.('on', 'compile.to.dbx'); enhanceModel(csn) })
 cds.on('served', addGenericHandlers)
+
+// Generate HDI artifacts for change tracking
+const _hdi_migration = cds.compiler.to.hdi.migration;
+cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
+  const triggers = [];
+
+  for (let [name, def] of Object.entries(csn.definitions)) {
+    if (def.kind !== 'entity' || !isChangeTracked(def)) continue;
+    const entityTriggers = generateTriggersForEntity(name, def);
+    triggers.push(...entityTriggers);
+  }
+
+  // Load procedures for Changes and ChangeLog creation
+  if (triggers.length > 0) {
+    triggers.push({ name: 'CREATE_CHANGES', sql: _changes, suffix: '.hdbprocedure' })
+    triggers.push({ name: 'CREATE_CHANGE_LOG', sql: _change_logs, suffix: '.hdbprocedure' })
+  }
+
+  const ret = _hdi_migration(csn, options, beforeImage);
+  ret.definitions = [...ret.definitions, ...triggers];
+  return ret;
+}
