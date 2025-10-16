@@ -53,5 +53,18 @@ describe("Tests for uploading/deleting attachments through API calls - in-memory
     const statusChangeGerman = changes2.sort((a,b) => b.createdAt - a.createdAt).find(change => change.attribute === 'status');
     expect(statusChangeGerman).to.have.property('valueChangedFrom', 'Gelöst')
     expect(statusChangeGerman).to.have.property('valueChangedTo', 'Neu')
+
+  });
+
+  //Draft mode uploading attachment
+  it("Requesting object page to ensure change tracking works with attachments combined", async () => {
+
+    //read attachments list for Incident
+    const attachmentResponse = await GET(
+      `odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)`
+    )
+    //the data should have only one attachment
+    expect(attachmentResponse.status).to.equal(200)
+    expect(attachmentResponse.data).to.not.be.undefined;
   })
 })

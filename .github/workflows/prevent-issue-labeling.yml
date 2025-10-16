@@ -1,0 +1,24 @@
+name: Prevent "New" Label on Issues
+
+permissions:
+  issues: write
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  remove_new_label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove "New" label if applied by non-bot user
+        if: >
+          contains(github.event.issue.labels.*.name, 'New') &&
+          github.event.label.name == 'New' &&
+          github.event.sender.login != 'github-actions[bot]'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue edit "$ISSUE_NUMBER" --remove-label "New"

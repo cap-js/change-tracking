@@ -1,0 +1,30 @@
+name: Label issues
+
+permissions:
+  issues: write
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  label_issues:
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh issue edit "$NUMBER" --add-label "$LABELS"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number }}
+          LABELS: New
+
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `👋 Hello @${context.payload.issue.user.login}, thank you for submitting this issue. Our team is reviewing your report and will follow up with you as soon as possible.`
+            })
