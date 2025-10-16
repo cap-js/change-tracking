@@ -27,6 +27,9 @@
       "attachments": {
         "kind": "db",
         "scan": false
+      },
+      "change-tracking": {
+        "considerLocalizedValues": true
       }
     }
   },
