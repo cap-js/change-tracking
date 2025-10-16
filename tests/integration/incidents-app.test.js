@@ -11,7 +11,7 @@ describe("Tests for uploading/deleting attachments through API calls - in-memory
     await test.data.reset()
   })
 
-  it("Localized values are stored", async () => {
+  it("Localized values are stored - EN", async () => {
     await POST(
       `odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {}
     )
@@ -32,14 +32,16 @@ describe("Tests for uploading/deleting attachments through API calls - in-memory
     const statusChange = changes.find(change => change.attribute === 'status');
     expect(statusChange).to.have.property('valueChangedFrom', 'New')
     expect(statusChange).to.have.property('valueChangedTo', 'Resolved')
+  });
 
+  it("Localized values are stored - DE", async () => {
     await POST(
       `odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {}
     )
 
     await PATCH(
       `odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)?sap-locale=de`, {
-        status_code: 'N'
+        status_code: 'R'
       }
     )
 
@@ -47,12 +49,12 @@ describe("Tests for uploading/deleting attachments through API calls - in-memory
       `odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate?sap-locale=de`, {}
     )
 
-    const {data: {value: changes2}} = await GET(
+    const {data: {value: changes}} = await GET(
       `odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`
     )
-    const statusChangeGerman = changes2.sort((a,b) => b.createdAt - a.createdAt).find(change => change.attribute === 'status');
-    expect(statusChangeGerman).to.have.property('valueChangedFrom', 'Gelöst')
-    expect(statusChangeGerman).to.have.property('valueChangedTo', 'Neu')
+    const statusChangeGerman = changes.find(change => change.attribute === 'status');
+    expect(statusChangeGerman).to.have.property('valueChangedFrom', 'Neu')
+    expect(statusChangeGerman).to.have.property('valueChangedTo', 'Gelöst')
 
   });
 
