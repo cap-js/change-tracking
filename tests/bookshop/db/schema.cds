@@ -295,3 +295,49 @@ entity Schools : managed, cuid {
     teacher : String;
   };
 }
+
+// Test for key which include special character: '/' -- draft enabled
+@title: 'Root Sample Draft'
+entity RootSampleDraft @(cds.autoexpose) : managed {
+  key ID    : String;
+      child : Composition of many Level1SampleDraft
+                on child.parent = $self;
+      title : String;
+}
+
+@title: 'Level1 Sample Draft'
+entity Level1SampleDraft : managed {
+  key ID     : String;
+      parent : Association to one RootSampleDraft;
+      child  : Composition of many Level2SampleDraft
+                 on child.parent = $self;
+      title  : String;
+}
+
+entity Level2SampleDraft : managed {
+  key ID     : String;
+      title  : String;
+      parent : Association to one Level1SampleDraft;
+}
+
+// Test for key which include special character: '/' -- draft disabled
+entity RootSample : managed {
+  key ID    : String;
+      child : Composition of many Level1Sample
+                on child.parent = $self;
+      title : String;
+}
+
+entity Level1Sample : managed {
+  key ID     : String;
+      parent : Association to one RootSample;
+      child  : Composition of many Level2Sample
+                 on child.parent = $self;
+      title  : String;
+}
+
+entity Level2Sample : managed {
+  key ID     : String;
+      title  : String;
+      parent : Association to one Level1Sample;
+}

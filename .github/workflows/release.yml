@@ -31,7 +31,7 @@ jobs:
       with:
         version: '${{ steps.package-version.outputs.current-version }}'
     - name: create a GitHub release
-      uses: ncipollo/release-action@v1
+      uses: ncipollo/release-action@v1.20.0
       with:
         tag: 'v${{ steps.package-version.outputs.current-version }}'
         body: '${{ steps.parse-changelog.outputs.body }}'

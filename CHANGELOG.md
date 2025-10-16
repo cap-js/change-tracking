@@ -4,19 +4,22 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.0.9 - TBD
+## Version 1.1.0 - TBD
 
 ### Added
 
 - License entry
+- Added translations for the UI labels for more languages
 
 ### Fixed
 
 - Handling of multiple records in one request
+- Handle cases where the key contains '/'
+- Instantiate the changes association correctly so it does not impact other `@cap-js` plugins
 
 ### Changed
 
-- prepare for CDS9 in tests
+- Prepare for CDS9 in tests
 
 ## Version 1.0.8 - 28.03.25
 

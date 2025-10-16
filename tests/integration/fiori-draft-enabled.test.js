@@ -1644,4 +1644,110 @@ describe("change log integration test", () => {
         expect(changeLogs[0].entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
         expect(changeLogs[0].serviceEntity).to.equal("AdminService.BookStores");
     });
+
+    it("Special Character Handling in draft-enabled - issue#187", async () => {
+        delete cds.services.AdminService.entities.RootSampleDraft["@changelog"];
+        delete cds.services.AdminService.entities.Level1SampleDraft["@changelog"];
+        delete cds.db.entities.Level1SampleDraft["@changelog"];
+        delete cds.db.entities.RootSampleDraft["@changelog"];
+
+        const action = PATCH.bind({}, `/odata/v4/admin/Level1SampleDraft(ID='${encodeURIComponent('/level1draftone')}',IsActiveEntity=false)`, {
+            title: "new special title",
+        });
+        await utils.apiAction("admin", "RootSampleDraft", `'${encodeURIComponent('/draftone')}'`, "AdminService", action);
+
+        let changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level1SampleDraft",
+                attribute: "title",
+            })
+        );
+        expect(changes.length).to.equal(1);
+
+        const change = changes[0];
+        expect(changes[0].valueChangedFrom).to.equal("Level1SampleDraft title");
+        expect(changes[0].valueChangedTo).to.equal("new special title");
+        expect(changes[0].entityKey).to.equal("/draftone");
+        expect(changes[0].parentKey).to.equal("/draftone");
+        // if object type is localized, use the localized object type as object ID
+        expect(change.objectID).to.equal("Level1 Sample Draft");
+        expect(change.parentObjectID).to.equal("Root Sample Draft");
+
+        cds.services.AdminService.entities.RootSampleDraft["@changelog"] = [
+            { "=": "ID" },
+            { "=": "title" }
+        ];
+        cds.services.AdminService.entities.Level1SampleDraft["@changelog"] = [
+            { "=": "ID" },
+            { "=": "title" },
+            { "=": "parent.ID" }
+        ];
+
+        // Root and child nodes are created at the same time
+        const createAction = POST.bind({}, `/odata/v4/admin/RootSampleDraft`, {
+            ID: "/drafttwo",
+            title: "New title for RootSampleDraft",
+            child: [
+                {
+                    ID: "/level1drafttwo",
+                    title: "New title for Level1SampleDraft",
+                    child: [
+                        {
+                            ID: "/level2drafttwo",
+                            title: "New title for Level2SampleDraft",
+                        },
+                    ],
+                },
+            ],
+        });
+        await utils.apiAction(
+            "admin",
+            "RootSampleDraft",
+            `'${encodeURIComponent('/drafttwo')}'`,
+            "AdminService",
+            createAction,
+            true,
+        );
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.RootSampleDraft",
+                attribute: "title",
+                modification: "create",
+            })
+        );
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("New title for RootSampleDraft");
+        expect(changes[0].entityKey).to.equal("/drafttwo");
+        expect(changes[0].parentKey).to.equal("");
+        expect(changes[0].objectID).to.equal("/drafttwo, New title for RootSampleDraft");
+
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level1SampleDraft",
+                attribute: "title",
+                modification: "create",
+            })
+        );
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("New title for Level1SampleDraft");
+        expect(changes[0].entityKey).to.equal("/drafttwo");
+        expect(changes[0].parentKey).to.equal("/drafttwo");
+        expect(changes[0].objectID).to.equal("/level1drafttwo, New title for Level1SampleDraft, /drafttwo");
+
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2SampleDraft",
+                attribute: "title",
+                modification: "create",
+            })
+        );
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("New title for Level2SampleDraft");
+        expect(changes[0].entityKey).to.equal("/drafttwo");
+        expect(changes[0].parentKey).to.equal("/level1drafttwo");
+        expect(changes[0].objectID).to.equal("/level2drafttwo, New title for Level2SampleDraft, /drafttwo");
+    });
 });
