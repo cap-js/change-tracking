@@ -187,8 +187,7 @@ function enhanceModel(m) {
           if (part?.ref && part.ref[0] === 'ID') on.push(...keys)
           else on.push(part)
         }
-        const assoc = { ...changes, on }
-        //const assoc = new cds.builtin.classes.Association({ ...changes, on: [ ...changes.on, ...keys ] })
+        const assoc = new cds.builtin.classes.Association({ ...changes, on});
 
         // --------------------------------------------------------------------
         // PARKED: Add auto-exposed projection on ChangeView to service if applicable
