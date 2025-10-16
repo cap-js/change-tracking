@@ -246,9 +246,9 @@ function addGenericHandlers() {
       let any = false
       for (const entity of Object.values(srv.entities)) {
         if (isChangeTracked(entity)) {
-          // cds.db.before("CREATE", entity, track_changes)
-          // cds.db.before("UPDATE", entity, track_changes)
-          // cds.db.before("DELETE", entity, track_changes)
+          cds.db.before("CREATE", entity, track_changes)
+          cds.db.before("UPDATE", entity, track_changes)
+          cds.db.before("DELETE", entity, track_changes)
           any = true
         }
       }
@@ -267,23 +267,23 @@ cds.on('compile.to.dbx', csn => { DEBUG?.('on', 'compile.to.dbx'); enhanceModel(
 cds.on('served', addGenericHandlers)
 
 // Generate HDI artifacts for change tracking
-const _hdi_migration = cds.compiler.to.hdi.migration;
-cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
-  const triggers = [];
+// const _hdi_migration = cds.compiler.to.hdi.migration;
+// cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
+//   const triggers = [];
 
-  for (let [name, def] of Object.entries(csn.definitions)) {
-    if (def.kind !== 'entity' || !isChangeTracked(def)) continue;
-    const entityTriggers = generateTriggersForEntity(name, def);
-    triggers.push(...entityTriggers);
-  }
+//   for (let [name, def] of Object.entries(csn.definitions)) {
+//     if (def.kind !== 'entity' || !isChangeTracked(def)) continue;
+//     const entityTriggers = generateTriggersForEntity(name, def);
+//     triggers.push(...entityTriggers);
+//   }
 
-  // Load procedures for Changes and ChangeLog creation
-  if (triggers.length > 0) {
-    triggers.push({ name: 'CREATE_CHANGES', sql: _changes, suffix: '.hdbprocedure' })
-    triggers.push({ name: 'CREATE_CHANGE_LOG', sql: _change_logs, suffix: '.hdbprocedure' })
-  }
+//   // Load procedures for Changes and ChangeLog creation
+//   if (triggers.length > 0) {
+//     triggers.push({ name: 'CREATE_CHANGES', sql: _changes, suffix: '.hdbprocedure' })
+//     triggers.push({ name: 'CREATE_CHANGE_LOG', sql: _change_logs, suffix: '.hdbprocedure' })
+//   }
 
-  const ret = _hdi_migration(csn, options, beforeImage);
-  ret.definitions = [...ret.definitions, ...triggers];
-  return ret;
-}
+//   const ret = _hdi_migration(csn, options, beforeImage);
+//   ret.definitions = [...ret.definitions, ...triggers];
+//   return ret;
+// }
