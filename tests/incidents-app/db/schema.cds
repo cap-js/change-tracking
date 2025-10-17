@@ -36,6 +36,10 @@ entity Incidents : cuid, managed {
   title          : String @title: 'Title';
   urgency        : Association to Urgency default 'M';
   status         : Association to Status default 'N' @changelog : [status.descr];
+  date : Date @title : 'date' @changelog;
+  datetime : DateTime @title : 'datetime' @changelog;
+  time : Time @title : 'time' @changelog;
+  timestamp : Timestamp @title : 'timestamp' @changelog;
   conversation   : Composition of many {
     key ID    : UUID;
     timestamp : type of managed:createdAt;
