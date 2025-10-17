@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.1.1 - TBD
+## Version 1.1.2 - TBD
 
 ### Added
 
@@ -12,7 +12,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 
-- Correct localisation for `cds.Date`, `cds.Time`, `cds.DateTime` and `cds.Timestamp` properties
 
 ## Version 1.1.1 - 17.10.25
 
