@@ -434,6 +434,9 @@ Use cases for tracing changes
 
 #### Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)
 
+> [!WARNING]
+> When you don't need to track the deep changes, but still want to track the additions and removals in the composition, you can set it up as described below. At this point, updates to child entity will not generate a changelog.
+
 Modelling in `db/schema.cds`
 
 ```cds
