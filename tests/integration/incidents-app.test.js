@@ -69,4 +69,37 @@ describe("Tests for uploading/deleting attachments through API calls - in-memory
     expect(attachmentResponse.status).to.equal(200)
     expect(attachmentResponse.data).to.not.be.undefined;
   })
+
+  //REVISIT: Ideally use OData dynamic types so UI does the formatting and not the backend
+  it("Date and time values are localized", async () => {
+
+    await POST(
+      `odata/v4/processor/Incidents(ID=${'3583f982-d7df-4aad-ab26-301d4a157cd7'},IsActiveEntity=true)/ProcessorService.draftEdit`, {}
+    )
+
+    await POST(
+      `odata/v4/processor/Incidents(ID=${'3583f982-d7df-4aad-ab26-301d4a157cd7'},IsActiveEntity=false)/ProcessorService.draftActivate?sap-locale=de`, {}
+    )
+
+    const {data: {value: changes}} = await GET(
+      `odata/v4/processor/Incidents(ID=${'3583f982-d7df-4aad-ab26-301d4a157cd7'},IsActiveEntity=true)/changes?sap-locale=en`
+    )
+    const dbChanges = await SELECT.from('sap.changelog.Changes').where({attribute: {in: ['date', 'time', 'datetime', 'timestamp']}})
+    const dateChange = changes.find(change => change.attribute === 'date');
+    const dateDBChange = dbChanges.find(change => change.attribute === 'date');
+    expect(dateChange.valueChangedFrom).to.not.equal(dateDBChange.valueChangedFrom);
+    expect(dateChange.valueChangedTo).to.not.equal(dateDBChange.valueChangedTo);
+    const timeChange = changes.find(change => change.attribute === 'time');
+    const timeDBChange = dbChanges.find(change => change.attribute === 'time');
+    expect(timeChange.valueChangedFrom).to.not.equal(timeDBChange.valueChangedFrom);
+    expect(timeChange.valueChangedTo).to.not.equal(timeDBChange.valueChangedTo);
+    const dateTimeChange = changes.find(change => change.attribute === 'datetime');
+    const dateTimeDBChange = dbChanges.find(change => change.attribute === 'datetime');
+    expect(dateTimeChange.valueChangedFrom).to.not.equal(dateTimeDBChange.valueChangedFrom);
+    expect(dateTimeChange.valueChangedTo).to.not.equal(dateTimeDBChange.valueChangedTo);
+    const timestampChange = changes.find(change => change.attribute === 'timestamp');
+    const timestampDBChange = dbChanges.find(change => change.attribute === 'timestamp');
+    expect(timestampChange.valueChangedFrom).to.not.equal(timestampDBChange.valueChangedFrom);
+    expect(timestampChange.valueChangedTo).to.not.equal(timestampDBChange.valueChangedTo);
+  })
 })
