@@ -1509,7 +1509,7 @@ describe("change log integration test", () => {
         expect(registryChange.objectID).to.equal("San Francisco-2");
         expect(registryChange.entity).to.equal("Book Store Registry");
         expect(registryChange.valueChangedFrom).to.equal("");
-        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.valueChangedTo).to.equal("Jan 1, 2022");
         expect(registryChange.parentKey).to.equal("01234567-89ab-cdef-0123-456789abcdef");
         expect(registryChange.parentObjectID).to.equal("Murder on the Orient Express");
     });
@@ -1540,8 +1540,8 @@ describe("change log integration test", () => {
         const registryChange = registryChanges[0];
         expect(registryChange.attribute).to.equal("Valid On");
         expect(registryChange.modification).to.equal("Update");
-        expect(registryChange.valueChangedFrom).to.equal("2022-10-15");
-        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.valueChangedFrom).to.equal("Oct 15, 2022");
+        expect(registryChange.valueChangedTo).to.equal("Jan 1, 2022");
         expect(registryChange.parentKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
         expect(registryChange.parentObjectID).to.equal("The Strand");
     });
@@ -1566,8 +1566,8 @@ describe("change log integration test", () => {
         const registryChange = registryChanges[0];
         expect(registryChange.attribute).to.equal("Valid On");
         expect(registryChange.modification).to.equal("Update");
-        expect(registryChange.valueChangedFrom).to.equal("2018-09-01");
-        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.valueChangedFrom).to.equal("Sep 1, 2018");
+        expect(registryChange.valueChangedTo).to.equal("Jan 1, 2022");
         expect(registryChange.parentKey).to.equal("8aaed432-8336-4b0d-be7e-3ef1ce7f13ea");
         expect(registryChange.parentObjectID).to.equal("City Lights Books");
     });
@@ -1588,7 +1588,7 @@ describe("change log integration test", () => {
         const registryChange = registryChanges[0];
         expect(registryChange.attribute).to.equal("Valid On");
         expect(registryChange.modification).to.equal("Delete");
-        expect(registryChange.valueChangedFrom).to.equal("2018-09-01");
+        expect(registryChange.valueChangedFrom).to.equal("Sep 1, 2018");
         expect(registryChange.valueChangedTo).to.equal("");
         expect(registryChange.parentKey).to.equal("8aaed432-8336-4b0d-be7e-3ef1ce7f13ea");
         expect(registryChange.parentObjectID).to.equal("City Lights Books");

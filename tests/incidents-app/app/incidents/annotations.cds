@@ -44,6 +44,18 @@ annotate service.Incidents with @(
                 Value : customer_ID,
                 Label : '{i18n>Customer}',
             },
+            {
+                Value : date,
+            },
+            {
+                Value : datetime,
+            },
+            {
+                Value : time,
+            },
+            {
+                Value : timestamp,
+            },
         ],
     },
     UI.Facets : [

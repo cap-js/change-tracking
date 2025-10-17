@@ -271,7 +271,7 @@ and `disableDeleteTracking` configs in your project settings:
 By default, deleting a record will also automatically delete all associated change logs. This helps reduce the impact on the size of the database.
 You can turn this behavior off globally by adding the following switch to the `package.json` of your project
 
-```
+```json
 ...
 "cds": {
   "requires": {
@@ -287,6 +287,38 @@ You can turn this behavior off globally by adding the following switch to the `p
 > [!IMPORTANT]
 > Preserving the change logs of deleted data can have a significant impact on the size of the change logging table, since now such data also survives automated data retention runs. 
 > You must implement an own **data retention strategy** for the change logging table in order to manage the size and performance of your database.
+
+### Tracking localized values
+
+If you are using a model like 
+
+```cds
+entity Incidents : cuid, managed {
+  // … more fields
+  status         : Association to Status default 'N' @changelog : [status.descr];
+}
+
+entity Status {
+  key code    : String:
+  descr : localized String;
+}
+```
+
+you can save the localized values into the change log instead of the default values, by setting `considerLocalizedValues`:
+
+```json
+...
+"cds": {
+  "requires": {
+    "change-tracking": {
+      "considerLocalizedValues": true
+    }
+  }
+}
+...
+```
+
+Please be aware this means the localized value is then stored and shown in the change log, e.g. if a user speaking another language accesses the change log later, they will still see the value in the language used by the user who caused the change log.
 
 ## Examples
 
