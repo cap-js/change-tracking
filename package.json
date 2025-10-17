@@ -18,7 +18,7 @@
     "test": "npx jest --silent"
   },
   "peerDependencies": {
-    "@sap/cds": ">=8"
+    "@sap/cds": ">=8.5"
   },
   "engines": {
     "node": ">=20.0.0"
