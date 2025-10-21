@@ -33,7 +33,8 @@
     "requires": {
       "change-tracking": {
         "model": "@cap-js/change-tracking",
-        "considerLocalizedValues": false
+        "considerLocalizedValues": false,
+        "preserveDeletes": true
       }
     }
   }

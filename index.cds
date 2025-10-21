@@ -72,7 +72,7 @@ entity Changes {
         Delete = 'delete';
       };
 
-      valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}';
+      valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}' @UI.Hidden;
       changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}' @UI.Hidden;
 }
 
