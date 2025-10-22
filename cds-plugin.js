@@ -272,7 +272,8 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
   const triggers = [];
 
   for (let [name, def] of Object.entries(csn.definitions)) {
-    if (def.kind !== 'entity' || !isChangeTracked(def)) continue;
+    const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+    if (def.kind !== 'entity' || !isChangeTracked(def) || isTableEntity) continue;
     const entityTriggers = generateTriggersForEntity(name, def);
     triggers.push(...entityTriggers);
   }
