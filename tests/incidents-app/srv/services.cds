@@ -6,6 +6,11 @@ using { sap.capire.incidents as my } from '../db/schema';
 service ProcessorService {
   entity Incidents as projection on my.Incidents;
   entity Customers @readonly as projection on my.Customers;
+  
+  @odata.draft.enabled
+  entity MultiKeyScenario as projection on my.MultiKeyScenario;
+  @odata.draft.enabled
+  entity BooksNotID as projection on my.BooksNotID;
 }
 
 /**

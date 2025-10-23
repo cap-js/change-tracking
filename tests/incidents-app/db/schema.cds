@@ -78,3 +78,24 @@ entity Urgency : CodeList {
 
 type EMailAddress : String;
 type PhoneNumber  : String;
+
+
+entity MultiKeyScenario {
+  key GJAHR: Integer;
+  key BUKRS: String(40);
+      foo1: String @changelog;
+}
+
+entity BooksNotID {
+  key NOT_ID : Int16;
+      @changelog
+      title  : String;
+      pages : Composition of many PagesNotID on pages.book = $self;
+}
+
+entity PagesNotID {
+  key NOT_ID : Int16;
+      book : Association to one BooksNotID;
+      @changelog : [book.title, page]
+      page  : Integer;
+}
