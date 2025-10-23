@@ -1,6 +1,6 @@
 const cds = require("@sap/cds");
 const { expect } = cds.test
-const templateProcessor = require("../../lib/template-processor");
+const { templateProcessor } = require("../../lib/template-processor");
 const { getEntityByContextPath } = require("../../lib/entity-helper");
 
 // Enable locale fallback to simulate end user requests
@@ -41,7 +41,7 @@ describe("templateProcessor", () => {
 });
 
 describe("entityHelper", () => {
-    cds.model = {definitions:{}}
+    cds.model = { definitions: {} }
 
     it("1.0 should return null if content path not exist (ERP4SMEPREPWORKAPPPLAT-32)", async () => {
         expect(getEntityByContextPath("".split('/'))).to.not.exist;
