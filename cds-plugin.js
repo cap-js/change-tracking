@@ -1,4 +1,5 @@
 const cds = require('@sap/cds')
+const LOG = cds.log('changelog')
 const DEBUG = cds.debug('changelog')
 
 const isRoot = 'change-tracking-isRootEntity'
@@ -157,6 +158,7 @@ function entityKey4 (entity) {
   return xpr
 }
 
+const hasFacetForComp = (comp, facets) => facets.some(f => f.Target === `${comp.name}/@UI.LineItem` || (f.Facets && hasFacetForComp(comp, f.Facets)))
 
 // Unfold @changelog annotations in loaded model
 function enhanceModel (m) {
@@ -208,9 +210,23 @@ function enhanceModel (m) {
         if (query) (query.columns ??= ['*']).push({ as: 'changes', cast: assoc })
         else if (entity.elements) entity.elements.changes = assoc
 
+        if (entity["@changelog.disable_facet"] !== undefined) {
+          LOG.warn(`@changelog.disable_facet is deprecated! You can just define your own Facet for the changes association or annotate the changes association on ${entity.name} with not readable via @Capabilities.NavigationRestrictions.RestrictedProperties`)
+        }
+
+        let facets = entity["@UI.Facets"]
+
+        if (!facets) {
+          DEBUG?.(`${entity.name} does not have a @UI.Facets annotation and thus the change tracking section is not added.`)
+        }
         // Add UI.Facet for Change History List
-        if (!entity['@changelog.disable_facet'])
-          entity['@UI.Facets']?.push(facet)
+        if (
+          facets && !entity['@changelog.disable_facet'] 
+          && !hasFacetForComp(changes, entity['@UI.Facets'])
+          && !entity['@Capabilities.NavigationRestrictions.RestrictedProperties']?.some(restriction => restriction.NavigationProperty?.['='] === 'changes' && restriction.ReadRestrictions?.Readable === false)
+        ) {
+          facets.push(facet)
+        }
       }
 
       if (entity.actions) {
