@@ -159,6 +159,12 @@ function entityKey4(entity) {
   return xpr
 }
 
+function _replaceTablePlaceholders(on, tableName) {
+  return on.map(part => {
+    if (part && part.val === 'DUMMY') return { ...part, val: tableName }
+    return part
+  })
+}
 
 // Unfold @changelog annotations in loaded model
 function enhanceModel(m) {
@@ -176,17 +182,14 @@ function enhanceModel(m) {
   for (let name in m.definitions) {
 
     const entity = m.definitions[name]
-    if (entity.kind === 'entity' && isChangeTracked(entity)) {
+    const isTableEntity = entity.kind === 'entity' && !entity.query && !entity.projection;
+    if (entity.kind === 'entity' && isChangeTracked(entity) && !isTableEntity) {
 
       if (!entity['@changelog.disable_assoc']) {
-
-        // Add association to ChangeView...
-        const keys = entityKey4(entity); if (!keys.length) continue // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
-        const on = [];
-        for (const part of changes.on) {
-          if (part?.ref && part.ref[0] === 'ID') on.push(...keys)
-          else on.push(part)
-        }
+        // Add association to ChangeView
+        const keys = entityKey4(entity); if (!keys.length) continue; // skip if no key attribute is defined
+        const onCondition = changes.on.flatMap(p => p?.ref && p.ref[0] === 'ID' ? keys : [p]);
+        const on = _replaceTablePlaceholders(onCondition, entity.projection?.from?.ref[0]);
         const assoc = new cds.builtin.classes.Association({ ...changes, on});
 
         // --------------------------------------------------------------------
@@ -265,6 +268,29 @@ cds.on('compile.for.runtime', csn => { DEBUG?.('on', 'compile.for.runtime'); enh
 cds.on('compile.to.edmx', csn => { DEBUG?.('on', 'compile.to.edmx'); enhanceModel(csn) })
 cds.on('compile.to.dbx', csn => { DEBUG?.('on', 'compile.to.dbx'); enhanceModel(csn) })
 cds.on('served', addGenericHandlers)
+
+const _sql_original = cds.compile.to.sql
+cds.compile.to.sql = function (csn, options) {
+  let ret = _sql_original.call(this, csn, options);
+  return ret;
+}
+Object.assign (cds.compile.to.sql, _sql_original)
+
+// REVISIT: workaround for in-memory sqlite db
+cds.once('served', async () => {
+  if (cds.db?.options?.kind === 'sqlite' && cds.db?.options?.credentials?.url === ':memory:') {
+    const csn = cds.model
+    const trigger = `
+    CREATE TRIGGER update_category_total
+    AFTER UPDATE ON sap_capire_incidents_Incidents
+    BEGIN
+      UPDATE sap_capire_incidents_Incidents SET title = 'Trigger' WHERE ID = NEW.ID;
+END;`.trim()
+    // const triggers = _buildTriggers(csn)
+    // for (const t of triggers) await cds.db.run(t)
+    await cds.db.run(trigger);
+  }
+})
 
 // Generate HDI artifacts for change tracking
 const _hdi_migration = cds.compiler.to.hdi.migration;

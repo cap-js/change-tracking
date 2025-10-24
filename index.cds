@@ -12,8 +12,8 @@ namespace sap.changelog;
   ![@UI.PartOfPreview]: false
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
-  changes : Association to many ChangeView on changes.entityKey = ID OR changes.parentObjectID = ID;
-  key ID  : UUID;
+  changes : Association to many ChangeView on changes.entityKey = ID AND changes.entity = 'DUMMY' OR changes.parentKey = ID AND changes.parentEntity = 'DUMMY';
+  key ID  : String;
 }
 
 
@@ -27,6 +27,7 @@ view ChangeView as
     changeLog.entityKey as entityKey, // flattening assoc path -> this is the main reason for having this helper view
     changeLog.createdAt as createdAt,
     changeLog.createdBy as createdBy,
+    changeLog.entity as parentEntity
   }
   excluding {
     entityID,
