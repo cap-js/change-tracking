@@ -36,6 +36,10 @@ entity Incidents : cuid, managed {
   title          : String @title: 'Title';
   urgency        : Association to Urgency default 'M';
   status         : Association to Status default 'N' @changelog : [status.descr];
+  date : Date @title : 'date' @changelog;
+  datetime : DateTime @title : 'datetime' @changelog;
+  time : Time @title : 'time' @changelog;
+  timestamp : Timestamp @title : 'timestamp' @changelog;
   conversation   : Composition of many {
     key ID    : UUID;
     timestamp : type of managed:createdAt;
@@ -66,3 +70,24 @@ entity Urgency : CodeList {
 
 type EMailAddress : String;
 type PhoneNumber  : String;
+
+
+entity MultiKeyScenario {
+  key GJAHR: Integer;
+  key BUKRS: String(40);
+      foo1: String @changelog;
+}
+
+entity BooksNotID {
+  key NOT_ID : Int16;
+      @changelog
+      title  : String;
+      pages : Composition of many PagesNotID on pages.book = $self;
+}
+
+entity PagesNotID {
+  key NOT_ID : Int16;
+      book : Association to one BooksNotID;
+      @changelog : [book.title, page]
+      page  : Integer;
+}
