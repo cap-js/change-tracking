@@ -4,6 +4,8 @@ const DEBUG = cds.debug('changelog')
 const isRoot = 'change-tracking-isRootEntity'
 const hasParent = 'change-tracking-parentEntity'
 
+const { generateTriggersForEntity, _changes, _change_logs } = require('./lib/hdi-utils.js')
+
 const isChangeTracked = (entity) => {
   if (entity.query?.SET?.op === 'union') return false // REVISIT: should that be an error or warning?
   if (entity['@changelog']) return true
@@ -32,13 +34,13 @@ const addSideEffects = (actions, flag, element) => {
   }
 }
 
-function setChangeTrackingIsRootEntity (entity, csn, val = true) {
+function setChangeTrackingIsRootEntity(entity, csn, val = true) {
   if (csn.definitions?.[entity.name]) {
     csn.definitions[entity.name][isRoot] = val
   }
 }
 
-function checkAndSetRootEntity (parentEntity, entity, csn) {
+function checkAndSetRootEntity(parentEntity, entity, csn) {
   if (entity[isRoot] === false) {
     return entity
   }
@@ -50,13 +52,13 @@ function checkAndSetRootEntity (parentEntity, entity, csn) {
   }
 }
 
-function processEntities (m) {
+function processEntities(m) {
   for (let name in m.definitions) {
     compositionRoot({ ...m.definitions[name], name }, m)
   }
 }
 
-function compositionRoot (entity, csn) {
+function compositionRoot(entity, csn) {
   if (!entity || entity.kind !== 'entity') {
     return
   }
@@ -64,7 +66,7 @@ function compositionRoot (entity, csn) {
   return checkAndSetRootEntity(parentEntity, entity, csn)
 }
 
-function compositionParent (entity, csn) {
+function compositionParent(entity, csn) {
   if (!entity || entity.kind !== 'entity') {
     return
   }
@@ -72,7 +74,7 @@ function compositionParent (entity, csn) {
   return parentAssociation ?? null
 }
 
-function compositionParentAssociation (entity, csn) {
+function compositionParentAssociation(entity, csn) {
   if (!entity || entity.kind !== 'entity') {
     return
   }
@@ -99,7 +101,7 @@ function compositionParentAssociation (entity, csn) {
   return { ...csn.definitions?.[entity.name], name: entity.name }
 }
 
-function processCompositionElements (entity, csn, elements) {
+function processCompositionElements(entity, csn, elements) {
   for (const name in elements) {
     const element = elements[name]
     const target = element?.target
@@ -116,7 +118,7 @@ function processCompositionElements (entity, csn, elements) {
   }
 }
 
-function findParentAssociation (entity, csn, elements) {
+function findParentAssociation(entity, csn, elements) {
   return Object.keys(elements).find((name) => {
     const element = elements[name]
     const target = element?.target
@@ -146,20 +148,26 @@ function findParentAssociation (entity, csn, elements) {
 /**
  * Returns an expression for the key of the given entity, which we can use as the right-hand-side of an ON condition.
  */
-function entityKey4 (entity) {
+function entityKey4(entity) {
   const xpr = []
   for (let k in entity.elements) {
     const e = entity.elements[k]; if (!e.key) continue
     if (xpr.length) xpr.push('||')
     if (e.type === 'cds.Association') xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] })
-    else xpr.push({ ref:[k] })
+    else xpr.push({ ref: [k] })
   }
   return xpr
 }
 
+function _replaceTablePlaceholders(on, tableName) {
+  return on.map(part => {
+    if (part && part.val === 'DUMMY') return { ...part, val: tableName }
+    return part
+  })
+}
 
 // Unfold @changelog annotations in loaded model
-function enhanceModel (m) {
+function enhanceModel(m) {
 
   const _enhanced = 'sap.changelog.enhanced'
   if (m.meta?.[_enhanced]) return // already enhanced
@@ -167,20 +175,22 @@ function enhanceModel (m) {
   // Get definitions from Dummy entity in our models
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
-  if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
+  // if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
 
   processEntities(m) // REVISIT: why is that required ?!?
 
   for (let name in m.definitions) {
 
     const entity = m.definitions[name]
-    if (entity.kind === 'entity' && !entity['@cds.autoexposed'] && isChangeTracked(entity)) {
+    const isTableEntity = entity.kind === 'entity' && !entity.query && !entity.projection;
+    if (entity.kind === 'entity' && isChangeTracked(entity) && !isTableEntity) {
 
       if (!entity['@changelog.disable_assoc']) {
-
-        // Add association to ChangeView...
-        const keys = entityKey4(entity); if (!keys.length) continue // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
-        const assoc = new cds.builtin.classes.Association({ ...changes, on: [ ...changes.on, ...keys ] })
+        // Add association to ChangeView
+        const keys = entityKey4(entity); if (!keys.length) continue; // skip if no key attribute is defined
+        const onCondition = changes.on.flatMap(p => p?.ref && p.ref[0] === 'ID' ? keys : [p]);
+        const on = _replaceTablePlaceholders(onCondition, entity.projection?.from?.ref[0]);
+        const assoc = new cds.builtin.classes.Association({ ...changes, on});
 
         // --------------------------------------------------------------------
         // PARKED: Add auto-exposed projection on ChangeView to service if applicable
@@ -201,9 +211,9 @@ function enhanceModel (m) {
 
         DEBUG?.(`\n
           extend ${name} with {
-            changes : Association to many ${assoc.target} on ${ assoc.on.map(x => x.ref?.join('.') || x).join(' ') };
+            changes : Association to many ${assoc.target} on ${assoc.on.map(x => x.ref?.join('.') || x).join(' ')};
           }
-        `.replace(/ {8}/g,''))
+        `.replace(/ {8}/g, ''))
         const query = entity.projection || entity.query?.SELECT
         if (query) (query.columns ??= ['*']).push({ as: 'changes', cast: assoc })
         else if (entity.elements) entity.elements.changes = assoc
@@ -239,9 +249,9 @@ function addGenericHandlers() {
       let any = false
       for (const entity of Object.values(srv.entities)) {
         if (isChangeTracked(entity)) {
-          cds.db.before("CREATE", entity, track_changes)
-          cds.db.before("UPDATE", entity, track_changes)
-          cds.db.before("DELETE", entity, track_changes)
+          // cds.db.before("CREATE", entity, track_changes)
+          // cds.db.before("UPDATE", entity, track_changes)
+          // cds.db.before("DELETE", entity, track_changes)
           any = true
         }
       }
@@ -254,7 +264,53 @@ function addGenericHandlers() {
 
 
 // Register plugin hooks
-cds.on('compile.for.runtime', csn => { DEBUG?.('on','compile.for.runtime'); enhanceModel(csn) })
-cds.on('compile.to.edmx', csn => { DEBUG?.('on','compile.to.edmx'); enhanceModel(csn) })
-cds.on('compile.to.dbx', csn => { DEBUG?.('on','compile.to.dbx'); enhanceModel(csn) })
+cds.on('compile.for.runtime', csn => { DEBUG?.('on', 'compile.for.runtime'); enhanceModel(csn) })
+cds.on('compile.to.edmx', csn => { DEBUG?.('on', 'compile.to.edmx'); enhanceModel(csn) })
+cds.on('compile.to.dbx', csn => { DEBUG?.('on', 'compile.to.dbx'); enhanceModel(csn) })
 cds.on('served', addGenericHandlers)
+
+const _sql_original = cds.compile.to.sql
+cds.compile.to.sql = function (csn, options) {
+  let ret = _sql_original.call(this, csn, options);
+  return ret;
+}
+Object.assign (cds.compile.to.sql, _sql_original)
+
+// REVISIT: workaround for in-memory sqlite db
+cds.once('served', async () => {
+  if (cds.db?.options?.kind === 'sqlite' && cds.db?.options?.credentials?.url === ':memory:') {
+    const csn = cds.model
+    const trigger = `
+    CREATE TRIGGER update_category_total
+    AFTER UPDATE ON sap_capire_incidents_Incidents
+    BEGIN
+      UPDATE sap_capire_incidents_Incidents SET title = 'Trigger' WHERE ID = NEW.ID;
+END;`.trim()
+    // const triggers = _buildTriggers(csn)
+    // for (const t of triggers) await cds.db.run(t)
+    await cds.db.run(trigger);
+  }
+})
+
+// Generate HDI artifacts for change tracking
+const _hdi_migration = cds.compiler.to.hdi.migration;
+cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
+  const triggers = [];
+
+  for (let [name, def] of Object.entries(csn.definitions)) {
+    const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+    if (def.kind !== 'entity' || !isChangeTracked(def) || isTableEntity) continue;
+    const entityTriggers = generateTriggersForEntity(name, def);
+    triggers.push(...entityTriggers);
+  }
+
+  // Load procedures for Changes and ChangeLog creation
+  if (triggers.length > 0) {
+    triggers.push({ name: 'CREATE_CHANGES', sql: _changes, suffix: '.hdbprocedure' })
+    triggers.push({ name: 'CREATE_CHANGE_LOG', sql: _change_logs, suffix: '.hdbprocedure' })
+  }
+
+  const ret = _hdi_migration(csn, options, beforeImage);
+  ret.definitions = [...ret.definitions, ...triggers];
+  return ret;
+}

@@ -12,7 +12,7 @@ namespace sap.changelog;
   ![@UI.PartOfPreview]: false
 }]) {
   // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
-  changes : Association to many ChangeView on changes.entityKey = ID;
+  changes : Association to many ChangeView on changes.entityKey = ID AND changes.entity = 'DUMMY' OR changes.parentKey = ID AND changes.parentEntity = 'DUMMY';
   key ID  : String;
 }
 
@@ -27,6 +27,7 @@ view ChangeView as
     changeLog.entityKey as entityKey, // flattening assoc path -> this is the main reason for having this helper view
     changeLog.createdAt as createdAt,
     changeLog.createdBy as createdBy,
+    changeLog.entity as parentEntity
   }
   excluding {
     entityID,
@@ -36,7 +37,7 @@ view ChangeView as
 /**
  * Top-level changes entity, e.g. UPDATE Incident by, at, ...
  */
-entity ChangeLog : managed, cuid {
+entity ChangeLog : cuid {
   serviceEntity : String(5000) @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
   entity        : String(5000) @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
   entityKey     : String       @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
@@ -50,7 +51,6 @@ entity ChangeLog : managed, cuid {
  * composition trees in parent... elements.
  */
 entity Changes {
-
   key ID                : UUID                     @UI.Hidden;
       keys              : String(5000)             @title: '{i18n>Changes.keys}';
       attribute         : String(5000)             @title: '{i18n>Changes.attribute}';
@@ -74,7 +74,7 @@ entity Changes {
         Delete = 'delete';
       };
 
-      valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}';
+      valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}' @UI.Hidden;
       changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}' @UI.Hidden;
 }
 
@@ -84,7 +84,6 @@ annotate ChangeView with @(UI: {
     RequestAtLeast: [
       parentKey,
       serviceEntity,
-      serviceEntityPath,
       valueDataType
     ],
     SortOrder     : [{
