@@ -206,4 +206,30 @@ describe('Non ID key support', () => {
     expect(change).to.have.property('modification', 'delete')
     expect(change).to.have.property('serviceEntityPath', 'ProcessorService.BooksNotID(1)/ProcessorService.PagesNotID(1)')
   });
+
+  it("Change track patched association on composition using document approach", async () => {
+    const {status} = await PATCH(
+      `odata/v4/processor/Orders(839b2355-b538-4b6d-87f9-6516496843a9)`, {
+        orderProducts: [
+          {
+            ID: "bda1d416-8747-4fff-a847-9a3b2506927c",
+            country: {
+              code: "DE"
+            }
+          }
+        ]
+      }
+    )
+    expect(status).to.equal(200);
+
+    const {data: {value: changes}} = await GET(
+      `odata/v4/processor/Orders(839b2355-b538-4b6d-87f9-6516496843a9)/changes`
+    )
+    expect(changes.length).to.equal(1);
+    const change = changes.find(change => change.attribute === 'country');
+    expect(change).to.have.property('valueChangedFrom', '')
+    expect(change).to.have.property('valueChangedTo', 'DE')
+    expect(change).to.have.property('modification', 'create')
+    expect(change).to.have.property('serviceEntityPath', 'ProcessorService.Orders(839b2355-b538-4b6d-87f9-6516496843a9)/ProcessorService.OrderProducts(bda1d416-8747-4fff-a847-9a3b2506927c)')
+  });
 })
