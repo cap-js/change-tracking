@@ -11,6 +11,8 @@ service ProcessorService {
   entity MultiKeyScenario as projection on my.MultiKeyScenario;
   @odata.draft.enabled
   entity BooksNotID as projection on my.BooksNotID;
+
+  entity Orders as projection on my.Orders;
 }
 
 /**
