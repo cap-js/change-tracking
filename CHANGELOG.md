@@ -4,13 +4,18 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.1.3 - TBD
+## Version 1.1.4 - TBD
 
 ### Added
 
 ### Fixed
 
 ### Changed
+
+## Version 1.1.3 - 27.10.25
+
+### Changed
+- Remove association from diff and only keep the foreign key
 
 
 ## Version 1.1.2 - 23.10.25
