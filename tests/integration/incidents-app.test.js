@@ -208,7 +208,7 @@ describe('Non ID key support', () => {
   });
 
   it("Change track patched association on composition using document approach", async () => {
-    const {data, status} = await PATCH(
+    const {status} = await PATCH(
       `odata/v4/processor/Orders(839b2355-b538-4b6d-87f9-6516496843a9)`, {
         orderProducts: [
           {
