@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ## Version 1.1.3 - 27.10.25
 
 ### Changed
-- Remove association from diff and only keep the foreign key
+- Correctly handle changes on foreign keys when sending them via the document notation on an API level.
 
 
 ## Version 1.1.2 - 23.10.25
