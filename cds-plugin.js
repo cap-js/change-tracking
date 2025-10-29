@@ -256,7 +256,7 @@ function addGenericHandlers() {
         }
       }
       if (any && srv.entities.ChangeView) {
-        srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
+        //srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
       }
     }
   }
@@ -300,7 +300,7 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
   for (let [name, def] of Object.entries(csn.definitions)) {
     const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
     if (def.kind !== 'entity' || !isChangeTracked(def) || isTableEntity) continue;
-    const entityTriggers = generateTriggersForEntity(name, def);
+    const entityTriggers = generateTriggersForEntity(csn, name, def);
     triggers.push(...entityTriggers);
   }
 

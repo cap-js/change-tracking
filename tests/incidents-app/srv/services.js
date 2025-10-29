@@ -4,9 +4,11 @@ const { SELECT } = cds.ql
 class ProcessorService extends cds.ApplicationService {
   /** Registering custom event handlers */
   init() {
-    this.before('UPDATE', 'Incidents', req => this.onUpdate(req))
-    this.before(['CREATE', 'UPDATE'], 'Incidents', req => this.changeUrgencyDueToSubject(req.data))
-    this.before('SAVE', 'Incidents', req => {
+    const { Incidents, MultiKeyScenario } = this.entities;
+
+    this.before('UPDATE', Incidents, req => this.onUpdate(req))
+    this.before(['CREATE', 'UPDATE'], Incidents, req => this.changeUrgencyDueToSubject(req.data))
+    this.before('SAVE', Incidents, req => {
       req.data.time = '01:02:03'
       req.data.date = '2025-10-18'
       req.data.timestamp = new Date(req.data.timestamp)
