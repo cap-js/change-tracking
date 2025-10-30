@@ -882,7 +882,7 @@ describe("change log integration test", () => {
     });
 
     it('Leave localization logic early if entity is not part of the model', async () => {
-        const { Changes, ChangeLog } = cds.entities('sap.changelog');
+        const { Changes } = cds.entities('sap.changelog');
         const { Volumns } = cds.entities('VolumnsService');
         const VolumnsSrv = await cds.connect.to('VolumnsService');
         await VolumnsSrv.run(UPDATE.entity(Volumns).where({ ID: 'dd1fdd7d-da2a-4600-940b-0baf2946c9bf' }).set({ title: 'new title' }))
@@ -896,7 +896,7 @@ describe("change log integration test", () => {
     });
 
     it('Leave localization logic early if attribute value is not part of the model', async () => {
-        const { Changes, ChangeLog } = cds.entities('sap.changelog');
+        const { Changes } = cds.entities('sap.changelog');
         const { Volumns } = cds.entities('VolumnsService');
         const VolumnsSrv = await cds.connect.to('VolumnsService');
         await VolumnsSrv.run(UPDATE.entity(Volumns).where({ ID: 'dd1fdd7d-da2a-4600-940b-0baf2946c9bf' }).set({ title: 'new title' }))
