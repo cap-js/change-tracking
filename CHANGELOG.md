@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 
 ### Fixed
+- Server no longer crashes when after a DB migration the service name or attribute name change
 
 ### Changed
 
