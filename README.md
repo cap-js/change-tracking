@@ -239,7 +239,24 @@ The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, suc
 
 ### Disable UI Facet generation
 
-If you do not want the UI facet added to a specific UI, you can annotate the service entity with `@changelog.disable_facet`. This will disable the automatic addition of the UI faced to this specific entity, but also all views or further projections up the chain.
+If you do not want the auto-provided UI facet for viewing changes, you can provide your own facet for the `changes` association in the `@UI.Facets` annotation and the plugin won't override it.
+
+Furthermore if you annotate the association as not readable, the facet is also not added. You can achive this, like 
+
+```cds
+@Capabilities.NavigationRestrictions.RestrictedProperties : [
+  {
+    NavigationProperty : changes,
+    ReadRestrictions : {
+      Readable : false,
+    },
+  },
+]
+entity SalesOrders {
+  key ID : Int16;
+      title  : String @changelog;
+}
+```
 
 ### Disable Association to Changes Generation
 
