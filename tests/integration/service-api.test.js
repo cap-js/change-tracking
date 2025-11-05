@@ -1,6 +1,6 @@
 const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
-const { expect, data } = cds.test(bookshop);
+const { expect, data, GET } = cds.test(bookshop);
 
 // Enable locale fallback to simulate end user requests
 cds.env.features.locale_fallback = true;
@@ -13,6 +13,29 @@ let ChangeLog = null;
 let db = null;
 
 describe("change log integration test", () => {
+    let __warn, _warnings
+    const _warn = (...args) => {
+        if (!(args.length === 2 && typeof args[0] === 'string' && args[0].match(/\[change-log\]/i))) {
+            // > not an audit log (most likely, anyway)
+            return __warn(...args)
+        }
+
+        _warnings.push(args[1])
+    }
+
+    beforeAll(() => {
+        __warn = global.console.warn
+        global.console.warn = _warn
+    })
+
+    afterAll(() => {
+        global.console.warn = __warn
+    })
+
+    beforeEach(async () => {
+        _warnings = []
+    })
+
     beforeAll(async () => {
         adminService = await cds.connect.to("AdminService");
         db = await cds.connect.to("sql:my.db");
@@ -158,13 +181,13 @@ describe("change log integration test", () => {
          */
         expect(change.valueChangedTo).to.equal(
             new Date("2024-10-16T08:53:48Z").toLocaleDateString("en", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-              hour12: true
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true
             })
         );
         delete cds.services.AdminService.entities.RootEntity.elements.dateTime["@changelog"];
@@ -857,4 +880,33 @@ describe("change log integration test", () => {
         expect(changes[0].parentKey).to.equal("/level1three");
         expect(changes[0].objectID).to.equal("/level2three, Level2Sample title3, /three");
     });
+
+    it('Leave localization logic early if entity is not part of the model', async () => {
+        const { Changes } = cds.entities('sap.changelog');
+        const { Volumns } = cds.entities('VolumnsService');
+        const VolumnsSrv = await cds.connect.to('VolumnsService');
+        await VolumnsSrv.run(UPDATE.entity(Volumns).where({ ID: 'dd1fdd7d-da2a-4600-940b-0baf2946c9bf' }).set({ title: 'new title' }))
+        const { data: { value: changes } } = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
+        expect(changes.length).to.equal(1);
+        await UPDATE(Changes).where({ ID: changes[0].ID }).set({ serviceEntity: 'Volumns' });
+        const { data: { value: changes2 } } = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
+        expect(changes2.length).to.equal(1);
+        expect(changes2[0].serviceEntity).to.equal('Volumns');
+        _warnings[0].match(/Cannot localize the attribute/)
+    });
+
+    it('Leave localization logic early if attribute value is not part of the model', async () => {
+        const { Changes } = cds.entities('sap.changelog');
+        const { Volumns } = cds.entities('VolumnsService');
+        const VolumnsSrv = await cds.connect.to('VolumnsService');
+        await VolumnsSrv.run(UPDATE.entity(Volumns).where({ ID: 'dd1fdd7d-da2a-4600-940b-0baf2946c9bf' }).set({ title: 'new title' }))
+        const { data: { value: changes } } = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
+        expect(changes.length).to.equal(1);
+        await UPDATE(Changes).where({ ID: changes[0].ID }).set({ attribute: 'abc' });
+        const { data: { value: changes2 } } = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
+        expect(changes2.length).to.equal(1);
+        expect(changes2[0].attribute).to.equal('abc');
+        _warnings[0].match(/Cannot localize the attribute/)
+    });
+
 });
