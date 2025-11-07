@@ -4,13 +4,19 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.1.3 - TBD
+## Version 1.1.4 - TBD
 
 ### Added
 
 ### Fixed
+- Server no longer crashes when after a DB migration the service name or attribute name change
 
 ### Changed
+
+## Version 1.1.3 - 27.10.25
+
+### Changed
+- Correctly handle changes on foreign keys when sending them via the document notation on an API level.
 
 
 ## Version 1.1.2 - 23.10.25
