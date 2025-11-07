@@ -180,7 +180,7 @@ function enhanceModel (m) {
 
         // Add association to ChangeView...
         const keys = entityKey4(entity); if (!keys.length) continue // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
-        const assoc = { ...changes, on: [ ...changes.on, ...keys ] }
+        const assoc = new cds.builtin.classes.Association({ ...changes, on: [ ...changes.on, ...keys ] })
 
         // --------------------------------------------------------------------
         // PARKED: Add auto-exposed projection on ChangeView to service if applicable

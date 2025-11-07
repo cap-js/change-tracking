@@ -1,9 +1,9 @@
 const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
-const { expect, data } = cds.test(bookshop);
+const { expect, data, GET } = cds.test(bookshop);
 
 // Enable locale fallback to simulate end user requests
-cds.env.features.locale_fallback = true
+cds.env.features.locale_fallback = true;
 
 jest.setTimeout(5 * 60 * 1000);
 
@@ -13,6 +13,29 @@ let ChangeLog = null;
 let db = null;
 
 describe("change log integration test", () => {
+    let __warn, _warnings
+    const _warn = (...args) => {
+        if (!(args.length === 2 && typeof args[0] === 'string' && args[0].match(/\[change-log\]/i))) {
+            // > not an audit log (most likely, anyway)
+            return __warn(...args)
+        }
+
+        _warnings.push(args[1])
+    }
+
+    beforeAll(() => {
+        __warn = global.console.warn
+        global.console.warn = _warn
+    })
+
+    afterAll(() => {
+        global.console.warn = __warn
+    })
+
+    beforeEach(async () => {
+        _warnings = []
+    })
+
     beforeAll(async () => {
         adminService = await cds.connect.to("AdminService");
         db = await cds.connect.to("sql:my.db");
@@ -35,7 +58,7 @@ describe("change log integration test", () => {
                 name_lastName: "Smiths",
                 placeOfBirth: "test place",
             }
-        ]
+        ];
 
         await INSERT.into(adminService.entities.Authors).entries(authorData);
         const beforeChanges = await adminService.run(SELECT.from(ChangeView));
@@ -64,29 +87,29 @@ describe("change log integration test", () => {
         expect(changes).to.have.length(2);
         expect(
             changes.map((change) => ({
-              entityKey: change.entityKey,
-              entity: change.entity,
-              valueChangedFrom: change.valueChangedFrom,
-              valueChangedTo: change.valueChangedTo,
-              modification: change.modification,
-              attribute: change.attribute
+                entityKey: change.entityKey,
+                entity: change.entity,
+                valueChangedFrom: change.valueChangedFrom,
+                valueChangedTo: change.valueChangedTo,
+                modification: change.modification,
+                attribute: change.attribute
             }))
-          ).to.have.deep.members([
+        ).to.have.deep.members([
             {
-              entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
-              modification: "Create",
-              entity: "sap.capire.bookshop.Order",
-              attribute: "netAmount",
-              valueChangedFrom: "",
-              valueChangedTo: "0"
+                entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+                modification: "Create",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "netAmount",
+                valueChangedFrom: "",
+                valueChangedTo: "0"
             },
             {
-              entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
-              modification: "Create",
-              entity: "sap.capire.bookshop.Order",
-              attribute: "isUsed",
-              valueChangedFrom: "",
-              valueChangedTo: "false"
+                entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+                modification: "Create",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "isUsed",
+                valueChangedFrom: "",
+                valueChangedTo: "false"
             },
         ]);
 
@@ -100,29 +123,29 @@ describe("change log integration test", () => {
         expect(changes).to.have.length(2);
         expect(
             changes.map((change) => ({
-              entityKey: change.entityKey,
-              entity: change.entity,
-              valueChangedFrom: change.valueChangedFrom,
-              valueChangedTo: change.valueChangedTo,
-              modification: change.modification,
-              attribute: change.attribute
+                entityKey: change.entityKey,
+                entity: change.entity,
+                valueChangedFrom: change.valueChangedFrom,
+                valueChangedTo: change.valueChangedTo,
+                modification: change.modification,
+                attribute: change.attribute
             }))
-          ).to.have.deep.members([
+        ).to.have.deep.members([
             {
-              entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
-              modification: "Delete",
-              entity: "sap.capire.bookshop.Order",
-              attribute: "netAmount",
-              valueChangedFrom: "0",
-              valueChangedTo: ""
+                entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+                modification: "Delete",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "netAmount",
+                valueChangedFrom: "0",
+                valueChangedTo: ""
             },
             {
-              entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
-              modification: "Delete",
-              entity: "sap.capire.bookshop.Order",
-              attribute: "isUsed",
-              valueChangedFrom: "false",
-              valueChangedTo: ""
+                entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
+                modification: "Delete",
+                entity: "sap.capire.bookshop.Order",
+                attribute: "isUsed",
+                valueChangedFrom: "false",
+                valueChangedTo: ""
             },
         ]);
 
@@ -140,7 +163,7 @@ describe("change log integration test", () => {
                 dateTime: new Date("2024-10-16T08:53:48Z"),
                 timestamp: new Date("2024-10-23T08:53:54.000Z")
             }
-        ]
+        ];
         await INSERT.into(adminService.entities.RootEntity).entries(rootEntityData);
         let changes = await adminService.run(SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.RootEntity",
@@ -156,7 +179,17 @@ describe("change log integration test", () => {
          * REVISIT: Currently, when using '@cap-js/sqlite' or '@cap-js/hana' and inputting values of type Date in javascript,
          * there is an issue with inconsistent formats before and after, which requires a fix from cds-dbs (Issue-873).
          */
-        expect(change.valueChangedTo).to.equal(`${new Date("2024-10-16T08:53:48Z")}`);
+        expect(change.valueChangedTo).to.equal(
+            new Date("2024-10-16T08:53:48Z").toLocaleDateString("en", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true
+            })
+        );
         delete cds.services.AdminService.entities.RootEntity.elements.dateTime["@changelog"];
         delete cds.services.AdminService.entities.RootEntity.elements.timestamp["@changelog"];
         cds.env.requires["change-tracking"].preserveDeletes = false;
@@ -240,7 +273,7 @@ describe("change log integration test", () => {
     });
 
     it("7.3 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
-        cds.services.AdminService.entities.BookStores["@changelog"].push({ "=": "city.name" })
+        cds.services.AdminService.entities.BookStores["@changelog"].push({ "=": "city.name" });
 
         const bookStoreData = {
             ID: "9d703c23-54a8-4eff-81c1-cdce6b6587c4",
@@ -257,12 +290,12 @@ describe("change log integration test", () => {
         expect(createBookStoresChange.objectID).to.equal("new name");
 
         await UPDATE(adminService.entities.BookStores)
-        .where({
-            ID: "9d703c23-54a8-4eff-81c1-cdce6b6587c4"
-        })
-        .with({
-            name: "BookStores name changed"
-        });
+            .where({
+                ID: "9d703c23-54a8-4eff-81c1-cdce6b6587c4"
+            })
+            .with({
+                name: "BookStores name changed"
+            });
         const updateBookStoresChanges = await adminService.run(
             SELECT.from(ChangeView).where({
                 entity: "sap.capire.bookshop.BookStores",
@@ -300,7 +333,7 @@ describe("change log integration test", () => {
             entity: "sap.capire.bookshop.RootEntity",
             entityKey: "64625905-c234-4d0d-9bc1-283ee8940812",
             serviceEntity: "AdminService.RootEntity",
-        })
+        });
 
         expect(changeLogs.length).to.equal(1);
         expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.RootEntity");
@@ -367,25 +400,25 @@ describe("change log integration test", () => {
         expect(createEntityChange.objectID).to.equal("In Preparation");
 
         // Test the object id when the parent node and child node are modified at the same time
-        await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
-        .with({
-            ID: "01234567-89ab-cdef-0123-987654fedcba",
-            name: "RootEntity name changed",
-            lifecycleStatus_code: "AC",
-            child: [
-                {
-                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
-                    parent_ID: "01234567-89ab-cdef-0123-987654fedcba",
-                    child: [
-                        {
-                            ID: "12ed5dd8-d45b-11ed-afa1-0242ac124446",
-                            parent_ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
-                            title : "Level2Entity title changed"
-                        },
-                    ],
-                },
-            ],
-        });
+        await UPDATE(adminService.entities.RootEntity, { ID: "01234567-89ab-cdef-0123-987654fedcba" })
+            .with({
+                ID: "01234567-89ab-cdef-0123-987654fedcba",
+                name: "RootEntity name changed",
+                lifecycleStatus_code: "AC",
+                child: [
+                    {
+                        ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                        parent_ID: "01234567-89ab-cdef-0123-987654fedcba",
+                        child: [
+                            {
+                                ID: "12ed5dd8-d45b-11ed-afa1-0242ac124446",
+                                parent_ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                                title: "Level2Entity title changed"
+                            },
+                        ],
+                    },
+                ],
+            });
         const updateEntityChanges = await adminService.run(
             SELECT.from(ChangeView).where({
                 entity: "sap.capire.bookshop.Level2Entity",
@@ -398,19 +431,19 @@ describe("change log integration test", () => {
         expect(updateEntityChange.objectID).to.equal("Open");
 
         // Tests the object id when the parent node update and child node deletion occur simultaneously
-        await UPDATE(adminService.entities.RootEntity, {ID: "01234567-89ab-cdef-0123-987654fedcba"})
-        .with({
-            ID: "01234567-89ab-cdef-0123-987654fedcba",
-            name: "RootEntity name del",
-            lifecycleStatus_code: "CL",
-            child: [
-                {
-                    ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
-                    parent_ID: "01234567-89ab-cdef-0123-987654fedcba",
-                    child: [],
-                },
-            ],
-        });
+        await UPDATE(adminService.entities.RootEntity, { ID: "01234567-89ab-cdef-0123-987654fedcba" })
+            .with({
+                ID: "01234567-89ab-cdef-0123-987654fedcba",
+                name: "RootEntity name del",
+                lifecycleStatus_code: "CL",
+                child: [
+                    {
+                        ID: "12ed5dd8-d45b-11ed-afa1-0242ac120003",
+                        parent_ID: "01234567-89ab-cdef-0123-987654fedcba",
+                        child: [],
+                    },
+                ],
+            });
         const deleteEntityChanges = await adminService.run(
             SELECT.from(ChangeView).where({
                 entity: "sap.capire.bookshop.Level2Entity",
@@ -536,8 +569,8 @@ describe("change log integration test", () => {
     it(`11.1 "disableUpdateTracking" setting`, async () => {
         cds.env.requires["change-tracking"].disableUpdateTracking = true;
         await UPDATE(adminService.entities.BookStores)
-            .where({ID: "64625905-c234-4d0d-9bc1-283ee8946770"})
-            .with({name: 'New name'});
+            .where({ ID: "64625905-c234-4d0d-9bc1-283ee8946770" })
+            .with({ name: 'New name' });
 
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.BookStores",
@@ -548,8 +581,8 @@ describe("change log integration test", () => {
 
         cds.env.requires["change-tracking"].disableUpdateTracking = false;
         await UPDATE(adminService.entities.BookStores)
-            .where({ID: "64625905-c234-4d0d-9bc1-283ee8946770"})
-            .with({name: 'Another name'});
+            .where({ ID: "64625905-c234-4d0d-9bc1-283ee8946770" })
+            .with({ name: 'Another name' });
 
         changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.BookStores",
@@ -590,7 +623,7 @@ describe("change log integration test", () => {
     it(`11.3 "disableDeleteTracking" setting`, async () => {
         cds.env.requires["change-tracking"].disableDeleteTracking = true;
         await DELETE.from(adminService.entities.Level3Entity)
-            .where({ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321"});
+            .where({ ID: "12ed5dd8-d45b-11ed-afa1-0242ac654321" });
 
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.Level3Entity",
@@ -601,7 +634,7 @@ describe("change log integration test", () => {
 
         cds.env.requires["change-tracking"].disableDeleteTracking = false;
         await DELETE.from(adminService.entities.Level2Entity)
-            .where({ID: "dd1fdd7d-da2a-4600-940b-0baf2946c4ff"});
+            .where({ ID: "dd1fdd7d-da2a-4600-940b-0baf2946c4ff" });
 
         changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.Level2Entity",
@@ -793,4 +826,87 @@ describe("change log integration test", () => {
         delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
         delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
     });
+
+    it("Special Character Handling in service-api - issue#187", async () => {
+        const sampleData = {
+            ID: "/three",
+            title: "RootSample title3",
+            child: [
+                {
+                    ID: "/level1three",
+                    title: "Level1Sample title3",
+                    child: [
+                        {
+                            ID: "/level2three",
+                            title: "Level2Sample title3",
+                        },
+                    ]
+                },
+            ],
+        };
+
+        await adminService.run(INSERT.into(adminService.entities.RootSample).entries(sampleData));
+
+        let changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.RootSample",
+            attribute: "title",
+        });
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("RootSample title3");
+        expect(changes[0].entityKey).to.equal("/three");
+        expect(changes[0].parentKey).to.equal("");
+        expect(changes[0].objectID).to.equal("/three, RootSample title3");
+
+        changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level1Sample",
+            attribute: "title",
+        });
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("Level1Sample title3");
+        expect(changes[0].entityKey).to.equal("/three");
+        expect(changes[0].parentKey).to.equal("/three");
+        expect(changes[0].objectID).to.equal("/level1three, Level1Sample title3, /three");
+
+        changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level2Sample",
+            attribute: "title",
+        });
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("Level2Sample title3");
+        expect(changes[0].entityKey).to.equal("/three");
+        expect(changes[0].parentKey).to.equal("/level1three");
+        expect(changes[0].objectID).to.equal("/level2three, Level2Sample title3, /three");
+    });
+
+    it('Leave localization logic early if entity is not part of the model', async () => {
+        const { Changes } = cds.entities('sap.changelog');
+        const { Volumns } = cds.entities('VolumnsService');
+        const VolumnsSrv = await cds.connect.to('VolumnsService');
+        await VolumnsSrv.run(UPDATE.entity(Volumns).where({ ID: 'dd1fdd7d-da2a-4600-940b-0baf2946c9bf' }).set({ title: 'new title' }))
+        const { data: { value: changes } } = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
+        expect(changes.length).to.equal(1);
+        await UPDATE(Changes).where({ ID: changes[0].ID }).set({ serviceEntity: 'Volumns' });
+        const { data: { value: changes2 } } = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
+        expect(changes2.length).to.equal(1);
+        expect(changes2[0].serviceEntity).to.equal('Volumns');
+        _warnings[0].match(/Cannot localize the attribute/)
+    });
+
+    it('Leave localization logic early if attribute value is not part of the model', async () => {
+        const { Changes } = cds.entities('sap.changelog');
+        const { Volumns } = cds.entities('VolumnsService');
+        const VolumnsSrv = await cds.connect.to('VolumnsService');
+        await VolumnsSrv.run(UPDATE.entity(Volumns).where({ ID: 'dd1fdd7d-da2a-4600-940b-0baf2946c9bf' }).set({ title: 'new title' }))
+        const { data: { value: changes } } = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
+        expect(changes.length).to.equal(1);
+        await UPDATE(Changes).where({ ID: changes[0].ID }).set({ attribute: 'abc' });
+        const { data: { value: changes2 } } = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
+        expect(changes2.length).to.equal(1);
+        expect(changes2[0].attribute).to.equal('abc');
+        _warnings[0].match(/Cannot localize the attribute/)
+    });
+
 });

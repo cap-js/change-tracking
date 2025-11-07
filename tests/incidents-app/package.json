@@ -1,0 +1,37 @@
+{
+  "name": "@capire/incidents",
+  "version": "1.0.0",
+  "dependencies": {
+    "@cap-js/change-tracking": "file:../../.",
+    "@cap-js/attachments": "^2"
+  },
+  "cds": {
+    "requires": {
+      "auth": {
+        "[development]": {
+          "users": {
+            "alice": {
+              "roles": [
+                "support",
+                "admin"
+              ]
+            },
+            "bob": {
+              "roles": [
+                "support"
+              ]
+            }
+          }
+        }
+      },
+      "attachments": {
+        "kind": "db",
+        "scan": false
+      },
+      "change-tracking": {
+        "considerLocalizedValues": true
+      }
+    }
+  },
+  "private": true
+}

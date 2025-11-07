@@ -796,4 +796,57 @@ describe("change log draft disabled test", () => {
         expect(changeLogs[0].entityKey).to.equal("6ac4afbf-deda-45ae-88e6-2883157cd576");
         expect(changeLogs[0].serviceEntity).to.equal("AdminService.RootObject");
     });
+
+    it("Special Character Handling in draft-disabled - issue#187", async () => {
+        await POST(
+            `/odata/v4/admin/RootSample(ID='${encodeURIComponent('/one')}')/child(ID='${encodeURIComponent('/level1one')}')/child(ID='${encodeURIComponent('/level2one')}')/AdminService.activate`
+        );
+
+        let changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.Level2Sample",
+            attribute: "title",
+        });
+
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("Level2Sample title1");
+        expect(changes[0].valueChangedTo).to.equal("special title");
+        expect(changes[0].entityKey).to.equal("/one");
+        expect(changes[0].parentKey).to.equal("/level1one");
+        expect(changes[0].objectID).to.equal("/level2one, special title, /one");
+
+        // Check the changeLog to make sure the entity information is root
+        let changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.RootSample",
+            entityKey: "/one",
+            serviceEntity: "AdminService.RootSample",
+        });
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.RootSample");
+        expect(changeLogs[0].entityKey).to.equal("/one");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.RootSample");
+
+        changes = await SELECT.from(ChangeView).where({
+            entity: "sap.capire.bookshop.RootSample",
+            attribute: "title",
+        });
+
+        expect(changes[0].valueChangedFrom).to.equal("RootSample title2");
+        expect(changes[0].valueChangedTo).to.equal("Black Myth Zhong Kui");
+        expect(changes[0].entityKey).to.equal("/two");
+        expect(changes[0].parentKey).to.equal("");
+        expect(changes[0].objectID).to.equal("/two, Black Myth Zhong Kui");
+
+        // Check the changeLog to make sure the entity information is root
+        changeLogs = await SELECT.from(ChangeLog).where({
+            entity: "sap.capire.bookshop.RootSample",
+            entityKey: "/two",
+            serviceEntity: "AdminService.RootSample",
+        });
+
+        expect(changeLogs.length).to.equal(1);
+        expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.RootSample");
+        expect(changeLogs[0].entityKey).to.equal("/two");
+        expect(changeLogs[0].serviceEntity).to.equal("AdminService.RootSample");
+    });
 });

@@ -72,16 +72,16 @@ describe("change log integration test", () => {
 
         const afterChanges = await adminService.run(SELECT.from(ChangeView));
 
-        const changelogCreated = afterChanges.filter(ele=> ele.modification === "Create");
-        const changelogDeleted = afterChanges.filter(ele=> ele.modification === "Delete");
+        const changelogCreated = afterChanges.filter(ele => ele.modification === "Create");
+        const changelogDeleted = afterChanges.filter(ele => ele.modification === "Delete");
 
         const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'parentKey', 'serviceEntityPath', 'valueDataType', 'objectID', 'parentObjectID', 'entityKey'];
 
         let commonItems = changelogCreated.filter(beforeItem => {
-        return changelogDeleted.some(afterItem => {
-            return compareAttributes.every(attr => beforeItem[attr] === afterItem[attr])
-            && beforeItem['valueChangedFrom'] === afterItem['valueChangedTo']
-            && beforeItem['valueChangedTo'] === afterItem['valueChangedFrom'];
+            return changelogDeleted.some(afterItem => {
+                return compareAttributes.every(attr => beforeItem[attr] === afterItem[attr])
+                    && beforeItem['valueChangedFrom'] === afterItem['valueChangedTo']
+                    && beforeItem['valueChangedTo'] === afterItem['valueChangedFrom'];
             });
         });
         expect(commonItems.length > 0).to.be.true;
@@ -105,29 +105,29 @@ describe("change log integration test", () => {
         expect(changes).to.have.length(2);
         expect(
             changes.map((change) => ({
-              entityKey: change.entityKey,
-              entity: change.entity,
-              valueChangedFrom: change.valueChangedFrom,
-              valueChangedTo: change.valueChangedTo,
-              modification: change.modification,
-              attribute: change.attribute
+                entityKey: change.entityKey,
+                entity: change.entity,
+                valueChangedFrom: change.valueChangedFrom,
+                valueChangedTo: change.valueChangedTo,
+                modification: change.modification,
+                attribute: change.attribute
             }))
-          ).to.have.deep.members([
+        ).to.have.deep.members([
             {
-              entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
-              modification: "Create",
-              entity: "Book",
-              attribute: "price",
-              valueChangedFrom: "",
-              valueChangedTo: "0"
+                entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+                modification: "Create",
+                entity: "Book",
+                attribute: "price",
+                valueChangedFrom: "",
+                valueChangedTo: "0"
             },
             {
-              entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
-              modification: "Create",
-              entity: "Book",
-              attribute: "isUsed",
-              valueChangedFrom: "",
-              valueChangedTo: "false"
+                entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+                modification: "Create",
+                entity: "Book",
+                attribute: "isUsed",
+                valueChangedFrom: "",
+                valueChangedTo: "false"
             },
         ]);
 
@@ -141,29 +141,29 @@ describe("change log integration test", () => {
         expect(changes).to.have.length(2);
         expect(
             changes.map((change) => ({
-              entityKey: change.entityKey,
-              entity: change.entity,
-              valueChangedFrom: change.valueChangedFrom,
-              valueChangedTo: change.valueChangedTo,
-              modification: change.modification,
-              attribute: change.attribute
+                entityKey: change.entityKey,
+                entity: change.entity,
+                valueChangedFrom: change.valueChangedFrom,
+                valueChangedTo: change.valueChangedTo,
+                modification: change.modification,
+                attribute: change.attribute
             }))
-          ).to.have.deep.members([
+        ).to.have.deep.members([
             {
-              entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
-              modification: "Delete",
-              entity: "Book",
-              attribute: "price",
-              valueChangedFrom: "0",
-              valueChangedTo: ""
+                entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+                modification: "Delete",
+                entity: "Book",
+                attribute: "price",
+                valueChangedFrom: "0",
+                valueChangedTo: ""
             },
             {
-              entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
-              modification: "Delete",
-              entity: "Book",
-              attribute: "isUsed",
-              valueChangedFrom: "false",
-              valueChangedTo: ""
+                entityKey: "64625905-c234-4d0d-9bc1-283ee8946770",
+                modification: "Delete",
+                entity: "Book",
+                attribute: "isUsed",
+                valueChangedFrom: "false",
+                valueChangedTo: ""
             },
         ]);
 
@@ -490,7 +490,7 @@ describe("change log integration test", () => {
         expect(volumnTitleChange.valueChangedTo).to.equal("");
 
         // Test for Unmanaged entity(Delete)
-        const unmanagedAction = DELETE.bind({},`/odata/v4/admin/Schools_classes(up__ID=5ab2a87b-3a56-4d97-a697-7af72333c123,ID=9d703c23-54a8-4eff-81c1-cdec5a0422c3,IsActiveEntity=false)`);
+        const unmanagedAction = DELETE.bind({}, `/odata/v4/admin/Schools_classes(up__ID=5ab2a87b-3a56-4d97-a697-7af72333c123,ID=9d703c23-54a8-4eff-81c1-cdec5a0422c3,IsActiveEntity=false)`);
         await utils.apiAction("admin", "Schools", "5ab2a87b-3a56-4d97-a697-7af72333c123", "AdminService", unmanagedAction);
         const schoolChanges = await adminService.run(
             SELECT.from(ChangeView).where({
@@ -542,6 +542,16 @@ describe("change log integration test", () => {
                 "=": "name",
             },
         ];
+        cds.db.entities.Books["@changelog"] = [
+            { "=": "title" },
+            { "=": "author.name.firstName" },
+            { "=": "author.name.lastName" },
+        ];
+        cds.db.entities.BookStores["@changelog"] = [
+            {
+                "=": "name",
+            },
+        ];
     });
 
     it("2.7 Composition of inline entity for draft enabled entity", async () => {
@@ -566,6 +576,7 @@ describe("change log integration test", () => {
     it("4.1 Annotate multiple native and attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
         // After appending object id as below, the object ID sequence should be:
         // title, author.name.firstName, author.name.lastName, stock, bookStore.name, bookStore.location
+        const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.Books["@changelog"]))
         cds.services.AdminService.entities.Books["@changelog"].push(
             { "=": "stock" },
             { "=": "bookStore.name" },
@@ -663,14 +674,11 @@ describe("change log integration test", () => {
         expect(deleteTitleChange.objectID).to.equal("Shakespeare and Company, test title 1, Paris, Emily, 1, Brontë");
 
         // Recover the object ID of entity Books as defined in admin-service
-        cds.services.AdminService.entities.Books["@changelog"] = [
-            { "=": "title" },
-            { "=": "author.name.firstName" },
-            { "=": "author.name.lastName" },
-        ];
+        cds.services.AdminService.entities.Books["@changelog"] = originalChangelog
     });
 
     it("4.2 Annotate multiple native attributes as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
+        const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.Books["@changelog"]))
         cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "price" },
             { "=": "title" },
@@ -695,14 +703,11 @@ describe("change log integration test", () => {
         const titleChange = titleChanges[0];
         expect(titleChange.objectID).to.equal("3000, new title, 12");
 
-        cds.services.AdminService.entities.Books["@changelog"] = [
-            { "=": "title" },
-            { "=": "author.name.firstName" },
-            { "=": "author.name.lastName" },
-        ];
+        cds.services.AdminService.entities.Books["@changelog"] = originalChangelog;
     });
 
     it("4.3 Annotate multiple attributes comming from one or more associated table as the object ID (ERP4SMEPREPWORKAPPPLAT-913)", async () => {
+        const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.Books["@changelog"]))
         cds.services.AdminService.entities.Books["@changelog"] = [
             { "=": "bookStore.location" },
             { "=": "author.name.lastName" },
@@ -729,14 +734,11 @@ describe("change log integration test", () => {
         const titleChange = titleChanges[0];
         expect(titleChange.objectID).to.equal("Paris, Brontë, Charlotte, Shakespeare and Company, 16");
 
-        cds.services.AdminService.entities.Books["@changelog"] = [
-            { "=": "title" },
-            { "=": "author.name.firstName" },
-            { "=": "author.name.lastName" },
-        ];
+        cds.services.AdminService.entities.Books["@changelog"] = originalChangelog
     });
 
     it("5.1 Value data type records data type of native attributes of the entity or attributes from association table which are annotated as the displayed value(ERP4SMEPREPWORKAPPPLAT-873)", async () => {
+        const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.Books.elements.author_ID["@changelog"]))
         cds.services.AdminService.entities.Books.elements.author_ID["@changelog"] = [
             { "=": "author.name.firstName" },
             { "=": "author.dateOfBirth" },
@@ -803,9 +805,12 @@ describe("change log integration test", () => {
         expect(authorUpdateChangeInDb.valueChangedFrom).to.equal("Emily, Brontë");
         expect(authorUpdateChangeInDb.valueChangedTo).to.equal("Charlotte, Brontë");
         expect(authorUpdateChangeInDb.valueDataType).to.equal("cds.String, cds.String");
+        cds.services.AdminService.entities.Books.elements.author_ID['@changelog'] = originalChangelog;
+        cds.services.AdminService.entities.Books.elements.author['@changelog'] = originalChangelog;
     });
 
     it("5.2 Value data type records data type of native attributes of the entity or attributes from composition which are annotated as the displayed value (ERP4SMEPREPWORKAPPPLAT-873)", async () => {
+        const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.BookStores.elements.books["@changelog"]))
         cds.services.AdminService.entities.BookStores.elements.books["@changelog"] = [
             { "=": "books.title" },
             { "=": "books.stock" },
@@ -865,7 +870,7 @@ describe("change log integration test", () => {
         expect(bookUpdateChangesInDb.valueDataType).to.equal("cds.Integer, cds.String, cds.Decimal");
 
         // recover @changelog context on composition books
-        cds.services.AdminService.entities.BookStores.elements.books["@changelog"] = [{ "=": "books.title" }];
+        cds.services.AdminService.entities.BookStores.elements.books["@changelog"] = originalChangelog;
     });
 
     it("6.1 Single attribute from the code list could be annotated as value (ERP4SMEPREPWORKAPPPLAT-1055)", async () => {
@@ -974,6 +979,7 @@ describe("change log integration test", () => {
     });
 
     it("6.3 Attributes from the code list could be annotated as object ID (ERP4SMEPREPWORKAPPPLAT-1055)", async () => {
+        const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.BookStores["@changelog"]))
         cds.services.AdminService.entities.BookStores["@changelog"] = [
             { "=": "name" },
             { "=": "lifecycleStatus.name" },
@@ -1036,10 +1042,11 @@ describe("change log integration test", () => {
         expect(lifecycleStatusUpdateChange.modification).to.equal("Update");
         expect(lifecycleStatusUpdateChange.objectID).to.equal("Closed, new test name");
 
-        cds.services.AdminService.entities.BookStores["@changelog"] = [{ "=": "name" }];
+        cds.services.AdminService.entities.BookStores["@changelog"] = originalChangelog;
     });
 
     it("7.1 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-993)", async () => {
+        const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.BookStores["@changelog"]))
         cds.services.AdminService.entities.BookStores["@changelog"].push({ "=": "city.name" })
 
         const createBookStoresAction = POST.bind({}, `/odata/v4/admin/BookStores`, {
@@ -1295,6 +1302,7 @@ describe("change log integration test", () => {
         expect(deleteEntityChanges.length).to.equal(1);
         const deleteEntityChange = deleteEntityChanges[0];
         expect(deleteEntityChange.objectID).to.equal("Closed");
+        cds.services.AdminService.entities.BookStores["@changelog"] = originalChangelog;
     });
 
     it("8.1 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-1094 ERP4SMEPREPWORKAPPPLAT-4542)", async () => {
@@ -1419,7 +1427,9 @@ describe("change log integration test", () => {
     });
 
     it("9.1 Localization should handle the cases that reading the change view without required parameters obtained (ERP4SMEPREPWORKAPPPLAT-1414)", async () => {
+        const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.BookStores["@changelog"]))
         delete cds.services.AdminService.entities.BookStores["@changelog"];
+        delete cds.db.entities.BookStores["@changelog"];
         const action = POST.bind(
             {},
             `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`,
@@ -1465,11 +1475,8 @@ describe("change log integration test", () => {
         const bookChangeObjectId = bookElementChanges[3];
         expect(bookChangeObjectId.objectID).to.equal("");
 
-        cds.services.AdminService.entities.BookStores["@changelog"] = [
-            {
-                "=": "name",
-            },
-        ];
+        cds.services.AdminService.entities.BookStores["@changelog"] = originalChangelog;
+        cds.db.entities.BookStores["@changelog"] = originalChangelog;
     });
 
     it("10.4 Composition of one node creation - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)", async () => {
@@ -1509,7 +1516,7 @@ describe("change log integration test", () => {
         expect(registryChange.objectID).to.equal("San Francisco-2");
         expect(registryChange.entity).to.equal("Book Store Registry");
         expect(registryChange.valueChangedFrom).to.equal("");
-        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.valueChangedTo).to.equal("Jan 1, 2022");
         expect(registryChange.parentKey).to.equal("01234567-89ab-cdef-0123-456789abcdef");
         expect(registryChange.parentObjectID).to.equal("Murder on the Orient Express");
     });
@@ -1540,8 +1547,8 @@ describe("change log integration test", () => {
         const registryChange = registryChanges[0];
         expect(registryChange.attribute).to.equal("Valid On");
         expect(registryChange.modification).to.equal("Update");
-        expect(registryChange.valueChangedFrom).to.equal("2022-10-15");
-        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.valueChangedFrom).to.equal("Oct 15, 2022");
+        expect(registryChange.valueChangedTo).to.equal("Jan 1, 2022");
         expect(registryChange.parentKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
         expect(registryChange.parentObjectID).to.equal("The Strand");
     });
@@ -1566,8 +1573,8 @@ describe("change log integration test", () => {
         const registryChange = registryChanges[0];
         expect(registryChange.attribute).to.equal("Valid On");
         expect(registryChange.modification).to.equal("Update");
-        expect(registryChange.valueChangedFrom).to.equal("2018-09-01");
-        expect(registryChange.valueChangedTo).to.equal("2022-01-01");
+        expect(registryChange.valueChangedFrom).to.equal("Sep 1, 2018");
+        expect(registryChange.valueChangedTo).to.equal("Jan 1, 2022");
         expect(registryChange.parentKey).to.equal("8aaed432-8336-4b0d-be7e-3ef1ce7f13ea");
         expect(registryChange.parentObjectID).to.equal("City Lights Books");
     });
@@ -1588,7 +1595,7 @@ describe("change log integration test", () => {
         const registryChange = registryChanges[0];
         expect(registryChange.attribute).to.equal("Valid On");
         expect(registryChange.modification).to.equal("Delete");
-        expect(registryChange.valueChangedFrom).to.equal("2018-09-01");
+        expect(registryChange.valueChangedFrom).to.equal("Sep 1, 2018");
         expect(registryChange.valueChangedTo).to.equal("");
         expect(registryChange.parentKey).to.equal("8aaed432-8336-4b0d-be7e-3ef1ce7f13ea");
         expect(registryChange.parentObjectID).to.equal("City Lights Books");
@@ -1643,5 +1650,121 @@ describe("change log integration test", () => {
         expect(changeLogs[0].entity).to.equal("sap.capire.bookshop.BookStores");
         expect(changeLogs[0].entityKey).to.equal("5ab2a87b-3a56-4d97-a697-7af72334a384");
         expect(changeLogs[0].serviceEntity).to.equal("AdminService.BookStores");
+    });
+
+    it("Special Character Handling in draft-enabled - issue#187", async () => {
+        delete cds.services.AdminService.entities.RootSampleDraft["@changelog"];
+        delete cds.services.AdminService.entities.Level1SampleDraft["@changelog"];
+        delete cds.db.entities.Level1SampleDraft["@changelog"];
+        delete cds.db.entities.RootSampleDraft["@changelog"];
+
+        const action = PATCH.bind({}, `/odata/v4/admin/Level1SampleDraft(ID='${encodeURIComponent('/level1draftone')}',IsActiveEntity=false)`, {
+            title: "new special title",
+        });
+        await utils.apiAction("admin", "RootSampleDraft", `'${encodeURIComponent('/draftone')}'`, "AdminService", action);
+
+        let changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level1SampleDraft",
+                attribute: "title",
+            })
+        );
+        expect(changes.length).to.equal(1);
+
+        const change = changes[0];
+        expect(changes[0].valueChangedFrom).to.equal("Level1SampleDraft title");
+        expect(changes[0].valueChangedTo).to.equal("new special title");
+        expect(changes[0].entityKey).to.equal("/draftone");
+        expect(changes[0].parentKey).to.equal("/draftone");
+        // if object type is localized, use the localized object type as object ID
+        expect(change.objectID).to.equal("Level1 Sample Draft");
+        expect(change.parentObjectID).to.equal("Root Sample Draft");
+
+        cds.services.AdminService.entities.RootSampleDraft["@changelog"] = [
+            { "=": "ID" },
+            { "=": "title" }
+        ];
+        cds.services.AdminService.entities.Level1SampleDraft["@changelog"] = [
+            { "=": "ID" },
+            { "=": "title" },
+            { "=": "parent.ID" }
+        ];
+
+        // Root and child nodes are created at the same time
+        const createAction = POST.bind({}, `/odata/v4/admin/RootSampleDraft`, {
+            ID: "/drafttwo",
+            title: "New title for RootSampleDraft",
+            child: [
+                {
+                    ID: "/level1drafttwo",
+                    title: "New title for Level1SampleDraft",
+                    child: [
+                        {
+                            ID: "/level2drafttwo",
+                            title: "New title for Level2SampleDraft",
+                        },
+                    ],
+                },
+            ],
+        });
+        await utils.apiAction(
+            "admin",
+            "RootSampleDraft",
+            `'${encodeURIComponent('/drafttwo')}'`,
+            "AdminService",
+            createAction,
+            true,
+        );
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.RootSampleDraft",
+                attribute: "title",
+                modification: "create",
+            })
+        );
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("New title for RootSampleDraft");
+        expect(changes[0].entityKey).to.equal("/drafttwo");
+        expect(changes[0].parentKey).to.equal("");
+        expect(changes[0].objectID).to.equal("/drafttwo, New title for RootSampleDraft");
+
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level1SampleDraft",
+                attribute: "title",
+                modification: "create",
+            })
+        );
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("New title for Level1SampleDraft");
+        expect(changes[0].entityKey).to.equal("/drafttwo");
+        expect(changes[0].parentKey).to.equal("/drafttwo");
+        expect(changes[0].objectID).to.equal("/level1drafttwo, New title for Level1SampleDraft, /drafttwo");
+
+        changes = await adminService.run(
+            SELECT.from(ChangeView).where({
+                entity: "sap.capire.bookshop.Level2SampleDraft",
+                attribute: "title",
+                modification: "create",
+            })
+        );
+        expect(changes.length).to.equal(1);
+        expect(changes[0].valueChangedFrom).to.equal("");
+        expect(changes[0].valueChangedTo).to.equal("New title for Level2SampleDraft");
+        expect(changes[0].entityKey).to.equal("/drafttwo");
+        expect(changes[0].parentKey).to.equal("/level1drafttwo");
+        expect(changes[0].objectID).to.equal("/level2drafttwo, New title for Level2SampleDraft, /drafttwo");
+
+        cds.db.entities.RootSampleDraft["@changelog"] = [
+            { "=": "ID" },
+            { "=": "title" }
+        ];
+        cds.db.entities.Level1SampleDraft["@changelog"] = [
+            { "=": "ID" },
+            { "=": "title" },
+            { "=": "parent.ID" }
+        ];
     });
 });
