@@ -175,7 +175,6 @@ function enhanceModel(m) {
   // Get definitions from Dummy entity in our models
   const { 'sap.changelog.aspect': aspect } = m.definitions; if (!aspect) return // some other model
   const { '@UI.Facets': [facet], elements: { changes } } = aspect
-  // if (changes.on.length > 2) changes.on.pop() // remove ID -> filled in below
 
   processEntities(m) // REVISIT: why is that required ?!?
 
@@ -189,8 +188,9 @@ function enhanceModel(m) {
         // Add association to ChangeView
         const keys = entityKey4(entity); if (!keys.length) continue; // skip if no key attribute is defined
         const onCondition = changes.on.flatMap(p => p?.ref && p.ref[0] === 'ID' ? keys : [p]);
-        const on = _replaceTablePlaceholders(onCondition, entity.projection?.from?.ref[0]);
-        const assoc = new cds.builtin.classes.Association({ ...changes, on});
+        const tableName = entity.projection?.from?.ref[0];
+        const on = _replaceTablePlaceholders(onCondition, tableName);
+        const assoc = new cds.builtin.classes.Association({ ...changes, on });
 
         // --------------------------------------------------------------------
         // PARKED: Add auto-exposed projection on ChangeView to service if applicable
@@ -274,23 +274,31 @@ cds.compile.to.sql = function (csn, options) {
   let ret = _sql_original.call(this, csn, options);
   return ret;
 }
-Object.assign (cds.compile.to.sql, _sql_original)
+Object.assign(cds.compile.to.sql, _sql_original)
 
 // REVISIT: workaround for in-memory sqlite db
-cds.once('served', async () => {
-  if (cds.db?.options?.kind === 'sqlite' && cds.db?.options?.credentials?.url === ':memory:') {
-    const csn = cds.model
-    const trigger = `
-    CREATE TRIGGER update_category_total
-    AFTER UPDATE ON sap_capire_incidents_Incidents
-    BEGIN
-      UPDATE sap_capire_incidents_Incidents SET title = 'Trigger' WHERE ID = NEW.ID;
-END;`.trim()
-    // const triggers = _buildTriggers(csn)
-    // for (const t of triggers) await cds.db.run(t)
-    await cds.db.run(trigger);
-  }
-})
+// cds.once('served', async () => {
+//   if (cds.db?.options?.kind === 'sqlite' && cds.db?.options?.credentials?.url === ':memory:') {
+//     const csn = cds.model
+//     const trigger = `
+//     CREATE TRIGGER update_category_total
+//     AFTER UPDATE ON sap_capire_incidents_Incidents
+//     BEGIN
+//       UPDATE sap_capire_incidents_Incidents SET title = 'Trigger' WHERE ID = NEW.ID;
+// END;`.trim()
+//     // const triggers = _buildTriggers(csn)
+//     // for (const t of triggers) await cds.db.run(t)
+//     await cds.db.run(trigger);
+//   }
+// })
+
+/*
+- Customers
+  - Addresses
+- Incindets
+  - Conversation
+  - IncidentTasks
+*/
 
 // Generate HDI artifacts for change tracking
 const _hdi_migration = cds.compiler.to.hdi.migration;

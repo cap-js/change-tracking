@@ -22,16 +22,10 @@ namespace sap.changelog;
 view ChangeView as
   select from Changes {
     *,
-    entityID            as objectID, // no clue why we have to rename this?
-    parentEntityID      as parentObjectID, // no clue why we have to rename this?
     changeLog.entityKey as entityKey, // flattening assoc path -> this is the main reason for having this helper view
     changeLog.createdAt as createdAt,
     changeLog.createdBy as createdBy,
     changeLog.entity as parentEntity
-  }
-  excluding {
-    entityID,
-    parentEntityID,
   };
 
 /**
@@ -40,7 +34,7 @@ view ChangeView as
 entity ChangeLog : cuid {
   serviceEntity : String(5000) @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
   entity        : String(5000) @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
-  entityKey     : String       @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
+  entityKey     : String(5000)  @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
   createdAt     : managed:createdAt @title : '{i18n>ChangeLog.createdAt}';
   createdBy     : managed:createdBy @title : '{i18n>ChangeLog.createdBy}';
   changes       : Composition of many Changes on changes.changeLog = $self;
@@ -58,12 +52,12 @@ entity Changes {
       valueChangedTo    : String(5000)             @title: '{i18n>Changes.valueChangedTo}' @UI.MultiLineText;
 
       // Business meaningful object id
-      entityID          : String(5000)             @title: '{i18n>Changes.entityID}';
+      objectID          : String(5000)             @title: '{i18n>Changes.objectID}';
       entity            : String(5000)             @title: '{i18n>Changes.entity}'; // similar to ChangeLog.entity, but could be nested entity in a composition tree
       serviceEntity     : String(5000)             @title: '{i18n>Changes.serviceEntity}'; // similar to ChangeLog.serviceEntity, but could be nested entity in a composition tree
 
       // Business meaningful parent object id
-      parentEntityID    : String(5000)             @title: '{i18n>Changes.parentEntityID}';
+      parentObjectID    : String(5000)             @title: '{i18n>Changes.parentObjectID}';
       parentKey         : String                   @title: '{i18n>Changes.parentKey}';
       serviceEntityPath : String(5000)             @title: '{i18n>Changes.serviceEntityPath}';
 

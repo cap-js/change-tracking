@@ -44,9 +44,10 @@ entity Incidents : cuid, managed {
     key ID    : UUID;
     timestamp : type of managed:createdAt;
     author    : type of managed:createdBy;
-    message   : String;
+    message   : String @changelog;
   };
   tasks : Composition of many IncidentTasks on tasks.incident = $self;
+  task : Composition of one IncidentTasks on task.incident = $self and task.title = 'ANC';
 }
 
 @changelog : [title, timestamp]
