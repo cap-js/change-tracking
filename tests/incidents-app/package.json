@@ -9,9 +9,6 @@
     "@cap-js/attachments": "^2",
     "@cap-js/hana": "^2.3.4"
   },
-  "devDependencies": {
-    "@sap/cds-dk": "9.4.0"
-  },
   "cds": {
     "requires": {
       "auth": {
@@ -36,7 +33,8 @@
         "scan": false
       },
       "change-tracking": {
-        "considerLocalizedValues": true
+        "considerLocalizedValues": true,
+        "preserveDeletes": false
       }
     }
   },

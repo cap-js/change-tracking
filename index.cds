@@ -1,82 +1,68 @@
 using { managed, cuid } from '@sap/cds/common';
+
 namespace sap.changelog;
 
 /**
  * Used in cds-plugin.js as template for tracked entities
  */
-@cds.persistence.skip entity aspect @(UI.Facets: [{
-  $Type : 'UI.ReferenceFacet',
-  ID    : 'ChangeHistoryFacet',
-  Label : '{i18n>ChangeHistory}',
-  Target: 'changes/@UI.PresentationVariant',
+@cds.persistence.skip
+entity aspect @(UI.Facets: [{
+  $Type               : 'UI.ReferenceFacet',
+  ID                  : 'ChangeHistoryFacet',
+  Label               : '{i18n>ChangeHistory}',
+  Target              : 'changes/@UI.PresentationVariant',
   ![@UI.PartOfPreview]: false
 }]) {
-  // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
-  changes : Association to many ChangeView on changes.entityKey = ID AND changes.entity = 'DUMMY' OR changes.parentKey = ID AND changes.parentEntity = 'DUMMY';
-  key ID  : String;
+      changes : Association to many ChangeView
+                  on  changes.entityKey     = ID and changes.entity        = 'DUMMY'
+                  or  changes.rootEntityKey = ID and changes.rootEntity    = 'DUMMY';
+      key ID      : String;
 }
 
 
 // This is a helper view to flatten the assoc path to the entityKey
 @readonly
-view ChangeView as
-  select from Changes {
-    *,
-    changeLog.entityKey as entityKey, // flattening assoc path -> this is the main reason for having this helper view
-    changeLog.createdAt as createdAt,
-    changeLog.createdBy as createdBy,
-    changeLog.entity as parentEntity
+@cds.autoexpose
+view ChangeView as select from Changes {
+  *,
+};
+
+entity Changes : cuid {
+  attribute        : String(5000)      @title: '{i18n>Changes.attribute}';
+  valueChangedFrom : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;
+  valueChangedTo   : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
+
+  entity           : String(5000)      @title: '{i18n>Changes.entity}'; // target entity on db level
+  serviceEntity    : String(5000)      @title: '{i18n>Changes.serviceEntity}'; // target entity on service level
+  entityKey        : String(5000)      @title: '{i18n>Changes.entityKey}'; // primary key of target entity
+
+  rootEntity       : String(5000)      @title: '{i18n>Changes.rootEntity}';
+  rootEntityKey    : String(5000)      @title: '{i18n>Changes.rootKey}';
+
+  // Business meaningful object id
+  objectID         : String(5000)      @title: '{i18n>Changes.objectID}';
+  rootObjectID   : String(5000)        @title: '{i18n>Changes.rootObjectID}';
+
+  @title: '{i18n>Changes.modification}'
+  modification     : String enum {
+    Create = 'create';
+    Update = 'update';
+    Delete = 'delete';
   };
 
-/**
- * Top-level changes entity, e.g. UPDATE Incident by, at, ...
- */
-entity ChangeLog : cuid {
-  serviceEntity : String(5000) @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
-  entity        : String(5000) @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
-  entityKey     : String(5000)  @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
-  createdAt     : managed:createdAt @title : '{i18n>ChangeLog.createdAt}';
-  createdBy     : managed:createdBy @title : '{i18n>ChangeLog.createdBy}';
-  changes       : Composition of many Changes on changes.changeLog = $self;
+  valueDataType    : String(5000)      @title: '{i18n>Changes.valueDataType}'     @UI.Hidden;
+  createdAt        : managed:createdAt @title: '{i18n>Changes.createdAt}';
+  createdBy        : managed:createdBy @title: '{i18n>Changes.createdBy}';
+  transactionID    : Int64             @title: '{i18n>Changes.transactionID}';
 }
 
-/**
- * Attribute-level Changes with simple capturing of one-level
- * composition trees in parent... elements.
- */
-entity Changes {
-  key ID                : UUID                     @UI.Hidden;
-      keys              : String(5000)             @title: '{i18n>Changes.keys}';
-      attribute         : String(5000)             @title: '{i18n>Changes.attribute}';
-      valueChangedFrom  : String(5000)             @title: '{i18n>Changes.valueChangedFrom}' @UI.MultiLineText;
-      valueChangedTo    : String(5000)             @title: '{i18n>Changes.valueChangedTo}' @UI.MultiLineText;
-
-      // Business meaningful object id
-      objectID          : String(5000)             @title: '{i18n>Changes.objectID}';
-      entity            : String(5000)             @title: '{i18n>Changes.entity}'; // similar to ChangeLog.entity, but could be nested entity in a composition tree
-      serviceEntity     : String(5000)             @title: '{i18n>Changes.serviceEntity}'; // similar to ChangeLog.serviceEntity, but could be nested entity in a composition tree
-
-      // Business meaningful parent object id
-      parentObjectID    : String(5000)             @title: '{i18n>Changes.parentObjectID}';
-      parentKey         : String                   @title: '{i18n>Changes.parentKey}';
-      serviceEntityPath : String(5000)             @title: '{i18n>Changes.serviceEntityPath}';
-
-      @title: '{i18n>Changes.modification}'
-      modification      : String enum {
-        Create = 'create';
-        Update = 'update';
-        Delete = 'delete';
-      };
-
-      valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}' @UI.Hidden;
-      changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}' @UI.Hidden;
-}
+//annotate Changes.ID with @(UI.Hidden: true);
 
 annotate ChangeView with @(UI: {
   PresentationVariant: {
     Visualizations: ['@UI.LineItem'],
     RequestAtLeast: [
-      parentKey,
+      rootEntityKey,
       serviceEntity,
       valueDataType
     ],
@@ -86,15 +72,43 @@ annotate ChangeView with @(UI: {
     }],
   },
   LineItem           : [
-    { Value: modification, @HTML5.CssDefaults: {width:'9%'} },
-    { Value: createdAt, @HTML5.CssDefaults: {width:'12%'} },
-    { Value: createdBy, @HTML5.CssDefaults: {width:'9%'} },
-    { Value: entity, @HTML5.CssDefaults: {width:'11%'} },
-    { Value: objectID, @HTML5.CssDefaults: {width:'14%'} },
-    { Value: attribute, @HTML5.CssDefaults: {width:'9%'} },
-    { Value: valueChangedTo, @HTML5.CssDefaults: {width:'11%'} },
-    { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11%'} },
-    { Value: parentObjectID, @HTML5.CssDefaults: {width:'14%'}, ![@UI.Hidden]: true }
+    {
+      Value             : modification,
+      @HTML5.CssDefaults: {width: '9%'}
+    },
+    {
+      Value             : createdAt,
+      @HTML5.CssDefaults: {width: '12%'}
+    },
+    {
+      Value             : createdBy,
+      @HTML5.CssDefaults: {width: '9%'}
+    },
+    {
+      Value             : entity,
+      @HTML5.CssDefaults: {width: '11%'}
+    },
+    {
+      Value             : objectID,
+      @HTML5.CssDefaults: {width: '14%'}
+    },
+    {
+      Value             : attribute,
+      @HTML5.CssDefaults: {width: '9%'}
+    },
+    {
+      Value             : valueChangedTo,
+      @HTML5.CssDefaults: {width: '11%'}
+    },
+    {
+      Value             : valueChangedFrom,
+      @HTML5.CssDefaults: {width: '11%'}
+    },
+    {
+      Value             : rootObjectID,
+      @HTML5.CssDefaults: {width: '14%'},
+      ![@UI.Hidden]     : true
+    }
   ],
   DeleteHidden       : true,
 });
