@@ -10,7 +10,7 @@ class RequestSend {
 		}
 		await action();
 		await this.post(`/odata/v4/${serviceName}/${entityName}(ID=${id},IsActiveEntity=false)/${path}.draftPrepare`, {
-			SideEffectsQualifier: ""
+			SideEffectsQualifier: ''
 		});
 		await this.post(`/odata/v4/${serviceName}/${entityName}(ID=${id},IsActiveEntity=false)/${path}.draftActivate`, {});
 	}

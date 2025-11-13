@@ -1,13 +1,13 @@
-const cds = require("@sap/cds");
-const DEBUG = cds.debug("changelog");
+const cds = require('@sap/cds');
+const DEBUG = cds.debug('changelog');
 
-const isRoot = "change-tracking-isRootEntity";
-const hasParent = "change-tracking-parentEntity";
+const isRoot = 'change-tracking-isRootEntity';
+const hasParent = 'change-tracking-parentEntity';
 
 const isChangeTracked = (entity) => {
-	if (entity.query?.SET?.op === "union") return false; // REVISIT: should that be an error or warning?
-	if (entity["@changelog"]) return true;
-	if (Object.values(entity.elements).some((e) => e["@changelog"])) return true;
+	if (entity.query?.SET?.op === 'union') return false; // REVISIT: should that be an error or warning?
+	if (entity['@changelog']) return true;
+	if (Object.values(entity.elements).some((e) => e['@changelog'])) return true;
 };
 
 // Add the appropriate Side Effects attribute to the custom action
@@ -17,11 +17,11 @@ const addSideEffects = (actions, flag, element) => {
 	}
 
 	for (const se of Object.values(actions)) {
-		const target = flag ? "TargetProperties" : "TargetEntities";
+		const target = flag ? 'TargetProperties' : 'TargetEntities';
 		const sideEffectAttr = se[`@Common.SideEffects.${target}`];
-		const property = flag ? "changes" : { "=": `${element}.changes` };
+		const property = flag ? 'changes' : { '=': `${element}.changes` };
 		if (sideEffectAttr?.length >= 0) {
-			sideEffectAttr.findIndex((item) => (item["="] ? item["="] : item) === (property["="] ? property["="] : property)) === -1 && sideEffectAttr.push(property);
+			sideEffectAttr.findIndex((item) => (item['='] ? item['='] : item) === (property['='] ? property['='] : property)) === -1 && sideEffectAttr.push(property);
 		} else {
 			se[`@Common.SideEffects.${target}`] = [property];
 		}
@@ -53,7 +53,7 @@ function processEntities(m) {
 }
 
 function compositionRoot(entity, csn) {
-	if (!entity || entity.kind !== "entity") {
+	if (!entity || entity.kind !== 'entity') {
 		return;
 	}
 	const parentEntity = compositionParent(entity, csn);
@@ -61,7 +61,7 @@ function compositionRoot(entity, csn) {
 }
 
 function compositionParent(entity, csn) {
-	if (!entity || entity.kind !== "entity") {
+	if (!entity || entity.kind !== 'entity') {
 		return;
 	}
 	const parentAssociation = compositionParentAssociation(entity, csn);
@@ -69,7 +69,7 @@ function compositionParent(entity, csn) {
 }
 
 function compositionParentAssociation(entity, csn) {
-	if (!entity || entity.kind !== "entity") {
+	if (!entity || entity.kind !== 'entity') {
 		return;
 	}
 	const elements = entity.elements ?? {};
@@ -100,7 +100,7 @@ function processCompositionElements(entity, csn, elements) {
 		const element = elements[name];
 		const target = element?.target;
 		const definition = csn.definitions?.[target];
-		if (element.type !== "cds.Composition" || target === entity.name || !definition || definition[isRoot] === false) {
+		if (element.type !== 'cds.Composition' || target === entity.name || !definition || definition[isRoot] === false) {
 			continue;
 		}
 		setChangeTrackingIsRootEntity({ ...definition, name: target }, csn, false);
@@ -111,12 +111,12 @@ function findParentAssociation(entity, csn, elements) {
 	return Object.keys(elements).find((name) => {
 		const element = elements[name];
 		const target = element?.target;
-		if (element.type === "cds.Association" && target !== entity.name) {
+		if (element.type === 'cds.Association' && target !== entity.name) {
 			const parentDefinition = csn.definitions?.[target] ?? {};
 			const parentElements = parentDefinition?.elements ?? {};
 			return !!Object.keys(parentElements).find((parentEntityName) => {
 				const parentElement = parentElements?.[parentEntityName] ?? {};
-				if (parentElement.type === "cds.Composition") {
+				if (parentElement.type === 'cds.Composition') {
 					const isCompositionEntity = parentElement.target === entity.name;
 					// add parent information in the current entity
 					if (isCompositionEntity) {
@@ -140,8 +140,8 @@ function entityKey4(entity) {
 	for (let k in entity.elements) {
 		const e = entity.elements[k];
 		if (!e.key) continue;
-		if (xpr.length) xpr.push("||");
-		if (e.type === "cds.Association") xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
+		if (xpr.length) xpr.push('||');
+		if (e.type === 'cds.Association') xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
 		else xpr.push({ ref: [k] });
 	}
 	return xpr;
@@ -149,14 +149,14 @@ function entityKey4(entity) {
 
 // Unfold @changelog annotations in loaded model
 function enhanceModel(m) {
-	const _enhanced = "sap.changelog.enhanced";
+	const _enhanced = 'sap.changelog.enhanced';
 	if (m.meta?.[_enhanced]) return; // already enhanced
 
 	// Get definitions from Dummy entity in our models
-	const { "sap.changelog.aspect": aspect } = m.definitions;
+	const { 'sap.changelog.aspect': aspect } = m.definitions;
 	if (!aspect) return; // some other model
 	const {
-		"@UI.Facets": [facet],
+		'@UI.Facets': [facet],
 		elements: { changes }
 	} = aspect;
 	if (changes.on.length > 2) changes.on.pop(); // remove ID -> filled in below
@@ -165,8 +165,8 @@ function enhanceModel(m) {
 
 	for (let name in m.definitions) {
 		const entity = m.definitions[name];
-		if (entity.kind === "entity" && !entity["@cds.autoexposed"] && isChangeTracked(entity)) {
-			if (!entity["@changelog.disable_assoc"]) {
+		if (entity.kind === 'entity' && !entity['@cds.autoexposed'] && isChangeTracked(entity)) {
+			if (!entity['@changelog.disable_assoc']) {
 				// Add association to ChangeView...
 				const keys = entityKey4(entity);
 				if (!keys.length) continue; // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
@@ -192,24 +192,24 @@ function enhanceModel(m) {
 				DEBUG?.(
 					`\n
           extend ${name} with {
-            changes : Association to many ${assoc.target} on ${assoc.on.map((x) => x.ref?.join(".") || x).join(" ")};
+            changes : Association to many ${assoc.target} on ${assoc.on.map((x) => x.ref?.join('.') || x).join(' ')};
           }
-        `.replace(/ {8}/g, "")
+        `.replace(/ {8}/g, '')
 				);
 				const query = entity.projection || entity.query?.SELECT;
-				if (query) (query.columns ??= ["*"]).push({ as: "changes", cast: assoc });
+				if (query) (query.columns ??= ['*']).push({ as: 'changes', cast: assoc });
 				else if (entity.elements) entity.elements.changes = assoc;
 
 				// Add UI.Facet for Change History List
-				if (!entity["@changelog.disable_facet"]) entity["@UI.Facets"]?.push(facet);
+				if (!entity['@changelog.disable_facet']) entity['@UI.Facets']?.push(facet);
 			}
 
 			if (entity.actions) {
 				const hasParentInfo = entity[hasParent];
 				const entityName = hasParentInfo?.entityName;
 				const parentEntity = entityName ? m.definitions[entityName] : null;
-				const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.["@UI.Facets"];
-				if (entity[isRoot] && entity["@UI.Facets"]) {
+				const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets'];
+				if (entity[isRoot] && entity['@UI.Facets']) {
 					// Add side effects for root entity
 					addSideEffects(entity.actions, true);
 				} else if (isParentRootAndHasFacets) {
@@ -224,36 +224,36 @@ function enhanceModel(m) {
 
 // Add generic change tracking handlers
 function addGenericHandlers() {
-	const { track_changes, _afterReadChangeView } = require("./lib/change-log");
+	const { track_changes, _afterReadChangeView } = require('./lib/change-log');
 	for (const srv of cds.services) {
 		if (srv instanceof cds.ApplicationService) {
 			let any = false;
 			for (const entity of Object.values(srv.entities)) {
 				if (isChangeTracked(entity)) {
-					cds.db.before("CREATE", entity, track_changes);
-					cds.db.before("UPDATE", entity, track_changes);
-					cds.db.before("DELETE", entity, track_changes);
+					cds.db.before('CREATE', entity, track_changes);
+					cds.db.before('UPDATE', entity, track_changes);
+					cds.db.before('DELETE', entity, track_changes);
 					any = true;
 				}
 			}
 			if (any && srv.entities.ChangeView) {
-				srv.after("READ", srv.entities.ChangeView, _afterReadChangeView);
+				srv.after('READ', srv.entities.ChangeView, _afterReadChangeView);
 			}
 		}
 	}
 }
 
 // Register plugin hooks
-cds.on("compile.for.runtime", (csn) => {
-	DEBUG?.("on", "compile.for.runtime");
+cds.on('compile.for.runtime', (csn) => {
+	DEBUG?.('on', 'compile.for.runtime');
 	enhanceModel(csn);
 });
-cds.on("compile.to.edmx", (csn) => {
-	DEBUG?.("on", "compile.to.edmx");
+cds.on('compile.to.edmx', (csn) => {
+	DEBUG?.('on', 'compile.to.edmx');
 	enhanceModel(csn);
 });
-cds.on("compile.to.dbx", (csn) => {
-	DEBUG?.("on", "compile.to.dbx");
+cds.on('compile.to.dbx', (csn) => {
+	DEBUG?.('on', 'compile.to.dbx');
 	enhanceModel(csn);
 });
-cds.on("served", addGenericHandlers);
+cds.on('served', addGenericHandlers);

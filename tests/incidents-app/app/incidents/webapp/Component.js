@@ -1,9 +1,9 @@
-sap.ui.define(["sap/fe/core/AppComponent"], function (AppComponent) {
-	"use strict";
+sap.ui.define(['sap/fe/core/AppComponent'], function (AppComponent) {
+	'use strict';
 
-	return AppComponent.extend("ns.incidents.Component", {
+	return AppComponent.extend('ns.incidents.Component', {
 		metadata: {
-			manifest: "json"
+			manifest: 'json'
 		}
 	});
 });
