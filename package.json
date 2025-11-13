@@ -15,7 +15,8 @@
   ],
   "scripts": {
     "lint": "npx eslint .",
-    "test": "npx jest --silent"
+    "test": "npx jest --silent",
+    "format": "prettier . --write"
   },
   "peerDependencies": {
     "@sap/cds": ">=8.5"
@@ -24,11 +25,12 @@
     "node": ">=20.0.0"
   },
   "devDependencies": {
-    "@cap-js/change-tracking": "file:.",
     "@cap-js/attachments": "^2",
-    "@cap-js/sqlite": "^1 || ^2",
     "@cap-js/cds-test": "*",
-    "express": "^4"
+    "@cap-js/change-tracking": "file:.",
+    "@cap-js/sqlite": "^1 || ^2",
+    "express": "^4",
+    "prettier": "^3.6.2"
   },
   "cds": {
     "requires": {
