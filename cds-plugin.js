@@ -181,8 +181,7 @@ function enhanceModel(m) {
   for (let name in m.definitions) {
 
     const entity = m.definitions[name]
-    const isTableEntity = entity.kind === 'entity' && !entity.query && !entity.projection;
-    if (entity.kind === 'entity' && isChangeTracked(entity) && !isTableEntity) {
+    if (entity.kind === 'entity' && isChangeTracked(entity)){
 
       if (!entity['@changelog.disable_assoc']) {
         // Add association to ChangeView
@@ -292,30 +291,16 @@ Object.assign(cds.compile.to.sql, _sql_original)
 //   }
 // })
 
-/*
-- Customers
-  - Addresses
-- Incindets
-  - Conversation
-  - IncidentTasks
-*/
-
 // Generate HDI artifacts for change tracking
 const _hdi_migration = cds.compiler.to.hdi.migration;
 cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
   const triggers = [];
-
-  for (let [name, def] of Object.entries(csn.definitions)) {
+  
+  for (let [_, def] of Object.entries(csn.definitions)) {
     const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
-    if (def.kind !== 'entity' || !isChangeTracked(def) || isTableEntity) continue;
-    const entityTriggers = generateTriggersForEntity(csn, name, def);
+    if (!isTableEntity || !isChangeTracked(def)) continue;
+    const entityTriggers = generateTriggersForEntity(csn, def);
     triggers.push(...entityTriggers);
-  }
-
-  // Load procedures for Changes and ChangeLog creation
-  if (triggers.length > 0) {
-    triggers.push({ name: 'CREATE_CHANGES', sql: _changes, suffix: '.hdbprocedure' })
-    triggers.push({ name: 'CREATE_CHANGE_LOG', sql: _change_logs, suffix: '.hdbprocedure' })
   }
 
   const ret = _hdi_migration(csn, options, beforeImage);

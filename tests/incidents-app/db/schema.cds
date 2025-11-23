@@ -30,7 +30,7 @@ entity Addresses : cuid, managed {
 /**
  * Incidents created by Customers.
  */
-@changelog : [title]
+@changelog : [customer.name]
 entity Incidents : cuid, managed {
   customer       : Association to Customers @changelog : [customer.name];
   title          : String @title: 'Title';
