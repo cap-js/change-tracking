@@ -33,7 +33,6 @@ entity Changes : cuid {
   valueChangedTo   : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
 
   entity           : String(5000)      @title: '{i18n>Changes.entity}'; // target entity on db level
-  serviceEntity    : String(5000)      @title: '{i18n>Changes.serviceEntity}'; // target entity on service level
   entityKey        : String(5000)      @title: '{i18n>Changes.entityKey}'; // primary key of target entity
 
   rootEntity       : String(5000)      @title: '{i18n>Changes.rootEntity}';
@@ -63,7 +62,6 @@ annotate ChangeView with @(UI: {
     Visualizations: ['@UI.LineItem'],
     RequestAtLeast: [
       rootEntityKey,
-      serviceEntity,
       valueDataType
     ],
     SortOrder     : [{

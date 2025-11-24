@@ -181,36 +181,22 @@ function enhanceModel(m) {
   for (let name in m.definitions) {
 
     const entity = m.definitions[name]
-    if (entity.kind === 'entity' && isChangeTracked(entity)){
+    const isServiceEntity = entity.kind === 'entity' && (entity.query || entity.projection);
+    if (isServiceEntity && isChangeTracked(entity)) {
 
       if (!entity['@changelog.disable_assoc']) {
         // Add association to ChangeView
-        const keys = entityKey4(entity); if (!keys.length) continue; // skip if no key attribute is defined
+        const keys = entityKey4(entity); 
+        if (!keys.length) continue; // skip if no key attribute is defined
+
         const onCondition = changes.on.flatMap(p => p?.ref && p.ref[0] === 'ID' ? keys : [p]);
         const tableName = entity.projection?.from?.ref[0];
         const on = _replaceTablePlaceholders(onCondition, tableName);
         const assoc = new cds.builtin.classes.Association({ ...changes, on });
 
-        // --------------------------------------------------------------------
-        // PARKED: Add auto-exposed projection on ChangeView to service if applicable
-        // const namespace = name.match(/^(.*)\.[^.]+$/)[1]
-        // const service = m.definitions[namespace]
-        // if (service) {
-        //   const projection = {from:{ref:[assoc.target]}}
-        //   m.definitions[assoc.target = namespace + '.' + Changes] = {
-        //     '@cds.autoexposed':true, kind:'entity', projection
-        //   }
-        //   DEBUG?.(`\n
-        //     extend service ${namespace} with {
-        //       entity ${Changes} as projection on ${projection.from.ref[0]};
-        //     }
-        //   `.replace(/ {10}/g,''))
-        // }
-        // --------------------------------------------------------------------
-
         DEBUG?.(`\n
           extend ${name} with {
-            changes : Association to many ${assoc.target} on ${assoc.on.map(x => x.ref?.join('.') || x).join(' ')};
+            changes : Association to many ${assoc.target} on ${assoc.on.map(x => x.ref?.join('.') || x.val || x).join(' ')};
           }
         `.replace(/ {8}/g, ''))
         const query = entity.projection || entity.query?.SELECT
@@ -263,9 +249,7 @@ function addGenericHandlers() {
 
 
 // Register plugin hooks
-cds.on('compile.for.runtime', csn => { DEBUG?.('on', 'compile.for.runtime'); enhanceModel(csn) })
-cds.on('compile.to.edmx', csn => { DEBUG?.('on', 'compile.to.edmx'); enhanceModel(csn) })
-cds.on('compile.to.dbx', csn => { DEBUG?.('on', 'compile.to.dbx'); enhanceModel(csn) })
+cds.on('loaded', enhanceModel)
 cds.on('served', addGenericHandlers)
 
 const _sql_original = cds.compile.to.sql
@@ -295,7 +279,7 @@ Object.assign(cds.compile.to.sql, _sql_original)
 const _hdi_migration = cds.compiler.to.hdi.migration;
 cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
   const triggers = [];
-  
+
   for (let [_, def] of Object.entries(csn.definitions)) {
     const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
     if (!isTableEntity || !isChangeTracked(def)) continue;
