@@ -25,14 +25,36 @@ entity aspect @(UI.Facets: [{
 @cds.autoexpose
 view ChangeView as select from Changes {
   *,
+  ID @UI.Hidden,
+  COALESCE(
+      (
+        select text from i18nKeys where ID = Changes.attribute and locale = $user.locale
+      ), Changes.attribute
+    ) as attribute: String(5000) @title: '{i18n>Changes.attribute}',
+  COALESCE(
+      (
+        select text from i18nKeys where ID = Changes.entity and locale = $user.locale
+      ), Changes.entity
+    ) as entityLabel: String(5000) @title: '{i18n>Changes.entity}',
+    COALESCE(
+      (
+        select text from i18nKeys where ID = Changes.modification and locale = $user.locale
+      ), Changes.modification
+    ) as modification: String(5000) @title: '{i18n>Changes.modification}'
 };
+
+entity i18nKeys {
+  key ID     : String(5000);
+  key locale : String(10);
+      text   : String(5000);
+}
 
 entity Changes : cuid {
   attribute        : String(5000)      @title: '{i18n>Changes.attribute}';
   valueChangedFrom : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;
   valueChangedTo   : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
 
-  entity           : String(5000)      @title: '{i18n>Changes.entity}'; // target entity on db level
+  entity           : String(5000)      @UI.Hidden; // target entity on db level
   entityKey        : String(5000)      @title: '{i18n>Changes.entityKey}'; // primary key of target entity
 
   rootEntity       : String(5000)      @title: '{i18n>Changes.rootEntity}';
@@ -54,8 +76,6 @@ entity Changes : cuid {
   createdBy        : managed:createdBy @title: '{i18n>Changes.createdBy}';
   transactionID    : Int64             @title: '{i18n>Changes.transactionID}';
 }
-
-//annotate Changes.ID with @(UI.Hidden: true);
 
 annotate ChangeView with @(UI: {
   PresentationVariant: {
@@ -83,7 +103,7 @@ annotate ChangeView with @(UI: {
       @HTML5.CssDefaults: {width: '9%'}
     },
     {
-      Value             : entity,
+      Value             : entityLabel,
       @HTML5.CssDefaults: {width: '11%'}
     },
     {

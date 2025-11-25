@@ -186,7 +186,7 @@ function enhanceModel(m) {
 
       if (!entity['@changelog.disable_assoc']) {
         // Add association to ChangeView
-        const keys = entityKey4(entity); 
+        const keys = entityKey4(entity);
         if (!keys.length) continue; // skip if no key attribute is defined
 
         const onCondition = changes.on.flatMap(p => p?.ref && p.ref[0] === 'ID' ? keys : [p]);
@@ -196,7 +196,7 @@ function enhanceModel(m) {
 
         DEBUG?.(`\n
           extend ${name} with {
-            changes : Association to many ${assoc.target} on ${assoc.on.map(x => x.ref?.join('.') || x.val || x).join(' ')};
+            changes : Association to many ${assoc.target} on ${assoc.on.map(x => x.ref?.join('.') || x.val || x).join(' ')};
           }
         `.replace(/ {8}/g, ''))
         const query = entity.projection || entity.query?.SELECT
@@ -277,17 +277,81 @@ Object.assign(cds.compile.to.sql, _sql_original)
 
 // Generate HDI artifacts for change tracking
 const _hdi_migration = cds.compiler.to.hdi.migration;
-cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
+cds.compiler.to.hdi.migration = async function (csn, options, beforeImage) {
   const triggers = [];
+  const entities = [];
 
   for (let [_, def] of Object.entries(csn.definitions)) {
     const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
     if (!isTableEntity || !isChangeTracked(def)) continue;
     const entityTriggers = generateTriggersForEntity(csn, def);
     triggers.push(...entityTriggers);
+    entities.push(def);
   }
+
+  if (triggers.length > 0) await loadTranslations(entities);
 
   const ret = _hdi_migration(csn, options, beforeImage);
   ret.definitions = [...ret.definitions, ...triggers];
   return ret;
+}
+
+async function loadTranslations(entities) {
+
+  // Get translations for entity and attribute labels
+  const allLabels = cds.i18n.labels.translations4('all');
+
+  // Get translations for modification texts
+  const bundle = cds.i18n.bundle4({ folders: [cds.utils.path.join(__dirname, '_i18n')] });
+  const modificationLabels = bundle.translations4('all');
+
+  const rows = new Set();
+
+  for (const entity of entities) {
+    const entityKeys = [];
+    const entityLabelKey = cds.i18n.labels.key4(entity);
+    if (entityLabelKey !== entity.name) entityKeys.push(entityLabelKey);
+
+    // Attribute labels
+    for (const e of Object.values(entity.elements)) {
+      if (!e['@changelog']) continue;
+      const attrKey = cds.i18n.labels.key4(e);
+      if (attrKey !== e.name) {
+        for (const [locale, localeTranslations] of Object.entries(allLabels)) {
+          if (!locale) continue;
+          const text = localeTranslations[attrKey] || attrKey;
+          rows.add(`${e.name};${locale};${text}`);
+        }
+      }
+    }
+
+    // Entity labels
+    for (const [locale, localeTranslations] of Object.entries(allLabels)) {
+      if (!locale) continue;
+      for (const key of entityKeys) {
+        const text = localeTranslations[key] || key;
+        rows.add(`${entity.name};${locale};${text}`);
+      }
+    }
+  }
+
+  // Modification labels
+  const MODIF_I18N_MAP = {
+    create: "Changes.modification.create",
+    update: "Changes.modification.update",
+    delete: "Changes.modification.delete",
+  };
+
+  for (const [locale, localeTranslations] of Object.entries(modificationLabels)) {
+    if (!locale) continue;
+    for (const [key, i18nKey] of Object.entries(MODIF_I18N_MAP)) {
+      const text = localeTranslations[i18nKey] || key
+      rows.add(`${key};${locale};${text}`)
+    }
+  }
+
+  const header = 'ID;locale;text'
+  const content = [header, ...rows].join('\n') + '\n'
+
+  await cds.utils.write('db/data/sap.changelog-i18nKeys.csv', content);
 }

@@ -31,11 +31,12 @@ entity Addresses : cuid, managed {
  * Incidents created by Customers.
  */
 @changelog : [customer.name]
+@title : 'Support Incidents'
 entity Incidents : cuid, managed {
   customer       : Association to Customers @changelog : [customer.name];
   title          : String @title: 'Title';
   urgency        : Association to Urgency default 'M';
-  status         : Association to Status default 'N' @changelog : [status.descr];
+  status         : Association to Status default 'N' @changelog : [status.descr] @title : 'Status';
   date           : Date @title : 'date' @changelog;
   datetime       : DateTime @title : 'datetime' @changelog;
   time           : Time @title : 'time' @changelog;
