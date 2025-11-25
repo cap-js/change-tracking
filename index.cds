@@ -45,7 +45,7 @@ view ChangeView as select from Changes {
 
 entity i18nKeys {
   key ID     : String(5000);
-  key locale : String(10);
+  key locale : String(100);
       text   : String(5000);
 }
 
