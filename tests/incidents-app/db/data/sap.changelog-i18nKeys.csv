@@ -1,40 +1,4 @@
 ID;locale;text
-status;ar;Status
-status;bg;Status
-status;cs;Status
-status;da;Status
-status;de;Status
-status;el;Status
-status;en;Status
-status;en_US_saptrc;Status
-status;es;Status
-status;es_MX;Status
-status;fi;Status
-status;fr;Status
-status;he;Status
-status;hr;Status
-status;hu;Status
-status;it;Status
-status;ja;Status
-status;kk;Status
-status;ko;Status
-status;ms;Status
-status;nl;Status
-status;no;Status
-status;pl;Status
-status;pt;Status
-status;ro;Status
-status;ru;Status
-status;sh;Status
-status;sk;Status
-status;sl;Status
-status;sv;Status
-status;th;Status
-status;tr;Status
-status;uk;Status
-status;vi;Status
-status;zh_CN;Status
-status;zh_TW;Status
 sap.capire.incidents.Incidents;ar;Support Incidents
 sap.capire.incidents.Incidents;bg;Support Incidents
 sap.capire.incidents.Incidents;cs;Support Incidents
@@ -71,6 +35,42 @@ sap.capire.incidents.Incidents;uk;Support Incidents
 sap.capire.incidents.Incidents;vi;Support Incidents
 sap.capire.incidents.Incidents;zh_CN;Support Incidents
 sap.capire.incidents.Incidents;zh_TW;Support Incidents
+status;ar;Status
+status;bg;Status
+status;cs;Status
+status;da;Status
+status;de;Status
+status;el;Status
+status;en;Status
+status;en_US_saptrc;Status
+status;es;Status
+status;es_MX;Status
+status;fi;Status
+status;fr;Status
+status;he;Status
+status;hr;Status
+status;hu;Status
+status;it;Status
+status;ja;Status
+status;kk;Status
+status;ko;Status
+status;ms;Status
+status;nl;Status
+status;no;Status
+status;pl;Status
+status;pt;Status
+status;ro;Status
+status;ru;Status
+status;sh;Status
+status;sk;Status
+status;sl;Status
+status;sv;Status
+status;th;Status
+status;tr;Status
+status;uk;Status
+status;vi;Status
+status;zh_CN;Status
+status;zh_TW;Status
 title;ar;Task Title
 title;bg;Task Title
 title;cs;Task Title
