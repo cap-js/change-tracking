@@ -4,7 +4,7 @@ const DEBUG = cds.debug('changelog')
 const isRoot = 'change-tracking-isRootEntity'
 const hasParent = 'change-tracking-parentEntity'
 
-const { generateTriggersForEntity, _changes, _change_logs } = require('./lib/hdi-utils.js')
+const { generateTriggersForEntity } = require('./lib/hdi-utils.js')
 
 const isChangeTracked = (entity) => {
   if (entity.query?.SET?.op === 'union') return false // REVISIT: should that be an error or warning?
@@ -167,7 +167,7 @@ function _replaceTablePlaceholders(on, tableName) {
 }
 
 // Unfold @changelog annotations in loaded model
-function enhanceModel(m) {
+async function enhanceModel(m) {
 
   const _enhanced = 'sap.changelog.enhanced'
   if (m.meta?.[_enhanced]) return // already enhanced
@@ -178,9 +178,12 @@ function enhanceModel(m) {
 
   processEntities(m) // REVISIT: why is that required ?!?
 
-  for (let name in m.definitions) {
+  const clonedModel = structuredClone(m);
+  const csn = cds.linked(clonedModel).definitions;
 
-    const entity = m.definitions[name]
+  const labelsEntities = [];
+
+  for (const entity of csn) {
     const isServiceEntity = entity.kind === 'entity' && (entity.query || entity.projection);
     if (isServiceEntity && isChangeTracked(entity)) {
 
@@ -195,7 +198,7 @@ function enhanceModel(m) {
         const assoc = new cds.builtin.classes.Association({ ...changes, on });
 
         DEBUG?.(`\n
-          extend ${name} with {
+          extend ${entity.name} with {
             changes : Association to many ${assoc.target} on ${assoc.on.map(x => x.ref?.join('.') || x.val || x).join(' ')};
           }
         `.replace(/ {8}/g, ''))
@@ -221,8 +224,12 @@ function enhanceModel(m) {
           addSideEffects(entity.actions, false, hasParentInfo?.associationName)
         }
       }
+    } else if (entity.kind === 'entity' && isChangeTracked(entity)) {
+      // Collect labels entity info
+      labelsEntities.push(entity);
     }
   }
+  await loadTranslations(labelsEntities);
   (m.meta ??= {})[_enhanced] = true
 }
 
@@ -246,7 +253,6 @@ function addGenericHandlers() {
     }
   }
 }
-
 
 // Register plugin hooks
 cds.on('loaded', enhanceModel)
@@ -277,7 +283,7 @@ Object.assign(cds.compile.to.sql, _sql_original)
 
 // Generate HDI artifacts for change tracking
 const _hdi_migration = cds.compiler.to.hdi.migration;
-cds.compiler.to.hdi.migration = async function (csn, options, beforeImage) {
+cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
   const triggers = [];
   const entities = [];
 
@@ -288,8 +294,6 @@ cds.compiler.to.hdi.migration = async function (csn, options, beforeImage) {
     triggers.push(...entityTriggers);
     entities.push(def);
   }
-
-  if (triggers.length > 0) await loadTranslations(entities);
 
   const ret = _hdi_migration(csn, options, beforeImage);
   ret.definitions = [...ret.definitions, ...triggers];
@@ -308,29 +312,27 @@ async function loadTranslations(entities) {
   const rows = new Set();
 
   for (const entity of entities) {
-    const entityKeys = [];
-    const entityLabelKey = cds.i18n.labels.key4(entity);
-    if (entityLabelKey !== entity.name) entityKeys.push(entityLabelKey);
 
-    // Attribute labels
-    for (const e of Object.values(entity.elements)) {
-      if (!e['@changelog']) continue;
-      const attrKey = cds.i18n.labels.key4(e);
-      if (attrKey !== e.name) {
-        for (const [locale, localeTranslations] of Object.entries(allLabels)) {
-          if (!locale) continue;
-          const text = localeTranslations[attrKey] || attrKey;
-          rows.add(`${e.name};${locale};${text}`);
-        }
+    // Entity labels
+    const entityLabelKey = cds.i18n.labels.key4(entity);
+    if (entityLabelKey && entityLabelKey !== entity.name) {
+      for (const [locale, localeTranslations] of Object.entries(allLabels)) {
+        if (!locale) continue;
+        const text = localeTranslations[entityLabelKey] || entityLabelKey;
+        rows.add(`${entity.name};${locale};${text}`);
       }
     }
 
-    // Entity labels
-    for (const [locale, localeTranslations] of Object.entries(allLabels)) {
-      if (!locale) continue;
-      for (const key of entityKeys) {
-        const text = localeTranslations[key] || key;
-        rows.add(`${entity.name};${locale};${text}`);
+    // Attribute labels
+    for (const element of entity.elements) {
+      if (!element['@changelog']) continue;
+      const attrKey = cds.i18n.labels.key4(element);
+      if (attrKey && attrKey !== element.name) {
+        for (const [locale, localeTranslations] of Object.entries(allLabels)) {
+          if (!locale) continue;
+          const text = localeTranslations[attrKey] || attrKey;
+          rows.add(`${element.name};${locale};${text}`);
+        }
       }
     }
   }
