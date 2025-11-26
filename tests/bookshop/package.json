@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "@cap-js/change-tracking": "file:../../."
+    "@cap-js/change-tracking": "file:../../.",
+    "@cap-js/hana": "^2.3.4"
   },
   "devDependencies": {
     "@cap-js/sqlite": "*"
