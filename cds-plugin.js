@@ -1,7 +1,9 @@
 const cds = require('@sap/cds')
 const DEBUG = cds.debug('changelog')
+
 const { fs } = require('@sap/cds/lib/utils/cds-utils.js')
 const { generateTriggersForEntity } = require('./lib/hdi-utils.js')
+const { generateTriggers } = require('./lib/sqlite.js')
 
 const isRoot = 'change-tracking-isRootEntity'
 const hasParent = 'change-tracking-parentEntity'
@@ -260,36 +262,27 @@ function addGenericHandlers() {
 cds.on('loaded', enhanceModel)
 cds.on('served', addGenericHandlers)
 
-// const _sql_original = cds.compile.to.sql
-// cds.compile.to.sql = function (csn, options) {
-//   let ret = _sql_original.call(this, csn, options);
-//   return ret;
-// }
-// Object.assign(cds.compile.to.sql, _sql_original)
-
-// REVISIT: workaround for in-memory sqlite db
 cds.once('served', async () => {
   if (cds.db?.options?.kind === 'sqlite' && cds.db?.options?.credentials?.url === ':memory:') {
     const csn = cds.model
-    const trigger = `
-    CREATE TRIGGER update_category_total
-    AFTER UPDATE ON sap_capire_incidents_Incidents
-    BEGIN
-      UPDATE sap_capire_incidents_Incidents SET title = 'Trigger' WHERE ID = NEW.ID;
-END;`.trim()
-    // const triggers = _buildTriggers(csn)
-    // for (const t of triggers) await cds.db.run(t)
+    const triggers = [];
     const entities = [];
-    for (let name in csn.definitions) {
-      const def = csn.definitions[name];
+
+    for (const def of csn.definitions) {
       const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
       if (!isTableEntity || !isChangeTracked(def)) continue;
+      const entityTrigger = generateTriggers(def);
+      triggers.push(...entityTrigger);
       entities.push(def);
     }
+
+    // Create the triggers
+    await Promise.all(triggers.map(t => cds.db.run(t)));
+
+    // Add label translations
     const labels = getLabelTranslations(entities)
     await cds.delete('sap.changelog.i18nKeys');
     await cds.insert(labels).into('sap.changelog.i18nKeys');
-    await cds.db.run(trigger);
   }
 })
 
