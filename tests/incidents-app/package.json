@@ -34,7 +34,7 @@
       },
       "change-tracking": {
         "considerLocalizedValues": true,
-        "preserveDeletes": false
+        "preserveDeletes": true
       }
     }
   },
