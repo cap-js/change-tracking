@@ -264,13 +264,12 @@ cds.on('served', addGenericHandlers)
 
 cds.once('served', async () => {
   if (cds.db?.options?.kind === 'sqlite' && cds.db?.options?.credentials?.url === ':memory:') {
-    const csn = cds.model
-    const triggers = [];
-    const entities = [];
+    const triggers = [], entities = [];
 
-    for (const def of csn.definitions) {
+    for (const def of cds.model.definitions) {
       const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
       if (!isTableEntity || !isChangeTracked(def)) continue;
+
       const entityTrigger = generateTriggers(def);
       triggers.push(...entityTrigger);
       entities.push(def);
