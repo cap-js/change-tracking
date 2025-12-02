@@ -275,13 +275,16 @@ cds.once('served', async () => {
       entities.push(def);
     }
 
-    // Create the triggers
-    await Promise.all(triggers.map(t => cds.db.run(t)));
-
-    // Add label translations
+    // Get all label translations
     const labels = getLabelTranslations(entities)
-    await cds.delete('sap.changelog.i18nKeys');
-    await cds.insert(labels).into('sap.changelog.i18nKeys');
+    const { i18nKeys } = cds.entities('sap.changelog');
+
+    // Create the DB triggers and add label translations
+    await Promise.all([
+      triggers.map(t => cds.db.run(t)),
+      cds.delete(i18nKeys),
+      cds.insert(labels).into(i18nKeys)
+    ]);
   }
 })
 
