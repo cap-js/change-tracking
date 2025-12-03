@@ -113,17 +113,6 @@ annotate AdminService.Authors with {
   name @(Common.Label: '{i18n>serviceAuthors.name}');
 };
 
-annotate AdminService.BookStores with @changelog: [name] {
-  name            @changelog;
-  location        @changelog;
-  books           @changelog                    : [books.title];
-  lifecycleStatus @changelog                    : [lifecycleStatus.name];
-  city            @changelog                    : [
-    city.name,
-    city.country.countryName.code
-  ]
-};
-
 
 annotate AdminService.Books with @changelog: [
   title,
@@ -143,22 +132,6 @@ annotate AdminService.Books with @changelog: [
     bookType.descr
   ];
 };
-
-annotate AdminService.Authors with @changelog: [
-  name.firstName,
-  name.lastName
-] {
-  name         @changelog;
-  placeOfBirth @changelog;
-  books        @changelog                    : [
-    books.name,
-    books.title
-  ];
-};
-
-annotate AdminService.Order with {
-  header @changelog;
-}
 
 annotate AdminService.OrderHeader with {
   status @changelog;

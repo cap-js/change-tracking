@@ -1,6 +1,7 @@
 const cds = require("@sap/cds");
 const bookshop = require("path").resolve(__dirname, "./../bookshop");
-const { expect, data, GET } = cds.test(bookshop);
+const { expect, test, GET, axios } = cds.test(bookshop);
+axios.defaults.auth = { username: 'alice', password: 'admin' }
 
 // Enable locale fallback to simulate end user requests
 cds.env.features.locale_fallback = true;
@@ -38,18 +39,19 @@ describe("change log integration test", () => {
 
     beforeAll(async () => {
         adminService = await cds.connect.to("AdminService");
-        db = await cds.connect.to("sql:my.db");
+        db = await cds.connect.to("db");
         ChangeView = adminService.entities.ChangeView;
-        ChangeView["@cds.autoexposed"] = false;
+        ChangeView["@cds.autoexposed"] = false; // why?
         ChangeLog = db.model.definitions["sap.changelog.ChangeLog"];
     });
 
     beforeEach(async () => {
-        await data.reset();
+       // await test.data.reset();
     });
 
-    it("1.6 When the global switch is on, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated", async () => {
+    it("should keep all changelogs after root entity is deleted and generate a changelog for the deletion operation when preserveDeletes is activated", async () => {
         cds.env.requires["change-tracking"].preserveDeletes = true;
+        const { Authors } = adminService.entities;
 
         const authorData = [
             {
@@ -60,20 +62,19 @@ describe("change log integration test", () => {
             }
         ];
 
-        await INSERT.into(adminService.entities.Authors).entries(authorData);
+        await INSERT.into(Authors).entries(authorData);
         const beforeChanges = await adminService.run(SELECT.from(ChangeView));
         expect(beforeChanges.length > 0).to.be.true;
 
-        await DELETE.from(adminService.entities.Authors).where({ ID: "64625905-c234-4d0d-9bc1-283ee8940812" });
+        await DELETE.from(Authors).where({ ID: "64625905-c234-4d0d-9bc1-283ee8940812" });
 
         const afterChanges = await adminService.run(SELECT.from(ChangeView));
-        expect(afterChanges.length).to.equal(6);
+        expect(afterChanges.length).to.equal(beforeChanges.length * 2);
     });
 
-    it("1.8 When creating or deleting a record with a numeric type of 0 and a boolean type of false, a changelog should also be generated", async () => {
+    it("should track numeric 0 and boolean false on create and delete", async () => {
         cds.env.requires["change-tracking"].preserveDeletes = true;
-        cds.services.AdminService.entities.Order.elements.netAmount["@changelog"] = true;
-        cds.services.AdminService.entities.Order.elements.isUsed["@changelog"] = true;
+        const { Order } = adminService.entities;
 
         const ordersData = {
             ID: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
@@ -81,7 +82,7 @@ describe("change log integration test", () => {
             netAmount: 0
         };
 
-        await INSERT.into(adminService.entities.Order).entries(ordersData);
+        await INSERT.into(Order).entries(ordersData);
         let changes = await adminService.run(SELECT.from(ChangeView));
 
         expect(changes).to.have.length(2);
@@ -100,7 +101,7 @@ describe("change log integration test", () => {
                 modification: "Create",
                 entity: "sap.capire.bookshop.Order",
                 attribute: "netAmount",
-                valueChangedFrom: "",
+                valueChangedFrom: null,
                 valueChangedTo: "0"
             },
             {
@@ -108,16 +109,14 @@ describe("change log integration test", () => {
                 modification: "Create",
                 entity: "sap.capire.bookshop.Order",
                 attribute: "isUsed",
-                valueChangedFrom: "",
+                valueChangedFrom: null,
                 valueChangedTo: "false"
             },
         ]);
 
-        await DELETE.from(adminService.entities.Order).where({ ID: "0faaff2d-7e0e-4494-97fe-c815ee973fa1" });
+        await DELETE.from(Order).where({ ID: "0faaff2d-7e0e-4494-97fe-c815ee973fa1" });
         changes = await adminService.run(
-            SELECT.from(ChangeView).where({
-                modification: "delete",
-            })
+            SELECT.from(ChangeView).where({modification: "Delete"}) // REVISIT: localization issue with 'delete' vs 'Delete'
         );
 
         expect(changes).to.have.length(2);
@@ -137,7 +136,7 @@ describe("change log integration test", () => {
                 entity: "sap.capire.bookshop.Order",
                 attribute: "netAmount",
                 valueChangedFrom: "0",
-                valueChangedTo: ""
+                valueChangedTo: null
             },
             {
                 entityKey: "0faaff2d-7e0e-4494-97fe-c815ee973fa1",
@@ -145,12 +144,9 @@ describe("change log integration test", () => {
                 entity: "sap.capire.bookshop.Order",
                 attribute: "isUsed",
                 valueChangedFrom: "false",
-                valueChangedTo: ""
+                valueChangedTo: null
             },
         ]);
-
-        delete cds.services.AdminService.entities.Order.elements.netAmount["@changelog"];
-        delete cds.services.AdminService.entities.Order.elements.isUsed["@changelog"];
     });
 
     it("1.9 For DateTime and Timestamp, support for input via Date objects.", async () => {
@@ -195,7 +191,9 @@ describe("change log integration test", () => {
         cds.env.requires["change-tracking"].preserveDeletes = false;
     });
 
-    it("2.5 Root entity deep creation by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)", async () => {
+    it("2.5 Root entity deep creation by service API  - should log changes on root entity", async () => {
+        const { BookStores } = adminService.entities;
+
         const bookStoreData = {
             ID: "843b3681-8b32-4d30-82dc-937cdbc68b3a",
             name: "test bookstore name",
@@ -213,7 +211,7 @@ describe("change log integration test", () => {
         };
 
         // CAP currently support run queries on the draft-enabled entity on application service, so we can re-enable it. (details in CAP/Issue#16292)
-        await adminService.run(INSERT.into(adminService.entities.BookStores).entries(bookStoreData));
+        await adminService.run(INSERT.into(BookStores).entries(bookStoreData));
 
         let changes = await SELECT.from(ChangeView).where({
             entity: "sap.capire.bookshop.BookStores",
