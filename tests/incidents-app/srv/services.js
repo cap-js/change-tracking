@@ -1,5 +1,5 @@
-const cds = require('@sap/cds')
-const { SELECT } = cds.ql
+const cds = require('@sap/cds');
+const { SELECT } = cds.ql;
 
 class ProcessorService extends cds.ApplicationService {
   /** Registering custom event handlers */
@@ -21,24 +21,24 @@ class ProcessorService extends cds.ApplicationService {
     return super.init()
   }
 
-  changeUrgencyDueToSubject(data) {
-    if (data) {
-      const incidents = Array.isArray(data) ? data : [data]
-      incidents.forEach(incident => {
-        if (incident.title?.toLowerCase().includes('urgent')) {
-          incident.urgency = { code: 'H', descr: 'High' }
-        }
-      })
-    }
-  }
+	changeUrgencyDueToSubject(data) {
+		if (data) {
+			const incidents = Array.isArray(data) ? data : [data];
+			incidents.forEach((incident) => {
+				if (incident.title?.toLowerCase().includes('urgent')) {
+					incident.urgency = { code: 'H', descr: 'High' };
+				}
+			});
+		}
+	}
 
-  /** Custom Validation */
-  async onUpdate(req) {
-    const { status_code } = await SELECT.one(req.subject, i => i.status_code).where({ ID: req.data.ID })
-    if (status_code === 'C') {
-      return req.reject(`Can't modify a closed incident`)
-    }
-  }
+	/** Custom Validation */
+	async onUpdate(req) {
+		const { status_code } = await SELECT.one(req.subject, (i) => i.status_code).where({ ID: req.data.ID });
+		if (status_code === 'C') {
+			return req.reject(`Can't modify a closed incident`);
+		}
+	}
 }
 
-module.exports = { ProcessorService }
+module.exports = { ProcessorService };
