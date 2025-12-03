@@ -1,5 +1,11 @@
 const cds = require("@sap/cds");
-const bookshop = require("path").resolve(__dirname, "./../bookshop");
+const { exec } = require("child_process");
+const { promisify } = require("util");
+const asyncExec = promisify(exec)
+const fs = require("fs/promises");
+const path = require("path")
+
+const bookshop = path.resolve(__dirname, "./../bookshop");
 const { expect, data, GET } = cds.test(bookshop);
 
 // Enable locale fallback to simulate end user requests
@@ -910,3 +916,18 @@ describe("change log integration test", () => {
     });
 
 });
+
+describe('MTX Build', () => {
+    test('Changes association is only added once JSON csn is compiled for runtime', async () => {
+        await asyncExec(`cd ${path.join(__dirname, '../bookshop-mtx')} && cds build --production`)
+
+        const csnJSON = JSON.parse(await fs.readFile(path.join(__dirname, '../bookshop-mtx/gen/srv/srv/csn.json')))
+
+        expect(csnJSON.definitions['AdminService.RootEntity'].changes).to.be.undefined
+
+        const csn = await cds.load(path.join(__dirname, '../bookshop-mtx/gen/srv/srv/csn.json'));
+        const effectiveCSN = await cds.compile.for.nodejs(csn);
+
+        expect(effectiveCSN.definitions['AdminService.RootEntity'].elements.changes).not.to.be.undefined
+    })
+})

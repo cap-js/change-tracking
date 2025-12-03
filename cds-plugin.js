@@ -8,6 +8,7 @@ const isChangeTracked = (entity) => {
   if (entity.query?.SET?.op === 'union') return false // REVISIT: should that be an error or warning?
   if (entity['@changelog']) return true
   if (Object.values(entity.elements).some(e => e['@changelog'])) return true
+  return false
 }
 
 // Add the appropriate Side Effects attribute to the custom action
@@ -160,7 +161,12 @@ function entityKey4 (entity) {
 
 // Unfold @changelog annotations in loaded model
 function enhanceModel (m) {
-
+  if (m.meta?.flavor !== 'inferred') {
+    // In MTX scenarios with extensibility the runtime model for deployed apps is not 
+    // inferred but xtended and the logic requires inferred.
+    DEBUG?.(`Skipping model enhancement because model flavour is '${m.meta?.flavor}' and not 'inferred'`)
+    return
+  }
   const _enhanced = 'sap.changelog.enhanced'
   if (m.meta?.[_enhanced]) return // already enhanced
 
