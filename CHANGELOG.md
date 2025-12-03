@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 
+### Changed
+
 ## Version 1.1.4 - 03.12.25
 
 ### Fixed
