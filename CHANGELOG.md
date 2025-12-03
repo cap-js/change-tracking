@@ -4,14 +4,20 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.1.4 - TBD
+## Version 1.1.5 - TBD
 
 ### Added
 
 ### Fixed
-- Server no longer crashes when after a DB migration the service name or attribute name change
 
 ### Changed
+
+## Version 1.1.4 - 03.12.25
+
+### Fixed
+- Server no longer crashes when after a DB migration the service name or attribute name change
+- Fix crash when applications uses feature toogles or extensibility
+
 
 ## Version 1.1.3 - 27.10.25
 
