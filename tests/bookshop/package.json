@@ -1,19 +1,19 @@
 {
-  "dependencies": {
-    "@cap-js/change-tracking": "file:../../.",
-    "@cap-js/hana": "^2.3.4"
-  },
-  "devDependencies": {
-    "@cap-js/sqlite": "*"
-  },
-  "cds": {
-    "requires": {
-      "db": {
-        "kind": "sql"
-      }
-    },
-    "features": {
-      "serve_on_root": true
-    }
-  }
+	"dependencies": {
+		"@cap-js/change-tracking": "file:../../.",
+		"@cap-js/hana": "^2.3.4"
+	},
+	"devDependencies": {
+		"@cap-js/sqlite": "*"
+	},
+	"cds": {
+		"requires": {
+			"db": {
+				"kind": "sql"
+			}
+		},
+		"features": {
+			"serve_on_root": true
+		}
+	}
 }
