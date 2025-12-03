@@ -16,7 +16,8 @@
 	"scripts": {
 		"lint": "npx eslint .",
 		"test": "npx jest --silent",
-		"format": "prettier . --write"
+		"format": "npx -y prettier@3 . --write",
+		"format:check": "npx -y prettier@3 --check ."
 	},
 	"peerDependencies": {
 		"@sap/cds": ">=8.5"
@@ -29,8 +30,7 @@
 		"@cap-js/cds-test": "*",
 		"@cap-js/change-tracking": "file:.",
 		"@cap-js/sqlite": "^1 || ^2",
-		"express": "^4",
-		"prettier": "^3.6.2"
+		"express": "^4"
 	},
 	"cds": {
 		"requires": {
