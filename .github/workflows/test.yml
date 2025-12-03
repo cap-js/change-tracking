@@ -9,6 +9,7 @@ on:
 
 jobs:
   test:
+    if: '! github.event.pull_request.draft'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
