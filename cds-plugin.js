@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const DEBUG = cds.debug('changelog');
 
 const { fs } = require('@sap/cds/lib/utils/cds-utils.js');
-const { generateTriggersForEntity } = require('./lib/hdi-utils.js');
+const { generateTriggersForEntity } = require('./lib/hdi.js');
 const { generateTriggers } = require('./lib/sqlite.js');
 
 const isRoot = 'change-tracking-isRootEntity';
