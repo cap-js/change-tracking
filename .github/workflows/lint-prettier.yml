@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   lint:
+    if: '! github.event.pull_request.draft'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
