@@ -114,25 +114,6 @@ annotate AdminService.Authors with {
 };
 
 
-annotate AdminService.Books with @changelog: [
-  title,
-  author.name.firstName,
-  author.name.lastName
-] {
-  title    @changelog;
-  descr    @changelog;
-  isUsed   @changelog;
-  author   @changelog                      : [
-    author.name.firstName,
-    author.name.lastName
-  ];
-  genre    @changelog;
-  bookType @changelog                      : [
-    bookType.name,
-    bookType.descr
-  ];
-};
-
 annotate AdminService.OrderHeader with {
   status @changelog;
 }
