@@ -104,7 +104,7 @@ describe('change log integration test', () => {
 		).to.have.deep.members([
 			{
 				entityKey: '0faaff2d-7e0e-4494-97fe-c815ee973fa1',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'netAmount',
 				valueChangedFrom: null,
@@ -112,7 +112,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: '0faaff2d-7e0e-4494-97fe-c815ee973fa1',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'isUsed',
 				valueChangedFrom: null,
@@ -122,7 +122,7 @@ describe('change log integration test', () => {
 
 		await DELETE.from(Order).where({ ID: '0faaff2d-7e0e-4494-97fe-c815ee973fa1' });
 		changes = await adminService.run(
-			SELECT.from(ChangeView).where({ modification: 'Delete' }) // REVISIT: localization issue with 'delete' vs 'Delete'
+			SELECT.from(ChangeView).where({ modification: 'delete' })
 		);
 
 		expect(changes).to.have.length(2);
@@ -138,7 +138,7 @@ describe('change log integration test', () => {
 		).to.have.deep.members([
 			{
 				entityKey: '0faaff2d-7e0e-4494-97fe-c815ee973fa1',
-				modification: 'Delete',
+				modification: 'delete',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'netAmount',
 				valueChangedFrom: '0',
@@ -146,7 +146,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: '0faaff2d-7e0e-4494-97fe-c815ee973fa1',
-				modification: 'Delete',
+				modification: 'delete',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'isUsed',
 				valueChangedFrom: 'false',
@@ -177,7 +177,7 @@ describe('change log integration test', () => {
 		let change = changes[0];
 		expect(change.entityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8940717');
 		expect(change.attribute).to.equal('dateTime');
-		expect(change.modification).to.equal('Create');
+		expect(change.modification).to.equal('create');
 		expect(change.valueChangedFrom).to.equal('');
 		/**
 		 * REVISIT: Currently, when using '@cap-js/sqlite' or '@cap-js/hana' and inputting values of type Date in javascript,
@@ -271,7 +271,7 @@ describe('change log integration test', () => {
 		expect(changes.length).to.equal(1);
 		const change = changes[0];
 		expect(change.attribute).to.equal('quantity');
-		expect(change.modification).to.equal('Update');
+		expect(change.modification).to.equal('update');
 		expect(change.valueChangedFrom).to.equal('10');
 		expect(change.valueChangedTo).to.equal('12');
 		expect(change.parentKey).to.equal('3b23bb4b-4ac7-4a24-ac02-aa10cabd842c');
@@ -721,7 +721,7 @@ describe('change log integration test', () => {
 		).to.have.deep.members([
 			{
 				entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'netAmount',
 				valueChangedFrom: '',
@@ -729,7 +729,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'isUsed',
 				valueChangedFrom: '',
@@ -737,7 +737,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'quantity',
 				valueChangedFrom: '',
@@ -745,7 +745,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'quantity',
 				valueChangedFrom: '',
@@ -753,7 +753,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'netAmount',
 				valueChangedFrom: '',
@@ -761,7 +761,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'isUsed',
 				valueChangedFrom: '',
@@ -769,7 +769,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'quantity',
 				valueChangedFrom: '',
@@ -777,7 +777,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'quantity',
 				valueChangedFrom: '',
@@ -785,7 +785,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'netAmount',
 				valueChangedFrom: '',
@@ -793,7 +793,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'isUsed',
 				valueChangedFrom: '',
@@ -801,7 +801,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'quantity',
 				valueChangedFrom: '',
@@ -809,7 +809,7 @@ describe('change log integration test', () => {
 			},
 			{
 				entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056',
-				modification: 'Create',
+				modification: 'create',
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'quantity',
 				valueChangedFrom: '',
@@ -914,7 +914,7 @@ describe('change log integration test', () => {
 });
 
 describe('MTX Build', () => {
-	test('Changes association is only added once JSON csn is compiled for runtime', async () => {
+	it('Changes association is only added once JSON csn is compiled for runtime', async () => {
 		await asyncExec(`cd ${path.join(__dirname, '../bookshop-mtx')} && cds build --production`);
 
 		const csnJSON = JSON.parse(await fs.readFile(path.join(__dirname, '../bookshop-mtx/gen/srv/srv/csn.json')));

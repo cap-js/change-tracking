@@ -30,7 +30,7 @@ view ChangeView as select from Changes {
       (
         select text from i18nKeys where ID = Changes.attribute and locale = $user.locale
       ), Changes.attribute
-    ) as attribute: String(5000) @title: '{i18n>Changes.attribute}',
+    ) as attributeLabel: String(5000) @title: '{i18n>Changes.attribute}',
   COALESCE(
       (
         select text from i18nKeys where ID = Changes.entity and locale = $user.locale
@@ -40,7 +40,7 @@ view ChangeView as select from Changes {
       (
         select text from i18nKeys where ID = Changes.modification and locale = $user.locale
       ), Changes.modification
-    ) as modification: String(5000) @title: '{i18n>Changes.modification}'
+    ) as modificationLabel: String(5000) @title: '{i18n>Changes.modification}'
 };
 
 entity i18nKeys {
@@ -91,7 +91,7 @@ annotate ChangeView with @(UI: {
   },
   LineItem           : [
     {
-      Value             : modification,
+      Value             : modificationLabel,
       @HTML5.CssDefaults: {width: '9%'}
     },
     {
@@ -111,7 +111,7 @@ annotate ChangeView with @(UI: {
       @HTML5.CssDefaults: {width: '14%'}
     },
     {
-      Value             : attribute,
+      Value             : attributeLabel,
       @HTML5.CssDefaults: {width: '9%'}
     },
     {
