@@ -177,7 +177,6 @@ function enhanceModel(m) {
 		'@UI.Facets': [facet],
 		elements: { changes }
 	} = aspect;
-	if (changes.on.length > 2) changes.on.pop(); // remove ID -> filled in below
 
 	processEntities(m); // REVISIT: why is that required ?!?
 
@@ -204,7 +203,6 @@ function enhanceModel(m) {
 					`\n
           extend ${name} with {
             changes : Association to many ${assoc.target} on ${assoc.on.map((x) => x.ref?.join('.') || x.val || x).join(' ')};
-            changes : Association to many ${assoc.target} on ${assoc.on.map((x) => x.ref?.join('.') || x).join(' ')};
           }
         `.replace(/ {8}/g, '')
 				);
