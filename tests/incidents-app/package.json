@@ -1,9 +1,13 @@
 {
 	"name": "@capire/incidents",
 	"version": "1.0.0",
+	"scripts": {
+		"deploy": "cds deploy -2 hana"
+	},
 	"dependencies": {
 		"@cap-js/change-tracking": "file:../../.",
-		"@cap-js/attachments": "^2"
+		"@cap-js/attachments": "^2",
+		"@cap-js/hana": "^2.3.4"
 	},
 	"cds": {
 		"requires": {
@@ -29,7 +33,8 @@
 				"scan": false
 			},
 			"change-tracking": {
-				"considerLocalizedValues": true
+				"considerLocalizedValues": true,
+				"preserveDeletes": true
 			}
 		}
 	},
