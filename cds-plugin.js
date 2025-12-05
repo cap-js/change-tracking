@@ -3,7 +3,6 @@ const DEBUG = cds.debug('change-tracking');
 
 const { fs } = require('@sap/cds/lib/utils/cds-utils.js');
 const { generateTriggersForEntity } = require('./lib/hdi.js');
-const { generateTriggers } = require('./lib/sqlite.js');
 
 const isRoot = 'change-tracking-isRootEntity';
 const hasParent = 'change-tracking-parentEntity';
@@ -194,7 +193,7 @@ function enhanceModel(m) {
 	// Get definitions from Dummy entity in our models
 	const { 'sap.changelog.aspect': aspect } = m.definitions;
 	if (!aspect) return; // some other model
-	const {'@UI.Facets': [facet], elements: { changes }} = aspect;
+	const { '@UI.Facets': [facet], elements: { changes } } = aspect;
 
 	processEntities(m); // REVISIT: why is that required ?!?
 	hierarchyMap = analyzeCompositions(m);
@@ -254,14 +253,14 @@ function addGenericHandlers() {
 			let any = false;
 			for (const entity of Object.values(srv.entities)) {
 				if (isChangeTracked(entity)) {
-					// cds.db.before("CREATE", entity, track_changes)
-					// cds.db.before("UPDATE", entity, track_changes)
-					// cds.db.before("DELETE", entity, track_changes)
+					cds.db.before("CREATE", entity, track_changes)
+					cds.db.before("UPDATE", entity, track_changes)
+					cds.db.before("DELETE", entity, track_changes)
 					any = true;
 				}
 			}
 			if (any && srv.entities.ChangeView) {
-				//srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
+				srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
 			}
 		}
 	}
@@ -269,32 +268,40 @@ function addGenericHandlers() {
 
 // Register plugin hooks
 cds.on('loaded', enhanceModel);
-cds.on('served', addGenericHandlers);
+//cds.on('served', addGenericHandlers);
 
 cds.once('served', async () => {
-	if (cds.db?.options?.kind === 'sqlite' && cds.db?.options?.credentials?.url === ':memory:') {
-		const triggers = [],
-			entities = [];
+	const kind = cds.env.requires?.db?.kind
+	const isSQLite = kind === 'sqlite' && cds.env.requires?.db.credentials?.url === ':memory:';
+	if (!isSQLite) return;
 
-		for (const def of cds.model.definitions) {
-			const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
-			if (!isTableEntity || !isChangeTracked(def)) continue;
 
-			// Get root entity hierarchy
-			const rootEntity = hierarchyMap.get(def.name) || null;
+	const { generateTriggers } = require('./lib/sqlite.js');
+	const triggers = [], entities = [];
 
-			const entityTrigger = generateTriggers(def, cds.model.definitions?.[rootEntity]);
-			triggers.push(...entityTrigger);
-			entities.push(def);
-		}
+	for (const def of cds.model.definitions) {
+		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+		if (!isTableEntity || !isChangeTracked(def)) continue;
 
-		// Get all label translations
-		const labels = getLabelTranslations(entities);
-		const { i18nKeys } = cds.entities('sap.changelog');
+		// Resolve root entity name from your hierarchyMap
+		const rootEntityName = hierarchyMap.get(def.name)
+		const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null
 
-		// Create the DB triggers and add label translations
-		await Promise.all([triggers.map((t) => cds.db.run(t)), cds.delete(i18nKeys), cds.insert(labels).into(i18nKeys)]);
+		const entityTrigger = generateTriggers(def, rootEntity);
+		triggers.push(...entityTrigger);
+		entities.push(def);
 	}
+
+	// Get all label translations
+	const labels = getLabelTranslations(entities);
+	const { i18nKeys } = cds.entities('sap.changelog');
+
+	// Create the DB triggers and add label translations
+	await Promise.all([
+		triggers.map((t) => cds.db.run(t)),
+		cds.delete(i18nKeys),
+		cds.insert(labels).into(i18nKeys)
+	]);
 });
 
 // Generate HDI artifacts for change tracking
