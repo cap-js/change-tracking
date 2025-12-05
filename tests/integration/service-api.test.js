@@ -155,8 +155,8 @@ describe('change log integration test', () => {
 
 	it('1.9 For DateTime and Timestamp, support for input via Date objects.', async () => {
 		cds.env.requires['change-tracking'].preserveDeletes = true;
-		cds.services.AdminService.entities.RootEntity.elements.dateTime['@changelog'] = true;
-		cds.services.AdminService.entities.RootEntity.elements.timestamp['@changelog'] = true;
+		const { RootEntity } = adminService.entities;
+
 		const rootEntityData = [
 			{
 				ID: '64625905-c234-4d0d-9bc1-283ee8940717',
@@ -164,7 +164,7 @@ describe('change log integration test', () => {
 				timestamp: new Date('2024-10-23T08:53:54.000Z')
 			}
 		];
-		await INSERT.into(adminService.entities.RootEntity).entries(rootEntityData);
+		await INSERT.into(RootEntity).entries(rootEntityData);
 		let changes = await adminService.run(
 			SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.RootEntity',
@@ -172,16 +172,15 @@ describe('change log integration test', () => {
 			})
 		);
 		expect(changes.length).to.equal(1);
-		let change = changes[0];
-		expect(change.entityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8940717');
-		expect(change.attribute).to.equal('dateTime');
-		expect(change.modification).to.equal('create');
-		expect(change.valueChangedFrom).to.equal('');
+		expect(changes[0].entityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8940717');
+		expect(changes[0].attribute).to.equal('dateTime');
+		expect(changes[0].modification).to.equal('create');
+		expect(changes[0].valueChangedFrom).to.equal(null);
 		/**
 		 * REVISIT: Currently, when using '@cap-js/sqlite' or '@cap-js/hana' and inputting values of type Date in javascript,
 		 * there is an issue with inconsistent formats before and after, which requires a fix from cds-dbs (Issue-873).
 		 */
-		expect(change.valueChangedTo).to.equal(
+		expect(changes[0].valueChangedTo).to.equal(
 			new Date('2024-10-16T08:53:48Z').toLocaleDateString('en', {
 				day: 'numeric',
 				month: 'short',
@@ -192,8 +191,6 @@ describe('change log integration test', () => {
 				hour12: true
 			})
 		);
-		delete cds.services.AdminService.entities.RootEntity.elements.dateTime['@changelog'];
-		delete cds.services.AdminService.entities.RootEntity.elements.timestamp['@changelog'];
 		cds.env.requires['change-tracking'].preserveDeletes = false;
 	});
 
@@ -232,7 +229,7 @@ describe('change log integration test', () => {
 			attribute: 'title'
 		});
 		expect(changes.length).to.equal(1);
-		expect(changes[0].entityKey).to.equal(bookStoreData.ID);
+		expect(changes[0].entityKey).to.equal(bookStoreData.books[0].ID);
 		expect(changes[0].objectID).to.equal('test title, Emily, Brontë');
 	});
 
@@ -252,9 +249,9 @@ describe('change log integration test', () => {
 
 		expect(changes.length).to.equal(1);
 		expect(changes[0].entityKey).to.equal('9d703c23-54a8-4eff-81c1-cdce6b8376b1');
-		//expect(changes[0].rootEntityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(changes[0].rootEntityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(changes[0].objectID).to.equal('Wuthering Heights Test, Emily, Brontë');
-		//expect(changes[0].rootObjectID).to.equal('Shakespeare and Company');
+		expect(changes[0].rootObjectID).to.equal('Shakespeare and Company, Paris');
 	});
 
 	it('3.6 Composition operation of inline entity operation by QL API', async () => {
@@ -326,8 +323,8 @@ describe('change log integration test', () => {
 		});
 		expect(createChanges.length).to.equal(1);
 		expect(createChanges[0].objectID).to.equal('In Preparation');
-		// expect(createChanges[0].rootEntityKey).to.equal('dd1fdd7d-da2a-4600-940b-0baf2946c4ff');
-		// expect(createChanges[0].rootObjectID).to.equal('In Preparation');
+		expect(createChanges[0].rootEntityKey).to.equal('dd1fdd7d-da2a-4600-940b-0baf2946c4ff');
+		expect(createChanges[0].rootObjectID).to.equal('In Preparation');
 
 		// Check the changeLog to make sure the entity information is root
 		const changeLogs = await SELECT.from(Changes).where({
@@ -509,9 +506,9 @@ describe('change log integration test', () => {
 		expect(changes[0].modification).to.equal('create');
 		expect(changes[0].entity).to.equal('sap.capire.bookshop.BookStoreRegistry');
 		expect(changes[0].entityKey).to.equal(bookStoreData.registry.ID);
-		// expect(changes[0].rootEntity).to.equal('sap.capire.bookshop.BookStores');
-		// expect(changes[0].rootEntityKey).to.equal(bookStoreData.ID);
-		expect(changes[0].objectID).to.equal('San Francisco-2');
+		expect(changes[0].rootEntity).to.equal('sap.capire.bookshop.BookStores');
+		expect(changes[0].rootEntityKey).to.equal(bookStoreData.ID);
+		expect(changes[0].objectID).to.equal('San Francisco-2, 2022-01-01');
 		expect(changes[0].valueChangedFrom).to.equal(null);
 		expect(changes[0].valueChangedTo).to.equal('2022-01-01');
 	});

@@ -53,6 +53,8 @@ annotate db.RootEntity with @changelog: [name] {
   child           @changelog          : [child.child.child.title];
   lifecycleStatus @changelog          : [lifecycleStatus.name];
   info            @changelog          : [info.info.info.name];
+  dateTime        @changelog;
+  timestamp      @changelog;
 };
 
 annotate db.Level1Entity with @changelog: [parent.lifecycleStatus.name] {

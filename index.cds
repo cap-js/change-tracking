@@ -14,8 +14,8 @@ entity aspect @(UI.Facets: [{
   ![@UI.PartOfPreview]: false
 }]) {
       changes : Association to many ChangeView
-                  on  changes.entityKey     = ID and changes.entity        = 'DUMMY'
-                  or  changes.rootEntityKey = ID and changes.rootEntity    = 'DUMMY';
+                  on  changes.entityKey     = ID and changes.entity        = 'ENTITY'
+                  or  changes.rootEntityKey = ID and changes.rootEntity    = 'ROOTENTITY';
       key ID      : String;
 }
 

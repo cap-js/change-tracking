@@ -1,5 +1,5 @@
 const cds = require('@sap/cds');
-const DEBUG = cds.debug('changelog');
+const DEBUG = cds.debug('change-tracking');
 
 const { fs } = require('@sap/cds/lib/utils/cds-utils.js');
 const { generateTriggersForEntity } = require('./lib/hdi.js');
@@ -7,24 +7,43 @@ const { generateTriggers } = require('./lib/sqlite.js');
 
 const isRoot = 'change-tracking-isRootEntity';
 const hasParent = 'change-tracking-parentEntity';
+let hierarchyMap = new Map();
 
 const isChangeTracked = (entity) => {
 	if (entity.query?.SET?.op === 'union') return false; // REVISIT: should that be an error or warning?
 	if (entity['@changelog']) return true;
-	if (Object.values(entity.elements).some((e) => e['@changelog'])) return true;
-	return false;
+	return Object.values(entity.elements).some((e) => e['@changelog']);
+};
+
+const analyzeCompositions = (csn) => {
+	const childParentMap = new Map();
+
+	for (const [name, def] of Object.entries(csn.definitions)) {
+		if (def.kind !== 'entity') continue;
+
+		if (def.elements) {
+			for (const element of Object.values(def.elements)) {
+				if (element.type === "cds.Composition" && element.target) {
+					childParentMap.set(element.target, name);
+				}
+			}
+		}
+	}
+	const hierarchy = new Map();
+
+	for (const [childName, parentName] of childParentMap) {
+		let root = parentName;
+		hierarchy.set(childName, root);
+	}
+	return hierarchy;
 };
 
 // Add the appropriate Side Effects attribute to the custom action
-const addSideEffects = (actions, flag, element) => {
-	if (!flag && (element === undefined || element === null)) {
-		return;
-	}
-
+const addSideEffects = (actions, isRootEntity) => {
 	for (const se of Object.values(actions)) {
-		const target = flag ? 'TargetProperties' : 'TargetEntities';
+		const target = isRootEntity ? 'TargetProperties' : 'TargetEntities';
 		const sideEffectAttr = se[`@Common.SideEffects.${target}`];
-		const property = flag ? 'changes' : { '=': `${element}.changes` };
+		const property = isRootEntity ? 'changes' : { '=': `${element}.changes` };
 		if (sideEffectAttr?.length >= 0) {
 			sideEffectAttr.findIndex((item) => (item['='] ? item['='] : item) === (property['='] ? property['='] : property)) === -1 && sideEffectAttr.push(property);
 		} else {
@@ -152,9 +171,11 @@ function entityKey4(entity) {
 	return xpr;
 }
 
-function _replaceTablePlaceholders(on, tableName) {
-	return on.map((part) => {
-		if (part && part.val === 'DUMMY') return { ...part, val: tableName };
+function _replaceTablePlaceholders(on, tableName, hierarchy) {
+	const rootEntityName = hierarchy.get(tableName) || tableName;
+	return on.map(part => {
+		if (part && part.val === 'ENTITY') return { ...part, val: tableName };
+		if (part && part.val === 'ROOTENTITY') return { ...part, val: rootEntityName };
 		return part;
 	});
 }
@@ -173,17 +194,10 @@ function enhanceModel(m) {
 	// Get definitions from Dummy entity in our models
 	const { 'sap.changelog.aspect': aspect } = m.definitions;
 	if (!aspect) return; // some other model
-	const {
-		'@UI.Facets': [facet],
-		elements: { changes }
-	} = aspect;
+	const {'@UI.Facets': [facet], elements: { changes }} = aspect;
 
 	processEntities(m); // REVISIT: why is that required ?!?
-
-	const clonedModel = structuredClone(m);
-	const csn = cds.linked(clonedModel).definitions;
-
-	const labelsEntities = [];
+	hierarchyMap = analyzeCompositions(m);
 
 	for (let name in m.definitions) {
 		const entity = m.definitions[name];
@@ -196,7 +210,7 @@ function enhanceModel(m) {
 
 				const onCondition = changes.on.flatMap((p) => (p?.ref && p.ref[0] === 'ID' ? keys : [p]));
 				const tableName = entity.projection?.from?.ref[0];
-				const on = _replaceTablePlaceholders(onCondition, tableName);
+				const on = _replaceTablePlaceholders(onCondition, tableName, hierarchyMap);
 				const assoc = new cds.builtin.classes.Association({ ...changes, on });
 
 				DEBUG?.(
@@ -227,9 +241,6 @@ function enhanceModel(m) {
 					addSideEffects(entity.actions, false, hasParentInfo?.associationName);
 				}
 			}
-		} else if (entity.kind === 'entity' && isChangeTracked(entity)) {
-			// Collect labels entity info
-			labelsEntities.push(csn[name]);
 		}
 	}
 	(m.meta ??= {})[_enhanced] = true;
@@ -269,7 +280,10 @@ cds.once('served', async () => {
 			const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
 			if (!isTableEntity || !isChangeTracked(def)) continue;
 
-			const entityTrigger = generateTriggers(def);
+			// Get root entity hierarchy
+			const rootEntity = hierarchyMap.get(def.name) || null;
+
+			const entityTrigger = generateTriggers(def, cds.model.definitions?.[rootEntity]);
 			triggers.push(...entityTrigger);
 			entities.push(def);
 		}
