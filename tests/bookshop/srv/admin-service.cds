@@ -33,22 +33,19 @@ service AdminService {
 
   entity OrderItemNote                as projection on my.OrderItemNote
     actions {
-      @cds.odata.bindingparameter.name: 'self'
-      @Common.SideEffects             : {TargetEntities: [self]}
+      @Common.SideEffects             : {TargetEntities: [in]}
       action activate();
     };
 
   entity Volumns                      as projection on my.Volumns
     actions {
-      @cds.odata.bindingparameter.name: 'self'
-      @Common.SideEffects             : {TargetEntities: [self]}
+      @Common.SideEffects             : {TargetEntities: [in]}
       action activate();
     };
 
   entity Level2Sample                 as projection on my.Level2Sample
     actions {
-      @cds.odata.bindingparameter.name: 'self'
-      @Common.SideEffects             : {TargetEntities: [self]}
+      @Common.SideEffects             : {TargetEntities: [in]}
       action activate();
     };
 
