@@ -1,0 +1,28 @@
+{
+	"dependencies": {
+		"@cap-js/change-tracking": "file:../../.",
+		"@sap/cds-mtxs": "^3"
+	},
+	"devDependencies": {
+		"@cap-js/sqlite": "*"
+	},
+	"cds": {
+		"requires": {
+			"db": {
+				"kind": "sql"
+			},
+			"[production]": {
+				"multitenancy": true
+			},
+			"[with-mtx]": {
+				"multitenancy": true
+			},
+			"toggles": true,
+			"extensibility": true
+		},
+		"features": {
+			"serve_on_root": true
+		},
+		"profile": "with-mtx-sidecar"
+	}
+}

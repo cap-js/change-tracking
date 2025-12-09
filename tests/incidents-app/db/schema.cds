@@ -1,4 +1,4 @@
-using { cuid, managed, sap.common.CodeList } from '@sap/cds/common';
+using { cuid, managed, sap.common.CodeList, Country } from '@sap/cds/common';
 
 namespace sap.capire.incidents;
 
@@ -100,4 +100,17 @@ entity PagesNotID {
       book : Association to one BooksNotID;
       @changelog : [book.title, page]
       page  : Integer;
+}
+
+
+
+entity Orders : cuid {
+  abc : String @changelog;
+  orderProducts : Composition of many OrderProducts on orderProducts.order = $self;
+}
+
+entity OrderProducts : cuid {
+  order : Association to one Orders;
+  country : Country @changelog : [country.name];
+  price: Decimal @changelog;
 }
