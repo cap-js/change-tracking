@@ -3,24 +3,62 @@ name: CI
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [main]
+  pull_request_target:
+    branches: [main]
+    types: [reopened, synchronize, opened]
 
 jobs:
+  requires-approval:
+    runs-on: ubuntu-latest
+    name: "Waiting for PR approval as this workflow runs on pull_request_target"
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.base.user.login != 'cap-js'
+    environment: pr-approval
+    steps:
+      - name: Approval Step
+        run: echo "This job has been approved!"
   test:
     runs-on: ubuntu-latest
+    needs: requires-approval
+    if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
         node-version: [20.x, 22.x]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v5
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm i -g @sap/cds-dk
     - run: npm i
-    - run: cds v
+    - run: cd tests/bookshop && npm i
+    - run: cd tests/bookshop-mtx && npm i
     - run: npm run test
+    
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: requires-approval
+    if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
+    name: Integration Tests on Node.js ${{ matrix['node-version'] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 22.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Integration tests
+        uses: ./.github/actions/integration-tests
+        with:
+          CF_API: ${{ secrets['CF_API'] }}
+          CF_USERNAME: ${{ secrets['CF_USERNAME'] }}
+          CF_PASSWORD: ${{ secrets['CF_PASSWORD'] }}
+          CF_ORG: ${{ secrets['CF_ORG'] }}
+          CF_SPACE: ${{ secrets['CF_SPACE'] }}
+          NODE_VERSION: ${{ matrix.node-version }}

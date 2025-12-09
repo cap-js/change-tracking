@@ -18,11 +18,11 @@ service ProcessorService {
 /**
  * Service used by administrators to manage customers and incidents.
  */
-service AdminService {
+service IncidentsAdminService {
   entity Customers as projection on my.Customers;
   entity Incidents as projection on my.Incidents;
 }
 
 annotate ProcessorService.Incidents with @odata.draft.enabled; 
 annotate ProcessorService with @(requires: 'support');
-annotate AdminService with @(requires: 'admin');
+annotate IncidentsAdminService with @(requires: 'admin');

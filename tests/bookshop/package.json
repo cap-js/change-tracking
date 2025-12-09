@@ -1,5 +1,6 @@
 {
 	"dependencies": {
+		"@cap-js/attachments": "^2",
 		"@cap-js/change-tracking": "file:../../."
 	},
 	"devDependencies": {
@@ -9,6 +10,30 @@
 		"requires": {
 			"db": {
 				"kind": "sql"
+			},
+			"auth": {
+				"[development]": {
+					"users": {
+						"alice": {
+							"roles": [
+								"support",
+								"admin"
+							]
+						},
+						"bob": {
+							"roles": [
+								"support"
+							]
+						}
+					}
+				}
+			},
+			"attachments": {
+				"kind": "db",
+				"scan": false
+			},
+			"change-tracking": {
+				"considerLocalizedValues": true
 			}
 		},
 		"features": {

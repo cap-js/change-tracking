@@ -1,6 +1,6 @@
 const cds = require('@sap/cds');
 const path = require('path');
-const app = path.join(__dirname, '../incidents-app');
+const app = path.join(__dirname, '../bookshop');
 const { test, expect, axios, GET, POST, PATCH, DELETE } = cds.test(app);
 axios.defaults.auth = { username: 'alice' };
 const incidentID = '3ccf474c-3881-44b7-99fb-59a2a4668418';
