@@ -46,5 +46,4 @@ describe('entityHelper', () => {
 	it('1.0 should return null if content path not exist (ERP4SMEPREPWORKAPPPLAT-32)', async () => {
 		expect(getEntityByContextPath(''.split('/'))).to.not.exist;
 	});
-		expect(hasComposition).to.equal(false);
 });
