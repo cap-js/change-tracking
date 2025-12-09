@@ -89,6 +89,11 @@ annotate ChangeView with @(UI: {
       Descending: true
     }],
   },
+  HeaderInfo : {
+      $Type : 'UI.HeaderInfoType',
+      TypeName : '{i18n>ChangeHistory}',
+      TypeNamePlural : '{i18n>ChangeHistory}',
+  },
   LineItem           : [
     {
       Value             : modificationLabel,
