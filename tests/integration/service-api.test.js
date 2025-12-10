@@ -1,8 +1,4 @@
 const cds = require('@sap/cds');
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const asyncExec = promisify(exec);
-const fs = require('fs/promises');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
