@@ -66,21 +66,21 @@ describe('change log integration test', () => {
 
 		expect(changes.length).toEqual(2);
 
-		const change1 = changes.find(c => c.attribute === 'netAmount')
+		const change1 = changes.find((c) => c.attribute === 'netAmount');
 
-		expect(change1).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1')
-		expect(change1).toHaveProperty('modification', 'Create')
-		expect(change1).toHaveProperty('entity', 'sap.capire.bookshop.Order')
-		expect(change1.valueChangedFrom).toEqual('')
-		expect(Number(change1.valueChangedTo)).toEqual(0)
+		expect(change1).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1');
+		expect(change1).toHaveProperty('modification', 'Create');
+		expect(change1).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change1.valueChangedFrom).toEqual('');
+		expect(Number(change1.valueChangedTo)).toEqual(0);
 
-		const change2 = changes.find(c => c.attribute === 'isUsed')
+		const change2 = changes.find((c) => c.attribute === 'isUsed');
 
-		expect(change2).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1')
-		expect(change2).toHaveProperty('modification', 'Create')
-		expect(change2).toHaveProperty('entity', 'sap.capire.bookshop.Order')
-		expect(change2.valueChangedFrom).toEqual('')
-		expect(change2.valueChangedTo).toEqual('false')
+		expect(change2).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1');
+		expect(change2).toHaveProperty('modification', 'Create');
+		expect(change2).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change2.valueChangedFrom).toEqual('');
+		expect(change2.valueChangedTo).toEqual('false');
 
 		await DELETE.from(adminService.entities.Order).where({ ID: '0faaff2d-7e0e-4494-97fe-c815ee973fa1' });
 		changes = await adminService.run(
@@ -91,21 +91,21 @@ describe('change log integration test', () => {
 
 		expect(changes.length).toEqual(2);
 
-		const change3 = changes.find(c => c.attribute === 'netAmount')
+		const change3 = changes.find((c) => c.attribute === 'netAmount');
 
-		expect(change3).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1')
-		expect(change3).toHaveProperty('modification', 'Delete')
-		expect(change3).toHaveProperty('entity', 'sap.capire.bookshop.Order')
-		expect(Number(change3.valueChangedFrom)).toEqual(0)
-		expect(change3.valueChangedTo).toEqual('')
+		expect(change3).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1');
+		expect(change3).toHaveProperty('modification', 'Delete');
+		expect(change3).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(Number(change3.valueChangedFrom)).toEqual(0);
+		expect(change3.valueChangedTo).toEqual('');
 
-		const change4 = changes.find(c => c.attribute === 'isUsed')
+		const change4 = changes.find((c) => c.attribute === 'isUsed');
 
-		expect(change4).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1')
-		expect(change4).toHaveProperty('modification', 'Delete')
-		expect(change4).toHaveProperty('entity', 'sap.capire.bookshop.Order')
-		expect(change4.valueChangedFrom).toEqual('false')
-		expect(change4.valueChangedTo).toEqual('')
+		expect(change4).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1');
+		expect(change4).toHaveProperty('modification', 'Delete');
+		expect(change4).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change4.valueChangedFrom).toEqual('false');
+		expect(change4.valueChangedTo).toEqual('');
 
 		delete cds.services.AdminService.entities.Order.elements.netAmount['@changelog'];
 		delete cds.services.AdminService.entities.Order.elements.isUsed['@changelog'];
@@ -664,9 +664,9 @@ describe('change log integration test', () => {
 
 		expect(changes.length).toEqual(12);
 
-		expect(changes.some(c => c.modification !== 'Create')).toEqual(false)
+		expect(changes.some((c) => c.modification !== 'Create')).toEqual(false);
 
-		let changesOrder1 = await adminService.run(SELECT.from(ChangeView).where({entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1'}));
+		let changesOrder1 = await adminService.run(SELECT.from(ChangeView).where({ entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1' }));
 
 		const change1 = changesOrder1.find((change) => change.attribute === 'netAmount');
 		expect(change1.entity).toEqual('sap.capire.bookshop.Order');
@@ -678,8 +678,7 @@ describe('change log integration test', () => {
 		expect(change2.valueChangedFrom).toEqual('');
 		expect(change2.valueChangedTo).toEqual('false');
 
-
-		const quantityChanges1 = changesOrder1.filter((change) => change.attribute === 'quantity').sort((a,b) => a.valueChangedTo - b.valueChangedTo);
+		const quantityChanges1 = changesOrder1.filter((change) => change.attribute === 'quantity').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
 		expect(quantityChanges1[0].entity).toEqual('sap.capire.bookshop.OrderItem');
 		expect(quantityChanges1[0].valueChangedFrom).toEqual('');
 		expect(Number(quantityChanges1[0].valueChangedTo)).toEqual(10);
@@ -687,9 +686,8 @@ describe('change log integration test', () => {
 		expect(quantityChanges1[1].entity).toEqual('sap.capire.bookshop.OrderItem');
 		expect(quantityChanges1[1].valueChangedFrom).toEqual('');
 		expect(Number(quantityChanges1[1].valueChangedTo)).toEqual(12);
-		
 
-		let changesOrder2 = await adminService.run(SELECT.from(ChangeView).where({entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040'}));
+		let changesOrder2 = await adminService.run(SELECT.from(ChangeView).where({ entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040' }));
 
 		const change3 = changesOrder2.find((change) => change.attribute === 'netAmount');
 		expect(change3.entity).toEqual('sap.capire.bookshop.Order');
@@ -701,8 +699,7 @@ describe('change log integration test', () => {
 		expect(change4.valueChangedFrom).toEqual('');
 		expect(change4.valueChangedTo).toEqual('true');
 
-
-		const quantityChanges2 = changesOrder2.filter((change) => change.attribute === 'quantity').sort((a,b) => a.valueChangedTo - b.valueChangedTo);
+		const quantityChanges2 = changesOrder2.filter((change) => change.attribute === 'quantity').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
 		expect(quantityChanges2[0].entity).toEqual('sap.capire.bookshop.OrderItem');
 		expect(quantityChanges2[0].valueChangedFrom).toEqual('');
 		expect(Number(quantityChanges2[0].valueChangedTo)).toEqual(10);
@@ -711,7 +708,7 @@ describe('change log integration test', () => {
 		expect(quantityChanges2[1].valueChangedFrom).toEqual('');
 		expect(Number(quantityChanges2[1].valueChangedTo)).toEqual(12);
 
-		let changesOrder3 = await adminService.run(SELECT.from(ChangeView).where({entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056'}));
+		let changesOrder3 = await adminService.run(SELECT.from(ChangeView).where({ entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056' }));
 
 		const change5 = changesOrder3.find((change) => change.attribute === 'netAmount');
 		expect(change5.entity).toEqual('sap.capire.bookshop.Order');
@@ -723,8 +720,7 @@ describe('change log integration test', () => {
 		expect(change6.valueChangedFrom).toEqual('');
 		expect(change6.valueChangedTo).toEqual('false');
 
-
-		const quantityChanges3 = changesOrder3.filter((change) => change.attribute === 'quantity').sort((a,b) => a.valueChangedTo - b.valueChangedTo);
+		const quantityChanges3 = changesOrder3.filter((change) => change.attribute === 'quantity').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
 		expect(quantityChanges3[0].entity).toEqual('sap.capire.bookshop.OrderItem');
 		expect(quantityChanges3[0].valueChangedFrom).toEqual('');
 		expect(Number(quantityChanges3[0].valueChangedTo)).toEqual(10);
@@ -833,10 +829,10 @@ describe('change log integration test', () => {
 
 describe('MTX Build', () => {
 	test('Changes association is only added once JSON csn is compiled for runtime', async () => {
-		const csn = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], {flavor: 'xtended'});
+		const csn = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'xtended' });
 		expect(csn.definitions['AdminService.RootEntity'].elements?.changes).toBeFalsy();
 
-		const csn2 = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], {flavor: 'inferred'});
+		const csn2 = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'inferred' });
 		const effectiveCSN2 = await cds.compile.for.nodejs(csn2);
 
 		expect(effectiveCSN2.definitions['AdminService.RootEntity'].elements.changes).toBeTruthy();

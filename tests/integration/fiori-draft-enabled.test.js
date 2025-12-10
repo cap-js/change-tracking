@@ -85,21 +85,21 @@ describe('change log integration test', () => {
 		let changes = await adminService.run(SELECT.from(ChangeView));
 		expect(changes.length).toEqual(2);
 
-		const change1 = changes.find(c => c.attribute === 'price')
+		const change1 = changes.find((c) => c.attribute === 'price');
 
-		expect(change1).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770')
-		expect(change1).toHaveProperty('modification', 'Create')
-		expect(change1).toHaveProperty('entity', 'Book')
-		expect(change1.valueChangedFrom).toEqual('')
-		expect(Number(change1.valueChangedTo)).toEqual(0)
+		expect(change1).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(change1).toHaveProperty('modification', 'Create');
+		expect(change1).toHaveProperty('entity', 'Book');
+		expect(change1.valueChangedFrom).toEqual('');
+		expect(Number(change1.valueChangedTo)).toEqual(0);
 
-		const change2 = changes.find(c => c.attribute === 'isUsed')
+		const change2 = changes.find((c) => c.attribute === 'isUsed');
 
-		expect(change2).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770')
-		expect(change2).toHaveProperty('modification', 'Create')
-		expect(change2).toHaveProperty('entity', 'Book')
-		expect(change2.valueChangedFrom).toEqual('')
-		expect(change2.valueChangedTo).toEqual('false')
+		expect(change2).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(change2).toHaveProperty('modification', 'Create');
+		expect(change2).toHaveProperty('entity', 'Book');
+		expect(change2.valueChangedFrom).toEqual('');
+		expect(change2.valueChangedTo).toEqual('false');
 
 		action = DELETE.bind({}, `/odata/v4/admin/Books(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=false)`);
 		await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action);
@@ -110,21 +110,21 @@ describe('change log integration test', () => {
 		);
 		expect(changes.length).toEqual(2);
 
-		const change3 = changes.find(c => c.attribute === 'price')
+		const change3 = changes.find((c) => c.attribute === 'price');
 
-		expect(change3).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770')
-		expect(change3).toHaveProperty('modification', 'Delete')
-		expect(change3).toHaveProperty('entity', 'Book')
-		expect(Number(change3.valueChangedFrom)).toEqual(0)
-		expect(change3.valueChangedTo).toEqual('')
+		expect(change3).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(change3).toHaveProperty('modification', 'Delete');
+		expect(change3).toHaveProperty('entity', 'Book');
+		expect(Number(change3.valueChangedFrom)).toEqual(0);
+		expect(change3.valueChangedTo).toEqual('');
 
-		const change4 = changes.find(c => c.attribute === 'isUsed')
+		const change4 = changes.find((c) => c.attribute === 'isUsed');
 
-		expect(change4).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770')
-		expect(change4).toHaveProperty('modification', 'Delete')
-		expect(change4).toHaveProperty('entity', 'Book')
-		expect(change4.valueChangedFrom).toEqual('false')
-		expect(change4.valueChangedTo).toEqual('')
+		expect(change4).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(change4).toHaveProperty('modification', 'Delete');
+		expect(change4).toHaveProperty('entity', 'Book');
+		expect(change4.valueChangedFrom).toEqual('false');
+		expect(change4.valueChangedTo).toEqual('');
 
 		delete cds.services.AdminService.entities.Books.elements.price['@changelog'];
 	});
@@ -614,9 +614,9 @@ describe('change log integration test', () => {
 		expect(titleChanges.length).toEqual(1);
 
 		const titleChangeParts = titleChanges[0].objectID.split(', ');
-		expect(Number(titleChangeParts[0])).toEqual(3000)
-		expect(titleChangeParts[1]).toEqual('new title')
-		expect(Number(titleChangeParts[2])).toEqual(12)
+		expect(Number(titleChangeParts[0])).toEqual(3000);
+		expect(titleChangeParts[1]).toEqual('new title');
+		expect(Number(titleChangeParts[2])).toEqual(12);
 
 		cds.services.AdminService.entities.Books['@changelog'] = originalChangelog;
 	});

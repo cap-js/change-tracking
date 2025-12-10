@@ -155,21 +155,21 @@ describe('change log draft disabled test', () => {
 
 		expect(changes.length).toEqual(2);
 
-		const change1 = changes.find(c => c.attribute === 'netAmount')
+		const change1 = changes.find((c) => c.attribute === 'netAmount');
 
-		expect(change1).toHaveProperty('entityKey', '3e745e35-5974-4383-b60a-2f5c9bdd31ac')
-		expect(change1).toHaveProperty('modification', 'Create')
-		expect(change1).toHaveProperty('entity', 'sap.capire.bookshop.Order')
-		expect(change1.valueChangedFrom).toEqual('')
-		expect(Number(change1.valueChangedTo)).toEqual(0)
+		expect(change1).toHaveProperty('entityKey', '3e745e35-5974-4383-b60a-2f5c9bdd31ac');
+		expect(change1).toHaveProperty('modification', 'Create');
+		expect(change1).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change1.valueChangedFrom).toEqual('');
+		expect(Number(change1.valueChangedTo)).toEqual(0);
 
-		const change2 = changes.find(c => c.attribute === 'isUsed')
+		const change2 = changes.find((c) => c.attribute === 'isUsed');
 
-		expect(change2).toHaveProperty('entityKey', '3e745e35-5974-4383-b60a-2f5c9bdd31ac')
-		expect(change2).toHaveProperty('modification', 'Create')
-		expect(change2).toHaveProperty('entity', 'sap.capire.bookshop.Order')
-		expect(change2.valueChangedFrom).toEqual('')
-		expect(change2.valueChangedTo).toEqual('false')
+		expect(change2).toHaveProperty('entityKey', '3e745e35-5974-4383-b60a-2f5c9bdd31ac');
+		expect(change2).toHaveProperty('modification', 'Create');
+		expect(change2).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change2.valueChangedFrom).toEqual('');
+		expect(change2.valueChangedTo).toEqual('false');
 
 		await DELETE('/odata/v4/admin/Order(ID=3e745e35-5974-4383-b60a-2f5c9bdd31ac)');
 
@@ -181,21 +181,21 @@ describe('change log draft disabled test', () => {
 
 		expect(changes.length).toEqual(2);
 
-		const change3 = changes.find(c => c.attribute === 'netAmount')
+		const change3 = changes.find((c) => c.attribute === 'netAmount');
 
-		expect(change3).toHaveProperty('entityKey', '3e745e35-5974-4383-b60a-2f5c9bdd31ac')
-		expect(change3).toHaveProperty('modification', 'Delete')
-		expect(change3).toHaveProperty('entity', 'sap.capire.bookshop.Order')
-		expect(Number(change3.valueChangedFrom)).toEqual(0)
-		expect(change3.valueChangedTo).toEqual('')
+		expect(change3).toHaveProperty('entityKey', '3e745e35-5974-4383-b60a-2f5c9bdd31ac');
+		expect(change3).toHaveProperty('modification', 'Delete');
+		expect(change3).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(Number(change3.valueChangedFrom)).toEqual(0);
+		expect(change3.valueChangedTo).toEqual('');
 
-		const change4 = changes.find(c => c.attribute === 'isUsed')
+		const change4 = changes.find((c) => c.attribute === 'isUsed');
 
-		expect(change4).toHaveProperty('entityKey', '3e745e35-5974-4383-b60a-2f5c9bdd31ac')
-		expect(change4).toHaveProperty('modification', 'Delete')
-		expect(change4).toHaveProperty('entity', 'sap.capire.bookshop.Order')
-		expect(change4.valueChangedFrom).toEqual('false')
-		expect(change4.valueChangedTo).toEqual('')
+		expect(change4).toHaveProperty('entityKey', '3e745e35-5974-4383-b60a-2f5c9bdd31ac');
+		expect(change4).toHaveProperty('modification', 'Delete');
+		expect(change4).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change4.valueChangedFrom).toEqual('false');
+		expect(change4.valueChangedTo).toEqual('');
 
 		delete cds.services.AdminService.entities.Order.elements.netAmount['@changelog'];
 		delete cds.services.AdminService.entities.Order.elements.isUsed['@changelog'];
@@ -315,7 +315,7 @@ describe('change log draft disabled test', () => {
 		let changes = await adminService.run(SELECT.from(ChangeView));
 		expect(changes.length).toEqual(1);
 		const change = changes[0];
-		const IDsegments = change.objectID.split(', ')
+		const IDsegments = change.objectID.split(', ');
 		expect(IDsegments[0]).toEqual('Ōsaka');
 		expect(IDsegments[1]).toEqual('Post');
 		expect(Number(IDsegments[2])).toEqual(5);
