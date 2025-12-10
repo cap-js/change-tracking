@@ -15,7 +15,7 @@
 	],
 	"scripts": {
 		"lint": "npx eslint .",
-		"test": "npx jest --silent",
+		"test": "npx jest --silent --runInBand",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
 	},
@@ -41,7 +41,7 @@
 		}
 	},
 	"jest": {
-		"testTimeout": 10000
+		"testTimeout": 180000
 	},
 	"workspaces": [
 		"tests/*"

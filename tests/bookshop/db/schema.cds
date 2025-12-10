@@ -11,6 +11,8 @@ using {
 } from './common/types.cds';
 using {sap.capire.bookshop.ActivationStatusCode} from './codelists';
 using {sap.capire.bookshop.PaymentAgreementStatusCodes as PaymentAgreementStatusCodes} from './codelists';
+using from './incidents/schema';
+using from './incidents/attachments';
 
 namespace sap.capire.bookshop;
 
