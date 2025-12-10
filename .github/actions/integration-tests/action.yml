@@ -54,14 +54,44 @@ runs:
       uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.NODE_VERSION }}
-    - run: npm i -g @sap/cds-dk
+    - name: Set CDS version-specific dependencies
       shell: bash
-    - run: npm i
+      run: |
+        if [ "${{ matrix.cds-version }}" == "8" ]; then
+          echo "Installing CDS 8 compatible packages..."
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
+          npm pkg set "overrides.@cap-js/sqlite=^1.0.0"
+          npm pkg set "overrides.@cap-js/hana=^1.0.0"
+          npm pkg set "overrides.@cap-js/db-service=^1.0.0"
+          cd tests/bookshop
+          npm pkg set "dependencies.@cap-js/hana=^1.0.0"
+          npm pkg set "dependencies.@cap-js/db-service=^1.0.0"
+          cd ../..
+          cd tests/bookshop-mtx
+          npm pkg set "dependencies.@cap-js/hana=^1.0.0"
+          npm pkg set "dependencies.@cap-js/db-service=^1.0.0"
+          cd ../..
+        fi
+
+    - name: Install global CDS
       shell: bash
-    - run: cd tests/bookshop && npm i
+      run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
+    - name: Install root dependencies
       shell: bash
-    - run: cd tests/bookshop-mtx && npm i
+      run: |
+        npm install @sap/cds@${{ matrix.cds-version }}
+        npm install
+    - name: Install bookshop dependencies
       shell: bash
+      run: |
+        cd tests/bookshop && npm install @sap/cds@${{ matrix.cds-version }}
+        cd tests/bookshop && npm install
+    - name: Install bookshop mtx dependencies
+      shell: bash
+      run: |
+        cd tests/bookshop-mtx && npm install @sap/cds@${{ matrix.cds-version }}
+        cd tests/bookshop-mtx && npm install
+      
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV
       shell: bash
