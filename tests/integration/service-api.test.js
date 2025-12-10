@@ -8,43 +8,17 @@ const path = require('path');
 const bookshop = path.resolve(__dirname, './../bookshop');
 const { expect, data, GET } = cds.test(bookshop);
 
-// Enable locale fallback to simulate end user requests
-cds.env.features.locale_fallback = true;
-
-jest.setTimeout(5 * 60 * 1000);
-
 let adminService = null;
 let ChangeView = null;
 let ChangeLog = null;
 let db = null;
 
 describe('change log integration test', () => {
-	let __warn, _warnings;
-	const _warn = (...args) => {
-		if (!(args.length === 2 && typeof args[0] === 'string' && args[0].match(/\[change-log\]/i))) {
-			// > not an audit log (most likely, anyway)
-			return __warn(...args);
-		}
-
-		_warnings.push(args[1]);
-	};
-
-	beforeAll(() => {
-		__warn = global.console.warn;
-		global.console.warn = _warn;
-	});
-
-	afterAll(() => {
-		global.console.warn = __warn;
-	});
-
-	beforeEach(async () => {
-		_warnings = [];
-	});
+	let log = cds.test.log()
 
 	beforeAll(async () => {
 		adminService = await cds.connect.to('AdminService');
-		db = await cds.connect.to('sql:my.db');
+		db = await cds.connect.to('db');
 		ChangeView = adminService.entities.ChangeView;
 		ChangeView['@cds.autoexposed'] = false;
 		ChangeLog = db.model.definitions['sap.changelog.ChangeLog'];
@@ -893,7 +867,8 @@ describe('change log integration test', () => {
 		} = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
 		expect(changes2.length).to.equal(1);
 		expect(changes2[0].serviceEntity).to.equal('Volumns');
-		_warnings[0].match(/Cannot localize the attribute/);
+		expect(log.output.length).to.be.greaterThan(0)
+		expect(log.output).to.match(/Cannot localize the attribute/);
 	});
 
 	it('Leave localization logic early if attribute value is not part of the model', async () => {
@@ -911,7 +886,8 @@ describe('change log integration test', () => {
 		} = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
 		expect(changes2.length).to.equal(1);
 		expect(changes2[0].attribute).to.equal('abc');
-		_warnings[0].match(/Cannot localize the attribute/);
+		expect(log.output.length).to.be.greaterThan(0)
+		expect(log.output).to.match(/Cannot localize the attribute/);
 	});
 });
 

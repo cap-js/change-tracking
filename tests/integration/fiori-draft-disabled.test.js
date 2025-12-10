@@ -2,11 +2,6 @@ const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { expect, data, POST, PATCH, DELETE } = cds.test(bookshop);
 
-// Enable locale fallback to simulate end user requests
-cds.env.features.locale_fallback = true;
-
-jest.setTimeout(5 * 60 * 1000);
-
 let adminService = null;
 let ChangeView = null;
 let db = null;
@@ -18,7 +13,7 @@ describe('change log draft disabled test', () => {
 		adminService = await cds.connect.to('AdminService');
 		ChangeView = adminService.entities.ChangeView;
 		ChangeView['@cds.autoexposed'] = false;
-		db = await cds.connect.to('sql:my.db');
+		db = await cds.connect.to('db');
 		ChangeEntity = db.model.definitions['sap.changelog.Changes'];
 		ChangeLog = db.model.definitions['sap.changelog.ChangeLog'];
 	});

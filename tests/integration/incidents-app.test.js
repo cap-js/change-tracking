@@ -9,7 +9,7 @@ beforeEach(async () => {
 	await test.data.reset();
 });
 
-describe('Tests for uploading/deleting attachments through API calls - in-memory db', () => {
+describe('Tests for uploading/deleting attachments through API calls', () => {
 	it('Localized values are stored - EN', async () => {
 		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
@@ -22,7 +22,7 @@ describe('Tests for uploading/deleting attachments through API calls - in-memory
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`);
-		const statusChange = changes.find((change) => change.attribute === 'status');
+		const statusChange = changes.find((change) => change.attribute === 'Status');
 		expect(statusChange).to.have.property('valueChangedFrom', 'New');
 		expect(statusChange).to.have.property('valueChangedTo', 'Resolved');
 	});
@@ -39,7 +39,7 @@ describe('Tests for uploading/deleting attachments through API calls - in-memory
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`);
-		const statusChangeGerman = changes.find((change) => change.attribute === 'status');
+		const statusChangeGerman = changes.find((change) => change.attribute === 'Status');
 		expect(statusChangeGerman).to.have.property('valueChangedFrom', 'Neu');
 		expect(statusChangeGerman).to.have.property('valueChangedTo', 'Gelöst');
 	});
@@ -118,7 +118,7 @@ describe('Non ID key support', () => {
 		const change = changes.find((change) => change.attribute === 'page');
 		expect(change).to.have.property('valueChangedFrom', '');
 		expect(change).to.have.property('valueChangedTo', '2');
-		expect(change).to.have.property('modification', 'create');
+		expect(change).to.have.property('modification', 'Create');
 		expect(change).to.have.property('serviceEntityPath', 'ProcessorService.BooksNotID(1)/ProcessorService.PagesNotID(6)');
 	});
 
@@ -137,7 +137,7 @@ describe('Non ID key support', () => {
 		const change = changes.find((change) => change.attribute === 'page');
 		expect(change).to.have.property('valueChangedFrom', '1');
 		expect(change).to.have.property('valueChangedTo', '2');
-		expect(change).to.have.property('modification', 'update');
+		expect(change).to.have.property('modification', 'Update');
 		expect(change).to.have.property('serviceEntityPath', 'ProcessorService.BooksNotID(1)/ProcessorService.PagesNotID(1)');
 	});
 
@@ -154,7 +154,7 @@ describe('Non ID key support', () => {
 		const change = changes.find((change) => change.attribute === 'page');
 		expect(change).to.have.property('valueChangedFrom', '1');
 		expect(change).to.have.property('valueChangedTo', '');
-		expect(change).to.have.property('modification', 'delete');
+		expect(change).to.have.property('modification', 'Delete');
 		expect(change).to.have.property('serviceEntityPath', 'ProcessorService.BooksNotID(1)/ProcessorService.PagesNotID(1)');
 	});
 
@@ -175,10 +175,10 @@ describe('Non ID key support', () => {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/Orders(839b2355-b538-4b6d-87f9-6516496843a9)/changes`);
 		expect(changes.length).to.equal(1);
-		const change = changes.find((change) => change.attribute === 'country');
+		const change = changes.find((change) => change.attribute === 'Country/Region');
 		expect(change).to.have.property('valueChangedFrom', '');
 		expect(change).to.have.property('valueChangedTo', 'DE');
-		expect(change).to.have.property('modification', 'create');
+		expect(change).to.have.property('modification', 'Create');
 		expect(change).to.have.property('serviceEntityPath', 'ProcessorService.Orders(839b2355-b538-4b6d-87f9-6516496843a9)/ProcessorService.OrderProducts(bda1d416-8747-4fff-a847-9a3b2506927c)');
 	});
 });
