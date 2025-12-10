@@ -1,42 +1,42 @@
 {
-  "dependencies": {
-    "@cap-js/attachments": "^2",
-    "@cap-js/change-tracking": "file:../../.",
-    "@cap-js/hana": "^2"
-  },
-  "devDependencies": {
-    "@cap-js/sqlite": "*"
-  },
-  "cds": {
-    "requires": {
-      "auth": {
-        "[development]": {
-          "users": {
-            "alice": {
-              "roles": [
-                "support",
-                "admin"
-              ]
-            },
-            "bob": {
-              "roles": [
-                "support"
-              ]
-            }
-          }
-        }
-      },
-      "attachments": {
-        "kind": "db",
-        "scan": false
-      },
-      "change-tracking": {
-        "considerLocalizedValues": true
-      }
-    },
-    "features": {
-      "serve_on_root": true,
-      "locale_fallback": true
-    }
-  }
+	"dependencies": {
+		"@cap-js/attachments": "^2",
+		"@cap-js/change-tracking": "file:../../.",
+		"@cap-js/hana": "^2"
+	},
+	"devDependencies": {
+		"@cap-js/sqlite": "*"
+	},
+	"cds": {
+		"requires": {
+			"auth": {
+				"[development]": {
+					"users": {
+						"alice": {
+							"roles": [
+								"support",
+								"admin"
+							]
+						},
+						"bob": {
+							"roles": [
+								"support"
+							]
+						}
+					}
+				}
+			},
+			"attachments": {
+				"kind": "db",
+				"scan": false
+			},
+			"change-tracking": {
+				"considerLocalizedValues": true
+			}
+		},
+		"features": {
+			"serve_on_root": true,
+			"locale_fallback": true
+		}
+	}
 }

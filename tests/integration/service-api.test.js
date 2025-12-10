@@ -14,7 +14,7 @@ let ChangeLog = null;
 let db = null;
 
 describe('change log integration test', () => {
-	let log = cds.test.log()
+	let log = cds.test.log();
 
 	beforeAll(async () => {
 		adminService = await cds.connect.to('AdminService');
@@ -867,7 +867,7 @@ describe('change log integration test', () => {
 		} = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
 		expect(changes2.length).to.equal(1);
 		expect(changes2[0].serviceEntity).to.equal('Volumns');
-		expect(log.output.length).to.be.greaterThan(0)
+		expect(log.output.length).to.be.greaterThan(0);
 		expect(log.output).to.match(/Cannot localize the attribute/);
 	});
 
@@ -886,7 +886,7 @@ describe('change log integration test', () => {
 		} = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
 		expect(changes2.length).to.equal(1);
 		expect(changes2[0].attribute).to.equal('abc');
-		expect(log.output.length).to.be.greaterThan(0)
+		expect(log.output.length).to.be.greaterThan(0);
 		expect(log.output).to.match(/Cannot localize the attribute/);
 	});
 });
