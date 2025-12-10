@@ -85,12 +85,12 @@ runs:
       shell: bash
       run: |
         cd tests/bookshop && npm install @sap/cds@${{ matrix.cds-version }}
-        cd tests/bookshop && npm install
+        npm install
     - name: Install bookshop mtx dependencies
       shell: bash
       run: |
         cd tests/bookshop-mtx && npm install @sap/cds@${{ matrix.cds-version }}
-        cd tests/bookshop-mtx && npm install
+        npm install
       
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV
