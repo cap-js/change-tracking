@@ -41,7 +41,7 @@ describe('change log draft disabled test', () => {
 		expect(!nameLog.parentObjectID).toBeTruthy();
 		expect(!nameLog.parentKey).toBeTruthy();
 		expect(nameLog.valueChangedFrom).toEqual('');
-		expect(changes.some(c => c.valueChangedTo === 'Sam')).toEqual(true);
+		expect(changes.some((c) => c.valueChangedTo === 'Sam')).toEqual(true);
 
 		expect(placeOfBirthLog).toBeTruthy();
 		expect(placeOfBirthLog.entityKey).toEqual(author.data.ID);
