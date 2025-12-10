@@ -1,10 +1,9 @@
 const cds = require('@sap/cds');
-const { SELECT } = cds.ql;
 
 class ProcessorService extends cds.ApplicationService {
 	/** Registering custom event handlers */
 	init() {
-		const { Incidents, MultiKeyScenario } = this.entities;
+		const { Incidents } = this.entities;
 
 		this.before('UPDATE', Incidents, (req) => this.onUpdate(req));
 		this.before(['CREATE', 'UPDATE'], Incidents, (req) => this.changeUrgencyDueToSubject(req.data));

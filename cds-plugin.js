@@ -195,7 +195,7 @@ function enhanceModel(m) {
 	if (!aspect) return; // some other model
 	const { '@UI.Facets': [facet], elements: { changes } } = aspect;
 
-	processEntities(m); // REVISIT: why is that required ?!?
+	//processEntities(m); // REVISIT: why is that required ?!?
 	hierarchyMap = analyzeCompositions(m);
 
 	for (let name in m.definitions) {
@@ -245,30 +245,8 @@ function enhanceModel(m) {
 	(m.meta ??= {})[_enhanced] = true;
 }
 
-// Add generic change tracking handlers
-function addGenericHandlers() {
-	const { track_changes, _afterReadChangeView } = require('./lib/change-log');
-	for (const srv of cds.services) {
-		if (srv instanceof cds.ApplicationService) {
-			let any = false;
-			for (const entity of Object.values(srv.entities)) {
-				if (isChangeTracked(entity)) {
-					cds.db.before("CREATE", entity, track_changes)
-					cds.db.before("UPDATE", entity, track_changes)
-					cds.db.before("DELETE", entity, track_changes)
-					any = true;
-				}
-			}
-			if (any && srv.entities.ChangeView) {
-				srv.after("READ", srv.entities.ChangeView, _afterReadChangeView)
-			}
-		}
-	}
-}
-
 // Register plugin hooks
 cds.on('loaded', enhanceModel);
-//cds.on('served', addGenericHandlers);
 
 cds.once('served', async () => {
 	const kind = cds.env.requires?.db?.kind
@@ -303,6 +281,159 @@ cds.once('served', async () => {
 		cds.insert(labels).into(i18nKeys)
 	]);
 });
+
+const _sql_original = cds.compile.to.sql
+cds.compile.to.sql = function (csn, options) {
+	let ret = _sql_original.call(this, csn, options);
+	if (options?.kind === 'sqlite') return ret; // skip for sqlite, handled in 'served' hook
+	const triggers = [];
+
+	for (let [name, def] of Object.entries(csn.definitions)) {
+		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+		if (!isTableEntity || !isChangeTracked(def)) continue;
+		if (name !== "sap.capire.incidents.Incidents") continue;
+		const entity = structuredClone(def);
+		entity.name = name;
+		const isH2 = options?.to === 'h2';
+		const { generateH2Trigger } = require('./lib/h2.js');
+		const x = generateH2Trigger(csn, entity);
+		masterTrigger = `CREATE TRIGGER masterTrigger
+AFTER INSERT, UPDATE, DELETE ON SAP_CAPIRE_INCIDENTS_INCIDENTS 
+FOR EACH ROW
+AS $$
+    import org.h2.tools.TriggerAdapter;
+    import java.sql.Connection;
+	import java.sql.ResultSet;
+    import java.sql.PreparedStatement;
+    import java.sql.SQLException;
+	import java.util.Objects;
+
+    @CODE
+    TriggerAdapter create() {
+        return new TriggerAdapter() {
+            
+            @Override
+            public void init(Connection conn, String schemaName, String triggerName, String tableName, boolean before, int type) throws SQLException {}
+
+            @Override
+			public void fire(Connection conn, ResultSet oldRow, ResultSet newRow) throws SQLException {
+				boolean isInsert = oldRow == null;
+				boolean isDelete = newRow == null;
+				boolean isUpdate = !isInsert && !isDelete;
+
+				if (isInsert) {
+					String title = newRow.getString("title");
+					try (PreparedStatement stmt = conn.prepareStatement(
+							"INSERT INTO SAP_CHANGELOG_CHANGES (ID, ATTRIBUTE, VALUECHANGEDFROM, VALUECHANGEDTO, MODIFICATION) VALUES (RANDOM_UUID(), 'title', NULL, ?, 'create')")) {
+						stmt.setString(1, title);
+						stmt.executeUpdate();
+					}
+				} else if (isDelete) {
+					String title = oldRow.getString("title");
+					try (PreparedStatement stmt = conn.prepareStatement(
+							"INSERT INTO SAP_CHANGELOG_CHANGES (ID, ATTRIBUTE, VALUECHANGEDFROM, VALUECHANGEDTO, MODIFICATION) VALUES (RANDOM_UUID(), 'title', ?, NULL, 'delete')")) {
+						stmt.setString(1, title);
+						stmt.executeUpdate();
+					}
+				} else if (isUpdate) {
+					String oldTitle = oldRow.getString("title");
+					String newTitle = newRow.getString("title");
+					if (!Objects.equals(oldTitle, newTitle)) {
+						try (PreparedStatement stmt = conn.prepareStatement(
+								"INSERT INTO SAP_CHANGELOG_CHANGES (ID, ATTRIBUTE, VALUECHANGEDFROM, VALUECHANGEDTO, MODIFICATION) VALUES (RANDOM_UUID(), 'title', ?, ?, 'update')")) {
+							stmt.setString(1, oldTitle);
+							stmt.setString(2, newTitle);
+							stmt.executeUpdate();
+						}
+					}
+				}
+			}
+        };
+    }
+$$;;`;
+		const createTrigger = `CREATE TRIGGER CREATE_TR
+AFTER INSERT ON SAP_CAPIRE_INCIDENTS_INCIDENTS 
+FOR EACH ROW
+AS $$
+    import org.h2.tools.TriggerAdapter;
+    import java.sql.Connection;
+	import java.sql.ResultSet;
+    import java.sql.PreparedStatement;
+    import java.sql.SQLException;
+
+    @CODE
+    TriggerAdapter create() {
+        return new TriggerAdapter() {
+            
+            @Override
+            public void init(Connection conn, String schemaName, String triggerName, String tableName, boolean before, int type) throws SQLException {}
+
+            @Override
+            public void fire(Connection conn, ResultSet oldRow, ResultSet newRow) throws SQLException {
+				if (newRow == null) return;
+
+				String status = newRow.getString("status_code");
+                
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "INSERT INTO SAP_CHANGELOG_CHANGES (ID, ATTRIBUTE, VALUECHANGEDFROM, VALUECHANGEDTO) VALUES (RANDOM_UUID(), 'Status', NULL, ?)")) {
+                    stmt.setString(1, status);
+                    stmt.executeUpdate();
+                }
+            }
+        };
+    }
+$$;;`;
+
+		const updateTrigger = `CREATE TRIGGER UPDATE_TR
+AFTER UPDATE ON SAP_CAPIRE_INCIDENTS_INCIDENTS 
+FOR EACH ROW
+AS $$
+    import org.h2.api.Trigger;
+    import java.sql.Connection;
+    import java.sql.PreparedStatement;
+    import java.sql.SQLException;
+
+    @CODE
+    Trigger create() {
+        return new Trigger() {
+            
+            @Override
+            public void init(Connection conn, String schemaName, String triggerName, String tableName, boolean before, int type) throws SQLException {}
+
+            @Override
+            public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
+			if (oldRow[6] != null && newRow[6] != null && oldRow[6].equals(newRow[6])) {
+				return;
+			}
+				String oldTitle = (String) oldRow[6];
+                String newTitle = (String) newRow[6];
+                
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "INSERT INTO SAP_CHANGELOG_CHANGES (ID, ATTRIBUTE, VALUECHANGEDFROM, VALUECHANGEDTO) VALUES (RANDOM_UUID(), 'title', ?, ?)")) {
+                    stmt.setString(1, oldTitle);
+					stmt.setString(2, newTitle);
+                    stmt.executeUpdate();
+                }
+            }
+
+            @Override
+            public void close() throws SQLException {}
+
+            @Override
+            public void remove() throws SQLException {}
+        };
+    }
+$$;;`;
+		//const entityTriggers = generateTriggersForEntity(csn, def);
+		triggers.push(x);
+		//triggers.push(updateTrigger);
+	}
+
+	// Add semicolon at the end of each DDL statement if not already present
+	ret = ret.map(s => (s.endsWith(';') ? s + ';' : s));
+	return [...ret, ...triggers];
+}
+Object.assign(cds.compile.to.sql, _sql_original)
 
 // Generate HDI artifacts for change tracking
 const _hdi_migration = cds.compiler.to.hdi.migration;
