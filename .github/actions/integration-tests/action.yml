@@ -95,6 +95,9 @@ runs:
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV
       shell: bash
+    - name: Set node env for CDS
+      run: echo "CDS_VERSION=$(echo ${{ matrix.cds-version }} | tr . _)" >> $GITHUB_ENV
+      shell: bash
     - name: CDS Versions being used
       run: cds v -i
       shell: bash
@@ -102,12 +105,12 @@ runs:
     # Deploy model to HANA
     - name: Create HDI Container
       shell: bash
-      run: cf create-service hana hdi-shared cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA
-    - run: cd tests/bookshop/ && cds deploy --to hana:cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA
+      run: cf create-service hana hdi-shared cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION
+    - run: cd tests/bookshop/ && cds deploy --to hana:cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION
       shell: bash
 
     # Bind against BTP services
-    - run: cds bind db -2 cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA -o package.json
+    - run: cds bind db -2 cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION -o package.json
       shell: bash
 
     # Run tests in hybrid mode
@@ -117,7 +120,7 @@ runs:
     # Cleanup BTP services
     - name: Delete HDI Container Key
       if: ${{ always() }}
-      run: cf delete-service-key cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-key -f
+      run: cf delete-service-key cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION-key -f
       shell: bash
 
     # Note: The initial delete attempt often fails due to an "ongoing operation on service binding" error.
@@ -126,7 +129,7 @@ runs:
       shell: bash
       run: |
         for i in {1..3}; do
-          cf delete-service cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA -f && break
+          cf delete-service cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION -f && break
           echo "HDI container delete failed, retrying ($i/3)..."
           sleep 10
           if [ "$i" -eq 3 ]; then
