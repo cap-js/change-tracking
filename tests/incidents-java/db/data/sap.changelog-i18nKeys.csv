@@ -1,0 +1,253 @@
+ID;locale;text
+sap.capire.incidents.Incidents;ar;Support Incidents
+sap.capire.incidents.Incidents;bg;Support Incidents
+sap.capire.incidents.Incidents;cs;Support Incidents
+sap.capire.incidents.Incidents;da;Support Incidents
+sap.capire.incidents.Incidents;de;Support Incidents
+sap.capire.incidents.Incidents;el;Support Incidents
+sap.capire.incidents.Incidents;en;Support Incidents
+sap.capire.incidents.Incidents;en_US_saptrc;Support Incidents
+sap.capire.incidents.Incidents;es;Support Incidents
+sap.capire.incidents.Incidents;es_MX;Support Incidents
+sap.capire.incidents.Incidents;fi;Support Incidents
+sap.capire.incidents.Incidents;fr;Support Incidents
+sap.capire.incidents.Incidents;he;Support Incidents
+sap.capire.incidents.Incidents;hr;Support Incidents
+sap.capire.incidents.Incidents;hu;Support Incidents
+sap.capire.incidents.Incidents;it;Support Incidents
+sap.capire.incidents.Incidents;ja;Support Incidents
+sap.capire.incidents.Incidents;kk;Support Incidents
+sap.capire.incidents.Incidents;ko;Support Incidents
+sap.capire.incidents.Incidents;ms;Support Incidents
+sap.capire.incidents.Incidents;nl;Support Incidents
+sap.capire.incidents.Incidents;no;Support Incidents
+sap.capire.incidents.Incidents;pl;Support Incidents
+sap.capire.incidents.Incidents;pt;Support Incidents
+sap.capire.incidents.Incidents;ro;Support Incidents
+sap.capire.incidents.Incidents;ru;Support Incidents
+sap.capire.incidents.Incidents;sh;Support Incidents
+sap.capire.incidents.Incidents;sk;Support Incidents
+sap.capire.incidents.Incidents;sl;Support Incidents
+sap.capire.incidents.Incidents;sv;Support Incidents
+sap.capire.incidents.Incidents;th;Support Incidents
+sap.capire.incidents.Incidents;tr;Support Incidents
+sap.capire.incidents.Incidents;uk;Support Incidents
+sap.capire.incidents.Incidents;vi;Support Incidents
+sap.capire.incidents.Incidents;zh_CN;Support Incidents
+sap.capire.incidents.Incidents;zh_TW;Support Incidents
+status;ar;Status
+status;bg;Status
+status;cs;Status
+status;da;Status
+status;de;Status
+status;el;Status
+status;en;Status
+status;en_US_saptrc;Status
+status;es;Status
+status;es_MX;Status
+status;fi;Status
+status;fr;Status
+status;he;Status
+status;hr;Status
+status;hu;Status
+status;it;Status
+status;ja;Status
+status;kk;Status
+status;ko;Status
+status;ms;Status
+status;nl;Status
+status;no;Status
+status;pl;Status
+status;pt;Status
+status;ro;Status
+status;ru;Status
+status;sh;Status
+status;sk;Status
+status;sl;Status
+status;sv;Status
+status;th;Status
+status;tr;Status
+status;uk;Status
+status;vi;Status
+status;zh_CN;Status
+status;zh_TW;Status
+title;ar;Task Title
+title;bg;Task Title
+title;cs;Task Title
+title;da;Task Title
+title;de;Task Title
+title;el;Task Title
+title;en;Task Title
+title;en_US_saptrc;Task Title
+title;es;Task Title
+title;es_MX;Task Title
+title;fi;Task Title
+title;fr;Task Title
+title;he;Task Title
+title;hr;Task Title
+title;hu;Task Title
+title;it;Task Title
+title;ja;Task Title
+title;kk;Task Title
+title;ko;Task Title
+title;ms;Task Title
+title;nl;Task Title
+title;no;Task Title
+title;pl;Task Title
+title;pt;Task Title
+title;ro;Task Title
+title;ru;Task Title
+title;sh;Task Title
+title;sk;Task Title
+title;sl;Task Title
+title;sv;Task Title
+title;th;Task Title
+title;tr;Task Title
+title;uk;Task Title
+title;vi;Task Title
+title;zh_CN;Task Title
+title;zh_TW;Task Title
+country;ar;الدولة/المنطقة
+country;bg;Държава/регион
+country;cs;Stát/region
+country;da;Land/region
+country;de;Land/Region
+country;el;Χώρα/Περιοχή
+country;en;Country/Region
+country;en_US_saptrc;AbsSu8Y0n1nvBQMk+UaLfw_Country/Region
+country;es;País/Región
+country;es_MX;País/Región
+country;fi;Maa/alue
+country;fr;Pays/Région
+country;he;מדינה/אזור
+country;hr;Država/regija
+country;hu;Ország/régió
+country;it;Paese/regione
+country;ja;国/地域
+country;kk;Ел/аймақ
+country;ko;국가/지역
+country;ms;Negara/Wilayah
+country;nl;Land/regio
+country;no;Land/region
+country;pl;Kraj/region
+country;pt;País/região
+country;ro;Țară/regiune
+country;ru;Страна/регион
+country;sh;Zemlja/regija
+country;sk;Štát/región
+country;sl;Država/regija
+country;sv;Land/region
+country;th;ประเทศ/ภูมิภาค
+country;tr;Ülke/bölge
+country;uk;Країна/регіон
+country;vi;Quốc gia/Vùng
+country;zh_CN;国家/地区
+country;zh_TW;國家/地區
+create;ar;Create
+update;ar;Update
+delete;ar;Delete
+create;bg;Create
+update;bg;Update
+delete;bg;Delete
+create;cs;Create
+update;cs;Update
+delete;cs;Delete
+create;da;Create
+update;da;Update
+delete;da;Delete
+create;de;Create
+update;de;Update
+delete;de;Delete
+create;el;Create
+update;el;Update
+delete;el;Delete
+create;en;Create
+update;en;Update
+delete;en;Delete
+create;en_US_saptrc;Create
+update;en_US_saptrc;Update
+delete;en_US_saptrc;Delete
+create;es;Create
+update;es;Update
+delete;es;Delete
+create;es_MX;Create
+update;es_MX;Update
+delete;es_MX;Delete
+create;fi;Create
+update;fi;Update
+delete;fi;Delete
+create;fr;Create
+update;fr;Update
+delete;fr;Delete
+create;he;Create
+update;he;Update
+delete;he;Delete
+create;hr;Create
+update;hr;Update
+delete;hr;Delete
+create;hu;Create
+update;hu;Update
+delete;hu;Delete
+create;it;Create
+update;it;Update
+delete;it;Delete
+create;ja;Create
+update;ja;Update
+delete;ja;Delete
+create;kk;Create
+update;kk;Update
+delete;kk;Delete
+create;ko;Create
+update;ko;Update
+delete;ko;Delete
+create;ms;Create
+update;ms;Update
+delete;ms;Delete
+create;nl;Create
+update;nl;Update
+delete;nl;Delete
+create;no;Create
+update;no;Update
+delete;no;Delete
+create;pl;Create
+update;pl;Update
+delete;pl;Delete
+create;pt;Create
+update;pt;Update
+delete;pt;Delete
+create;ro;Create
+update;ro;Update
+delete;ro;Delete
+create;ru;Create
+update;ru;Update
+delete;ru;Delete
+create;sh;Create
+update;sh;Update
+delete;sh;Delete
+create;sk;Create
+update;sk;Update
+delete;sk;Delete
+create;sl;Create
+update;sl;Update
+delete;sl;Delete
+create;sv;Create
+update;sv;Update
+delete;sv;Delete
+create;th;Create
+update;th;Update
+delete;th;Delete
+create;tr;Create
+update;tr;Update
+delete;tr;Delete
+create;uk;Create
+update;uk;Update
+delete;uk;Delete
+create;vi;Create
+update;vi;Update
+delete;vi;Delete
+create;zh_CN;Create
+update;zh_CN;Update
+delete;zh_CN;Delete
+create;zh_TW;Create
+update;zh_TW;Update
+delete;zh_TW;Delete

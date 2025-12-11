@@ -285,7 +285,7 @@ const _sql_original = cds.compile.to.sql
 cds.compile.to.sql = function (csn, options) {
 	let ret = _sql_original.call(this, csn, options);
 	if (options?.kind === 'sqlite') return ret; // skip for sqlite, handled in 'served' hook
-	const triggers = [];
+	const triggers = [], entities = [];
 	const clonedCSN = structuredClone(csn);
 	const linkedModel = cds.linked(clonedCSN);
 
@@ -297,6 +297,16 @@ cds.compile.to.sql = function (csn, options) {
 		if (!isTableEntity || !isChangeTracked(def)) continue;
 		const entityTrigger = generateH2Trigger(linkedModel, def);
 		triggers.push(entityTrigger);
+		entities.push(def);
+	}
+
+	// Add label translations if there are triggers
+	if (triggers.length > 0) {
+		const labels = getLabelTranslations(entities);
+		const header = 'ID;locale;text';
+		const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
+		const content = [header, ...rows].join('\n') + '\n';
+		fs.writeFileSync('db/data/sap.changelog-i18nKeys.csv', content);
 	}
 
 	// Add semicolon at the end of each DDL statement if not already present
