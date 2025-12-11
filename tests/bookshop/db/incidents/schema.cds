@@ -88,6 +88,16 @@ entity MultiKeyScenario {
       foo1: String @changelog;
 }
 
+@Capabilities : { NavigationRestrictions : {
+    RestrictedProperties : [
+        {
+            NavigationProperty : changes,
+            ReadRestrictions : {
+                Readable : true,
+            },
+        },
+    ],
+}, }
 entity BooksNotID {
   key NOT_ID : Int16;
       @changelog

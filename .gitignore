@@ -4,4 +4,5 @@ package-lock.json
 .vscode/
 coverage/
 gen/
+# added by cds
 .cdsrc-private.json

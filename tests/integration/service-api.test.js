@@ -1,46 +1,15 @@
 const cds = require('@sap/cds');
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const asyncExec = promisify(exec);
-const fs = require('fs/promises');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { expect, test, GET, axios } = cds.test(bookshop);
-axios.defaults.auth = { username: 'alice', password: 'admin' };
-
-// Enable locale fallback to simulate end user requests
-cds.env.features.locale_fallback = true;
-
-jest.setTimeout(5 * 60 * 1000);
+const { data, GET } = cds.test(bookshop);
 
 let adminService = null;
 let ChangeView = null;
 let db = null;
 
 describe('change log integration test', () => {
-	let __warn, _warnings;
-	const _warn = (...args) => {
-		if (!(args.length === 2 && typeof args[0] === 'string' && args[0].match(/\[change-log\]/i))) {
-			// > not an audit log (most likely, anyway)
-			return __warn(...args);
-		}
-
-		_warnings.push(args[1]);
-	};
-
-	beforeAll(() => {
-		__warn = global.console.warn;
-		global.console.warn = _warn;
-	});
-
-	afterAll(() => {
-		global.console.warn = __warn;
-	});
-
-	beforeEach(async () => {
-		_warnings = [];
-	});
+	let log = cds.test.log();
 
 	beforeAll(async () => {
 		adminService = await cds.connect.to('AdminService');
@@ -68,12 +37,12 @@ describe('change log integration test', () => {
 
 		await INSERT.into(Authors).entries(authorData);
 		const beforeChanges = await adminService.run(SELECT.from(ChangeView));
-		expect(beforeChanges.length > 0).to.be.true;
+		expect(beforeChanges.length > 0).toBeTruthy();
 
 		await DELETE.from(Authors).where({ ID: '64625905-c234-4d0d-9bc1-283ee8940812' });
 
 		const afterChanges = await adminService.run(SELECT.from(ChangeView));
-		expect(afterChanges.length).to.equal(beforeChanges.length * 2);
+		expect(afterChanges.length).toEqual(beforeChanges.length * 2);
 	});
 
 	it('should track numeric 0 and boolean false on create and delete', async () => {
@@ -89,68 +58,49 @@ describe('change log integration test', () => {
 		await INSERT.into(Order).entries(ordersData);
 		let changes = await adminService.run(SELECT.from(ChangeView));
 
-		expect(changes).to.have.length(2);
-		expect(
-			changes.map((change) => ({
-				entityKey: change.entityKey,
-				entity: change.entity,
-				valueChangedFrom: change.valueChangedFrom,
-				valueChangedTo: change.valueChangedTo,
-				modification: change.modification,
-				attribute: change.attribute
-			}))
-		).to.have.deep.members([
-			{
-				entityKey: '0faaff2d-7e0e-4494-97fe-c815ee973fa1',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'netAmount',
-				valueChangedFrom: null,
-				valueChangedTo: '0'
-			},
-			{
-				entityKey: '0faaff2d-7e0e-4494-97fe-c815ee973fa1',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'isUsed',
-				valueChangedFrom: null,
-				valueChangedTo: 'false'
-			}
-		]);
+		expect(changes.length).toEqual(2);
+
+		const change1 = changes.find((c) => c.attribute === 'netAmount');
+
+		expect(change1).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1');
+		expect(change1).toHaveProperty('modification', 'Create');
+		expect(change1).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change1.valueChangedFrom).toEqual('');
+		expect(Number(change1.valueChangedTo)).toEqual(0);
+
+		const change2 = changes.find((c) => c.attribute === 'isUsed');
+
+		expect(change2).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1');
+		expect(change2).toHaveProperty('modification', 'Create');
+		expect(change2).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change2.valueChangedFrom).toEqual('');
+		expect(change2.valueChangedTo).toEqual('false');
 
 		await DELETE.from(Order).where({ ID: '0faaff2d-7e0e-4494-97fe-c815ee973fa1' });
 		changes = await adminService.run(
 			SELECT.from(ChangeView).where({ modification: 'delete' })
 		);
 
-		expect(changes).to.have.length(2);
-		expect(
-			changes.map((change) => ({
-				entityKey: change.entityKey,
-				entity: change.entity,
-				valueChangedFrom: change.valueChangedFrom,
-				valueChangedTo: change.valueChangedTo,
-				modification: change.modification,
-				attribute: change.attribute
-			}))
-		).to.have.deep.members([
-			{
-				entityKey: '0faaff2d-7e0e-4494-97fe-c815ee973fa1',
-				modification: 'delete',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'netAmount',
-				valueChangedFrom: '0',
-				valueChangedTo: null
-			},
-			{
-				entityKey: '0faaff2d-7e0e-4494-97fe-c815ee973fa1',
-				modification: 'delete',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'isUsed',
-				valueChangedFrom: 'false',
-				valueChangedTo: null
-			}
-		]);
+		expect(changes.length).toEqual(2);
+
+		const change3 = changes.find((c) => c.attribute === 'netAmount');
+
+		expect(change3).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1');
+		expect(change3).toHaveProperty('modification', 'Delete');
+		expect(change3).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(Number(change3.valueChangedFrom)).toEqual(0);
+		expect(change3.valueChangedTo).toEqual('');
+
+		const change4 = changes.find((c) => c.attribute === 'isUsed');
+
+		expect(change4).toHaveProperty('entityKey', '0faaff2d-7e0e-4494-97fe-c815ee973fa1');
+		expect(change4).toHaveProperty('modification', 'Delete');
+		expect(change4).toHaveProperty('entity', 'sap.capire.bookshop.Order');
+		expect(change4.valueChangedFrom).toEqual('false');
+		expect(change4.valueChangedTo).toEqual('');
+
+		delete cds.services.AdminService.entities.Order.elements.netAmount['@changelog'];
+		delete cds.services.AdminService.entities.Order.elements.isUsed['@changelog'];
 	});
 
 	it('1.9 For DateTime and Timestamp, support for input via Date objects.', async () => {
@@ -171,16 +121,16 @@ describe('change log integration test', () => {
 				attribute: 'dateTime'
 			})
 		);
-		expect(changes.length).to.equal(1);
-		expect(changes[0].entityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8940717');
-		expect(changes[0].attribute).to.equal('dateTime');
-		expect(changes[0].modification).to.equal('create');
-		expect(changes[0].valueChangedFrom).to.equal(null);
+		expect(changes.length).toEqual(1);
+		expect(changes[0].entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8940717');
+		expect(changes[0].attribute).toEqual('dateTime');
+		expect(changes[0].modification).toEqual('create');
+		expect(changes[0].valueChangedFrom).toEqual(null);
 		/**
 		 * REVISIT: Currently, when using '@cap-js/sqlite' or '@cap-js/hana' and inputting values of type Date in javascript,
 		 * there is an issue with inconsistent formats before and after, which requires a fix from cds-dbs (Issue-873).
 		 */
-		expect(changes[0].valueChangedTo).to.equal(
+		expect(change.valueChangedTo).toEqual(
 			new Date('2024-10-16T08:53:48Z').toLocaleDateString('en', {
 				day: 'numeric',
 				month: 'short',
@@ -220,9 +170,9 @@ describe('change log integration test', () => {
 			entity: 'sap.capire.bookshop.BookStores',
 			attribute: 'name'
 		});
-		expect(changes.length).to.equal(1);
-		expect(changes[0].entityKey).to.equal(bookStoreData.ID);
-		expect(changes[0].objectID).to.equal('test bookstore name');
+		expect(changes.length).toEqual(1);
+		expect(changes[0].entityKey).toEqual(bookStoreData.ID);
+		expect(changes[0].objectID).toEqual('test bookstore name');
 
 		changes = await SELECT.from(ChangeView).where({
 			entity: 'sap.capire.bookshop.Books',
@@ -231,6 +181,9 @@ describe('change log integration test', () => {
 		expect(changes.length).to.equal(1);
 		expect(changes[0].entityKey).to.equal(bookStoreData.books[0].ID);
 		expect(changes[0].objectID).to.equal('test title, Emily, Brontë');
+		expect(changes.length).toEqual(1);
+		expect(changes[0].entityKey).toEqual(bookStoreData.ID);
+		expect(changes[0].objectID).toEqual('test title, Emily, Brontë');
 	});
 
 	it('2.6 Root entity deep update by QL API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613)', async () => {
@@ -247,11 +200,11 @@ describe('change log integration test', () => {
 			attribute: 'title'
 		});
 
-		expect(changes.length).to.equal(1);
+		expect(changes.length).toEqual(1);
 		expect(changes[0].entityKey).to.equal('9d703c23-54a8-4eff-81c1-cdce6b8376b1');
-		expect(changes[0].rootEntityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8946770');
-		expect(changes[0].objectID).to.equal('Wuthering Heights Test, Emily, Brontë');
-		expect(changes[0].rootObjectID).to.equal('Shakespeare and Company, Paris');
+		expect(changes[0].rootEntityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(changes[0].objectID).toEqual('Wuthering Heights Test, Emily, Brontë');
+		expect(changes[0].rootObjectID).toEqual('Shakespeare and Company, Paris');
 	});
 
 	it('3.6 Composition operation of inline entity operation by QL API', async () => {
@@ -266,14 +219,14 @@ describe('change log integration test', () => {
 
 		const changes = await adminService.run(SELECT.from(ChangeView));
 
-		expect(changes.length).to.equal(1);
-		expect(changes[0].entity).to.equal('sap.capire.bookshop.Order.Items');
-		expect(changes[0].attribute).to.equal('quantity');
-		expect(changes[0].modification).to.equal('update');
-		expect(changes[0].valueChangedFrom).to.equal('10');
-		expect(changes[0].valueChangedTo).to.equal('12');
-		//expect(changes[0].rootEntityKey).to.equal('3b23bb4b-4ac7-4a24-ac02-aa10cabd842c');
-		expect(changes[0].entityKey).to.equal('3b23bb4b-4ac7-4a24-ac02-aa10cabd842c||2b23bb4b-4ac7-4a24-ac02-aa10cabd842c');
+		expect(changes.length).toEqual(1);
+		const change = changes[0];
+		expect(change.attribute).toEqual('quantity');
+		expect(change.modification).toEqual('Update');
+		expect(change.valueChangedFrom).toEqual('10');
+		expect(change.valueChangedTo).toEqual('12');
+		expect(change.parentKey).toEqual('3b23bb4b-4ac7-4a24-ac02-aa10cabd842c');
+		expect(change.keys).toEqual('ID=2b23bb4b-4ac7-4a24-ac02-aa10cabd842c');
 	});
 
 	it('7.3 Annotate fields from chained associated entities as objectID (ERP4SMEPREPWORKAPPPLAT-4542)', async () => {
@@ -291,8 +244,9 @@ describe('change log integration test', () => {
 			attribute: 'name',
 			modification: 'create'
 		});
-		expect(createBookStoresChanges.length).to.equal(1);
-		expect(createBookStoresChanges[0].objectID).to.equal('new name');
+		expect(createBookStoresChanges.length).toEqual(1);
+		const createBookStoresChange = createBookStoresChanges[0];
+		expect(createBookStoresChange.objectID).toEqual('new name');
 
 		await UPDATE(BookStores).where({ ID: '9d703c23-54a8-4eff-81c1-cdce6b6587c4' })
 			.with({ name: 'BookStores name changed' });
@@ -303,8 +257,9 @@ describe('change log integration test', () => {
 				modification: 'update'
 			})
 		);
-		expect(updateBookStoresChanges.length).to.equal(1);
-		expect(updateBookStoresChanges[0].objectID).to.equal('BookStores name changed');
+		expect(updateBookStoresChanges.length).toEqual(1);
+		const updateBookStoresChange = updateBookStoresChanges[0];
+		expect(updateBookStoresChange.objectID).toEqual('BookStores name changed');
 
 		//cds.services.AdminService.entities.BookStores['@changelog'].pop();
 
@@ -321,10 +276,11 @@ describe('change log integration test', () => {
 			attribute: 'title',
 			modification: 'create'
 		});
-		expect(createChanges.length).to.equal(1);
-		expect(createChanges[0].objectID).to.equal('In Preparation');
-		expect(createChanges[0].rootEntityKey).to.equal('dd1fdd7d-da2a-4600-940b-0baf2946c4ff');
-		expect(createChanges[0].rootObjectID).to.equal('In Preparation');
+		expect(createChanges.length).toEqual(1);
+		const createChange = createChanges[0];
+		expect(createChange.objectID).toEqual('In Preparation');
+		expect(createChange.parentKey).toEqual('dd1fdd7d-da2a-4600-940b-0baf2946c4ff');
+		expect(createChange.parentObjectID).toEqual('In Preparation');
 
 		// Check the changeLog to make sure the entity information is root
 		const changeLogs = await SELECT.from(Changes).where({
@@ -332,9 +288,10 @@ describe('change log integration test', () => {
 			entityKey: '64625905-c234-4d0d-9bc1-283ee8940812'
 		});
 
-		expect(changeLogs.length).to.equal(1);
-		expect(changeLogs[0].entity).to.equal('sap.capire.bookshop.RootEntity');
-		expect(changeLogs[0].entityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8940812');
+		expect(changeLogs.length).toEqual(1);
+		expect(changeLogs[0].entity).toEqual('sap.capire.bookshop.RootEntity');
+		expect(changeLogs[0].entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8940812');
+		expect(changeLogs[0].serviceEntity).toEqual('AdminService.RootEntity');
 
 		await UPDATE(Level3Entity, '12ed5dd8-d45b-11ed-afa1-0242ac654321').with({
 			title: 'L3 title changed by QL API'
@@ -344,11 +301,11 @@ describe('change log integration test', () => {
 			attribute: 'title',
 			modification: 'update'
 		});
-		expect(createChanges.length).to.equal(1);
+		expect(createChanges.length).toEqual(1);
 		const updateChange = updateChanges[0];
-		expect(updateChange.objectID).to.equal('In Preparation');
-		expect(createChange.parentKey).to.equal('dd1fdd7d-da2a-4600-940b-0baf2946c4ff');
-		expect(createChange.parentObjectID).to.equal('In Preparation');
+		expect(updateChange.objectID).toEqual('In Preparation');
+		expect(createChange.parentKey).toEqual('dd1fdd7d-da2a-4600-940b-0baf2946c4ff');
+		expect(createChange.parentObjectID).toEqual('In Preparation');
 
 		await DELETE.from(Level3Entity).where({ ID: '12ed5dd8-d45b-11ed-afa1-0242ac654321' });
 		let deleteChanges = await SELECT.from(ChangeView).where({
@@ -356,11 +313,11 @@ describe('change log integration test', () => {
 			attribute: 'title',
 			modification: 'delete'
 		});
-		expect(deleteChanges.length).to.equal(1);
+		expect(deleteChanges.length).toEqual(1);
 		const deleteChange = deleteChanges[0];
-		expect(deleteChange.objectID).to.equal('In Preparation');
-		expect(createChange.parentKey).to.equal('dd1fdd7d-da2a-4600-940b-0baf2946c4ff');
-		expect(createChange.parentObjectID).to.equal('In Preparation');
+		expect(deleteChange.objectID).toEqual('In Preparation');
+		expect(createChange.parentKey).toEqual('dd1fdd7d-da2a-4600-940b-0baf2946c4ff');
+		expect(createChange.parentObjectID).toEqual('In Preparation');
 
 		// Test object id when parent and child nodes are created at the same time
 		const RootEntityData = {
@@ -391,9 +348,9 @@ describe('change log integration test', () => {
 				modification: 'create'
 			})
 		);
-		expect(createEntityChanges.length).to.equal(1);
+		expect(createEntityChanges.length).toEqual(1);
 		const createEntityChange = createEntityChanges[0];
-		expect(createEntityChange.objectID).to.equal('In Preparation');
+		expect(createEntityChange.objectID).toEqual('In Preparation');
 
 		// Test the object id when the parent node and child node are modified at the same time
 		await UPDATE(RootEntity, { ID: '01234567-89ab-cdef-0123-987654fedcba' }).with({
@@ -421,9 +378,9 @@ describe('change log integration test', () => {
 				modification: 'update'
 			})
 		);
-		expect(updateEntityChanges.length).to.equal(1);
+		expect(updateEntityChanges.length).toEqual(1);
 		const updateEntityChange = updateEntityChanges[0];
-		expect(updateEntityChange.objectID).to.equal('Open');
+		expect(updateEntityChange.objectID).toEqual('Open');
 
 		// Tests the object id when the parent node update and child node deletion occur simultaneously
 		await UPDATE(adminService.entities.RootEntity, { ID: '01234567-89ab-cdef-0123-987654fedcba' }).with({
@@ -445,9 +402,9 @@ describe('change log integration test', () => {
 				modification: 'delete'
 			})
 		);
-		expect(deleteEntityChanges.length).to.equal(1);
+		expect(deleteEntityChanges.length).toEqual(1);
 		const deleteEntityChange = deleteEntityChanges[0];
-		expect(deleteEntityChange.objectID).to.equal('Closed');
+		expect(deleteEntityChange.objectID).toEqual('Closed');
 	});
 
 	it('8.3 Annotate fields from chained associated entities as displayed value (ERP4SMEPREPWORKAPPPLAT-4542)', async () => {
@@ -464,9 +421,9 @@ describe('change log integration test', () => {
 			attribute: 'info',
 			modification: 'create'
 		});
-		expect(createChanges.length).to.equal(1);
-		expect(createChanges[0].valueChangedFrom).to.equal(null);
-		expect(createChanges[0].valueChangedTo).to.equal('Super Mario1');
+		expect(createChanges.length).toEqual(1);
+		expect(createChanges[0].valueChangedFrom).toEqual(null);
+		expect(createChanges[0].valueChangedTo).toEqual('Super Mario1');
 
 		await UPDATE(RootEntity, '01234567-89ab-cdef-0123-456789dcbafe').with({
 			info_ID: 'bc21e0d9-a313-4f52-8336-c1be5f44f435'
@@ -477,9 +434,9 @@ describe('change log integration test', () => {
 			attribute: 'info',
 			modification: 'update'
 		});
-		expect(updateChanges.length).to.equal(1);
-		expect(updateChanges[0].valueChangedFrom).to.equal('Super Mario1');
-		expect(updateChanges[0].valueChangedTo).to.equal('Super Mario3');
+		expect(updateChanges.length).toEqual(1);
+		expect(updateChanges[0].valueChangedFrom).toEqual('Super Mario1');
+		expect(updateChanges[0].valueChangedTo).toEqual('Super Mario3');
 	});
 
 	it('10.7 Composition of one node deep created by service API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)', async () => {
@@ -502,15 +459,13 @@ describe('change log integration test', () => {
 			entity: 'sap.capire.bookshop.BookStoreRegistry',
 			attribute: 'validOn'
 		});
-		expect(changes.length).to.equal(1);
-		expect(changes[0].modification).to.equal('create');
-		expect(changes[0].entity).to.equal('sap.capire.bookshop.BookStoreRegistry');
-		expect(changes[0].entityKey).to.equal(bookStoreData.registry.ID);
-		expect(changes[0].rootEntity).to.equal('sap.capire.bookshop.BookStores');
-		expect(changes[0].rootEntityKey).to.equal(bookStoreData.ID);
-		expect(changes[0].objectID).to.equal('San Francisco-2, 2022-01-01');
-		expect(changes[0].valueChangedFrom).to.equal(null);
-		expect(changes[0].valueChangedTo).to.equal('2022-01-01');
+		expect(changes.length).toEqual(1);
+		expect(changes[0].entityKey).toEqual(bookStoreData.ID);
+		expect(changes[0].objectID).toEqual('San Francisco-2');
+		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedTo).toEqual('2022-01-01');
+		expect(changes[0].parentKey).toEqual('843b3681-8b32-4d30-82dc-937cdbc68b3a');
+		expect(changes[0].parentObjectID).toEqual('test bookstore name');
 	});
 
 	it('10.8 Composition of one node deep updated by QL API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-2913 ERP4SMEPREPWORKAPPPLAT-3063)', async () => {
@@ -530,15 +485,15 @@ describe('change log integration test', () => {
 			attribute: 'validOn'
 		});
 
-		expect(changes.length).to.equal(1);
-		expect(changes[0].entity).to.equal('sap.capire.bookshop.BookStoreRegistry');
-		expect(changes[0].entityKey).to.equal('12ed5ac2-d45b-11ed-afa1-0242ac120001');
-		expect(changes[0].objectID).to.equal('Paris-1, 2022-01-01');
-		expect(changes[0].modification).to.equal('update');
-		expect(changes[0].valueChangedFrom).to.equal('2012-01-01');
-		expect(changes[0].valueChangedTo).to.equal('2022-01-01');
-		// expect(changes[0].rootEntityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8946770');
-		// expect(changes[0].rootObjectID).to.equal('Shakespeare and Company');
+		expect(changes.length).toEqual(1);
+		expect(changes[0].entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(changes[0].objectID).toEqual('Paris-1, 2022-01-01');
+		expect(changes[0].modification).toEqual('update');
+		expect(changes[0].valueChangedFrom).toEqual('2012-01-01');
+		expect(changes[0].valueChangedTo).toEqual('2022-01-01');
+		expect(changes[0].parentKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(changes[0].parentObjectID).toEqual('Shakespeare and Company');
+		cds.services.AdminService.entities.BookStoreRegistry['@changelog'] = [{ '=': 'code' }];
 	});
 
 	it('10.9 Child entity deep delete by QL API  - should log changes on root entity (ERP4SMEPREPWORKAPPPLAT-3063)', async () => {
@@ -554,15 +509,13 @@ describe('change log integration test', () => {
 			attribute: 'validOn'
 		});
 
-		expect(changes.length).to.equal(1);
-		expect(changes[0].entity).to.equal('sap.capire.bookshop.BookStoreRegistry');
-		expect(changes[0].entityKey).to.equal('12ed5ac2-d45b-11ed-afa1-0242ac120001');
-		// expect(changes[0].rootEntity).to.equal('sap.capire.bookshop.BookStores');
-		// expect(changes[0].rootEntityKey).to.equal('64625905-c234-4d0d-9bc1-283ee8946770');
-		expect(changes[0].modification).to.equal('delete');
-		expect(changes[0].objectID).to.equal('Paris-1, 2012-01-01');
-		//expect(changes[0].rootObjectID).to.equal('Shakespeare and Company');
-		expect(changes[0].valueChangedTo).to.equal(null);
+		expect(changes.length).toEqual(1);
+		expect(changes[0].entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
+		expect(changes[0].objectID).toEqual('Paris-1');
+		expect(changes[0].modification).toEqual('delete');
+		expect(changes[0].parentObjectID).toEqual('Shakespeare and Company');
+		expect(changes[0].valueChangedFrom).toEqual('2012-01-01');
+		expect(changes[0].valueChangedTo).toEqual('');
 	});
 
 	it.skip(`11.1 "disableUpdateTracking" setting`, async () => {
@@ -576,7 +529,7 @@ describe('change log integration test', () => {
 			attribute: 'name',
 			modification: 'update'
 		});
-		expect(changes.length).to.equal(0);
+		expect(changes.length).toEqual(0);
 
 		cds.env.requires['change-tracking'].disableUpdateTracking = false;
 		await UPDATE(BookStores).where({ ID: '64625905-c234-4d0d-9bc1-283ee8946770' }).with({ name: 'Another name' });
@@ -586,7 +539,7 @@ describe('change log integration test', () => {
 			attribute: 'name',
 			modification: 'update'
 		});
-		expect(changes.length).to.equal(1);
+		expect(changes.length).toEqual(1);
 	});
 
 	it.skip(`11.2 "disableCreateTracking" setting`, async () => {
@@ -601,7 +554,7 @@ describe('change log integration test', () => {
 			attribute: 'name',
 			modification: 'create'
 		});
-		expect(changes.length).to.equal(0);
+		expect(changes.length).toEqual(0);
 
 		cds.env.requires['change-tracking'].disableCreateTracking = false;
 		await INSERT.into(adminService.entities.BookStores).entries({
@@ -614,7 +567,7 @@ describe('change log integration test', () => {
 			attribute: 'name',
 			modification: 'create'
 		});
-		expect(changes.length).to.equal(1);
+		expect(changes.length).toEqual(1);
 	});
 
 	it.skip(`11.3 "disableDeleteTracking" setting`, async () => {
@@ -626,7 +579,7 @@ describe('change log integration test', () => {
 			attribute: 'title',
 			modification: 'delete'
 		});
-		expect(changes.length).to.equal(0);
+		expect(changes.length).toEqual(0);
 
 		cds.env.requires['change-tracking'].disableDeleteTracking = false;
 		await DELETE.from(adminService.entities.Level2Entity).where({ ID: 'dd1fdd7d-da2a-4600-940b-0baf2946c4ff' });
@@ -636,7 +589,7 @@ describe('change log integration test', () => {
 			attribute: 'title',
 			modification: 'delete'
 		});
-		expect(changes.length).to.equal(1);
+		expect(changes.length).toEqual(1);
 	});
 
 	it('Do not change track personal data', async () => {
@@ -651,7 +604,7 @@ describe('change log integration test', () => {
 			entity: 'sap.capire.bookshop.Customers'
 		});
 
-		expect(changes.length).to.equal(0);
+		expect(changes.length).toEqual(0);
 	});
 
 	it('When creating multiple root records, change tracking for each entity should also be generated', async () => {
@@ -710,114 +663,72 @@ describe('change log integration test', () => {
 		await INSERT.into(adminService.entities.Order).entries(ordersData);
 		let changes = await adminService.run(SELECT.from(ChangeView));
 
-		expect(changes).to.have.length(12);
-		expect(
-			changes.map((change) => ({
-				entityKey: change.entityKey,
-				entity: change.entity,
-				valueChangedFrom: change.valueChangedFrom,
-				valueChangedTo: change.valueChangedTo,
-				modification: change.modification,
-				attribute: change.attribute
-			}))
-		).to.have.deep.members([
-			{
-				entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'netAmount',
-				valueChangedFrom: '',
-				valueChangedTo: '0'
-			},
-			{
-				entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'isUsed',
-				valueChangedFrom: '',
-				valueChangedTo: 'false'
-			},
-			{
-				entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.OrderItem',
-				attribute: 'quantity',
-				valueChangedFrom: '',
-				valueChangedTo: '10'
-			},
-			{
-				entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.OrderItem',
-				attribute: 'quantity',
-				valueChangedFrom: '',
-				valueChangedTo: '12'
-			},
-			{
-				entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'netAmount',
-				valueChangedFrom: '',
-				valueChangedTo: '10'
-			},
-			{
-				entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'isUsed',
-				valueChangedFrom: '',
-				valueChangedTo: 'true'
-			},
-			{
-				entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.OrderItem',
-				attribute: 'quantity',
-				valueChangedFrom: '',
-				valueChangedTo: '10'
-			},
-			{
-				entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.OrderItem',
-				attribute: 'quantity',
-				valueChangedFrom: '',
-				valueChangedTo: '12'
-			},
-			{
-				entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'netAmount',
-				valueChangedFrom: '',
-				valueChangedTo: '20'
-			},
-			{
-				entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.Order',
-				attribute: 'isUsed',
-				valueChangedFrom: '',
-				valueChangedTo: 'false'
-			},
-			{
-				entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.OrderItem',
-				attribute: 'quantity',
-				valueChangedFrom: '',
-				valueChangedTo: '10'
-			},
-			{
-				entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056',
-				modification: 'create',
-				entity: 'sap.capire.bookshop.OrderItem',
-				attribute: 'quantity',
-				valueChangedFrom: '',
-				valueChangedTo: '12'
-			}
-		]);
+		expect(changes.length).toEqual(12);
+
+		expect(changes.some((c) => c.modification !== 'Create')).toEqual(false);
+
+		let changesOrder1 = await adminService.run(SELECT.from(ChangeView).where({ entityKey: 'fa4d0140-efdd-4c32-aafd-efb7f1d0c8e1' }));
+
+		const change1 = changesOrder1.find((change) => change.attribute === 'netAmount');
+		expect(change1.entity).toEqual('sap.capire.bookshop.Order');
+		expect(change1.valueChangedFrom).toEqual('');
+		expect(Number(change1.valueChangedTo)).toEqual(0);
+
+		const change2 = changesOrder1.find((change) => change.attribute === 'isUsed');
+		expect(change2.entity).toEqual('sap.capire.bookshop.Order');
+		expect(change2.valueChangedFrom).toEqual('');
+		expect(change2.valueChangedTo).toEqual('false');
+
+		const quantityChanges1 = changesOrder1.filter((change) => change.attribute === 'quantity').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
+		expect(quantityChanges1[0].entity).toEqual('sap.capire.bookshop.OrderItem');
+		expect(quantityChanges1[0].valueChangedFrom).toEqual('');
+		expect(Number(quantityChanges1[0].valueChangedTo)).toEqual(10);
+
+		expect(quantityChanges1[1].entity).toEqual('sap.capire.bookshop.OrderItem');
+		expect(quantityChanges1[1].valueChangedFrom).toEqual('');
+		expect(Number(quantityChanges1[1].valueChangedTo)).toEqual(12);
+
+		let changesOrder2 = await adminService.run(SELECT.from(ChangeView).where({ entityKey: 'ec365b25-b346-4444-8f03-8f5b7d94f040' }));
+
+		const change3 = changesOrder2.find((change) => change.attribute === 'netAmount');
+		expect(change3.entity).toEqual('sap.capire.bookshop.Order');
+		expect(change3.valueChangedFrom).toEqual('');
+		expect(Number(change3.valueChangedTo)).toEqual(10);
+
+		const change4 = changesOrder2.find((change) => change.attribute === 'isUsed');
+		expect(change4.entity).toEqual('sap.capire.bookshop.Order');
+		expect(change4.valueChangedFrom).toEqual('');
+		expect(change4.valueChangedTo).toEqual('true');
+
+		const quantityChanges2 = changesOrder2.filter((change) => change.attribute === 'quantity').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
+		expect(quantityChanges2[0].entity).toEqual('sap.capire.bookshop.OrderItem');
+		expect(quantityChanges2[0].valueChangedFrom).toEqual('');
+		expect(Number(quantityChanges2[0].valueChangedTo)).toEqual(10);
+
+		expect(quantityChanges2[1].entity).toEqual('sap.capire.bookshop.OrderItem');
+		expect(quantityChanges2[1].valueChangedFrom).toEqual('');
+		expect(Number(quantityChanges2[1].valueChangedTo)).toEqual(12);
+
+		let changesOrder3 = await adminService.run(SELECT.from(ChangeView).where({ entityKey: 'ab9e5510-a60b-4dfc-b026-161c5c2d4056' }));
+
+		const change5 = changesOrder3.find((change) => change.attribute === 'netAmount');
+		expect(change5.entity).toEqual('sap.capire.bookshop.Order');
+		expect(change5.valueChangedFrom).toEqual('');
+		expect(Number(change5.valueChangedTo)).toEqual(20);
+
+		const change6 = changesOrder3.find((change) => change.attribute === 'isUsed');
+		expect(change6.entity).toEqual('sap.capire.bookshop.Order');
+		expect(change6.valueChangedFrom).toEqual('');
+		expect(change6.valueChangedTo).toEqual('false');
+
+		const quantityChanges3 = changesOrder3.filter((change) => change.attribute === 'quantity').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
+		expect(quantityChanges3[0].entity).toEqual('sap.capire.bookshop.OrderItem');
+		expect(quantityChanges3[0].valueChangedFrom).toEqual('');
+		expect(Number(quantityChanges3[0].valueChangedTo)).toEqual(10);
+
+		expect(quantityChanges3[1].entity).toEqual('sap.capire.bookshop.OrderItem');
+		expect(quantityChanges3[1].valueChangedFrom).toEqual('');
+		expect(Number(quantityChanges3[1].valueChangedTo)).toEqual(12);
 
 		cds.env.requires['change-tracking'].preserveDeletes = false;
 		delete cds.services.AdminService.entities.Order.elements.netAmount['@changelog'];
@@ -850,34 +761,34 @@ describe('change log integration test', () => {
 			entity: 'sap.capire.bookshop.RootSample',
 			attribute: 'title'
 		});
-		expect(changes.length).to.equal(1);
-		expect(changes[0].valueChangedFrom).to.equal(null);
-		expect(changes[0].valueChangedTo).to.equal('RootSample title3');
-		expect(changes[0].entityKey).to.equal('/three');
-		expect(changes[0].rootEntityKey).to.equal(null);
-		expect(changes[0].objectID).to.equal('/three, RootSample title3');
+		expect(changes.length).toEqual(1);
+		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedTo).toEqual('RootSample title3');
+		expect(changes[0].entityKey).toEqual('/three');
+		expect(changes[0].parentKey).toEqual('');
+		expect(changes[0].objectID).toEqual('/three, RootSample title3');
 
 		changes = await SELECT.from(ChangeView).where({
 			entity: 'sap.capire.bookshop.Level1Sample',
 			attribute: 'title'
 		});
-		expect(changes.length).to.equal(1);
-		expect(changes[0].valueChangedFrom).to.equal(null);
-		expect(changes[0].valueChangedTo).to.equal('Level1Sample title3');
-		expect(changes[0].entityKey).to.equal('/level1three');
-		//expect(changes[0].rootEntityKey).to.equal('/three');
-		expect(changes[0].objectID).to.equal('/level1three, Level1Sample title3, /three');
+		expect(changes.length).toEqual(1);
+		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedTo).toEqual('Level1Sample title3');
+		expect(changes[0].entityKey).toEqual('/three');
+		expect(changes[0].parentKey).toEqual('/three');
+		expect(changes[0].objectID).toEqual('/level1three, Level1Sample title3, /three');
 
 		changes = await SELECT.from(ChangeView).where({
 			entity: 'sap.capire.bookshop.Level2Sample',
 			attribute: 'title'
 		});
-		expect(changes.length).to.equal(1);
-		expect(changes[0].valueChangedFrom).to.equal(null);
-		expect(changes[0].valueChangedTo).to.equal('Level2Sample title3');
-		expect(changes[0].entityKey).to.equal('/level2three');
-		//expect(changes[0].rootEntityKey).to.equal('/level1three');
-		expect(changes[0].objectID).to.equal('/level2three, Level2Sample title3');
+		expect(changes.length).toEqual(1);
+		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedTo).toEqual('Level2Sample title3');
+		expect(changes[0].entityKey).toEqual('/three');
+		expect(changes[0].parentKey).toEqual('/level1three');
+		expect(changes[0].objectID).toEqual('/level2three, Level2Sample title3, /three');
 	});
 
 	it.skip('Leave localization logic early if entity is not part of the model', async () => {
@@ -888,14 +799,15 @@ describe('change log integration test', () => {
 		const {
 			data: { value: changes }
 		} = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
-		expect(changes.length).to.equal(1);
+		expect(changes.length).toEqual(1);
 		await UPDATE(Changes).where({ ID: changes[0].ID }).set({ serviceEntity: 'Volumns' });
 		const {
 			data: { value: changes2 }
 		} = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
-		expect(changes2.length).to.equal(1);
-		expect(changes2[0].serviceEntity).to.equal('Volumns');
-		_warnings[0].match(/Cannot localize the attribute/);
+		expect(changes2.length).toEqual(1);
+		expect(changes2[0].serviceEntity).toEqual('Volumns');
+		expect(log.output.length).toBeGreaterThan(0);
+		expect(log.output).toMatch(/Cannot localize the attribute/);
 	});
 
 	it.skip('Leave localization logic early if attribute value is not part of the model', async () => {
@@ -906,28 +818,26 @@ describe('change log integration test', () => {
 		const {
 			data: { value: changes }
 		} = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
-		expect(changes.length).to.equal(1);
+		expect(changes.length).toEqual(1);
 		await UPDATE(Changes).where({ ID: changes[0].ID }).set({ attribute: 'abc' });
 		const {
 			data: { value: changes2 }
 		} = await GET('/odata/v4/volumns/Volumns(ID=dd1fdd7d-da2a-4600-940b-0baf2946c9bf)/changes');
-		expect(changes2.length).to.equal(1);
-		expect(changes2[0].attribute).to.equal('abc');
-		_warnings[0].match(/Cannot localize the attribute/);
+		expect(changes2.length).toEqual(1);
+		expect(changes2[0].attribute).toEqual('abc');
+		expect(log.output.length).toBeGreaterThan(0);
+		expect(log.output).toMatch(/Cannot localize the attribute/);
 	});
 });
 
 describe('MTX Build', () => {
-	it('Changes association is only added once JSON csn is compiled for runtime', async () => {
-		await asyncExec(`cd ${path.join(__dirname, '../bookshop-mtx')} && cds build --production`);
+	test('Changes association is only added once JSON csn is compiled for runtime', async () => {
+		const csn = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'xtended' });
+		expect(csn.definitions['AdminService.RootEntity'].elements?.changes).toBeFalsy();
 
-		const csnJSON = JSON.parse(await fs.readFile(path.join(__dirname, '../bookshop-mtx/gen/srv/srv/csn.json')));
+		const csn2 = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'inferred' });
+		const effectiveCSN2 = await cds.compile.for.nodejs(csn2);
 
-		expect(csnJSON.definitions['AdminService.RootEntity'].changes).to.be.undefined;
-
-		const csn = await cds.load(path.join(__dirname, '../bookshop-mtx/gen/srv/srv/csn.json'));
-		const effectiveCSN = await cds.compile.for.nodejs(csn);
-
-		expect(effectiveCSN.definitions['AdminService.RootEntity'].elements.changes).not.to.be.undefined;
+		expect(effectiveCSN2.definitions['AdminService.RootEntity'].elements.changes).toBeTruthy();
 	});
 });

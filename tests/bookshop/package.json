@@ -1,19 +1,42 @@
 {
 	"dependencies": {
+		"@cap-js/attachments": "^2",
 		"@cap-js/change-tracking": "file:../../.",
-		"@cap-js/hana": "^2.3.4"
+		"@cap-js/hana": "^2"
 	},
 	"devDependencies": {
 		"@cap-js/sqlite": "*"
 	},
 	"cds": {
 		"requires": {
-			"db": {
-				"kind": "sql"
+			"auth": {
+				"[development]": {
+					"users": {
+						"alice": {
+							"roles": [
+								"support",
+								"admin"
+							]
+						},
+						"bob": {
+							"roles": [
+								"support"
+							]
+						}
+					}
+				}
+			},
+			"attachments": {
+				"kind": "db",
+				"scan": false
+			},
+			"change-tracking": {
+				"considerLocalizedValues": true
 			}
 		},
 		"features": {
-			"serve_on_root": true
+			"serve_on_root": true,
+			"locale_fallback": true
 		}
 	}
 }
