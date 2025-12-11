@@ -2,7 +2,6 @@ const cds = require('@sap/cds');
 const DEBUG = cds.debug('change-tracking');
 
 const { fs } = require('@sap/cds/lib/utils/cds-utils.js');
-const { generateTriggersForEntity } = require('./lib/hdi.js');
 
 const isRoot = 'change-tracking-isRootEntity';
 const hasParent = 'change-tracking-parentEntity';
@@ -254,7 +253,7 @@ cds.once('served', async () => {
 	if (!isSQLite) return;
 
 
-	const { generateTriggers } = require('./lib/sqlite.js');
+	const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
 	const triggers = [], entities = [];
 
 	for (const def of cds.model.definitions) {
@@ -265,7 +264,7 @@ cds.once('served', async () => {
 		const rootEntityName = hierarchyMap.get(def.name)
 		const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null
 
-		const entityTrigger = generateTriggers(def, rootEntity);
+		const entityTrigger = generateSQLiteTriggers(def, rootEntity);
 		triggers.push(...entityTrigger);
 		entities.push(def);
 	}
@@ -291,7 +290,7 @@ cds.compile.to.sql = function (csn, options) {
 	const linkedModel = cds.linked(clonedCSN);
 
 	// const isH2 = options?.to === 'h2';
-	const { generateH2Trigger } = require('./lib/h2.js');
+	const { generateH2Trigger } = require('./lib/trigger/h2.js');
 	
 	for (let def of linkedModel.definitions) {
 		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
@@ -311,11 +310,12 @@ const _hdi_migration = cds.compiler.to.hdi.migration;
 cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 	const triggers = [];
 	const entities = [];
+	const { generateHANATriggers } = require('./lib/trigger/hdi.js');
 
 	for (let [_, def] of Object.entries(csn.definitions)) {
 		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
 		if (!isTableEntity || !isChangeTracked(def)) continue;
-		const entityTriggers = generateTriggersForEntity(csn, def);
+		const entityTriggers = generateHANATriggers(csn, def);
 		triggers.push(...entityTriggers);
 		entities.push(def);
 	}
