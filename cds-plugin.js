@@ -274,11 +274,24 @@ cds.on('loaded', enhanceModel);
 
 cds.once('served', async () => {
 	const kind = cds.env.requires?.db?.kind
-	const isSQLite = kind === 'sqlite' && cds.env.requires?.db.credentials?.url === ':memory:';
-	if (!isSQLite) return;
+	const isInMemory = cds.env.requires?.db?.credentials?.url === ':memory:';
 
+	const isSQLite = kind === 'sqlite' && isInMemory;
+	const isPostgres = kind === 'postgres';
 
-	const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
+	// Set appropriate trigger generator based on the database kind
+	let generateTriggers;
+	if (isSQLite) {
+		const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
+		generateTriggers = generateSQLiteTriggers;
+	} else if (isPostgres) {
+		const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
+		generateTriggers = generatePostgresTriggers;
+	} else {
+		LOG.warn(`Change tracking triggers are not supported for database kind: ${kind}`);
+		return;
+	}
+
 	const triggers = [], entities = [];
 
 	for (const def of cds.model.definitions) {
@@ -289,7 +302,7 @@ cds.once('served', async () => {
 		const rootEntityName = hierarchyMap.get(def.name)
 		const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null
 
-		const entityTrigger = generateSQLiteTriggers(def, rootEntity);
+		const entityTrigger = generateTriggers(def, rootEntity);
 		triggers.push(...entityTrigger);
 		entities.push(def);
 	}
@@ -299,28 +312,31 @@ cds.once('served', async () => {
 	const { i18nKeys } = cds.entities('sap.changelog');
 
 	// Create the DB triggers and add label translations
+	await cds.delete(i18nKeys);
+	await cds.insert(labels).into(i18nKeys);
 	await Promise.all([
 		triggers.map((t) => cds.db.run(t)),
-		cds.delete(i18nKeys),
-		cds.insert(labels).into(i18nKeys)
+		// cds.delete(i18nKeys),
+		// cds.insert(labels).into(i18nKeys)
 	]);
 });
 
 const _sql_original = cds.compile.to.sql
 cds.compile.to.sql = function (csn, options) {
 	let ret = _sql_original.call(this, csn, options);
-	if (options?.kind === 'sqlite') return ret; // skip for sqlite, handled in 'served' hook
+	const isH2 = options?.to === 'h2';
+	if (!isH2) return ret; // skip for sqlite / postgres, handled in 'served' hook
 	const triggers = [], entities = [];
 	const clonedCSN = structuredClone(csn);
 	const linkedModel = cds.linked(clonedCSN);
 
-	// const isH2 = options?.to === 'h2';
 	const { generateH2Trigger } = require('./lib/trigger/h2.js');
 	
 	for (let def of linkedModel.definitions) {
 		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
 		if (!isTableEntity || !isChangeTracked(def)) continue;
 		const entityTrigger = generateH2Trigger(linkedModel, def);
+		if (!entityTrigger) continue;
 		triggers.push(entityTrigger);
 		entities.push(def);
 	}
