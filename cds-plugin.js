@@ -312,12 +312,10 @@ cds.once('served', async () => {
 	const { i18nKeys } = cds.entities('sap.changelog');
 
 	// Create the DB triggers and add label translations
-	await cds.delete(i18nKeys);
-	await cds.insert(labels).into(i18nKeys);
 	await Promise.all([
 		triggers.map((t) => cds.db.run(t)),
-		// cds.delete(i18nKeys),
-		// cds.insert(labels).into(i18nKeys)
+		cds.delete(i18nKeys),
+		cds.insert(labels).into(i18nKeys)
 	]);
 });
 
@@ -325,17 +323,18 @@ const _sql_original = cds.compile.to.sql
 cds.compile.to.sql = function (csn, options) {
 	let ret = _sql_original.call(this, csn, options);
 	const isH2 = options?.to === 'h2';
-	if (!isH2) return ret; // skip for sqlite / postgres, handled in 'served' hook
-	const triggers = [], entities = [];
-	const clonedCSN = structuredClone(csn);
-	const linkedModel = cds.linked(clonedCSN);
+	if (!isH2) return ret; // skip for sqlite and postgres which are handled in 'served' hook
 
+	const triggers = [], entities = [];
 	const { generateH2Trigger } = require('./lib/trigger/h2.js');
+
+	const clonedCSN = structuredClone(csn);
+	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
 	
-	for (let def of linkedModel.definitions) {
+	for (let def of runtimeCSN.entities) {
 		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
 		if (!isTableEntity || !isChangeTracked(def)) continue;
-		const entityTrigger = generateH2Trigger(linkedModel, def);
+		const entityTrigger = generateH2Trigger(runtimeCSN, def);
 		if (!entityTrigger) continue;
 		triggers.push(entityTrigger);
 		entities.push(def);
@@ -363,10 +362,13 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 	const entities = [];
 	const { generateHANATriggers } = require('./lib/trigger/hdi.js');
 
-	for (let [_, def] of Object.entries(csn.definitions)) {
+	const clonedCSN = structuredClone(csn);
+	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
+
+	for (let def of runtimeCSN.definitions) {
 		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
 		if (!isTableEntity || !isChangeTracked(def)) continue;
-		const entityTriggers = generateHANATriggers(csn, def);
+		const entityTriggers = generateHANATriggers(runtimeCSN, def);
 		triggers.push(...entityTriggers);
 		entities.push(def);
 	}

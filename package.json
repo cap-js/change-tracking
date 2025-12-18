@@ -34,6 +34,10 @@
 	},
 	"cds": {
 		"requires": {
+			"db": {
+				"kind": "sqlite",
+				"impl": "../../lib/custom-sqlite.js"
+			},
 			"change-tracking": {
 				"model": "@cap-js/change-tracking",
 				"considerLocalizedValues": false,
