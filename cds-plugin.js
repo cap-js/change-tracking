@@ -1,27 +1,48 @@
 const cds = require('@sap/cds');
-const LOG = cds.log('changelog');
-const DEBUG = cds.debug('changelog');
+const LOG = cds.log('change-tracking');
+const DEBUG = cds.debug('change-tracking');
+
+const { fs } = require('@sap/cds/lib/utils/cds-utils.js');
 
 const isRoot = 'change-tracking-isRootEntity';
 const hasParent = 'change-tracking-parentEntity';
+let hierarchyMap = new Map();
 
 const isChangeTracked = (entity) => {
 	if (entity.query?.SET?.op === 'union') return false; // REVISIT: should that be an error or warning?
 	if (entity['@changelog']) return true;
-	if (Object.values(entity.elements).some((e) => e['@changelog'])) return true;
-	return false;
+	return Object.values(entity.elements).some((e) => e['@changelog']);
+};
+
+const analyzeCompositions = (csn) => {
+	const childParentMap = new Map();
+
+	for (const [name, def] of Object.entries(csn.definitions)) {
+		if (def.kind !== 'entity') continue;
+
+		if (def.elements) {
+			for (const element of Object.values(def.elements)) {
+				if (element.type === "cds.Composition" && element.target) {
+					childParentMap.set(element.target, name);
+				}
+			}
+		}
+	}
+	const hierarchy = new Map();
+
+	for (const [childName, parentName] of childParentMap) {
+		let root = parentName;
+		hierarchy.set(childName, root);
+	}
+	return hierarchy;
 };
 
 // Add the appropriate Side Effects attribute to the custom action
-const addSideEffects = (actions, flag, element) => {
-	if (!flag && (element === undefined || element === null)) {
-		return;
-	}
-
+const addSideEffects = (actions, isRootEntity) => {
 	for (const se of Object.values(actions)) {
-		const target = flag ? 'TargetProperties' : 'TargetEntities';
+		const target = isRootEntity ? 'TargetProperties' : 'TargetEntities';
 		const sideEffectAttr = se[`@Common.SideEffects.${target}`];
-		const property = flag ? 'changes' : { '=': `${element}.changes` };
+		const property = isRootEntity ? 'changes' : { '=': `${element}.changes` };
 		if (sideEffectAttr?.length >= 0) {
 			sideEffectAttr.findIndex((item) => (item['='] ? item['='] : item) === (property['='] ? property['='] : property)) === -1 && sideEffectAttr.push(property);
 		} else {
@@ -149,6 +170,15 @@ function entityKey4(entity) {
 	return xpr;
 }
 
+function _replaceTablePlaceholders(on, tableName, hierarchy) {
+	const rootEntityName = hierarchy.get(tableName) || tableName;
+	return on.map(part => {
+		if (part && part.val === 'ENTITY') return { ...part, val: tableName };
+		if (part && part.val === 'ROOTENTITY') return { ...part, val: rootEntityName };
+		return part;
+	});
+}
+
 const hasFacetForComp = (comp, facets) => facets.some((f) => f.Target === `${comp.name}/@UI.LineItem` || (f.Facets && hasFacetForComp(comp, f.Facets)));
 
 // Unfold @changelog annotations in loaded model
@@ -165,44 +195,29 @@ function enhanceModel(m) {
 	// Get definitions from Dummy entity in our models
 	const { 'sap.changelog.aspect': aspect } = m.definitions;
 	if (!aspect) return; // some other model
-	const {
-		'@UI.Facets': [facet],
-		elements: { changes }
-	} = aspect;
-	if (changes.on.length > 2) changes.on.pop(); // remove ID -> filled in below
+	const { '@UI.Facets': [facet], elements: { changes } } = aspect;
 
-	processEntities(m); // REVISIT: why is that required ?!?
+	//processEntities(m); // REVISIT: why is that required ?!?
+	hierarchyMap = analyzeCompositions(m);
 
 	for (let name in m.definitions) {
 		const entity = m.definitions[name];
-		if (entity.kind === 'entity' && !entity['@cds.autoexposed'] && isChangeTracked(entity)) {
+		const isServiceEntity = entity.kind === 'entity' && (entity.query || entity.projection);
+		if (isServiceEntity && isChangeTracked(entity)) {
 			if (!entity['@changelog.disable_assoc']) {
-				// Add association to ChangeView...
+				// Add association to ChangeView
 				const keys = entityKey4(entity);
-				if (!keys.length) continue; // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
-				const assoc = new cds.builtin.classes.Association({ ...changes, on: [...changes.on, ...keys] });
+				if (!keys.length) continue; // skip if no key attribute is defined
 
-				// --------------------------------------------------------------------
-				// PARKED: Add auto-exposed projection on ChangeView to service if applicable
-				// const namespace = name.match(/^(.*)\.[^.]+$/)[1]
-				// const service = m.definitions[namespace]
-				// if (service) {
-				//   const projection = {from:{ref:[assoc.target]}}
-				//   m.definitions[assoc.target = namespace + '.' + Changes] = {
-				//     '@cds.autoexposed':true, kind:'entity', projection
-				//   }
-				//   DEBUG?.(`\n
-				//     extend service ${namespace} with {
-				//       entity ${Changes} as projection on ${projection.from.ref[0]};
-				//     }
-				//   `.replace(/ {10}/g,''))
-				// }
-				// --------------------------------------------------------------------
+				const onCondition = changes.on.flatMap((p) => (p?.ref && p.ref[0] === 'ID' ? keys : [p]));
+				const tableName = entity.projection?.from?.ref[0];
+				const on = _replaceTablePlaceholders(onCondition, tableName, hierarchyMap);
+				const assoc = new cds.builtin.classes.Association({ ...changes, on });
 
 				DEBUG?.(
 					`\n
           extend ${name} with {
-            changes : Association to many ${assoc.target} on ${assoc.on.map((x) => x.ref?.join('.') || x).join(' ')};
+            changes : Association to many ${assoc.target} on ${assoc.on.map((x) => x.ref?.join('.') || x.val || x).join(' ')};
           }
         `.replace(/ {8}/g, '')
 				);
@@ -254,38 +269,180 @@ function enhanceModel(m) {
 	(m.meta ??= {})[_enhanced] = true;
 }
 
-// Add generic change tracking handlers
-function addGenericHandlers() {
-	const { track_changes, _afterReadChangeView } = require('./lib/change-log');
-	for (const srv of cds.services) {
-		if (srv instanceof cds.ApplicationService) {
-			let any = false;
-			for (const entity of Object.values(srv.entities)) {
-				if (isChangeTracked(entity)) {
-					cds.db.before('CREATE', entity, track_changes);
-					cds.db.before('UPDATE', entity, track_changes);
-					cds.db.before('DELETE', entity, track_changes);
-					any = true;
-				}
+// Register plugin hooks
+cds.on('loaded', enhanceModel);
+
+cds.once('served', async () => {
+	const kind = cds.env.requires?.db?.kind
+	const isInMemory = cds.env.requires?.db?.credentials?.url === ':memory:';
+
+	const isSQLite = kind === 'sqlite' && isInMemory;
+	const isPostgres = kind === 'postgres';
+
+	// Set appropriate trigger generator based on the database kind
+	let generateTriggers;
+	if (isSQLite) {
+		const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
+		generateTriggers = generateSQLiteTriggers;
+	} else if (isPostgres) {
+		const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
+		generateTriggers = generatePostgresTriggers;
+	} else {
+		LOG.warn(`Change tracking triggers are not supported for database kind: ${kind}`);
+		return;
+	}
+
+	const triggers = [], entities = [];
+
+	for (const def of cds.model.definitions) {
+		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+		if (!isTableEntity || !isChangeTracked(def)) continue;
+
+		// Resolve root entity name from your hierarchyMap
+		const rootEntityName = hierarchyMap.get(def.name)
+		const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null
+
+		const entityTrigger = generateTriggers(def, rootEntity);
+		triggers.push(...entityTrigger);
+		entities.push(def);
+	}
+
+	// Get all label translations
+	const labels = getLabelTranslations(entities);
+	const { i18nKeys } = cds.entities('sap.changelog');
+
+	// Create the DB triggers and add label translations
+	await Promise.all([
+		triggers.map((t) => cds.db.run(t)),
+		cds.delete(i18nKeys),
+		cds.insert(labels).into(i18nKeys)
+	]);
+});
+
+const _sql_original = cds.compile.to.sql
+cds.compile.to.sql = function (csn, options) {
+	let ret = _sql_original.call(this, csn, options);
+	const isH2 = options?.to === 'h2';
+	if (!isH2) return ret; // skip for sqlite and postgres which are handled in 'served' hook
+
+	const triggers = [], entities = [];
+	const { generateH2Trigger } = require('./lib/trigger/h2.js');
+
+	const clonedCSN = structuredClone(csn);
+	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
+	
+	for (let def of runtimeCSN.entities) {
+		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+		if (!isTableEntity || !isChangeTracked(def)) continue;
+		const entityTrigger = generateH2Trigger(runtimeCSN, def);
+		if (!entityTrigger) continue;
+		triggers.push(entityTrigger);
+		entities.push(def);
+	}
+
+	// Add label translations if there are triggers
+	if (triggers.length > 0) {
+		const labels = getLabelTranslations(entities);
+		const header = 'ID;locale;text';
+		const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
+		const content = [header, ...rows].join('\n') + '\n';
+		fs.writeFileSync('db/data/sap.changelog-i18nKeys.csv', content);
+	}
+
+	// Add semicolon at the end of each DDL statement if not already present
+	ret = ret.map(s => (s.endsWith(';') ? s + ';' : s));
+	return [...ret, ...triggers];
+}
+Object.assign(cds.compile.to.sql, _sql_original)
+
+// Generate HDI artifacts for change tracking
+const _hdi_migration = cds.compiler.to.hdi.migration;
+cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
+	const triggers = [];
+	const entities = [];
+	const { generateHANATriggers } = require('./lib/trigger/hdi.js');
+
+	const clonedCSN = structuredClone(csn);
+	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
+
+	for (let def of runtimeCSN.definitions) {
+		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+		if (!isTableEntity || !isChangeTracked(def)) continue;
+		const entityTriggers = generateHANATriggers(runtimeCSN, def);
+		triggers.push(...entityTriggers);
+		entities.push(def);
+	}
+
+	// Add label translations if there are triggers
+	if (triggers.length > 0) {
+		const labels = getLabelTranslations(entities);
+		const header = 'ID;locale;text';
+		const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
+		const content = [header, ...rows].join('\n') + '\n';
+		fs.writeFileSync('db/data/sap.changelog-i18nKeys.csv', content);
+	}
+
+	const ret = _hdi_migration(csn, options, beforeImage);
+	ret.definitions = [...ret.definitions, ...triggers];
+	return ret;
+};
+
+function getLabelTranslations(entities) {
+	// Get translations for entity and attribute labels
+	const allLabels = cds.i18n.labels.translations4('all');
+
+	// Get translations for modification texts
+	const bundle = cds.i18n.bundle4({ folders: [cds.utils.path.join(__dirname, '_i18n')] });
+	const modificationLabels = bundle.translations4('all');
+
+	// REVISIT: Map is needed to ensure uniqueness (elements can include associations + association_foreignKey)
+	const rows = new Map();
+
+	const addRow = (ID, locale, text) => {
+		const compositeKey = `${ID}::${locale}`;
+		rows.set(compositeKey, { ID, locale, text });
+	};
+
+	for (const entity of entities) {
+		// Entity labels
+		const entityLabelKey = cds.i18n.labels.key4(entity);
+		if (entityLabelKey && entityLabelKey !== entity.name) {
+			for (const [locale, localeTranslations] of Object.entries(allLabels)) {
+				if (!locale) continue;
+				const text = localeTranslations[entityLabelKey] || entityLabelKey;
+				addRow(entity.name, locale, text);
 			}
-			if (any && srv.entities.ChangeView) {
-				srv.after('READ', srv.entities.ChangeView, _afterReadChangeView);
+		}
+
+		// Attribute labels
+		for (const element of entity.elements) {
+			if (!element['@changelog']) continue;
+			if (element._foreignKey4) continue; // REVISIT: skip foreign keys
+			const attrKey = cds.i18n.labels.key4(element);
+			if (attrKey && attrKey !== element.name) {
+				for (const [locale, localeTranslations] of Object.entries(allLabels)) {
+					if (!locale) continue;
+					const text = localeTranslations[attrKey] || attrKey;
+					addRow(element.name, locale, text);
+				}
 			}
 		}
 	}
-}
 
-// Register plugin hooks
-cds.on('compile.for.runtime', (csn) => {
-	DEBUG?.('on', 'compile.for.runtime');
-	enhanceModel(csn);
-});
-cds.on('compile.to.edmx', (csn) => {
-	DEBUG?.('on', 'compile.to.edmx');
-	enhanceModel(csn);
-});
-cds.on('compile.to.dbx', (csn) => {
-	DEBUG?.('on', 'compile.to.dbx');
-	enhanceModel(csn);
-});
-cds.on('served', addGenericHandlers);
+	// Modification labels
+	const MODIF_I18N_MAP = {
+		create: 'Changes.modification.create',
+		update: 'Changes.modification.update',
+		delete: 'Changes.modification.delete'
+	};
+
+	for (const [locale, localeTranslations] of Object.entries(modificationLabels)) {
+		if (!locale) continue;
+		for (const [key, i18nKey] of Object.entries(MODIF_I18N_MAP)) {
+			const text = localeTranslations[i18nKey] || key;
+			addRow(key, locale, text);
+		}
+	}
+
+	return Array.from(rows.values());
+}

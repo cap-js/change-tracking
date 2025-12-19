@@ -1,0 +1,1333 @@
+ID;locale;text
+sap.capire.bookshop.BookStores;ar;bookStore.objectTitle
+sap.capire.bookshop.BookStores;bg;bookStore.objectTitle
+sap.capire.bookshop.BookStores;cs;bookStore.objectTitle
+sap.capire.bookshop.BookStores;da;bookStore.objectTitle
+sap.capire.bookshop.BookStores;de;bookStore.objectTitle
+sap.capire.bookshop.BookStores;el;bookStore.objectTitle
+sap.capire.bookshop.BookStores;en;bookStore.objectTitle
+sap.capire.bookshop.BookStores;en_US_saptrc;bookStore.objectTitle
+sap.capire.bookshop.BookStores;es;bookStore.objectTitle
+sap.capire.bookshop.BookStores;es_MX;bookStore.objectTitle
+sap.capire.bookshop.BookStores;fi;bookStore.objectTitle
+sap.capire.bookshop.BookStores;fr;bookStore.objectTitle
+sap.capire.bookshop.BookStores;he;bookStore.objectTitle
+sap.capire.bookshop.BookStores;hr;bookStore.objectTitle
+sap.capire.bookshop.BookStores;hu;bookStore.objectTitle
+sap.capire.bookshop.BookStores;it;bookStore.objectTitle
+sap.capire.bookshop.BookStores;ja;bookStore.objectTitle
+sap.capire.bookshop.BookStores;kk;bookStore.objectTitle
+sap.capire.bookshop.BookStores;ko;bookStore.objectTitle
+sap.capire.bookshop.BookStores;ms;bookStore.objectTitle
+sap.capire.bookshop.BookStores;nl;bookStore.objectTitle
+sap.capire.bookshop.BookStores;no;bookStore.objectTitle
+sap.capire.bookshop.BookStores;pl;bookStore.objectTitle
+sap.capire.bookshop.BookStores;pt;bookStore.objectTitle
+sap.capire.bookshop.BookStores;ro;bookStore.objectTitle
+sap.capire.bookshop.BookStores;ru;bookStore.objectTitle
+sap.capire.bookshop.BookStores;sh;bookStore.objectTitle
+sap.capire.bookshop.BookStores;sk;bookStore.objectTitle
+sap.capire.bookshop.BookStores;sl;bookStore.objectTitle
+sap.capire.bookshop.BookStores;sv;bookStore.objectTitle
+sap.capire.bookshop.BookStores;th;bookStore.objectTitle
+sap.capire.bookshop.BookStores;tr;bookStore.objectTitle
+sap.capire.bookshop.BookStores;uk;bookStore.objectTitle
+sap.capire.bookshop.BookStores;vi;bookStore.objectTitle
+sap.capire.bookshop.BookStores;zh_CN;bookStore.objectTitle
+sap.capire.bookshop.BookStores;zh_TW;bookStore.objectTitle
+name;ar;bookStore.name
+name;bg;bookStore.name
+name;cs;bookStore.name
+name;da;bookStore.name
+name;de;bookStore.name
+name;el;bookStore.name
+name;en;bookStore.name
+name;en_US_saptrc;bookStore.name
+name;es;bookStore.name
+name;es_MX;bookStore.name
+name;fi;bookStore.name
+name;fr;bookStore.name
+name;he;bookStore.name
+name;hr;bookStore.name
+name;hu;bookStore.name
+name;it;bookStore.name
+name;ja;bookStore.name
+name;kk;bookStore.name
+name;ko;bookStore.name
+name;ms;bookStore.name
+name;nl;bookStore.name
+name;no;bookStore.name
+name;pl;bookStore.name
+name;pt;bookStore.name
+name;ro;bookStore.name
+name;ru;bookStore.name
+name;sh;bookStore.name
+name;sk;bookStore.name
+name;sl;bookStore.name
+name;sv;bookStore.name
+name;th;bookStore.name
+name;tr;bookStore.name
+name;uk;bookStore.name
+name;vi;bookStore.name
+name;zh_CN;bookStore.name
+name;zh_TW;bookStore.name
+location;ar;bookStore.location
+location;bg;bookStore.location
+location;cs;bookStore.location
+location;da;bookStore.location
+location;de;bookStore.location
+location;el;bookStore.location
+location;en;bookStore.location
+location;en_US_saptrc;bookStore.location
+location;es;bookStore.location
+location;es_MX;bookStore.location
+location;fi;bookStore.location
+location;fr;bookStore.location
+location;he;bookStore.location
+location;hr;bookStore.location
+location;hu;bookStore.location
+location;it;bookStore.location
+location;ja;bookStore.location
+location;kk;bookStore.location
+location;ko;bookStore.location
+location;ms;bookStore.location
+location;nl;bookStore.location
+location;no;bookStore.location
+location;pl;bookStore.location
+location;pt;bookStore.location
+location;ro;bookStore.location
+location;ru;bookStore.location
+location;sh;bookStore.location
+location;sk;bookStore.location
+location;sl;bookStore.location
+location;sv;bookStore.location
+location;th;bookStore.location
+location;tr;bookStore.location
+location;uk;bookStore.location
+location;vi;bookStore.location
+location;zh_CN;bookStore.location
+location;zh_TW;bookStore.location
+city;ar;bookStore.city
+city;bg;bookStore.city
+city;cs;bookStore.city
+city;da;bookStore.city
+city;de;bookStore.city
+city;el;bookStore.city
+city;en;bookStore.city
+city;en_US_saptrc;bookStore.city
+city;es;bookStore.city
+city;es_MX;bookStore.city
+city;fi;bookStore.city
+city;fr;bookStore.city
+city;he;bookStore.city
+city;hr;bookStore.city
+city;hu;bookStore.city
+city;it;bookStore.city
+city;ja;bookStore.city
+city;kk;bookStore.city
+city;ko;bookStore.city
+city;ms;bookStore.city
+city;nl;bookStore.city
+city;no;bookStore.city
+city;pl;bookStore.city
+city;pt;bookStore.city
+city;ro;bookStore.city
+city;ru;bookStore.city
+city;sh;bookStore.city
+city;sk;bookStore.city
+city;sl;bookStore.city
+city;sv;bookStore.city
+city;th;bookStore.city
+city;tr;bookStore.city
+city;uk;bookStore.city
+city;vi;bookStore.city
+city;zh_CN;bookStore.city
+city;zh_TW;bookStore.city
+city_ID;ar;bookStore.city
+city_ID;bg;bookStore.city
+city_ID;cs;bookStore.city
+city_ID;da;bookStore.city
+city_ID;de;bookStore.city
+city_ID;el;bookStore.city
+city_ID;en;bookStore.city
+city_ID;en_US_saptrc;bookStore.city
+city_ID;es;bookStore.city
+city_ID;es_MX;bookStore.city
+city_ID;fi;bookStore.city
+city_ID;fr;bookStore.city
+city_ID;he;bookStore.city
+city_ID;hr;bookStore.city
+city_ID;hu;bookStore.city
+city_ID;it;bookStore.city
+city_ID;ja;bookStore.city
+city_ID;kk;bookStore.city
+city_ID;ko;bookStore.city
+city_ID;ms;bookStore.city
+city_ID;nl;bookStore.city
+city_ID;no;bookStore.city
+city_ID;pl;bookStore.city
+city_ID;pt;bookStore.city
+city_ID;ro;bookStore.city
+city_ID;ru;bookStore.city
+city_ID;sh;bookStore.city
+city_ID;sk;bookStore.city
+city_ID;sl;bookStore.city
+city_ID;sv;bookStore.city
+city_ID;th;bookStore.city
+city_ID;tr;bookStore.city
+city_ID;uk;bookStore.city
+city_ID;vi;bookStore.city
+city_ID;zh_CN;bookStore.city
+city_ID;zh_TW;bookStore.city
+books;ar;bookStore.books
+books;bg;bookStore.books
+books;cs;bookStore.books
+books;da;bookStore.books
+books;de;bookStore.books
+books;el;bookStore.books
+books;en;bookStore.books
+books;en_US_saptrc;bookStore.books
+books;es;bookStore.books
+books;es_MX;bookStore.books
+books;fi;bookStore.books
+books;fr;bookStore.books
+books;he;bookStore.books
+books;hr;bookStore.books
+books;hu;bookStore.books
+books;it;bookStore.books
+books;ja;bookStore.books
+books;kk;bookStore.books
+books;ko;bookStore.books
+books;ms;bookStore.books
+books;nl;bookStore.books
+books;no;bookStore.books
+books;pl;bookStore.books
+books;pt;bookStore.books
+books;ro;bookStore.books
+books;ru;bookStore.books
+books;sh;bookStore.books
+books;sk;bookStore.books
+books;sl;bookStore.books
+books;sv;bookStore.books
+books;th;bookStore.books
+books;tr;bookStore.books
+books;uk;bookStore.books
+books;vi;bookStore.books
+books;zh_CN;bookStore.books
+books;zh_TW;bookStore.books
+sap.capire.bookshop.Books;ar;books.objectTitle
+sap.capire.bookshop.Books;bg;books.objectTitle
+sap.capire.bookshop.Books;cs;books.objectTitle
+sap.capire.bookshop.Books;da;books.objectTitle
+sap.capire.bookshop.Books;de;books.objectTitle
+sap.capire.bookshop.Books;el;books.objectTitle
+sap.capire.bookshop.Books;en;books.objectTitle
+sap.capire.bookshop.Books;en_US_saptrc;books.objectTitle
+sap.capire.bookshop.Books;es;books.objectTitle
+sap.capire.bookshop.Books;es_MX;books.objectTitle
+sap.capire.bookshop.Books;fi;books.objectTitle
+sap.capire.bookshop.Books;fr;books.objectTitle
+sap.capire.bookshop.Books;he;books.objectTitle
+sap.capire.bookshop.Books;hr;books.objectTitle
+sap.capire.bookshop.Books;hu;books.objectTitle
+sap.capire.bookshop.Books;it;books.objectTitle
+sap.capire.bookshop.Books;ja;books.objectTitle
+sap.capire.bookshop.Books;kk;books.objectTitle
+sap.capire.bookshop.Books;ko;books.objectTitle
+sap.capire.bookshop.Books;ms;books.objectTitle
+sap.capire.bookshop.Books;nl;books.objectTitle
+sap.capire.bookshop.Books;no;books.objectTitle
+sap.capire.bookshop.Books;pl;books.objectTitle
+sap.capire.bookshop.Books;pt;books.objectTitle
+sap.capire.bookshop.Books;ro;books.objectTitle
+sap.capire.bookshop.Books;ru;books.objectTitle
+sap.capire.bookshop.Books;sh;books.objectTitle
+sap.capire.bookshop.Books;sk;books.objectTitle
+sap.capire.bookshop.Books;sl;books.objectTitle
+sap.capire.bookshop.Books;sv;books.objectTitle
+sap.capire.bookshop.Books;th;books.objectTitle
+sap.capire.bookshop.Books;tr;books.objectTitle
+sap.capire.bookshop.Books;uk;books.objectTitle
+sap.capire.bookshop.Books;vi;books.objectTitle
+sap.capire.bookshop.Books;zh_CN;books.objectTitle
+sap.capire.bookshop.Books;zh_TW;books.objectTitle
+title;ar;Task Title
+title;bg;Task Title
+title;cs;Task Title
+title;da;Task Title
+title;de;Task Title
+title;el;Task Title
+title;en;Task Title
+title;en_US_saptrc;Task Title
+title;es;Task Title
+title;es_MX;Task Title
+title;fi;Task Title
+title;fr;Task Title
+title;he;Task Title
+title;hr;Task Title
+title;hu;Task Title
+title;it;Task Title
+title;ja;Task Title
+title;kk;Task Title
+title;ko;Task Title
+title;ms;Task Title
+title;nl;Task Title
+title;no;Task Title
+title;pl;Task Title
+title;pt;Task Title
+title;ro;Task Title
+title;ru;Task Title
+title;sh;Task Title
+title;sk;Task Title
+title;sl;Task Title
+title;sv;Task Title
+title;th;Task Title
+title;tr;Task Title
+title;uk;Task Title
+title;vi;Task Title
+title;zh_CN;Task Title
+title;zh_TW;Task Title
+descr;ar;books.descr
+descr;bg;books.descr
+descr;cs;books.descr
+descr;da;books.descr
+descr;de;books.descr
+descr;el;books.descr
+descr;en;books.descr
+descr;en_US_saptrc;books.descr
+descr;es;books.descr
+descr;es_MX;books.descr
+descr;fi;books.descr
+descr;fr;books.descr
+descr;he;books.descr
+descr;hr;books.descr
+descr;hu;books.descr
+descr;it;books.descr
+descr;ja;books.descr
+descr;kk;books.descr
+descr;ko;books.descr
+descr;ms;books.descr
+descr;nl;books.descr
+descr;no;books.descr
+descr;pl;books.descr
+descr;pt;books.descr
+descr;ro;books.descr
+descr;ru;books.descr
+descr;sh;books.descr
+descr;sk;books.descr
+descr;sl;books.descr
+descr;sv;books.descr
+descr;th;books.descr
+descr;tr;books.descr
+descr;uk;books.descr
+descr;vi;books.descr
+descr;zh_CN;books.descr
+descr;zh_TW;books.descr
+genre;ar;books.genre
+genre;bg;books.genre
+genre;cs;books.genre
+genre;da;books.genre
+genre;de;books.genre
+genre;el;books.genre
+genre;en;books.genre
+genre;en_US_saptrc;books.genre
+genre;es;books.genre
+genre;es_MX;books.genre
+genre;fi;books.genre
+genre;fr;books.genre
+genre;he;books.genre
+genre;hr;books.genre
+genre;hu;books.genre
+genre;it;books.genre
+genre;ja;books.genre
+genre;kk;books.genre
+genre;ko;books.genre
+genre;ms;books.genre
+genre;nl;books.genre
+genre;no;books.genre
+genre;pl;books.genre
+genre;pt;books.genre
+genre;ro;books.genre
+genre;ru;books.genre
+genre;sh;books.genre
+genre;sk;books.genre
+genre;sl;books.genre
+genre;sv;books.genre
+genre;th;books.genre
+genre;tr;books.genre
+genre;uk;books.genre
+genre;vi;books.genre
+genre;zh_CN;books.genre
+genre;zh_TW;books.genre
+genre_ID;ar;books.genre
+genre_ID;bg;books.genre
+genre_ID;cs;books.genre
+genre_ID;da;books.genre
+genre_ID;de;books.genre
+genre_ID;el;books.genre
+genre_ID;en;books.genre
+genre_ID;en_US_saptrc;books.genre
+genre_ID;es;books.genre
+genre_ID;es_MX;books.genre
+genre_ID;fi;books.genre
+genre_ID;fr;books.genre
+genre_ID;he;books.genre
+genre_ID;hr;books.genre
+genre_ID;hu;books.genre
+genre_ID;it;books.genre
+genre_ID;ja;books.genre
+genre_ID;kk;books.genre
+genre_ID;ko;books.genre
+genre_ID;ms;books.genre
+genre_ID;nl;books.genre
+genre_ID;no;books.genre
+genre_ID;pl;books.genre
+genre_ID;pt;books.genre
+genre_ID;ro;books.genre
+genre_ID;ru;books.genre
+genre_ID;sh;books.genre
+genre_ID;sk;books.genre
+genre_ID;sl;books.genre
+genre_ID;sv;books.genre
+genre_ID;th;books.genre
+genre_ID;tr;books.genre
+genre_ID;uk;books.genre
+genre_ID;vi;books.genre
+genre_ID;zh_CN;books.genre
+genre_ID;zh_TW;books.genre
+bookType;ar;books.bookType
+bookType;bg;books.bookType
+bookType;cs;books.bookType
+bookType;da;books.bookType
+bookType;de;books.bookType
+bookType;el;books.bookType
+bookType;en;books.bookType
+bookType;en_US_saptrc;books.bookType
+bookType;es;books.bookType
+bookType;es_MX;books.bookType
+bookType;fi;books.bookType
+bookType;fr;books.bookType
+bookType;he;books.bookType
+bookType;hr;books.bookType
+bookType;hu;books.bookType
+bookType;it;books.bookType
+bookType;ja;books.bookType
+bookType;kk;books.bookType
+bookType;ko;books.bookType
+bookType;ms;books.bookType
+bookType;nl;books.bookType
+bookType;no;books.bookType
+bookType;pl;books.bookType
+bookType;pt;books.bookType
+bookType;ro;books.bookType
+bookType;ru;books.bookType
+bookType;sh;books.bookType
+bookType;sk;books.bookType
+bookType;sl;books.bookType
+bookType;sv;books.bookType
+bookType;th;books.bookType
+bookType;tr;books.bookType
+bookType;uk;books.bookType
+bookType;vi;books.bookType
+bookType;zh_CN;books.bookType
+bookType;zh_TW;books.bookType
+bookType_code;ar;books.bookType
+bookType_code;bg;books.bookType
+bookType_code;cs;books.bookType
+bookType_code;da;books.bookType
+bookType_code;de;books.bookType
+bookType_code;el;books.bookType
+bookType_code;en;books.bookType
+bookType_code;en_US_saptrc;books.bookType
+bookType_code;es;books.bookType
+bookType_code;es_MX;books.bookType
+bookType_code;fi;books.bookType
+bookType_code;fr;books.bookType
+bookType_code;he;books.bookType
+bookType_code;hr;books.bookType
+bookType_code;hu;books.bookType
+bookType_code;it;books.bookType
+bookType_code;ja;books.bookType
+bookType_code;kk;books.bookType
+bookType_code;ko;books.bookType
+bookType_code;ms;books.bookType
+bookType_code;nl;books.bookType
+bookType_code;no;books.bookType
+bookType_code;pl;books.bookType
+bookType_code;pt;books.bookType
+bookType_code;ro;books.bookType
+bookType_code;ru;books.bookType
+bookType_code;sh;books.bookType
+bookType_code;sk;books.bookType
+bookType_code;sl;books.bookType
+bookType_code;sv;books.bookType
+bookType_code;th;books.bookType
+bookType_code;tr;books.bookType
+bookType_code;uk;books.bookType
+bookType_code;vi;books.bookType
+bookType_code;zh_CN;books.bookType
+bookType_code;zh_TW;books.bookType
+sap.capire.bookshop.Authors;ar;authors.objectTitle
+sap.capire.bookshop.Authors;bg;authors.objectTitle
+sap.capire.bookshop.Authors;cs;authors.objectTitle
+sap.capire.bookshop.Authors;da;authors.objectTitle
+sap.capire.bookshop.Authors;de;authors.objectTitle
+sap.capire.bookshop.Authors;el;authors.objectTitle
+sap.capire.bookshop.Authors;en;authors.objectTitle
+sap.capire.bookshop.Authors;en_US_saptrc;authors.objectTitle
+sap.capire.bookshop.Authors;es;authors.objectTitle
+sap.capire.bookshop.Authors;es_MX;authors.objectTitle
+sap.capire.bookshop.Authors;fi;authors.objectTitle
+sap.capire.bookshop.Authors;fr;authors.objectTitle
+sap.capire.bookshop.Authors;he;authors.objectTitle
+sap.capire.bookshop.Authors;hr;authors.objectTitle
+sap.capire.bookshop.Authors;hu;authors.objectTitle
+sap.capire.bookshop.Authors;it;authors.objectTitle
+sap.capire.bookshop.Authors;ja;authors.objectTitle
+sap.capire.bookshop.Authors;kk;authors.objectTitle
+sap.capire.bookshop.Authors;ko;authors.objectTitle
+sap.capire.bookshop.Authors;ms;authors.objectTitle
+sap.capire.bookshop.Authors;nl;authors.objectTitle
+sap.capire.bookshop.Authors;no;authors.objectTitle
+sap.capire.bookshop.Authors;pl;authors.objectTitle
+sap.capire.bookshop.Authors;pt;authors.objectTitle
+sap.capire.bookshop.Authors;ro;authors.objectTitle
+sap.capire.bookshop.Authors;ru;authors.objectTitle
+sap.capire.bookshop.Authors;sh;authors.objectTitle
+sap.capire.bookshop.Authors;sk;authors.objectTitle
+sap.capire.bookshop.Authors;sl;authors.objectTitle
+sap.capire.bookshop.Authors;sv;authors.objectTitle
+sap.capire.bookshop.Authors;th;authors.objectTitle
+sap.capire.bookshop.Authors;tr;authors.objectTitle
+sap.capire.bookshop.Authors;uk;authors.objectTitle
+sap.capire.bookshop.Authors;vi;authors.objectTitle
+sap.capire.bookshop.Authors;zh_CN;authors.objectTitle
+sap.capire.bookshop.Authors;zh_TW;authors.objectTitle
+name_firstName;ar;serviceAuthors.name
+name_firstName;bg;serviceAuthors.name
+name_firstName;cs;serviceAuthors.name
+name_firstName;da;serviceAuthors.name
+name_firstName;de;serviceAuthors.name
+name_firstName;el;serviceAuthors.name
+name_firstName;en;serviceAuthors.name
+name_firstName;en_US_saptrc;serviceAuthors.name
+name_firstName;es;serviceAuthors.name
+name_firstName;es_MX;serviceAuthors.name
+name_firstName;fi;serviceAuthors.name
+name_firstName;fr;serviceAuthors.name
+name_firstName;he;serviceAuthors.name
+name_firstName;hr;serviceAuthors.name
+name_firstName;hu;serviceAuthors.name
+name_firstName;it;serviceAuthors.name
+name_firstName;ja;serviceAuthors.name
+name_firstName;kk;serviceAuthors.name
+name_firstName;ko;serviceAuthors.name
+name_firstName;ms;serviceAuthors.name
+name_firstName;nl;serviceAuthors.name
+name_firstName;no;serviceAuthors.name
+name_firstName;pl;serviceAuthors.name
+name_firstName;pt;serviceAuthors.name
+name_firstName;ro;serviceAuthors.name
+name_firstName;ru;serviceAuthors.name
+name_firstName;sh;serviceAuthors.name
+name_firstName;sk;serviceAuthors.name
+name_firstName;sl;serviceAuthors.name
+name_firstName;sv;serviceAuthors.name
+name_firstName;th;serviceAuthors.name
+name_firstName;tr;serviceAuthors.name
+name_firstName;uk;serviceAuthors.name
+name_firstName;vi;serviceAuthors.name
+name_firstName;zh_CN;serviceAuthors.name
+name_firstName;zh_TW;serviceAuthors.name
+name_lastName;ar;serviceAuthors.name
+name_lastName;bg;serviceAuthors.name
+name_lastName;cs;serviceAuthors.name
+name_lastName;da;serviceAuthors.name
+name_lastName;de;serviceAuthors.name
+name_lastName;el;serviceAuthors.name
+name_lastName;en;serviceAuthors.name
+name_lastName;en_US_saptrc;serviceAuthors.name
+name_lastName;es;serviceAuthors.name
+name_lastName;es_MX;serviceAuthors.name
+name_lastName;fi;serviceAuthors.name
+name_lastName;fr;serviceAuthors.name
+name_lastName;he;serviceAuthors.name
+name_lastName;hr;serviceAuthors.name
+name_lastName;hu;serviceAuthors.name
+name_lastName;it;serviceAuthors.name
+name_lastName;ja;serviceAuthors.name
+name_lastName;kk;serviceAuthors.name
+name_lastName;ko;serviceAuthors.name
+name_lastName;ms;serviceAuthors.name
+name_lastName;nl;serviceAuthors.name
+name_lastName;no;serviceAuthors.name
+name_lastName;pl;serviceAuthors.name
+name_lastName;pt;serviceAuthors.name
+name_lastName;ro;serviceAuthors.name
+name_lastName;ru;serviceAuthors.name
+name_lastName;sh;serviceAuthors.name
+name_lastName;sk;serviceAuthors.name
+name_lastName;sl;serviceAuthors.name
+name_lastName;sv;serviceAuthors.name
+name_lastName;th;serviceAuthors.name
+name_lastName;tr;serviceAuthors.name
+name_lastName;uk;serviceAuthors.name
+name_lastName;vi;serviceAuthors.name
+name_lastName;zh_CN;serviceAuthors.name
+name_lastName;zh_TW;serviceAuthors.name
+placeOfBirth;ar;authors.placeOfBirth
+placeOfBirth;bg;authors.placeOfBirth
+placeOfBirth;cs;authors.placeOfBirth
+placeOfBirth;da;authors.placeOfBirth
+placeOfBirth;de;authors.placeOfBirth
+placeOfBirth;el;authors.placeOfBirth
+placeOfBirth;en;authors.placeOfBirth
+placeOfBirth;en_US_saptrc;authors.placeOfBirth
+placeOfBirth;es;authors.placeOfBirth
+placeOfBirth;es_MX;authors.placeOfBirth
+placeOfBirth;fi;authors.placeOfBirth
+placeOfBirth;fr;authors.placeOfBirth
+placeOfBirth;he;authors.placeOfBirth
+placeOfBirth;hr;authors.placeOfBirth
+placeOfBirth;hu;authors.placeOfBirth
+placeOfBirth;it;authors.placeOfBirth
+placeOfBirth;ja;authors.placeOfBirth
+placeOfBirth;kk;authors.placeOfBirth
+placeOfBirth;ko;authors.placeOfBirth
+placeOfBirth;ms;authors.placeOfBirth
+placeOfBirth;nl;authors.placeOfBirth
+placeOfBirth;no;authors.placeOfBirth
+placeOfBirth;pl;authors.placeOfBirth
+placeOfBirth;pt;authors.placeOfBirth
+placeOfBirth;ro;authors.placeOfBirth
+placeOfBirth;ru;authors.placeOfBirth
+placeOfBirth;sh;authors.placeOfBirth
+placeOfBirth;sk;authors.placeOfBirth
+placeOfBirth;sl;authors.placeOfBirth
+placeOfBirth;sv;authors.placeOfBirth
+placeOfBirth;th;authors.placeOfBirth
+placeOfBirth;tr;authors.placeOfBirth
+placeOfBirth;uk;authors.placeOfBirth
+placeOfBirth;vi;authors.placeOfBirth
+placeOfBirth;zh_CN;authors.placeOfBirth
+placeOfBirth;zh_TW;authors.placeOfBirth
+sap.capire.bookshop.Volumns;ar;volumns.objectTitle
+sap.capire.bookshop.Volumns;bg;volumns.objectTitle
+sap.capire.bookshop.Volumns;cs;volumns.objectTitle
+sap.capire.bookshop.Volumns;da;volumns.objectTitle
+sap.capire.bookshop.Volumns;de;volumns.objectTitle
+sap.capire.bookshop.Volumns;el;volumns.objectTitle
+sap.capire.bookshop.Volumns;en;volumns.objectTitle
+sap.capire.bookshop.Volumns;en_US_saptrc;volumns.objectTitle
+sap.capire.bookshop.Volumns;es;volumns.objectTitle
+sap.capire.bookshop.Volumns;es_MX;volumns.objectTitle
+sap.capire.bookshop.Volumns;fi;volumns.objectTitle
+sap.capire.bookshop.Volumns;fr;volumns.objectTitle
+sap.capire.bookshop.Volumns;he;volumns.objectTitle
+sap.capire.bookshop.Volumns;hr;volumns.objectTitle
+sap.capire.bookshop.Volumns;hu;volumns.objectTitle
+sap.capire.bookshop.Volumns;it;volumns.objectTitle
+sap.capire.bookshop.Volumns;ja;volumns.objectTitle
+sap.capire.bookshop.Volumns;kk;volumns.objectTitle
+sap.capire.bookshop.Volumns;ko;volumns.objectTitle
+sap.capire.bookshop.Volumns;ms;volumns.objectTitle
+sap.capire.bookshop.Volumns;nl;volumns.objectTitle
+sap.capire.bookshop.Volumns;no;volumns.objectTitle
+sap.capire.bookshop.Volumns;pl;volumns.objectTitle
+sap.capire.bookshop.Volumns;pt;volumns.objectTitle
+sap.capire.bookshop.Volumns;ro;volumns.objectTitle
+sap.capire.bookshop.Volumns;ru;volumns.objectTitle
+sap.capire.bookshop.Volumns;sh;volumns.objectTitle
+sap.capire.bookshop.Volumns;sk;volumns.objectTitle
+sap.capire.bookshop.Volumns;sl;volumns.objectTitle
+sap.capire.bookshop.Volumns;sv;volumns.objectTitle
+sap.capire.bookshop.Volumns;th;volumns.objectTitle
+sap.capire.bookshop.Volumns;tr;volumns.objectTitle
+sap.capire.bookshop.Volumns;uk;volumns.objectTitle
+sap.capire.bookshop.Volumns;vi;volumns.objectTitle
+sap.capire.bookshop.Volumns;zh_CN;volumns.objectTitle
+sap.capire.bookshop.Volumns;zh_TW;volumns.objectTitle
+sequence;ar;volumns.sequence
+sequence;bg;volumns.sequence
+sequence;cs;volumns.sequence
+sequence;da;volumns.sequence
+sequence;de;volumns.sequence
+sequence;el;volumns.sequence
+sequence;en;volumns.sequence
+sequence;en_US_saptrc;volumns.sequence
+sequence;es;volumns.sequence
+sequence;es_MX;volumns.sequence
+sequence;fi;volumns.sequence
+sequence;fr;volumns.sequence
+sequence;he;volumns.sequence
+sequence;hr;volumns.sequence
+sequence;hu;volumns.sequence
+sequence;it;volumns.sequence
+sequence;ja;volumns.sequence
+sequence;kk;volumns.sequence
+sequence;ko;volumns.sequence
+sequence;ms;volumns.sequence
+sequence;nl;volumns.sequence
+sequence;no;volumns.sequence
+sequence;pl;volumns.sequence
+sequence;pt;volumns.sequence
+sequence;ro;volumns.sequence
+sequence;ru;volumns.sequence
+sequence;sh;volumns.sequence
+sequence;sk;volumns.sequence
+sequence;sl;volumns.sequence
+sequence;sv;volumns.sequence
+sequence;th;volumns.sequence
+sequence;tr;volumns.sequence
+sequence;uk;volumns.sequence
+sequence;vi;volumns.sequence
+sequence;zh_CN;volumns.sequence
+sequence;zh_TW;volumns.sequence
+ActivationStatus;ar;Status
+ActivationStatus;bg;Status
+ActivationStatus;cs;Status
+ActivationStatus;da;Status
+ActivationStatus;de;Status
+ActivationStatus;el;Status
+ActivationStatus;en;Status
+ActivationStatus;en_US_saptrc;Status
+ActivationStatus;es;Status
+ActivationStatus;es_MX;Status
+ActivationStatus;fi;Status
+ActivationStatus;fr;Status
+ActivationStatus;he;Status
+ActivationStatus;hr;Status
+ActivationStatus;hu;Status
+ActivationStatus;it;Status
+ActivationStatus;ja;Status
+ActivationStatus;kk;Status
+ActivationStatus;ko;Status
+ActivationStatus;ms;Status
+ActivationStatus;nl;Status
+ActivationStatus;no;Status
+ActivationStatus;pl;Status
+ActivationStatus;pt;Status
+ActivationStatus;ro;Status
+ActivationStatus;ru;Status
+ActivationStatus;sh;Status
+ActivationStatus;sk;Status
+ActivationStatus;sl;Status
+ActivationStatus;sv;Status
+ActivationStatus;th;Status
+ActivationStatus;tr;Status
+ActivationStatus;uk;Status
+ActivationStatus;vi;Status
+ActivationStatus;zh_CN;Status
+ActivationStatus;zh_TW;Status
+ActivationStatus_code;ar;Status
+ActivationStatus_code;bg;Status
+ActivationStatus_code;cs;Status
+ActivationStatus_code;da;Status
+ActivationStatus_code;de;Status
+ActivationStatus_code;el;Status
+ActivationStatus_code;en;Status
+ActivationStatus_code;en_US_saptrc;Status
+ActivationStatus_code;es;Status
+ActivationStatus_code;es_MX;Status
+ActivationStatus_code;fi;Status
+ActivationStatus_code;fr;Status
+ActivationStatus_code;he;Status
+ActivationStatus_code;hr;Status
+ActivationStatus_code;hu;Status
+ActivationStatus_code;it;Status
+ActivationStatus_code;ja;Status
+ActivationStatus_code;kk;Status
+ActivationStatus_code;ko;Status
+ActivationStatus_code;ms;Status
+ActivationStatus_code;nl;Status
+ActivationStatus_code;no;Status
+ActivationStatus_code;pl;Status
+ActivationStatus_code;pt;Status
+ActivationStatus_code;ro;Status
+ActivationStatus_code;ru;Status
+ActivationStatus_code;sh;Status
+ActivationStatus_code;sk;Status
+ActivationStatus_code;sl;Status
+ActivationStatus_code;sv;Status
+ActivationStatus_code;th;Status
+ActivationStatus_code;tr;Status
+ActivationStatus_code;uk;Status
+ActivationStatus_code;vi;Status
+ActivationStatus_code;zh_CN;Status
+ActivationStatus_code;zh_TW;Status
+sap.capire.bookshop.BookStoreRegistry;ar;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;bg;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;cs;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;da;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;de;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;el;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;en;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;en_US_saptrc;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;es;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;es_MX;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;fi;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;fr;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;he;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;hr;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;hu;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;it;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;ja;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;kk;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;ko;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;ms;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;nl;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;no;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;pl;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;pt;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;ro;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;ru;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;sh;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;sk;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;sl;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;sv;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;th;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;tr;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;uk;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;vi;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;zh_CN;bookStoreRegistry.objectTitle
+sap.capire.bookshop.BookStoreRegistry;zh_TW;bookStoreRegistry.objectTitle
+validOn;ar;bookStoreRegistry.validOn
+validOn;bg;bookStoreRegistry.validOn
+validOn;cs;bookStoreRegistry.validOn
+validOn;da;bookStoreRegistry.validOn
+validOn;de;bookStoreRegistry.validOn
+validOn;el;bookStoreRegistry.validOn
+validOn;en;bookStoreRegistry.validOn
+validOn;en_US_saptrc;bookStoreRegistry.validOn
+validOn;es;bookStoreRegistry.validOn
+validOn;es_MX;bookStoreRegistry.validOn
+validOn;fi;bookStoreRegistry.validOn
+validOn;fr;bookStoreRegistry.validOn
+validOn;he;bookStoreRegistry.validOn
+validOn;hr;bookStoreRegistry.validOn
+validOn;hu;bookStoreRegistry.validOn
+validOn;it;bookStoreRegistry.validOn
+validOn;ja;bookStoreRegistry.validOn
+validOn;kk;bookStoreRegistry.validOn
+validOn;ko;bookStoreRegistry.validOn
+validOn;ms;bookStoreRegistry.validOn
+validOn;nl;bookStoreRegistry.validOn
+validOn;no;bookStoreRegistry.validOn
+validOn;pl;bookStoreRegistry.validOn
+validOn;pt;bookStoreRegistry.validOn
+validOn;ro;bookStoreRegistry.validOn
+validOn;ru;bookStoreRegistry.validOn
+validOn;sh;bookStoreRegistry.validOn
+validOn;sk;bookStoreRegistry.validOn
+validOn;sl;bookStoreRegistry.validOn
+validOn;sv;bookStoreRegistry.validOn
+validOn;th;bookStoreRegistry.validOn
+validOn;tr;bookStoreRegistry.validOn
+validOn;uk;bookStoreRegistry.validOn
+validOn;vi;bookStoreRegistry.validOn
+validOn;zh_CN;bookStoreRegistry.validOn
+validOn;zh_TW;bookStoreRegistry.validOn
+sap.capire.bookshop.RootEntity;ar;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;bg;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;cs;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;da;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;de;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;el;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;en;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;en_US_saptrc;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;es;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;es_MX;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;fi;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;fr;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;he;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;hr;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;hu;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;it;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;ja;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;kk;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;ko;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;ms;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;nl;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;no;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;pl;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;pt;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;ro;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;ru;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;sh;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;sk;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;sl;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;sv;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;th;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;tr;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;uk;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;vi;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;zh_CN;RootEntity.objectTitle
+sap.capire.bookshop.RootEntity;zh_TW;RootEntity.objectTitle
+sap.capire.bookshop.Level1Entity;ar;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;bg;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;cs;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;da;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;de;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;el;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;en;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;en_US_saptrc;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;es;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;es_MX;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;fi;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;fr;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;he;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;hr;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;hu;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;it;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;ja;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;kk;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;ko;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;ms;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;nl;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;no;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;pl;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;pt;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;ro;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;ru;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;sh;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;sk;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;sl;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;sv;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;th;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;tr;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;uk;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;vi;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;zh_CN;Level1Entity.objectTitle
+sap.capire.bookshop.Level1Entity;zh_TW;Level1Entity.objectTitle
+sap.capire.bookshop.Level2Entity;ar;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;bg;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;cs;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;da;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;de;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;el;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;en;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;en_US_saptrc;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;es;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;es_MX;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;fi;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;fr;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;he;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;hr;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;hu;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;it;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;ja;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;kk;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;ko;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;ms;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;nl;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;no;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;pl;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;pt;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;ro;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;ru;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;sh;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;sk;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;sl;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;sv;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;th;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;tr;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;uk;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;vi;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;zh_CN;Level2Entity.objectTitle
+sap.capire.bookshop.Level2Entity;zh_TW;Level2Entity.objectTitle
+sap.capire.bookshop.Level3Entity;ar;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;bg;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;cs;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;da;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;de;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;el;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;en;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;en_US_saptrc;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;es;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;es_MX;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;fi;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;fr;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;he;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;hr;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;hu;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;it;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;ja;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;kk;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;ko;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;ms;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;nl;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;no;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;pl;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;pt;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;ro;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;ru;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;sh;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;sk;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;sl;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;sv;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;th;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;tr;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;uk;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;vi;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;zh_CN;Level3Entity.objectTitle
+sap.capire.bookshop.Level3Entity;zh_TW;Level3Entity.objectTitle
+sap.capire.bookshop.RootSampleDraft;ar;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;bg;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;cs;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;da;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;de;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;el;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;en;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;en_US_saptrc;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;es;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;es_MX;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;fi;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;fr;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;he;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;hr;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;hu;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;it;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;ja;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;kk;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;ko;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;ms;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;nl;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;no;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;pl;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;pt;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;ro;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;ru;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;sh;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;sk;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;sl;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;sv;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;th;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;tr;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;uk;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;vi;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;zh_CN;Root Sample Draft
+sap.capire.bookshop.RootSampleDraft;zh_TW;Root Sample Draft
+sap.capire.bookshop.Level1SampleDraft;ar;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;bg;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;cs;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;da;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;de;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;el;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;en;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;en_US_saptrc;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;es;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;es_MX;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;fi;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;fr;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;he;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;hr;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;hu;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;it;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;ja;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;kk;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;ko;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;ms;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;nl;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;no;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;pl;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;pt;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;ro;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;ru;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;sh;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;sk;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;sl;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;sv;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;th;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;tr;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;uk;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;vi;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;zh_CN;Level1 Sample Draft
+sap.capire.bookshop.Level1SampleDraft;zh_TW;Level1 Sample Draft
+sap.capire.incidents.Incidents;ar;Support Incidents
+sap.capire.incidents.Incidents;bg;Support Incidents
+sap.capire.incidents.Incidents;cs;Support Incidents
+sap.capire.incidents.Incidents;da;Support Incidents
+sap.capire.incidents.Incidents;de;Support Incidents
+sap.capire.incidents.Incidents;el;Support Incidents
+sap.capire.incidents.Incidents;en;Support Incidents
+sap.capire.incidents.Incidents;en_US_saptrc;Support Incidents
+sap.capire.incidents.Incidents;es;Support Incidents
+sap.capire.incidents.Incidents;es_MX;Support Incidents
+sap.capire.incidents.Incidents;fi;Support Incidents
+sap.capire.incidents.Incidents;fr;Support Incidents
+sap.capire.incidents.Incidents;he;Support Incidents
+sap.capire.incidents.Incidents;hr;Support Incidents
+sap.capire.incidents.Incidents;hu;Support Incidents
+sap.capire.incidents.Incidents;it;Support Incidents
+sap.capire.incidents.Incidents;ja;Support Incidents
+sap.capire.incidents.Incidents;kk;Support Incidents
+sap.capire.incidents.Incidents;ko;Support Incidents
+sap.capire.incidents.Incidents;ms;Support Incidents
+sap.capire.incidents.Incidents;nl;Support Incidents
+sap.capire.incidents.Incidents;no;Support Incidents
+sap.capire.incidents.Incidents;pl;Support Incidents
+sap.capire.incidents.Incidents;pt;Support Incidents
+sap.capire.incidents.Incidents;ro;Support Incidents
+sap.capire.incidents.Incidents;ru;Support Incidents
+sap.capire.incidents.Incidents;sh;Support Incidents
+sap.capire.incidents.Incidents;sk;Support Incidents
+sap.capire.incidents.Incidents;sl;Support Incidents
+sap.capire.incidents.Incidents;sv;Support Incidents
+sap.capire.incidents.Incidents;th;Support Incidents
+sap.capire.incidents.Incidents;tr;Support Incidents
+sap.capire.incidents.Incidents;uk;Support Incidents
+sap.capire.incidents.Incidents;vi;Support Incidents
+sap.capire.incidents.Incidents;zh_CN;Support Incidents
+sap.capire.incidents.Incidents;zh_TW;Support Incidents
+status;ar;Status
+status;bg;Status
+status;cs;Status
+status;da;Status
+status;de;Status
+status;el;Status
+status;en;Status
+status;en_US_saptrc;Status
+status;es;Status
+status;es_MX;Status
+status;fi;Status
+status;fr;Status
+status;he;Status
+status;hr;Status
+status;hu;Status
+status;it;Status
+status;ja;Status
+status;kk;Status
+status;ko;Status
+status;ms;Status
+status;nl;Status
+status;no;Status
+status;pl;Status
+status;pt;Status
+status;ro;Status
+status;ru;Status
+status;sh;Status
+status;sk;Status
+status;sl;Status
+status;sv;Status
+status;th;Status
+status;tr;Status
+status;uk;Status
+status;vi;Status
+status;zh_CN;Status
+status;zh_TW;Status
+status_code;ar;Status
+status_code;bg;Status
+status_code;cs;Status
+status_code;da;Status
+status_code;de;Status
+status_code;el;Status
+status_code;en;Status
+status_code;en_US_saptrc;Status
+status_code;es;Status
+status_code;es_MX;Status
+status_code;fi;Status
+status_code;fr;Status
+status_code;he;Status
+status_code;hr;Status
+status_code;hu;Status
+status_code;it;Status
+status_code;ja;Status
+status_code;kk;Status
+status_code;ko;Status
+status_code;ms;Status
+status_code;nl;Status
+status_code;no;Status
+status_code;pl;Status
+status_code;pt;Status
+status_code;ro;Status
+status_code;ru;Status
+status_code;sh;Status
+status_code;sk;Status
+status_code;sl;Status
+status_code;sv;Status
+status_code;th;Status
+status_code;tr;Status
+status_code;uk;Status
+status_code;vi;Status
+status_code;zh_CN;Status
+status_code;zh_TW;Status
+country;ar;الدولة/المنطقة
+country;bg;Държава/регион
+country;cs;Stát/region
+country;da;Land/region
+country;de;Land/Region
+country;el;Χώρα/Περιοχή
+country;en;Country/Region
+country;en_US_saptrc;AbsSu8Y0n1nvBQMk+UaLfw_Country/Region
+country;es;País/Región
+country;es_MX;País/Región
+country;fi;Maa/alue
+country;fr;Pays/Région
+country;he;מדינה/אזור
+country;hr;Država/regija
+country;hu;Ország/régió
+country;it;Paese/regione
+country;ja;国/地域
+country;kk;Ел/аймақ
+country;ko;국가/지역
+country;ms;Negara/Wilayah
+country;nl;Land/regio
+country;no;Land/region
+country;pl;Kraj/region
+country;pt;País/região
+country;ro;Țară/regiune
+country;ru;Страна/регион
+country;sh;Zemlja/regija
+country;sk;Štát/región
+country;sl;Država/regija
+country;sv;Land/region
+country;th;ประเทศ/ภูมิภาค
+country;tr;Ülke/bölge
+country;uk;Країна/регіон
+country;vi;Quốc gia/Vùng
+country;zh_CN;国家/地区
+country;zh_TW;國家/地區
+country_code;ar;الدولة/المنطقة
+country_code;bg;Държава/регион
+country_code;cs;Stát/region
+country_code;da;Land/region
+country_code;de;Land/Region
+country_code;el;Χώρα/Περιοχή
+country_code;en;Country/Region
+country_code;en_US_saptrc;AbsSu8Y0n1nvBQMk+UaLfw_Country/Region
+country_code;es;País/Región
+country_code;es_MX;País/Región
+country_code;fi;Maa/alue
+country_code;fr;Pays/Région
+country_code;he;מדינה/אזור
+country_code;hr;Država/regija
+country_code;hu;Ország/régió
+country_code;it;Paese/regione
+country_code;ja;国/地域
+country_code;kk;Ел/аймақ
+country_code;ko;국가/지역
+country_code;ms;Negara/Wilayah
+country_code;nl;Land/regio
+country_code;no;Land/region
+country_code;pl;Kraj/region
+country_code;pt;País/região
+country_code;ro;Țară/regiune
+country_code;ru;Страна/регион
+country_code;sh;Zemlja/regija
+country_code;sk;Štát/región
+country_code;sl;Država/regija
+country_code;sv;Land/region
+country_code;th;ประเทศ/ภูมิภาค
+country_code;tr;Ülke/bölge
+country_code;uk;Країна/регіон
+country_code;vi;Quốc gia/Vùng
+country_code;zh_CN;国家/地区
+country_code;zh_TW;國家/地區
+create;ar;Create
+update;ar;Update
+delete;ar;Delete
+create;bg;Create
+update;bg;Update
+delete;bg;Delete
+create;cs;Create
+update;cs;Update
+delete;cs;Delete
+create;da;Create
+update;da;Update
+delete;da;Delete
+create;de;Create
+update;de;Update
+delete;de;Delete
+create;el;Create
+update;el;Update
+delete;el;Delete
+create;en;Create
+update;en;Update
+delete;en;Delete
+create;en_US_saptrc;Create
+update;en_US_saptrc;Update
+delete;en_US_saptrc;Delete
+create;es;Create
+update;es;Update
+delete;es;Delete
+create;es_MX;Create
+update;es_MX;Update
+delete;es_MX;Delete
+create;fi;Create
+update;fi;Update
+delete;fi;Delete
+create;fr;Create
+update;fr;Update
+delete;fr;Delete
+create;he;Create
+update;he;Update
+delete;he;Delete
+create;hr;Create
+update;hr;Update
+delete;hr;Delete
+create;hu;Create
+update;hu;Update
+delete;hu;Delete
+create;it;Create
+update;it;Update
+delete;it;Delete
+create;ja;Create
+update;ja;Update
+delete;ja;Delete
+create;kk;Create
+update;kk;Update
+delete;kk;Delete
+create;ko;Create
+update;ko;Update
+delete;ko;Delete
+create;ms;Create
+update;ms;Update
+delete;ms;Delete
+create;nl;Create
+update;nl;Update
+delete;nl;Delete
+create;no;Create
+update;no;Update
+delete;no;Delete
+create;pl;Create
+update;pl;Update
+delete;pl;Delete
+create;pt;Create
+update;pt;Update
+delete;pt;Delete
+create;ro;Create
+update;ro;Update
+delete;ro;Delete
+create;ru;Create
+update;ru;Update
+delete;ru;Delete
+create;sh;Create
+update;sh;Update
+delete;sh;Delete
+create;sk;Create
+update;sk;Update
+delete;sk;Delete
+create;sl;Create
+update;sl;Update
+delete;sl;Delete
+create;sv;Create
+update;sv;Update
+delete;sv;Delete
+create;th;Create
+update;th;Update
+delete;th;Delete
+create;tr;Create
+update;tr;Update
+delete;tr;Delete
+create;uk;Create
+update;uk;Update
+delete;uk;Delete
+create;vi;Create
+update;vi;Update
+delete;vi;Delete
+create;zh_CN;Create
+update;zh_CN;Update
+delete;zh_CN;Delete
+create;zh_TW;Create
+update;zh_TW;Update
+delete;zh_TW;Delete

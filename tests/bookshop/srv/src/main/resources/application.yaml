@@ -1,0 +1,22 @@
+
+---
+spring:
+  config.activate.on-profile: default
+  sql.init.platform: h2
+  sql.init.separator: ";;"
+cds:
+  data-source.auto-config.enabled: false
+  security:
+    mock:
+      users:
+        - name: alice
+          roles:
+            - support
+            - admin
+        - name: bob
+          roles:
+            - support
+
+# logging:
+#   level:
+#     com.sap.cds.persistence.sql: DEBUG
