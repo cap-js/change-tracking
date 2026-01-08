@@ -59,8 +59,8 @@ describe('change log integration test', () => {
 
 		const afterChanges = await adminService.run(SELECT.from(ChangeView));
 
-		const changelogCreated = afterChanges.filter((ele) => ele.modification === 'Create');
-		const changelogDeleted = afterChanges.filter((ele) => ele.modification === 'Delete');
+		const changelogCreated = afterChanges.filter((ele) => ele.modification === 'create');
+		const changelogDeleted = afterChanges.filter((ele) => ele.modification === 'delete');
 
 		const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'parentKey', 'serviceEntityPath', 'valueDataType', 'objectID', 'parentObjectID', 'entityKey'];
 
@@ -88,17 +88,17 @@ describe('change log integration test', () => {
 		const change1 = changes.find((c) => c.attribute === 'price');
 
 		expect(change1).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770');
-		expect(change1).toHaveProperty('modification', 'Create');
+		expect(change1).toHaveProperty('modification', 'create');
 		expect(change1).toHaveProperty('entity', 'Book');
-		expect(change1.valueChangedFrom).toEqual('');
+		expect(change1.valueChangedFrom).toEqual(null);
 		expect(Number(change1.valueChangedTo)).toEqual(0);
 
 		const change2 = changes.find((c) => c.attribute === 'isUsed');
 
 		expect(change2).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770');
-		expect(change2).toHaveProperty('modification', 'Create');
+		expect(change2).toHaveProperty('modification', 'create');
 		expect(change2).toHaveProperty('entity', 'Book');
-		expect(change2.valueChangedFrom).toEqual('');
+		expect(change2.valueChangedFrom).toEqual(null);
 		expect(change2.valueChangedTo).toEqual('false');
 
 		action = DELETE.bind({}, `/odata/v4/admin/Books(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=false)`);
@@ -113,18 +113,18 @@ describe('change log integration test', () => {
 		const change3 = changes.find((c) => c.attribute === 'price');
 
 		expect(change3).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770');
-		expect(change3).toHaveProperty('modification', 'Delete');
+		expect(change3).toHaveProperty('modification', 'delete');
 		expect(change3).toHaveProperty('entity', 'Book');
 		expect(Number(change3.valueChangedFrom)).toEqual(0);
-		expect(change3.valueChangedTo).toEqual('');
+		expect(change3.valueChangedTo).toEqual(null);
 
 		const change4 = changes.find((c) => c.attribute === 'isUsed');
 
 		expect(change4).toHaveProperty('entityKey', '64625905-c234-4d0d-9bc1-283ee8946770');
-		expect(change4).toHaveProperty('modification', 'Delete');
+		expect(change4).toHaveProperty('modification', 'delete');
 		expect(change4).toHaveProperty('entity', 'Book');
 		expect(change4.valueChangedFrom).toEqual('false');
-		expect(change4.valueChangedTo).toEqual('');
+		expect(change4.valueChangedTo).toEqual(null);
 
 		delete cds.services.AdminService.entities.Books.elements.price['@changelog'];
 	});
@@ -151,10 +151,10 @@ describe('change log integration test', () => {
 		const bookChange = bookChanges[0];
 		expect(bookChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(bookChange.attribute).toEqual('Books');
-		expect(bookChange.modification).toEqual('Create');
+		expect(bookChange.modification).toEqual('create');
 		expect(bookChange.objectID).toEqual('Shakespeare and Company');
 		expect(bookChange.entity).toEqual('Book Store');
-		expect(bookChange.valueChangedFrom).toEqual('');
+		expect(bookChange.valueChangedFrom).toEqual(null);
 		expect(bookChange.valueChangedTo).toEqual('test title');
 
 		const titleChanges = await adminService.run(
@@ -168,10 +168,10 @@ describe('change log integration test', () => {
 		const titleChange = titleChanges[0];
 		expect(titleChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(titleChange.attribute).toEqual('Title');
-		expect(titleChange.modification).toEqual('Create');
+		expect(titleChange.modification).toEqual('create');
 		expect(titleChange.objectID).toEqual('test title, Emily, Brontë');
 		expect(titleChange.entity).toEqual('Book');
-		expect(titleChange.valueChangedFrom).toEqual('');
+		expect(titleChange.valueChangedFrom).toEqual(null);
 		expect(titleChange.valueChangedTo).toEqual('test title');
 
 		const authorChanges = await adminService.run(
@@ -185,10 +185,10 @@ describe('change log integration test', () => {
 		const authorChange = authorChanges[0];
 		expect(authorChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(authorChange.attribute).toEqual('Author');
-		expect(authorChange.modification).toEqual('Create');
+		expect(authorChange.modification).toEqual('create');
 		expect(authorChange.objectID).toEqual('test title, Emily, Brontë');
 		expect(authorChange.entity).toEqual('Book');
-		expect(authorChange.valueChangedFrom).toEqual('');
+		expect(authorChange.valueChangedFrom).toEqual(null);
 		expect(authorChange.valueChangedTo).toEqual('Emily, Brontë');
 
 		const isUsedChanges = await adminService.run(
@@ -201,13 +201,13 @@ describe('change log integration test', () => {
 		const isUsedChange = isUsedChanges[0];
 		expect(isUsedChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(isUsedChange.attribute).toEqual('isUsed');
-		expect(isUsedChange.modification).toEqual('Create');
+		expect(isUsedChange.modification).toEqual('create');
 		expect(isUsedChange.objectID).toEqual('test title, Emily, Brontë');
 		expect(isUsedChange.entity).toEqual('Book');
-		expect(isUsedChange.valueChangedFrom).toEqual('');
+		expect(isUsedChange.valueChangedFrom).toEqual(null);
 		expect(isUsedChange.valueChangedTo).toEqual('true');
 
-		// Test for Unmanaged entity(Create)
+		// Test for Unmanaged entity(create)
 		const unmanagedAction = POST.bind({}, `/odata/v4/admin/Schools(ID=5ab2a87b-3a56-4d97-a697-7af72333c123,IsActiveEntity=false)/classes`, {
 			ID: '9d703c23-54a8-4eff-81c1-cdec5c4267c5',
 			name: 'Biology 101',
@@ -226,8 +226,8 @@ describe('change log integration test', () => {
 		const schoolChange = schoolChanges[0];
 		expect(schoolChange.entityKey).toEqual('5ab2a87b-3a56-4d97-a697-7af72333c123');
 		expect(schoolChange.attribute).toEqual('classes');
-		expect(schoolChange.modification).toEqual('Create');
-		expect(schoolChange.valueChangedFrom).toEqual('');
+		expect(schoolChange.modification).toEqual('create');
+		expect(schoolChange.valueChangedFrom).toEqual(null);
 		expect(schoolChange.valueChangedTo).toEqual('Biology 101, Mr. Smith');
 	});
 
@@ -253,7 +253,7 @@ describe('change log integration test', () => {
 		const bookChange = bookChanges[0];
 		expect(bookChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(bookChange.attribute).toEqual('Books');
-		expect(bookChange.modification).toEqual('Update');
+		expect(bookChange.modification).toEqual('update');
 		expect(bookChange.objectID).toEqual('Shakespeare and Company');
 		expect(bookChange.entity).toEqual('Book Store');
 		expect(bookChange.valueChangedFrom).toEqual('new title');
@@ -270,7 +270,7 @@ describe('change log integration test', () => {
 		const titleChange = titleChanges[0];
 		expect(titleChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(titleChange.attribute).toEqual('Title');
-		expect(titleChange.modification).toEqual('Update');
+		expect(titleChange.modification).toEqual('update');
 		expect(titleChange.objectID).toEqual('new title, Charlotte, Brontë');
 		expect(titleChange.entity).toEqual('Book');
 		expect(titleChange.valueChangedFrom).toEqual('Wuthering Heights');
@@ -288,7 +288,7 @@ describe('change log integration test', () => {
 		const authorChange = authorChanges[0];
 		expect(authorChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(authorChange.attribute).toEqual('Author');
-		expect(authorChange.modification).toEqual('Update');
+		expect(authorChange.modification).toEqual('update');
 		expect(authorChange.objectID).toEqual('new title, Charlotte, Brontë');
 		expect(authorChange.entity).toEqual('Book');
 		expect(authorChange.valueChangedFrom).toEqual('Emily, Brontë');
@@ -306,7 +306,7 @@ describe('change log integration test', () => {
 		const genreChange = genreChanges[0];
 		expect(genreChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(genreChange.attribute).toEqual('Genres');
-		expect(genreChange.modification).toEqual('Update');
+		expect(genreChange.modification).toEqual('update');
 		expect(genreChange.objectID).toEqual('new title, Charlotte, Brontë');
 		expect(genreChange.entity).toEqual('Book');
 		expect(genreChange.valueChangedFrom).toEqual('11');
@@ -322,7 +322,7 @@ describe('change log integration test', () => {
 		const isUsedChange = isUsedChanges[0];
 		expect(isUsedChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(isUsedChange.attribute).toEqual('isUsed');
-		expect(isUsedChange.modification).toEqual('Update');
+		expect(isUsedChange.modification).toEqual('update');
 		expect(isUsedChange.objectID).toEqual('new title, Charlotte, Brontë');
 		expect(isUsedChange.entity).toEqual('Book');
 		expect(isUsedChange.valueChangedFrom).toEqual('true');
@@ -338,7 +338,7 @@ describe('change log integration test', () => {
 
 		expect(priceChanges.length).toEqual(0);
 
-		// Test for Unmanaged entity(Create)
+		// Test for Unmanaged entity(create)
 		const unmanagedAction = POST.bind({}, `/odata/v4/admin/Schools(ID=5ab2a87b-3a56-4d97-a697-7af72333c123,IsActiveEntity=false)/classes`, {
 			ID: '9d703c23-54a8-4eff-81c1-cdec5c4267c5',
 			name: 'Biology 101',
@@ -357,8 +357,8 @@ describe('change log integration test', () => {
 		const schoolChange = schoolChanges[0];
 		expect(schoolChange.entityKey).toEqual('5ab2a87b-3a56-4d97-a697-7af72333c123');
 		expect(schoolChange.attribute).toEqual('classes');
-		expect(schoolChange.modification).toEqual('Create');
-		expect(schoolChange.valueChangedFrom).toEqual('');
+		expect(schoolChange.modification).toEqual('create');
+		expect(schoolChange.valueChangedFrom).toEqual(null);
 		expect(schoolChange.valueChangedTo).toEqual('Biology 101, Mr. Smith');
 
 		delete cds.services.AdminService.entities.Books.elements.price['@changelog'];
@@ -379,11 +379,11 @@ describe('change log integration test', () => {
 		const bookChange = bookChanges[0];
 		expect(bookChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(bookChange.attribute).toEqual('Books');
-		expect(bookChange.modification).toEqual('Delete');
+		expect(bookChange.modification).toEqual('delete');
 		expect(bookChange.objectID).toEqual('Shakespeare and Company');
 		expect(bookChange.entity).toEqual('Book Store');
 		expect(bookChange.valueChangedFrom).toEqual('Wuthering Heights');
-		expect(bookChange.valueChangedTo).toEqual('');
+		expect(bookChange.valueChangedTo).toEqual(null);
 
 		const bookTitleChanges = await adminService.run(
 			SELECT.from(ChangeView).where({
@@ -396,11 +396,11 @@ describe('change log integration test', () => {
 		const bookTitleChange = bookTitleChanges[0];
 		expect(bookTitleChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(bookTitleChange.attribute).toEqual('Title');
-		expect(bookTitleChange.modification).toEqual('Delete');
+		expect(bookTitleChange.modification).toEqual('delete');
 		expect(bookTitleChange.objectID).toEqual('Wuthering Heights, Emily, Brontë');
 		expect(bookTitleChange.entity).toEqual('Book');
 		expect(bookTitleChange.valueChangedFrom).toEqual('Wuthering Heights');
-		expect(bookTitleChange.valueChangedTo).toEqual('');
+		expect(bookTitleChange.valueChangedTo).toEqual(null);
 
 		const bookAuthorChanges = await adminService.run(
 			SELECT.from(ChangeView).where({
@@ -413,11 +413,11 @@ describe('change log integration test', () => {
 		const bookAuthorChange = bookAuthorChanges[0];
 		expect(bookAuthorChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(bookAuthorChange.attribute).toEqual('Author');
-		expect(bookAuthorChange.modification).toEqual('Delete');
+		expect(bookAuthorChange.modification).toEqual('delete');
 		expect(bookAuthorChange.objectID).toEqual('Wuthering Heights, Emily, Brontë');
 		expect(bookAuthorChange.entity).toEqual('Book');
 		expect(bookAuthorChange.valueChangedFrom).toEqual('Emily, Brontë');
-		expect(bookAuthorChange.valueChangedTo).toEqual('');
+		expect(bookAuthorChange.valueChangedTo).toEqual(null);
 
 		const volumnTitleChanges = await adminService.run(
 			SELECT.from(ChangeView).where({
@@ -430,13 +430,13 @@ describe('change log integration test', () => {
 		const volumnTitleChange = volumnTitleChanges[0];
 		expect(volumnTitleChange.entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(volumnTitleChange.attribute).toEqual('Title');
-		expect(volumnTitleChange.modification).toEqual('Delete');
+		expect(volumnTitleChange.modification).toEqual('delete');
 		expect(volumnTitleChange.objectID).toEqual('Wuthering Heights I');
 		expect(volumnTitleChange.entity).toEqual('Volumn');
 		expect(volumnTitleChange.valueChangedFrom).toEqual('Wuthering Heights I');
-		expect(volumnTitleChange.valueChangedTo).toEqual('');
+		expect(volumnTitleChange.valueChangedTo).toEqual(null);
 
-		// Test for Unmanaged entity(Delete)
+		// Test for Unmanaged entity(delete)
 		const unmanagedAction = DELETE.bind({}, `/odata/v4/admin/Schools_classes(up__ID=5ab2a87b-3a56-4d97-a697-7af72333c123,ID=9d703c23-54a8-4eff-81c1-cdec5a0422c3,IsActiveEntity=false)`);
 		await utils.apiAction('admin', 'Schools', '5ab2a87b-3a56-4d97-a697-7af72333c123', 'AdminService', unmanagedAction);
 		const schoolChanges = await adminService.run(
@@ -450,9 +450,9 @@ describe('change log integration test', () => {
 		const schoolChange = schoolChanges[0];
 		expect(schoolChange.entityKey).toEqual('5ab2a87b-3a56-4d97-a697-7af72333c123');
 		expect(schoolChange.attribute).toEqual('classes');
-		expect(schoolChange.modification).toEqual('Delete');
+		expect(schoolChange.modification).toEqual('delete');
 		expect(schoolChange.valueChangedFrom).toEqual('Physics 500, Mrs. Johnson');
-		expect(schoolChange.valueChangedTo).toEqual('');
+		expect(schoolChange.valueChangedTo).toEqual(null);
 	});
 
 	it('2.4 Child entity update without objectID annotation - should log object type for object ID (ERP4SMEPREPWORKAPPPLAT-32 ERP4SMEPREPWORKAPPPLAT-613 ERP4SMEPREPWORKAPPPLAT-538)', async () => {
@@ -505,7 +505,7 @@ describe('change log integration test', () => {
 		expect(changes.length).toEqual(1);
 		const change = changes[0];
 		expect(change.attribute).toEqual('title');
-		expect(change.modification).toEqual('Update');
+		expect(change.modification).toEqual('update');
 		expect(change.valueChangedFrom).toEqual('Eleonora');
 		expect(change.valueChangedTo).toEqual('update title');
 		expect(change.parentKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
@@ -669,7 +669,7 @@ describe('change log integration test', () => {
 		expect(authorChangesInDb.length).toEqual(1);
 
 		const authorChangeInDb = authorChangesInDb[0];
-		expect(authorChangeInDb.valueChangedFrom).toEqual('');
+		expect(authorChangeInDb.valueChangedFrom).toEqual(null);
 		expect(authorChangeInDb.valueChangedTo).toEqual('Emily, 1818-07-30, Brontë');
 		expect(authorChangeInDb.valueDataType).toEqual('cds.String, cds.Date, cds.String');
 
@@ -722,7 +722,7 @@ describe('change log integration test', () => {
 		expect(booksChangesInDb.length).toEqual(1);
 
 		const bookChangesInDb = booksChangesInDb[0];
-		expect(bookChangesInDb.valueChangedFrom).toEqual('');
+		expect(bookChangesInDb.valueChangedFrom).toEqual(null);
 		const titleSegments = bookChangesInDb.valueChangedTo.split(', ');
 		expect(titleSegments[0]).toEqual('test title');
 		expect(Number(titleSegments[1])).toEqual(2);
@@ -782,8 +782,8 @@ describe('change log integration test', () => {
 		expect(lifecycleStatusChanges.length).toEqual(1);
 
 		const lifecycleStatusChange = lifecycleStatusChanges[0];
-		expect(lifecycleStatusChange.modification).toEqual('Create');
-		expect(lifecycleStatusChange.valueChangedFrom).toEqual('');
+		expect(lifecycleStatusChange.modification).toEqual('create');
+		expect(lifecycleStatusChange.valueChangedFrom).toEqual(null);
 		expect(lifecycleStatusChange.valueChangedTo).toEqual('In Preparation');
 
 		const actionPH = PATCH.bind({}, `/odata/v4/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`, {
@@ -804,7 +804,7 @@ describe('change log integration test', () => {
 		expect(lifecycleStatusUpdateChanges.length).toEqual(1);
 
 		const lifecycleStatusUpdateChange = lifecycleStatusUpdateChanges[0];
-		expect(lifecycleStatusUpdateChange.modification).toEqual('Update');
+		expect(lifecycleStatusUpdateChange.modification).toEqual('update');
 		expect(lifecycleStatusUpdateChange.valueChangedFrom).toEqual('In Preparation');
 		expect(lifecycleStatusUpdateChange.valueChangedTo).toEqual('Closed');
 	});
@@ -827,8 +827,8 @@ describe('change log integration test', () => {
 		expect(bookTypeChanges.length).toEqual(1);
 
 		const bookTypeChange = bookTypeChanges[0];
-		expect(bookTypeChange.modification).toEqual('Create');
-		expect(bookTypeChange.valueChangedFrom).toEqual('');
+		expect(bookTypeChange.modification).toEqual('create');
+		expect(bookTypeChange.valueChangedFrom).toEqual(null);
 		expect(bookTypeChange.valueChangedTo).toEqual('Management, Management Books');
 
 		const actionPH = PATCH.bind({}, `/odata/v4/admin/Books(ID=7e9d4199-4602-47f1-8767-85dae82ce639,IsActiveEntity=false)`, {
@@ -849,7 +849,7 @@ describe('change log integration test', () => {
 		expect(bookTypeUpdateChanges.length).toEqual(1);
 
 		const bookTypeUpdateChange = bookTypeUpdateChanges[0];
-		expect(bookTypeUpdateChange.modification).toEqual('Update');
+		expect(bookTypeUpdateChange.modification).toEqual('update');
 		expect(bookTypeUpdateChange.valueChangedFrom).toEqual('Management, Management Books');
 		expect(bookTypeUpdateChange.valueChangedTo).toEqual('Science, Science Books');
 	});
@@ -875,7 +875,7 @@ describe('change log integration test', () => {
 		expect(lifecycleStatusChanges.length).toEqual(1);
 
 		const lifecycleStatusChange = lifecycleStatusChanges[0];
-		expect(lifecycleStatusChange.modification).toEqual('Create');
+		expect(lifecycleStatusChange.modification).toEqual('create');
 		expect(lifecycleStatusChange.objectID).toEqual('test name, In Preparation');
 
 		cds.services.AdminService.entities.BookStores['@changelog'] = [{ '=': 'lifecycleStatus.name' }, { '=': 'name' }];
@@ -898,7 +898,7 @@ describe('change log integration test', () => {
 		expect(lifecycleStatusUpdateChanges.length).toEqual(1);
 
 		const lifecycleStatusUpdateChange = lifecycleStatusUpdateChanges[0];
-		expect(lifecycleStatusUpdateChange.modification).toEqual('Update');
+		expect(lifecycleStatusUpdateChange.modification).toEqual('update');
 		expect(lifecycleStatusUpdateChange.objectID).toEqual('Closed, new test name');
 
 		cds.services.AdminService.entities.BookStores['@changelog'] = originalChangelog;
@@ -1107,8 +1107,8 @@ describe('change log integration test', () => {
 		expect(cityChanges.length).toEqual(1);
 
 		const cityChange = cityChanges[0];
-		expect(cityChange.modification).toEqual('Create');
-		expect(cityChange.valueChangedFrom).toEqual('');
+		expect(cityChange.modification).toEqual('create');
+		expect(cityChange.valueChangedFrom).toEqual(null);
 		expect(cityChange.valueChangedTo).toEqual('Paris, FR');
 
 		const updateAction = PATCH.bind({}, `/odata/v4/admin/BookStores(ID=01234567-89ab-cdef-0123-456789abcdef,IsActiveEntity=false)`, {
@@ -1148,8 +1148,8 @@ describe('change log integration test', () => {
 		);
 		expect(createChanges.length).toEqual(1);
 		const createChange = createChanges[0];
-		expect(createChange.modification).toEqual('Create');
-		expect(createChange.valueChangedFrom).toEqual('');
+		expect(createChange.modification).toEqual('create');
+		expect(createChange.valueChangedFrom).toEqual(null);
 		expect(createChange.valueChangedTo).toEqual('Super Mario1');
 
 		const updateInfoAction = PATCH.bind({}, `/odata/v4/admin/RootEntity(ID=c56b392c-e476-41a2-a460-ce6123be090a,IsActiveEntity=false)`, {
@@ -1171,7 +1171,7 @@ describe('change log integration test', () => {
 		);
 		expect(updateChanges.length).toEqual(1);
 		const updateChange = updateChanges[0];
-		expect(updateChange.modification).toEqual('Update');
+		expect(updateChange.modification).toEqual('update');
 		expect(updateChange.valueChangedFrom).toEqual('Super Mario1');
 		expect(updateChange.valueChangedTo).toEqual('Super Mario3');
 	});
@@ -1210,7 +1210,7 @@ describe('change log integration test', () => {
 
 		// To do localization, modification only needs parameters modification itself, so the localization could be done
 		const bookChangeModification = bookElementChanges[1];
-		expect(bookChangeModification.modification).toEqual('Create');
+		expect(bookChangeModification.modification).toEqual('create');
 
 		// To do localization, entity only needs parameters entity itself, so the localization could be done
 		const bookChangeEntity = bookElementChanges[2];
@@ -1219,7 +1219,7 @@ describe('change log integration test', () => {
 		// To do localization, object id needs parameters entity (if no object id is annotated), so the localization could not be done
 		// If no object id is annotated, the real value stored in db of object id should be "".
 		const bookChangeObjectId = bookElementChanges[3];
-		expect(bookChangeObjectId.objectID).toEqual('');
+		expect(bookChangeObjectId.objectID).toEqual(null);
 
 		cds.services.AdminService.entities.BookStores['@changelog'] = originalChangelog;
 		cds.db.entities.BookStores['@changelog'] = originalChangelog;
@@ -1251,10 +1251,10 @@ describe('change log integration test', () => {
 		const registryChange = registryChanges[0];
 		expect(registryChange.entityKey).toEqual('01234567-89ab-cdef-0123-456789abcdef');
 		expect(registryChange.attribute).toEqual('Valid On');
-		expect(registryChange.modification).toEqual('Create');
+		expect(registryChange.modification).toEqual('create');
 		expect(registryChange.objectID).toEqual('San Francisco-2');
 		expect(registryChange.entity).toEqual('Book Store Registry');
-		expect(registryChange.valueChangedFrom).toEqual('');
+		expect(registryChange.valueChangedFrom).toEqual(null);
 		expect(registryChange.valueChangedTo).toEqual('Jan 1, 2022');
 		expect(registryChange.parentKey).toEqual('01234567-89ab-cdef-0123-456789abcdef');
 		expect(registryChange.parentObjectID).toEqual('Murder on the Orient Express');
@@ -1281,7 +1281,7 @@ describe('change log integration test', () => {
 		expect(registryChanges.length).toEqual(1);
 		const registryChange = registryChanges[0];
 		expect(registryChange.attribute).toEqual('Valid On');
-		expect(registryChange.modification).toEqual('Update');
+		expect(registryChange.modification).toEqual('update');
 		expect(registryChange.valueChangedFrom).toEqual('Oct 15, 2022');
 		expect(registryChange.valueChangedTo).toEqual('Jan 1, 2022');
 		expect(registryChange.parentKey).toEqual('5ab2a87b-3a56-4d97-a697-7af72334a384');
@@ -1289,7 +1289,7 @@ describe('change log integration test', () => {
 	});
 
 	it('10.5.2 Composition of one node updated on child node - should log changes for root entity (ERP4SMEPREPWORKAPPPLAT-2913)', async () => {
-		// Update by calling API on child node
+		// update by calling API on child node
 		const action = PATCH.bind({}, `/odata/v4/admin/BookStoreRegistry(ID=12ed5dd8-d45b-11ed-afa1-0242ac120002,IsActiveEntity=false)`, {
 			validOn: '2022-01-01'
 		});
@@ -1303,7 +1303,7 @@ describe('change log integration test', () => {
 		expect(registryChanges.length).toEqual(1);
 		const registryChange = registryChanges[0];
 		expect(registryChange.attribute).toEqual('Valid On');
-		expect(registryChange.modification).toEqual('Update');
+		expect(registryChange.modification).toEqual('update');
 		expect(registryChange.valueChangedFrom).toEqual('Sep 1, 2018');
 		expect(registryChange.valueChangedTo).toEqual('Jan 1, 2022');
 		expect(registryChange.parentKey).toEqual('8aaed432-8336-4b0d-be7e-3ef1ce7f13ea');
@@ -1322,9 +1322,9 @@ describe('change log integration test', () => {
 		expect(registryChanges.length).toEqual(1);
 		const registryChange = registryChanges[0];
 		expect(registryChange.attribute).toEqual('Valid On');
-		expect(registryChange.modification).toEqual('Delete');
+		expect(registryChange.modification).toEqual('delete');
 		expect(registryChange.valueChangedFrom).toEqual('Sep 1, 2018');
-		expect(registryChange.valueChangedTo).toEqual('');
+		expect(registryChange.valueChangedTo).toEqual(null);
 		expect(registryChange.parentKey).toEqual('8aaed432-8336-4b0d-be7e-3ef1ce7f13ea');
 		expect(registryChange.parentObjectID).toEqual('City Lights Books');
 	});
@@ -1339,7 +1339,7 @@ describe('change log integration test', () => {
 		});
 
 		expect(changes.length).toEqual(1);
-		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedFrom).toEqual(null);
 		expect(changes[0].valueChangedTo).toEqual('VALID');
 		expect(changes[0].entityKey).toEqual('64625905-c234-4d0d-9bc1-283ee8946770');
 		expect(changes[0].parentKey).toEqual('9d703c23-54a8-4eff-81c1-cdce6b8376b1');
@@ -1437,10 +1437,10 @@ describe('change log integration test', () => {
 			})
 		);
 		expect(changes.length).toEqual(1);
-		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedFrom).toEqual(null);
 		expect(changes[0].valueChangedTo).toEqual('New title for RootSampleDraft');
 		expect(changes[0].entityKey).toEqual('/drafttwo');
-		expect(changes[0].parentKey).toEqual('');
+		expect(changes[0].parentKey).toEqual(null);
 		expect(changes[0].objectID).toEqual('/drafttwo, New title for RootSampleDraft');
 
 		changes = await adminService.run(
@@ -1451,7 +1451,7 @@ describe('change log integration test', () => {
 			})
 		);
 		expect(changes.length).toEqual(1);
-		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedFrom).toEqual(null);
 		expect(changes[0].valueChangedTo).toEqual('New title for Level1SampleDraft');
 		expect(changes[0].entityKey).toEqual('/drafttwo');
 		expect(changes[0].parentKey).toEqual('/drafttwo');
@@ -1465,7 +1465,7 @@ describe('change log integration test', () => {
 			})
 		);
 		expect(changes.length).toEqual(1);
-		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedFrom).toEqual(null);
 		expect(changes[0].valueChangedTo).toEqual('New title for Level2SampleDraft');
 		expect(changes[0].entityKey).toEqual('/drafttwo');
 		expect(changes[0].parentKey).toEqual('/level1drafttwo');

@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const LOG = cds.log('change-tracking');
 const DEBUG = cds.debug('change-tracking');
 
-const { fs } = require('@sap/cds/lib/utils/cds-utils.js');
+const { fs } = cds.utils;
 
 const isRoot = 'change-tracking-isRootEntity';
 const hasParent = 'change-tracking-parentEntity';
@@ -330,7 +330,7 @@ cds.compile.to.sql = function (csn, options) {
 
 	const clonedCSN = structuredClone(csn);
 	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
-	
+
 	for (let def of runtimeCSN.entities) {
 		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
 		if (!isTableEntity || !isChangeTracked(def)) continue;

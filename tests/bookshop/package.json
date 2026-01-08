@@ -6,8 +6,7 @@
 		"@cap-js/postgres": "^2.1.0"
 	},
 	"devDependencies": {
-		"@cap-js/sqlite": "*",
-		"@cap-js/hana": "^2"
+		"@cap-js/sqlite": "*"
 	},
 	"cds": {
 		"requires": {
