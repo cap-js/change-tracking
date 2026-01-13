@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: requires-approval
     if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
-    name: Integration Tests on Node.js ${{ matrix['node-version'] }}
+    name: Integration Tests on Node.js ${{ matrix['node-version'] }} and CAP ${{ matrix['cds-version'] }}
     strategy:
       fail-fast: false
       matrix:
