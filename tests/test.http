@@ -1,0 +1,27 @@
+### Deep Insert BookStore with Books
+POST http://localhost:4004/odata/v4/admin/BookStores
+Content-Type: application/json
+
+{
+    "ID": "37bc67c6-2d00-4107-aa74-320e6b2793a3",
+    "name": "Ligma BookStore",
+    "books": [
+        {
+        "descr": "A fascinating tale."
+        },
+        {
+        "title": "Book Two",
+        "descr": "Another fascinating tale."
+        }
+    ]
+}
+
+### Activate Draft BookStore
+POST http://localhost:4004/odata/v4/admin/BookStores(ID=37bc67c6-2d00-4107-aa74-320e6b2793a3, IsActiveEntity=false)/draftActivate
+
+
+### Get all Changes
+GET http://localhost:4004/odata/v4/admin/ChangeView?$select=ID,attribute,modification,valueChangedFrom,valueChangedTo,entity&$filter=attribute eq 'books'
+
+### Get Changes for BookStores
+GET http://localhost:4004/odata/v4/admin/BookStores(ID=5ab2a87b-3a56-4d97-a697-7af72334a384, IsActiveEntity=true)/changes

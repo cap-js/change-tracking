@@ -1,8 +1,12 @@
 using {sap.capire.bookshop as my} from '../db/schema';
+using {sap.changelog as changelog} from '@cap-js/change-tracking';
+
 
 service AdminService {
   @odata.draft.enabled
   entity BookStores @(cds.autoexpose) as projection on my.BookStores;
+
+  entity ChangeView                   as projection on changelog.ChangeView;
 
   @odata.draft.enabled
   entity RootEntity @(cds.autoexpose) as projection on my.RootEntity;
@@ -33,19 +37,19 @@ service AdminService {
 
   entity OrderItemNote                as projection on my.OrderItemNote
     actions {
-      @Common.SideEffects             : {TargetEntities: [in]}
+      @Common.SideEffects: {TargetEntities: [in]}
       action activate();
     };
 
   entity Volumns                      as projection on my.Volumns
     actions {
-      @Common.SideEffects             : {TargetEntities: [in]}
+      @Common.SideEffects: {TargetEntities: [in]}
       action activate();
     };
 
   entity Level2Sample                 as projection on my.Level2Sample
     actions {
-      @Common.SideEffects             : {TargetEntities: [in]}
+      @Common.SideEffects: {TargetEntities: [in]}
       action activate();
     };
 
