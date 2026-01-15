@@ -15,7 +15,8 @@
 	],
 	"scripts": {
 		"lint": "npx eslint .",
-		"test": "npx jest --silent --runInBand",
+		"test": "CDS_ENV=node npx jest --silent --runInBand",
+		"test:java": "npx jest --silent --runInBand",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
 	},
@@ -37,14 +38,11 @@
 			"change-tracking": {
 				"model": "@cap-js/change-tracking",
 				"considerLocalizedValues": false,
-				"preserveDeletes": true
+				"preserveDeletes": false
 			}
 		}
 	},
 	"jest": {
 		"testTimeout": 180000
-	},
-	"workspaces": [
-		"tests/*"
-	]
+	}
 }

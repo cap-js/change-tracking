@@ -7,15 +7,17 @@ spring:
 cds:
   data-source.auto-config.enabled: false
   security:
+    # Match mock users with default node mock users
     mock:
       users:
         - name: alice
+          tenant: t1
           roles:
-            - support
             - admin
         - name: bob
+          tenant: t1
           roles:
-            - support
+            - builder
 
 # logging:
 #   level:
