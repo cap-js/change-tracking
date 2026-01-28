@@ -14,6 +14,11 @@ using {sap.capire.bookshop.PaymentAgreementStatusCodes as PaymentAgreementStatus
 using from './incidents/schema';
 using from './incidents/attachments';
 
+// Test module schemas
+using from './test-crud';
+using from './test-config';
+using from './test-objectid';
+
 namespace sap.capire.bookshop;
 
 @fiori.draft.enabled
