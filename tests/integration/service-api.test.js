@@ -1,19 +1,17 @@
 const cds = require('@sap/cds');
-const e = require('express');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
 const { data } = cds.test(bookshop);
 
 describe('Change Tracking Integration Tests', () => {
-	let adminService, db, ChangeView, ChangeLog;
+	let adminService, db, ChangeView;
 
 	beforeAll(async () => {
 		adminService = await cds.connect.to('AdminService');
 		db = await cds.connect.to('db');
 		ChangeView = adminService.entities.ChangeView;
 		ChangeView['@cds.autoexposed'] = false;
-		ChangeLog = db.model.definitions['sap.changelog.ChangeLog'];
 	});
 
 	beforeEach(async () => {
@@ -47,18 +45,17 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBeGreaterThan(0);
+			expect(changes.length).toEqual(2); // name and location
 
-			const nameChange = changes.find(c => c.attribute === 'name');
-			expect(nameChange).toBeDefined();
-			expect(nameChange.valueChangedFrom).toBe('');
-			expect(nameChange.valueChangedTo).toBe('New Bookstore');
-			expect(nameChange.modification).toBe('create');
+			expect(changes.find(c => c.attribute === 'name')).toMatchObject({
+				valueChangedFrom: '',
+				valueChangedTo: 'New Bookstore',
+				modification: 'create'
+			});
 		});
 
 		it('should track simple field update', async () => {
 			const { BookStores } = adminService.entities;
-			// existing bookstore from test data
 			const existingId = '64625905-c234-4d0d-9bc1-283ee8946770';
 
 			await UPDATE(BookStores).where({ ID: existingId }).with({ name: 'Updated Bookstore Name' });
@@ -70,36 +67,40 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(changes.length).toBe(1);
-			expect(changes[0].valueChangedFrom).toBe('Shakespeare and Company');
-			expect(changes[0].valueChangedTo).toBe('Updated Bookstore Name');
+			expect(changes.length).toEqual(1);
+			expect(changes[0]).toMatchObject({
+				valueChangedFrom: 'Shakespeare and Company',
+				valueChangedTo: 'Updated Bookstore Name'
+			});
 		});
 
 		it('should track simple field deletion', async () => {
 			cds.env.requires['change-tracking'].preserveDeletes = true;
 			const { BookStores } = adminService.entities;
-			const existingId = '64625905-c234-4d0d-9bc1-283ee8946770';
+			const id = cds.utils.uuid();
 
-			await DELETE.from(BookStores).where({ ID: existingId });
+			// Create a fresh entity to delete
+			await INSERT.into(BookStores).entries({ ID: id, name: 'Store To Delete', location: 'Berlin' });
+
+			await DELETE.from(BookStores).where({ ID: id });
 
 			const changes = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.BookStores',
-				entityKey: existingId,
+				entityKey: id,
 				modification: 'delete'
 			});
 
-			expect(changes.length).toBeGreaterThan(0);
-			const nameChange = changes.find(c => c.attribute === 'name');
-			expect(nameChange).toBeDefined();
-			expect(nameChange.valueChangedFrom).toBe('Shakespeare and Company');
-			expect(nameChange.valueChangedTo).toBe('');
+			expect(changes.length).toEqual(2); // name and location
+			expect(changes.find(c => c.attribute === 'name')).toMatchObject({
+				valueChangedFrom: 'Store To Delete',
+				valueChangedTo: ''
+			});
 		});
 
 		it('should not create change log when value does not change on update', async () => {
 			const { BookStores } = adminService.entities;
-			const existingId = '64625905-c234-4d0d-9bc1-283ee8946770'; // with name 'Shakespeare and Company'
+			const existingId = '64625905-c234-4d0d-9bc1-283ee8946770';
 
-			// Update with the same value that already exists
 			await UPDATE(BookStores).where({ ID: existingId }).with({
 				name: 'Shakespeare and Company'
 			});
@@ -110,14 +111,12 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(changes.length).toBe(0);
+			expect(changes.length).toEqual(0);
 		});
 
 		it('should track numeric value 0 on create and delete', async () => {
 			cds.env.requires['change-tracking'].preserveDeletes = true;
 			const { Order } = adminService.entities;
-
-			// Temporarily add @changelog annotation for testing
 			Order.elements.netAmount['@changelog'] = true;
 
 			const orderID = cds.utils.uuid();
@@ -130,11 +129,12 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBe(1);
-			expect(changes[0].valueChangedFrom).toBe('');
-			expect(Number(changes[0].valueChangedTo)).toBe(0);
+			expect(changes.length).toEqual(1);
+			expect(changes[0]).toMatchObject({
+				valueChangedFrom: '',
+				valueChangedTo: '0'
+			});
 
-			// Now delete and verify
 			await DELETE.from(Order).where({ ID: orderID });
 
 			changes = await SELECT.from(ChangeView).where({
@@ -144,18 +144,17 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'delete'
 			});
 
-			expect(changes.length).toBe(1);
-			expect(Number(changes[0].valueChangedFrom)).toBe(0);
-			expect(changes[0].valueChangedTo).toBe('');
+			expect(changes.length).toEqual(1);
+			expect(changes[0]).toMatchObject({
+				valueChangedFrom: '0',
+				valueChangedTo: ''
+			});
 
-			// Cleanup
 			delete Order.elements.netAmount['@changelog'];
 		});
 
 		it('should track boolean false value on create and delete', async () => {
 			cds.env.requires['change-tracking'].preserveDeletes = true;
-
-			// Use Books entity which already has isUsed annotated with @changelog
 			const { Books } = adminService.entities;
 			const bookID = cds.utils.uuid();
 
@@ -166,21 +165,16 @@ describe('Change Tracking Integration Tests', () => {
 				stock: 10
 			});
 
-			// Get all changes for this entity
 			let allChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Books',
 				entityKey: bookID
 			});
 
-			let isUsedChange = allChanges.find(
-				c => c.attribute === 'isUsed' && c.modification === 'create'
-			);
+			expect(allChanges.find(c => c.attribute === 'isUsed' && c.modification === 'create')).toMatchObject({
+				valueChangedFrom: '',
+				valueChangedTo: 'false'
+			});
 
-			expect(isUsedChange).toBeDefined();
-			expect(isUsedChange.valueChangedFrom).toBe('');
-			expect(isUsedChange.valueChangedTo).toBe('false');
-
-			// Now delete and verify
 			await DELETE.from(Books).where({ ID: bookID });
 
 			allChanges = await SELECT.from(ChangeView).where({
@@ -188,20 +182,14 @@ describe('Change Tracking Integration Tests', () => {
 				entityKey: bookID
 			});
 
-			isUsedChange = allChanges.find(
-				c => c.attribute === 'isUsed' && c.modification === 'delete'
-			);
-
-			expect(isUsedChange).toBeDefined();
-			expect(isUsedChange.valueChangedFrom).toBe('false');
-			expect(isUsedChange.valueChangedTo).toBe('');
+			expect(allChanges.find(c => c.attribute === 'isUsed' && c.modification === 'delete')).toMatchObject({
+				valueChangedFrom: 'false',
+				valueChangedTo: ''
+			});
 		});
 
 		it('should track DateTime and Timestamp values via Date objects', async () => {
-			cds.env.requires['change-tracking'].preserveDeletes = true;
 			const { RootEntity } = adminService.entities;
-
-			// Temporarily add @changelog annotation for testing
 			RootEntity.elements.dateTime['@changelog'] = true;
 			RootEntity.elements.timestamp['@changelog'] = true;
 
@@ -220,26 +208,18 @@ describe('Change Tracking Integration Tests', () => {
 				entityKey: id
 			});
 
-			const dateTimeChange = allChanges.find(
-				c => c.attribute === 'dateTime' && c.modification === 'create'
-			);
-
-			expect(dateTimeChange).toBeDefined();
-			expect(dateTimeChange.valueChangedFrom).toBe('');
-			// The value should contain the date components - format varies by environment
+			const dateTimeChange = allChanges.find(c => c.attribute === 'dateTime' && c.modification === 'create');
+			expect(dateTimeChange.valueChangedFrom).toEqual('');
 			expect(dateTimeChange.valueChangedTo).toContain('2024');
 			expect(dateTimeChange.valueChangedTo).toContain('Oct');
 			expect(dateTimeChange.valueChangedTo).toContain('16');
 
-			// Cleanup
 			delete RootEntity.elements.dateTime['@changelog'];
 			delete RootEntity.elements.timestamp['@changelog'];
 		});
 
 		it('should track multiple records creation simultaneously', async () => {
 			const { Order } = adminService.entities;
-
-			// Temporarily add @changelog annotation for testing
 			Order.elements.netAmount['@changelog'] = true;
 
 			const id1 = cds.utils.uuid();
@@ -258,23 +238,11 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			// Should have 3 changes, one for each order
-			expect(changes.length).toBe(3);
+			expect(changes.length).toEqual(3);
+			expect(changes.find(c => c.entityKey === id1)).toMatchObject({ valueChangedTo: '100' });
+			expect(changes.find(c => c.entityKey === id2)).toMatchObject({ valueChangedTo: '200' });
+			expect(changes.find(c => c.entityKey === id3)).toMatchObject({ valueChangedTo: '300' });
 
-			const change1 = changes.find(c => c.entityKey === id1);
-			const change2 = changes.find(c => c.entityKey === id2);
-			const change3 = changes.find(c => c.entityKey === id3);
-
-			expect(change1).toBeDefined();
-			expect(Number(change1.valueChangedTo)).toBe(100);
-
-			expect(change2).toBeDefined();
-			expect(Number(change2.valueChangedTo)).toBe(200);
-
-			expect(change3).toBeDefined();
-			expect(Number(change3.valueChangedTo)).toBe(300);
-
-			// Cleanup
 			delete Order.elements.netAmount['@changelog'];
 		});
 
@@ -282,13 +250,10 @@ describe('Change Tracking Integration Tests', () => {
 			const { BookStores } = adminService.entities;
 			const existingId = '64625905-c234-4d0d-9bc1-283ee8946770';
 
-			// First verify location has a value
 			const before = await SELECT.one.from(BookStores).where({ ID: existingId });
-			expect(before.location).toBe('Paris');
+			expect(before.location).toEqual('Paris');
 
-			await UPDATE(BookStores).where({ ID: existingId }).with({
-				location: null
-			});
+			await UPDATE(BookStores).where({ ID: existingId }).with({ location: null });
 
 			const changes = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.BookStores',
@@ -297,26 +262,24 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(changes.length).toBe(1);
-			expect(changes[0].valueChangedFrom).toBe('Paris');
-			expect(changes[0].valueChangedTo).toBe('');
+			expect(changes.length).toEqual(1);
+			expect(changes[0]).toMatchObject({
+				valueChangedFrom: 'Paris',
+				valueChangedTo: ''
+			});
 		});
 
 		it('should track update from null to non-null value', async () => {
 			const { BookStores } = adminService.entities;
 			const id = cds.utils.uuid();
 
-			// Create without location
 			await INSERT.into(BookStores).entries({
 				ID: id,
 				name: 'No Location Store',
 				location: null
 			});
 
-			// Clear create logs by filtering for updates only
-			await UPDATE(BookStores).where({ ID: id }).with({
-				location: 'New Location'
-			});
+			await UPDATE(BookStores).where({ ID: id }).with({ location: 'New Location' });
 
 			const changes = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.BookStores',
@@ -325,13 +288,15 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(changes.length).toBe(1);
-			expect(changes[0].valueChangedFrom).toBe('');
-			expect(changes[0].valueChangedTo).toBe('New Location');
+			expect(changes.length).toEqual(1);
+			expect(changes[0]).toMatchObject({
+				valueChangedFrom: '',
+				valueChangedTo: 'New Location'
+			});
 		});
 	});
-	describe('Configuration Options', () => {
 
+	describe('Configuration Options', () => {
 		it('should retain changelogs after entity deletion when preserveDeletes is enabled', async () => {
 			cds.env.requires['change-tracking'].preserveDeletes = true;
 			const { Authors } = adminService.entities;
@@ -352,12 +317,12 @@ describe('Change Tracking Integration Tests', () => {
 			const initialChangeCount = changes.length;
 
 			await DELETE.from(Authors).where({ ID: id });
+
 			changes = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Authors',
 				entityKey: id
 			});
 
-			// Should have both create and delete logs
 			expect(changes.length).toBeGreaterThan(initialChangeCount);
 			const deleteChanges = changes.filter(c => c.modification === 'delete');
 			expect(deleteChanges.length).toBeGreaterThan(0);
@@ -387,9 +352,8 @@ describe('Change Tracking Integration Tests', () => {
 				entity: 'sap.capire.bookshop.Authors',
 				entityKey: id
 			});
-			expect(changes.length).toBe(0);
+			expect(changes.length).toEqual(0);
 		});
-
 
 		it('should skip create logs when disableCreateTracking is enabled', async () => {
 			cds.env.requires['change-tracking'].disableCreateTracking = true;
@@ -408,7 +372,7 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBe(0);
+			expect(changes.length).toEqual(0);
 		});
 
 		it('should still track updates when disableCreateTracking is enabled', async () => {
@@ -432,7 +396,7 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(changes.length).toBe(1);
+			expect(changes.length).toEqual(1);
 		});
 
 		it('should skip update logs when disableUpdateTracking is enabled', async () => {
@@ -450,7 +414,7 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(changes.length).toBe(0);
+			expect(changes.length).toEqual(0);
 		});
 
 		it('should still track creates when disableUpdateTracking is enabled', async () => {
@@ -494,9 +458,8 @@ describe('Change Tracking Integration Tests', () => {
 			});
 
 			const deleteChanges = changes.filter(c => c.modification === 'delete');
-			expect(deleteChanges.length).toBe(0);
+			expect(deleteChanges.length).toEqual(0);
 
-			// But create changes should still exist (due to preserveDeletes)
 			const createChanges = changes.filter(c => c.modification === 'create');
 			expect(createChanges.length).toBeGreaterThan(0);
 		});
@@ -528,7 +491,7 @@ describe('Change Tracking Integration Tests', () => {
 				entityKey: id,
 				modification: 'update'
 			});
-			expect(changes.length).toBe(1);
+			expect(changes.length).toEqual(1);
 		});
 
 		it('should respect multiple disable flags simultaneously', async () => {
@@ -549,7 +512,7 @@ describe('Change Tracking Integration Tests', () => {
 				entity: 'sap.capire.bookshop.BookStores',
 				entityKey: bookStoreID
 			});
-			expect(changes.length).toBe(0);
+			expect(changes.length).toEqual(0);
 
 			await UPDATE(BookStores).where({ ID: bookStoreID }).with({
 				name: 'Updated Combined Test Store'
@@ -559,7 +522,7 @@ describe('Change Tracking Integration Tests', () => {
 				entity: 'sap.capire.bookshop.BookStores',
 				entityKey: bookStoreID
 			});
-			expect(changes.length).toBe(0);
+			expect(changes.length).toEqual(0);
 
 			await DELETE.from(BookStores).where({ ID: bookStoreID });
 
@@ -568,16 +531,13 @@ describe('Change Tracking Integration Tests', () => {
 				entityKey: bookStoreID
 			});
 
-			// Should have delete logs only
 			expect(changes.length).toBeGreaterThan(0);
-			expect(changes.every(c => c.modification === 'delete')).toBe(true);
+			expect(changes.every(c => c.modification === 'delete')).toEqual(true);
 		});
-
 	});
 
 	describe('ObjectID - Human-readable IDs', () => {
 		it('should use single field as objectID', async () => {
-			// BookStores has @changelog: [name] -> single field objectID
 			const { BookStores } = adminService.entities;
 			const bookStoreID = cds.utils.uuid();
 
@@ -592,12 +552,11 @@ describe('Change Tracking Integration Tests', () => {
 				entityKey: bookStoreID
 			});
 
-			expect(changes.length).toBeGreaterThan(0);
-			expect(changes[0].objectID).toBe('My Unique Bookstore');
+			expect(changes.length).toEqual(2);
+			expect(changes[0].objectID).toEqual('My Unique Bookstore');
 		});
 
 		it('should use multiple fields as objectID (concatenation)', async () => {
-			// Books has @changelog: [title, author.name.firstName, author.name.lastName]
 			const { Books } = adminService.entities;
 			const bookID = cds.utils.uuid();
 			const authorID = 'd4d4a1b3-5b83-4814-8a20-f039af6f0387'; // existing author Emily Brontë
@@ -615,16 +574,14 @@ describe('Change Tracking Integration Tests', () => {
 			});
 
 			expect(changes.length).toBeGreaterThan(0);
-			expect(changes[0].objectID).toBe('Test Book Title, Emily, Brontë');
+			expect(changes[0].objectID).toEqual('Test Book Title, Emily, Brontë');
 		});
 
 		it('should use multiple fields as objectID (concatenation) even when one of the fields is null', async () => {
-			// Books has @changelog: [title, author.name.firstName, author.name.lastName]
 			const { Books } = adminService.entities;
 			const bookID = cds.utils.uuid();
-			const authorID = 'd4d4a1b3-5b83-4814-8a20-f039af6f0387'; // existing author Emily Brontë
+			const authorID = 'd4d4a1b3-5b83-4814-8a20-f039af6f0387';
 
-			// Insert book with null title
 			await INSERT.into(Books).entries({
 				ID: bookID,
 				author_ID: authorID,
@@ -636,10 +593,9 @@ describe('Change Tracking Integration Tests', () => {
 				entityKey: bookID
 			});
 
-			expect(changes.length).toBe(1);
-			expect(changes[0].objectID).toBe('Emily, Brontë');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].objectID).toEqual('Emily, Brontë');
 
-			// Now insert book with null author last name
 			const bookID2 = cds.utils.uuid();
 			await INSERT.into(Books).entries({
 				ID: bookID2,
@@ -655,13 +611,11 @@ describe('Change Tracking Integration Tests', () => {
 				entity: 'sap.capire.bookshop.Books',
 				entityKey: bookID2
 			});
-			expect(changes.length).toBe(1);
-			expect(changes[0].objectID).toBe('Test Book Title');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].objectID).toEqual('Test Book Title');
 		});
 
-		// should fallback to entity ID when all objectID fields are null?
 		it('should be empty string when all objectID fields are null', async () => {
-			// Books has @changelog: [title, author.name.firstName, author.name.lastName]
 			const { Books } = adminService.entities;
 			const bookID = cds.utils.uuid();
 
@@ -671,17 +625,16 @@ describe('Change Tracking Integration Tests', () => {
 				stock: 10
 			});
 
-			let changes = await SELECT.from(ChangeView).where({
+			const changes = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Books',
 				entityKey: bookID
 			});
 
-			expect(changes.length).toBe(1);
-			expect(changes[0].objectID).toBe('');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].objectID).toEqual('');
 		});
 
 		it('should use struct field as objectID', async () => {
-			// Authors has @changelog: [name.firstName, name.lastName]
 			const { Authors } = adminService.entities;
 			const id = cds.utils.uuid();
 
@@ -698,13 +651,12 @@ describe('Change Tracking Integration Tests', () => {
 			});
 
 			expect(changes.length).toBeGreaterThan(0);
-			expect(changes[0].objectID).toBe('William, Shakespeare');
+			expect(changes[0].objectID).toEqual('William, Shakespeare');
 		});
 
 		it('should use one level chained association as objectID', async () => {
-			// Level1Entity has @changelog: [parent.lifecycleStatus.name]
 			const { Level1Entity } = adminService.entities;
-			const existingRootEntity = '64625905-c234-4d0d-9bc1-283ee8940812'; // with lifecycleStatus 'IP' (In Preparation)
+			const existingRootEntity = '64625905-c234-4d0d-9bc1-283ee8940812';
 
 			await INSERT.into(Level1Entity).entries({
 				ID: cds.utils.uuid(),
@@ -717,17 +669,15 @@ describe('Change Tracking Integration Tests', () => {
 				entityKey: existingRootEntity
 			});
 
-			const level1Change = changes.find(c => c.attribute === 'title' && c.modification === 'create');
-
-			expect(level1Change).toBeDefined();
-			expect(level1Change.objectID).toBe('In Preparation');
+			expect(changes.find(c => c.attribute === 'title' && c.modification === 'create')).toMatchObject({
+				objectID: 'In Preparation'
+			});
 		});
 
 		it('should use deep chained association as objectID', async () => {
-			// Level3Entity has @changelog: [parent.parent.parent.lifecycleStatus.name]
 			const { Level3Entity } = adminService.entities;
-			const existingLevel2Entity = 'dd1fdd7d-da2a-4600-940b-0baf2946c4ff'; // Level2Entity that links to RootEntity
-			const existingRootEntity = '64625905-c234-4d0d-9bc1-283ee8940812'; // with lifecycleStatus 'IP' (In Preparation)
+			const existingLevel2Entity = 'dd1fdd7d-da2a-4600-940b-0baf2946c4ff';
+			const existingRootEntity = '64625905-c234-4d0d-9bc1-283ee8940812';
 
 			await INSERT.into(Level3Entity).entries({
 				ID: cds.utils.uuid(),
@@ -740,19 +690,15 @@ describe('Change Tracking Integration Tests', () => {
 				entityKey: existingRootEntity
 			});
 
-			const level3Change = changes.find(c => c.attribute === 'title' && c.modification === 'create');
-
-			// object with parentID 
-			expect(level3Change).toBeDefined();
-			// objectID should resolve through 3 levels: Level3 -> Level2 -> Level1 -> Root -> lifecycleStatus.name
-			expect(level3Change.objectID).toBe('In Preparation');
+			expect(changes.find(c => c.attribute === 'title' && c.modification === 'create')).toMatchObject({
+				objectID: 'In Preparation'
+			});
 		});
 
 		it('should resolve parentObjectID for child entities', async () => {
-			// When creating a child entity, parentObjectID should show the parent's objectID
 			const { BookStores } = adminService.entities;
 			const storeId = cds.utils.uuid();
-			const existingAuthorID = 'd4d4a1b3-5b83-4814-8a20-f039af6f0387'; // Emily Brontë
+			const existingAuthorID = 'd4d4a1b3-5b83-4814-8a20-f039af6f0387';
 
 			await INSERT.into(BookStores).entries({
 				ID: storeId,
@@ -776,16 +722,17 @@ describe('Change Tracking Integration Tests', () => {
 
 			const bookChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Books',
-				entityKey: storeId // for some reason entityKey is the parent key
+				entityKey: storeId
 			});
 
 			expect(bookChanges.length).toBeGreaterThan(0);
-			expect(bookChanges[0].parentObjectID).toBe(parentObjectID);
-			expect(bookChanges[0].objectID).toBe('Child Book Title, Emily, Brontë');
+			expect(bookChanges[0]).toMatchObject({
+				parentObjectID: parentObjectID,
+				objectID: 'Child Book Title, Emily, Brontë'
+			});
 		});
 
 		it('should update objectID when the referenced field is included in the change', async () => {
-			// BookStores has @changelog: [name] -> single field objectID
 			const { BookStores } = adminService.entities;
 			const bookStoreID = cds.utils.uuid();
 
@@ -800,10 +747,9 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(createChanges.length).toBe(1);
-			expect(createChanges[0].objectID).toBe('Original Store Name');
+			expect(createChanges.length).toEqual(1);
+			expect(createChanges[0].objectID).toEqual('Original Store Name');
 
-			// Update the name field which is the objectID
 			const updatedName = 'Updated Store Name';
 			await UPDATE(BookStores).where({ ID: bookStoreID }).with({ name: updatedName });
 
@@ -813,14 +759,13 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(updateChanges.length).toBe(1);
-			expect(updateChanges[0].objectID).toBe(updatedName);
+			expect(updateChanges.length).toEqual(1);
+			expect(updateChanges[0].objectID).toEqual(updatedName);
 		});
 	});
 
 	describe('Display Values - Human-readable Values', () => {
 		it('should display raw value for simple fields', async () => {
-			// Simple @changelog annotation should display the raw value
 			const { BookStores } = adminService.entities;
 			const id = cds.utils.uuid();
 
@@ -837,17 +782,14 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBe(1);
-			// For simple fields, valueChangedTo should be the raw value
-			expect(changes[0].valueChangedTo).toBe('Amsterdam');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedTo).toEqual('Amsterdam');
 		});
 
 		it('should display associated entity field as value', async () => {
-			// Books has author @changelog: [author.name.firstName, author.name.lastName]
 			const { Books } = adminService.entities;
 			const id = cds.utils.uuid();
 
-			// Use existing author: Emily Brontë (d4d4a1b3-5b83-4814-8a20-f039af6f0387)
 			await INSERT.into(Books).entries({
 				ID: id,
 				title: 'Book With Author Display',
@@ -862,17 +804,14 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBe(1);
-			// valueChangedTo should display the author's first and last name
-			expect(changes[0].valueChangedTo).toBe('Emily, Brontë');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedTo).toEqual('Emily, Brontë');
 		});
 
 		it('should display chained association field values', async () => {
-			// BookStores has city @changelog: [city.name, city.country.countryName.code]
 			const { BookStores } = adminService.entities;
 			const id = cds.utils.uuid();
 
-			// Use existing city: Paris (bc21e0d9-a313-4f52-8336-c1be5f66e257) in France (FR)
 			await INSERT.into(BookStores).entries({
 				ID: id,
 				name: 'Store With City',
@@ -887,17 +826,14 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBe(1);
-			// valueChangedTo should display city name and country code
-			expect(changes[0].valueChangedTo).toBe('Paris, FR');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedTo).toEqual('Paris, FR');
 		});
 
 		it('should display code list description as value', async () => {
-			// BookStores has lifecycleStatus @changelog: [lifecycleStatus.name]
 			const { BookStores } = adminService.entities;
 			const id = cds.utils.uuid();
 
-			// Use lifecycleStatus code 'IP' which maps to 'In Preparation'
 			await INSERT.into(BookStores).entries({
 				ID: id,
 				name: 'Store With Status',
@@ -912,17 +848,14 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBe(1);
-			// valueChangedTo should display the code list name 'In Preparation'
-			expect(changes[0].valueChangedTo).toBe('In Preparation');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedTo).toEqual('In Preparation');
 		});
 
 		it('should display multiple code list fields as value', async () => {
-			// Books has bookType @changelog: [bookType.name, bookType.descr]
 			const { Books } = adminService.entities;
 			const id = cds.utils.uuid();
 
-			// Use bookType code 'LIT' which maps to 'Literature', 'Literature Books'
 			await INSERT.into(Books).entries({
 				ID: id,
 				title: 'Book With Type',
@@ -938,25 +871,21 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBe(1);
-			// valueChangedTo should display both name and description
-			expect(changes[0].valueChangedTo).toBe('Literature, Literature Books');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedTo).toEqual('Literature, Literature Books');
 		});
 
 		it('should update displayed value when association changes', async () => {
-			// When updating an association, the display value should reflect the new target
 			const { Books } = adminService.entities;
 			const id = cds.utils.uuid();
 
-			// Create book with Emily Brontë as author
 			await INSERT.into(Books).entries({
 				ID: id,
 				title: 'Book Changing Authors',
-				author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387', // Emily Brontë
+				author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
 				stock: 10
 			});
 
-			// Change author to Charlotte Brontë (47f97f40-4f41-488a-b10b-a5725e762d5e)
 			await UPDATE(Books).where({ ID: id }).with({
 				author_ID: '47f97f40-4f41-488a-b10b-a5725e762d5e'
 			});
@@ -968,23 +897,23 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(changes.length).toBe(1);
-			expect(changes[0].valueChangedFrom).toBe('Emily, Brontë');
-			expect(changes[0].valueChangedTo).toBe('Charlotte, Brontë');
+			expect(changes.length).toEqual(1);
+			expect(changes[0]).toMatchObject({
+				valueChangedFrom: 'Emily, Brontë',
+				valueChangedTo: 'Charlotte, Brontë'
+			});
 		});
 
 		it('should display genre directly without explicit path', async () => {
-			// Books has genre @changelog (no explicit path, should use direct value)
 			const { Books } = adminService.entities;
 			const id = cds.utils.uuid();
 
-			// Use existing genre: Fiction (ID: 10)
 			await INSERT.into(Books).entries({
 				ID: id,
 				title: 'Book With Genre',
 				author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
 				stock: 8,
-				genre_ID: 11 // Drama (child of Fiction)
+				genre_ID: 11
 			});
 
 			const changes = await SELECT.from(ChangeView).where({
@@ -994,16 +923,13 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			expect(changes.length).toBe(1);
-			// Without explicit display path, should show the ID or raw value
-			expect(changes[0].valueChangedTo).toBe('11');
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedTo).toEqual('11');
 		});
 	});
 
 	describe('Composition Tracking', () => {
-
 		it('should track creation via deep creates over composition of one', async () => {
-			// BookStores has composition of one to BookStoreRegistry
 			const { BookStores } = adminService.entities;
 			const storeId = cds.utils.uuid();
 
@@ -1018,36 +944,27 @@ describe('Change Tracking Integration Tests', () => {
 				}
 			});
 
-			// Check registry changes are linked to parent store
 			const registryChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.BookStoreRegistry',
 				entityKey: storeId
 			});
 
-			expect(registryChanges.length).toBe(1);
+			expect(registryChanges.length).toEqual(1);
 			expect(registryChanges[0]).toMatchObject({
 				attribute: 'validOn',
 				modification: 'create',
 				objectID: 'MUN-001',
 				parentObjectID: 'Store With Registry',
 				entityKey: storeId,
-				parentKey: storeId // entityKey === parentKey ???
+				parentKey: storeId
 			});
 		});
 
 		it('should track update via deep update over composition of one', async () => {
-			// Books has volumns: Composition of many Volumns
-			// Volumns has title @changelog
-			// Using a composition of many child as it's exposed and works similarly
 			const { Volumns } = adminService.entities;
-
-			// Use existing Volumn from test data
-			// ID: dd1fdd7d-da2a-4600-940b-0baf2946c9bf belongs to book 9d703c23-54a8-4eff-81c1-cdce6b8376b1
-			// which belongs to store 64625905-c234-4d0d-9bc1-283ee8946770
 			const existingVolumnId = 'dd1fdd7d-da2a-4600-940b-0baf2946c9bf';
 			const rootStoreId = '64625905-c234-4d0d-9bc1-283ee8946770';
 
-			// Update the volumn's title directly
 			await UPDATE(Volumns).where({ ID: existingVolumnId }).with({
 				title: 'Wuthering Heights I - Updated'
 			});
@@ -1059,30 +976,29 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(volumnChanges.length).toBe(1);
-			expect(volumnChanges[0].valueChangedFrom).toBe('Wuthering Heights I');
-			expect(volumnChanges[0].valueChangedTo).toBe('Wuthering Heights I - Updated');
+			expect(volumnChanges.length).toEqual(1);
+			expect(volumnChanges[0]).toMatchObject({
+				valueChangedFrom: 'Wuthering Heights I',
+				valueChangedTo: 'Wuthering Heights I - Updated'
+			});
 		});
 
 		it('should track composition of one deletion', async () => {
 			cds.env.requires['change-tracking'].preserveDeletes = true;
 			const { BookStores } = adminService.entities;
 			const storeId = cds.utils.uuid();
-			const registryId = cds.utils.uuid();
 
-			// Create store with registry
 			await INSERT.into(BookStores).entries({
 				ID: storeId,
 				name: 'Store To Delete Registry',
 				location: 'Vienna',
 				registry: {
-					ID: registryId,
+					ID: cds.utils.uuid(),
 					code: 'VIE-001',
 					validOn: '2024-03-01'
 				}
 			});
 
-			// Delete the parent (should cascade delete to registry)
 			await DELETE.from(BookStores).where({ ID: storeId });
 
 			const registryChanges = await SELECT.from(ChangeView).where({
@@ -1092,14 +1008,12 @@ describe('Change Tracking Integration Tests', () => {
 			});
 
 			expect(registryChanges.length).toBeGreaterThan(0);
-			const validOnChange = registryChanges.find(c => c.attribute === 'validOn');
-			expect(validOnChange).toBeDefined();
-			expect(validOnChange.valueChangedFrom).toContain('2024');
+			expect(registryChanges.find(c => c.attribute === 'validOn')).toMatchObject({
+				modification: 'delete'
+			});
 		});
 
-
 		it('should track creation via deep creates over composition of many', async () => {
-			// BookStores has books: Composition of many Books
 			const { BookStores } = adminService.entities;
 			const storeId = cds.utils.uuid();
 
@@ -1123,7 +1037,6 @@ describe('Change Tracking Integration Tests', () => {
 				]
 			});
 
-			// Check books are linked to parent store
 			const bookChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Books',
 				entityKey: storeId,
@@ -1132,39 +1045,24 @@ describe('Change Tracking Integration Tests', () => {
 
 			expect(bookChanges.length).toBeGreaterThan(0);
 
-			// Should have changes for both books
 			const titleChanges = bookChanges.filter(c => c.attribute === 'title');
-			expect(titleChanges.length).toBe(2);
+			expect(titleChanges.length).toEqual(2);
 
 			const titles = titleChanges.map(c => c.valueChangedTo);
 			expect(titles).toContain('First Book');
 			expect(titles).toContain('Second Book');
 
-			// All should have same parentObjectID
-			expect(bookChanges.every(c => c.parentObjectID === 'Store With Multiple Books')).toBe(true);
+			expect(bookChanges.every(c => c.parentObjectID === 'Store With Multiple Books')).toEqual(true);
 		});
 
 		it('should track update via deep update over composition of many', async () => {
-			// Use existing book from bookstore
 			const { Books } = adminService.entities;
-			const existingBookId = '9d703c23-54a8-4eff-81c1-cdce6b8376b1'; // Wuthering Heights book
+			const existingBookId = '9d703c23-54a8-4eff-81c1-cdce6b8376b1';
 			const existingStoreId = '64625905-c234-4d0d-9bc1-283ee8946770';
 
-			await UPDATE(Books)
-				.where({ ID: existingBookId })
-				.with({ stock: 999 });
+			await UPDATE(Books).where({ ID: existingBookId }).with({ stock: 999 });
 
-			const bookChanges = await SELECT.from(ChangeView).where({
-				entity: 'sap.capire.bookshop.Books',
-				entityKey: existingStoreId,
-				modification: 'update'
-			});
-
-			// Note: stock is not annotated with @changelog, so check title update instead
-			// Let's update the title instead
-			await UPDATE(Books)
-				.where({ ID: existingBookId })
-				.with({ title: 'Wuthering Heights - Updated Edition' });
+			await UPDATE(Books).where({ ID: existingBookId }).with({ title: 'Wuthering Heights - Updated Edition' });
 
 			const titleChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Books',
@@ -1173,9 +1071,11 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(titleChanges.length).toBe(1);
-			expect(titleChanges[0].valueChangedFrom).toBe('Wuthering Heights');
-			expect(titleChanges[0].valueChangedTo).toBe('Wuthering Heights - Updated Edition');
+			expect(titleChanges.length).toEqual(1);
+			expect(titleChanges[0]).toMatchObject({
+				valueChangedFrom: 'Wuthering Heights',
+				valueChangedTo: 'Wuthering Heights - Updated Edition'
+			});
 		});
 
 		it('should track composition of many deletion', async () => {
@@ -1184,7 +1084,6 @@ describe('Change Tracking Integration Tests', () => {
 			const storeId = cds.utils.uuid();
 			const bookId = cds.utils.uuid();
 
-			// Create store with book
 			await INSERT.into(BookStores).entries({
 				ID: storeId,
 				name: 'Store For Book Deletion',
@@ -1199,7 +1098,6 @@ describe('Change Tracking Integration Tests', () => {
 				]
 			});
 
-			// Delete just the book (not the store)
 			await DELETE.from(Books).where({ ID: bookId });
 
 			const deleteChanges = await SELECT.from(ChangeView).where({
@@ -1209,14 +1107,13 @@ describe('Change Tracking Integration Tests', () => {
 			});
 
 			expect(deleteChanges.length).toBeGreaterThan(0);
-			const titleChange = deleteChanges.find(c => c.attribute === 'title');
-			expect(titleChange).toBeDefined();
-			expect(titleChange.valueChangedFrom).toBe('Book To Delete');
+			expect(deleteChanges.find(c => c.attribute === 'title')).toMatchObject({
+				valueChangedFrom: 'Book To Delete'
+			});
 		});
 
 		describe('deep compositions', () => {
 			it('should track deep create with 3+ hierarchy levels', async () => {
-				// RootEntity -> Level1Entity -> Level2Entity -> Level3Entity
 				const { RootEntity } = adminService.entities;
 				const rootId = cds.utils.uuid();
 
@@ -1244,48 +1141,44 @@ describe('Change Tracking Integration Tests', () => {
 					]
 				});
 
-				// Check all levels are tracked
 				const rootChanges = await SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.RootEntity',
 					entityKey: rootId,
 					modification: 'create'
 				});
-				expect(rootChanges.length).toBe(2); // name and lifecycleStatus
+				expect(rootChanges.length).toEqual(2);
 
 				const level1Changes = await SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.Level1Entity',
 					entityKey: rootId,
 					modification: 'create'
 				});
-				expect(level1Changes.length).toBe(2);
-				expect(level1Changes.find(c => c.attribute === 'title').valueChangedTo).toBe('Level 1 Child');
-				expect(level1Changes.find(c => c.attribute === 'child').valueChangedTo).toBe('Level 2 Child');
+				expect(level1Changes.length).toEqual(2);
+				expect(level1Changes.find(c => c.attribute === 'title')).toMatchObject({ valueChangedTo: 'Level 1 Child' });
+				expect(level1Changes.find(c => c.attribute === 'child')).toMatchObject({ valueChangedTo: 'Level 2 Child' });
 
 				const level2Changes = await SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.Level2Entity',
 					entityKey: rootId,
 					modification: 'create'
 				});
-				expect(level2Changes.length).toBe(2);
-				expect(level2Changes.find(c => c.attribute === 'title').valueChangedTo).toBe('Level 2 Child');
-				expect(level2Changes.find(c => c.attribute === 'child').valueChangedTo).toBe('Level 3 Child');
+				expect(level2Changes.length).toEqual(2);
+				expect(level2Changes.find(c => c.attribute === 'title')).toMatchObject({ valueChangedTo: 'Level 2 Child' });
+				expect(level2Changes.find(c => c.attribute === 'child')).toMatchObject({ valueChangedTo: 'Level 3 Child' });
 
 				const level3Changes = await SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.Level3Entity',
 					entityKey: rootId,
 					modification: 'create'
 				});
-				expect(level3Changes.length).toBe(1);
-				expect(level3Changes.find(c => c.attribute === 'title').valueChangedTo).toBe('Level 3 Child');
+				expect(level3Changes.length).toEqual(1);
+				expect(level3Changes.find(c => c.attribute === 'title')).toMatchObject({ valueChangedTo: 'Level 3 Child' });
 			});
 
 			it('should link all child changes to root entity key', async () => {
-				// All composition children should reference the root entity's key (entityKey)
-				// but parentObjectID reflects their immediate parent's objectID
 				const { BookStores } = adminService.entities;
 				const rootId = cds.utils.uuid();
 
-				// BookStores -> Books -> Volumns (3 levels)
 				await INSERT.into(BookStores).entries({
 					ID: rootId,
 					name: 'Root Store For Key Test',
@@ -1306,36 +1199,34 @@ describe('Change Tracking Integration Tests', () => {
 					]
 				});
 
-				// All changes should link to root store via entityKey
 				const storeChanges = await SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.BookStores',
 					entityKey: rootId
 				});
-				expect(storeChanges.length).toBe(2);
-				expect(storeChanges.find(c => c.attribute === 'name').valueChangedTo).toBe('Root Store For Key Test');
-				expect(storeChanges.find(c => c.attribute === 'books').valueChangedTo).toBe('Book With Volumns');
+				expect(storeChanges.length).toEqual(2);
+				expect(storeChanges.find(c => c.attribute === 'name')).toMatchObject({ valueChangedTo: 'Root Store For Key Test' });
+				expect(storeChanges.find(c => c.attribute === 'books')).toMatchObject({ valueChangedTo: 'Book With Volumns' });
 
 				const bookChanges = await SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.Books',
 					entityKey: rootId
 				});
-				expect(bookChanges.length).toBe(2); // title and author
-				expect(bookChanges[0].parentObjectID).toBe('Root Store For Key Test');
-				expect(bookChanges[1].parentObjectID).toBe('Root Store For Key Test');
+				expect(bookChanges.length).toEqual(2);
+				expect(bookChanges[0].parentObjectID).toEqual('Root Store For Key Test');
+				expect(bookChanges[1].parentObjectID).toEqual('Root Store For Key Test');
 
 				const volumnChanges = await SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.Volumns',
 					entityKey: rootId
 				});
 				expect(volumnChanges.length).toBeGreaterThan(0);
-				// Volumns' parentObjectID is the Book's objectID (immediate parent)
-				// Books has @changelog: [title, author.name.firstName, author.name.lastName]
-				expect(volumnChanges[0].parentObjectID).toBe('Book With Volumns, Emily, Brontë');
-				expect(volumnChanges[0].entityKey).toBe(rootId); // But entityKey still links to root store
+				expect(volumnChanges[0]).toMatchObject({
+					parentObjectID: 'Book With Volumns, Emily, Brontë',
+					entityKey: rootId
+				});
 			});
 
 			it('should track inline composition of many', async () => {
-				// BookStores has inline composition: bookInventory: Composition of many { ID, title }
 				const { BookStores } = adminService.entities;
 				const storeId = cds.utils.uuid();
 
@@ -1357,16 +1248,15 @@ describe('Change Tracking Integration Tests', () => {
 				});
 
 				expect(inventoryChanges.length).toBeGreaterThan(0);
-				const titleChange = inventoryChanges.find(c => c.attribute === 'title');
-				expect(titleChange).toBeDefined();
-				expect(titleChange.valueChangedTo).toBe('Inventory Item 1');
+				expect(inventoryChanges.find(c => c.attribute === 'title')).toMatchObject({
+					valueChangedTo: 'Inventory Item 1'
+				});
 			});
 		});
 	});
 
 	describe('Edge Cases', () => {
 		it('should handle special characters in entity IDs', async () => {
-			// RootSample has String keys that can include special characters like '/'
 			const { RootSample } = adminService.entities;
 			const specialId = '/test/special';
 
@@ -1382,22 +1272,19 @@ describe('Change Tracking Integration Tests', () => {
 			});
 
 			expect(changes.length).toBeGreaterThan(0);
-			const titleChange = changes.find(c => c.attribute === 'title');
-			expect(titleChange).toBeDefined();
-			expect(titleChange.valueChangedTo).toBe('Entity With Special ID');
-			// entityKey should properly store the special character ID
-			expect(titleChange.entityKey).toBe(specialId);
+			expect(changes.find(c => c.attribute === 'title')).toMatchObject({
+				valueChangedTo: 'Entity With Special ID',
+				entityKey: specialId
+			});
 		});
 
 		it('should not track fields annotated with @PersonalData', async () => {
-			// Customers.name has @PersonalData.IsPotentiallyPersonal and @changelog
-			// Personal data should NOT be tracked even if @changelog is present
 			const { Customers } = adminService.entities;
 			const id = cds.utils.uuid();
 
 			await INSERT.into(Customers).entries({
 				ID: id,
-				name: 'John Doe', // Personal data
+				name: 'John Doe',
 				city: 'New York',
 				country: 'USA',
 				age: 30
@@ -1409,20 +1296,17 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'create'
 			});
 
-			// Should have changes for city, country, age but NOT for name
 			const nameChange = changes.find(c => c.attribute === 'name');
 			expect(nameChange).toBeUndefined();
 
-			// Other fields should be tracked
-			const cityChange = changes.find(c => c.attribute === 'city');
-			expect(cityChange).toBeDefined();
-			expect(cityChange.valueChangedTo).toBe('New York');
+			expect(changes.find(c => c.attribute === 'city')).toMatchObject({
+				valueChangedTo: 'New York'
+			});
 		});
 
 		it('should track updates on personal data fields only if explicitly enabled', async () => {
-			// Update personal data - should not be tracked
 			const { Customers } = adminService.entities;
-			const existingId = 'd4d4a1b3-5b83-4814-8a20-f039af6f0385'; // Seven from test data
+			const existingId = 'd4d4a1b3-5b83-4814-8a20-f039af6f0385';
 
 			await UPDATE(Customers).where({ ID: existingId }).with({
 				name: 'Updated Name',
@@ -1435,19 +1319,16 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			// Name change should NOT be tracked (personal data)
 			const nameChange = changes.find(c => c.attribute === 'name');
 			expect(nameChange).toBeUndefined();
 
-			// City change SHOULD be tracked
-			const cityChange = changes.find(c => c.attribute === 'city');
-			expect(cityChange).toBeDefined();
-			expect(cityChange.valueChangedFrom).toBe('Shanghai');
-			expect(cityChange.valueChangedTo).toBe('Beijing');
+			expect(changes.find(c => c.attribute === 'city')).toMatchObject({
+				valueChangedFrom: 'Shanghai',
+				valueChangedTo: 'Beijing'
+			});
 		});
 
 		it('should track deep compositions with special character IDs', async () => {
-			// Test deep composition with entities using special character IDs
 			const { RootSample } = adminService.entities;
 			const rootId = '/root/special';
 			const level1Id = '/level1/special';
@@ -1470,7 +1351,6 @@ describe('Change Tracking Integration Tests', () => {
 				]
 			});
 
-			// All levels should be tracked with correct entityKey
 			const rootChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.RootSample',
 				entityKey: rootId
@@ -1491,7 +1371,6 @@ describe('Change Tracking Integration Tests', () => {
 		});
 
 		it('should track entities with non-UUID string keys', async () => {
-			// RootSample uses String keys instead of UUID
 			const { RootSample } = adminService.entities;
 			const stringId = 'my-custom-string-id';
 
@@ -1506,9 +1385,9 @@ describe('Change Tracking Integration Tests', () => {
 			});
 
 			expect(changes.length).toBeGreaterThan(0);
-			const titleChange = changes.find(c => c.attribute === 'title');
-			expect(titleChange).toBeDefined();
-			expect(titleChange.entityKey).toBe(stringId);
+			expect(changes.find(c => c.attribute === 'title')).toMatchObject({
+				entityKey: stringId
+			});
 		});
 
 		it('should track update and delete on entities with string keys', async () => {
@@ -1516,13 +1395,11 @@ describe('Change Tracking Integration Tests', () => {
 			const { RootSample } = adminService.entities;
 			const stringId = 'string-key-for-update-delete';
 
-			// Create
 			await INSERT.into(RootSample).entries({
 				ID: stringId,
 				title: 'Original Title'
 			});
 
-			// Update
 			await UPDATE(RootSample).where({ ID: stringId }).with({
 				title: 'Updated Title'
 			});
@@ -1533,11 +1410,12 @@ describe('Change Tracking Integration Tests', () => {
 				modification: 'update'
 			});
 
-			expect(updateChanges.length).toBe(1);
-			expect(updateChanges[0].valueChangedFrom).toBe('Original Title');
-			expect(updateChanges[0].valueChangedTo).toBe('Updated Title');
+			expect(updateChanges.length).toEqual(1);
+			expect(updateChanges[0]).toMatchObject({
+				valueChangedFrom: 'Original Title',
+				valueChangedTo: 'Updated Title'
+			});
 
-			// Delete
 			await DELETE.from(RootSample).where({ ID: stringId });
 
 			const deleteChanges = await SELECT.from(ChangeView).where({
@@ -1547,6 +1425,91 @@ describe('Change Tracking Integration Tests', () => {
 			});
 
 			expect(deleteChanges.length).toBeGreaterThan(0);
+		});
+
+		it('should track composition element creation on parent via @changelog display path', async () => {
+			// Schools.classes annotation: @changelog: [classes.name, classes.teacher]
+			// This means changes to classes are tracked on the Schools entity (parent)
+			// using the display values from name and teacher fields
+			const { Schools } = adminService.entities;
+			const schoolId = cds.utils.uuid();
+
+			await INSERT.into(Schools).entries({
+				ID: schoolId,
+				name: 'New Test School',
+				location: 'Chicago',
+				classes: [
+					{
+						ID: cds.utils.uuid(),
+						name: 'Math 101',
+						teacher: 'Mr. Smith'
+					},
+					{
+						ID: cds.utils.uuid(),
+						name: 'English 201',
+						teacher: 'Ms. Johnson'
+					}
+				]
+			});
+
+			const schoolChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.Schools',
+				entityKey: schoolId,
+				modification: 'create'
+			});
+
+			// Schools tracks `classes` field with display values [classes.name, classes.teacher]
+			// So we get 2 changes (one per class added), each showing name and teacher
+			expect(schoolChanges.length).toEqual(2);
+			expect(schoolChanges.every(c => c.attribute === 'classes')).toEqual(true);
+
+			// Verify display values include class info
+			const displayValues = schoolChanges.map(c => c.valueChangedTo);
+			expect(displayValues.some(v => v.includes('Math 101'))).toEqual(true);
+			expect(displayValues.some(v => v.includes('English 201'))).toEqual(true);
+		});
+
+		it('should track draft-enabled entity with string keys', async () => {
+			const { RootSampleDraft } = adminService.entities;
+			const draftId = '/draft/test/entity';
+
+			await INSERT.into(RootSampleDraft).entries({
+				ID: draftId,
+				title: 'Draft Enabled Title'
+			});
+
+			const changes = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.RootSampleDraft',
+				entityKey: draftId,
+				modification: 'create'
+			});
+
+			expect(changes.length).toBeGreaterThan(0);
+			expect(changes.find(c => c.attribute === 'title')).toMatchObject({
+				valueChangedTo: 'Draft Enabled Title',
+				entityKey: draftId
+			});
+		});
+
+		it('should track updates to draft-enabled entity with string keys', async () => {
+			const { RootSampleDraft } = adminService.entities;
+			const existingDraftId = '/draftone';
+
+			await UPDATE(RootSampleDraft).where({ ID: existingDraftId }).with({
+				title: 'Updated Draft Title'
+			});
+
+			const changes = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.RootSampleDraft',
+				entityKey: existingDraftId,
+				modification: 'update'
+			});
+
+			expect(changes.length).toEqual(1);
+			expect(changes[0]).toMatchObject({
+				valueChangedFrom: 'Draft title',
+				valueChangedTo: 'Updated Draft Title'
+			});
 		});
 	});
 });
