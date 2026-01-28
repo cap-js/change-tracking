@@ -4,16 +4,12 @@ const path = require('path');
 const bookshop = path.resolve(__dirname, '../bookshop');
 
 describe('Configuration Options', () => {
-    const { data } = cds.test(bookshop);
+    cds.test(bookshop);
     let service, ChangeView;
 
     beforeAll(async () => {
         service = await cds.connect.to('ConfigTestService');
         ChangeView = service.entities.ChangeView;
-    });
-
-    beforeEach(async () => {
-        await data.reset();
     });
 
     afterEach(() => {
@@ -129,17 +125,26 @@ describe('Configuration Options', () => {
 
     describe('disableUpdateTracking', () => {
         it('should skip update logs when disableUpdateTracking is enabled', async () => {
-            cds.env.requires['change-tracking'].disableUpdateTracking = true;
             const { Records } = service.entities;
-            const existingId = '64625905-c234-4d0d-9bc1-283ee8946100';
+            const id = cds.utils.uuid();
 
-            await UPDATE(Records).where({ ID: existingId }).with({
+            // Create entity first (with tracking enabled)
+            await INSERT.into(Records).entries({
+                ID: id,
+                name: 'Record For Update Test',
+                description: 'Initial'
+            });
+
+            // Now disable update tracking and try to update
+            cds.env.requires['change-tracking'].disableUpdateTracking = true;
+
+            await UPDATE(Records).where({ ID: id }).with({
                 name: 'This Update Should Not Be Logged'
             });
 
             const changes = await SELECT.from(ChangeView).where({
                 entity: 'sap.capire.bookshop.test.config.Records',
-                entityKey: existingId,
+                entityKey: id,
                 modification: 'update'
             });
 

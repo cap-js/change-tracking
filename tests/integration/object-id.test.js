@@ -4,16 +4,12 @@ const path = require('path');
 const bookshop = path.resolve(__dirname, '../bookshop');
 
 describe('ObjectID - Human-readable IDs', () => {
-    const { data } = cds.test(bookshop);
+    cds.test(bookshop);
     let service, ChangeView;
 
     beforeAll(async () => {
         service = await cds.connect.to('ObjectIdTestService');
         ChangeView = service.entities.ChangeView;
-    });
-
-    beforeEach(async () => {
-        await data.reset();
     });
 
     afterEach(() => {
@@ -187,18 +183,27 @@ describe('ObjectID - Human-readable IDs', () => {
 
     describe('Chained Association ObjectID', () => {
         it('should use one level chained association as objectID', async () => {
-            const { Level1Entity } = service.entities;
-            const existingRootEntity = '64625905-c234-4d0d-9bc1-283ee8940812';
+            const { RootEntity, Level1Entity } = service.entities;
+            const rootId = cds.utils.uuid();
+            const level1Id = cds.utils.uuid();
 
+            // Create root entity first with lifecycleStatus that resolves to 'In Preparation'
+            await INSERT.into(RootEntity).entries({
+                ID: rootId,
+                name: 'Test Root Entity',
+                lifecycleStatus_code: 'IP' // 'IP' = 'In Preparation'
+            });
+
+            // Create Level1Entity referencing the root
             await INSERT.into(Level1Entity).entries({
-                ID: cds.utils.uuid(),
+                ID: level1Id,
                 title: 'Level1 Test Entry',
-                parent_ID: existingRootEntity
+                parent_ID: rootId
             });
 
             const changes = await SELECT.from(ChangeView).where({
                 entity: 'sap.capire.bookshop.test.objectid.Level1Entity',
-                entityKey: existingRootEntity
+                entityKey: rootId
             });
 
             expect(changes.find(c => c.attribute === 'title' && c.modification === 'create')).toMatchObject({
@@ -207,19 +212,41 @@ describe('ObjectID - Human-readable IDs', () => {
         });
 
         it('should use deep chained association as objectID', async () => {
-            const { Level3Entity } = service.entities;
-            const existingLevel2Entity = 'dd1fdd7d-da2a-4600-940b-0baf2946c4ff';
-            const existingRootEntity = '64625905-c234-4d0d-9bc1-283ee8940812';
+            const { RootEntity, Level1Entity, Level2Entity, Level3Entity } = service.entities;
+            const rootId = cds.utils.uuid();
+            const level1Id = cds.utils.uuid();
+            const level2Id = cds.utils.uuid();
+            const level3Id = cds.utils.uuid();
+
+            // Create the full hierarchy: RootEntity -> Level1Entity -> Level2Entity -> Level3Entity
+            // Level3Entity's objectID is: parent.parent.parent.lifecycleStatus.name
+            await INSERT.into(RootEntity).entries({
+                ID: rootId,
+                name: 'Test Root for Deep Chain',
+                lifecycleStatus_code: 'IP' // 'IP' = 'In Preparation'
+            });
+
+            await INSERT.into(Level1Entity).entries({
+                ID: level1Id,
+                title: 'Level1 Entity',
+                parent_ID: rootId
+            });
+
+            await INSERT.into(Level2Entity).entries({
+                ID: level2Id,
+                title: 'Level2 Entity',
+                parent_ID: level1Id
+            });
 
             await INSERT.into(Level3Entity).entries({
-                ID: cds.utils.uuid(),
+                ID: level3Id,
                 title: 'Level3 Deep Test',
-                parent_ID: existingLevel2Entity
+                parent_ID: level2Id
             });
 
             const changes = await SELECT.from(ChangeView).where({
                 entity: 'sap.capire.bookshop.test.objectid.Level3Entity',
-                entityKey: existingRootEntity
+                entityKey: rootId
             });
 
             expect(changes.find(c => c.attribute === 'title' && c.modification === 'create')).toMatchObject({

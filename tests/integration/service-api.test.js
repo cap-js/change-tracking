@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { data } = cds.test(bookshop);
+cds.test(bookshop);
 
 describe('Change Tracking Integration Tests', () => {
 	let adminService, db, ChangeView;
@@ -12,10 +12,6 @@ describe('Change Tracking Integration Tests', () => {
 		db = await cds.connect.to('db');
 		ChangeView = adminService.entities.ChangeView;
 		ChangeView['@cds.autoexposed'] = false;
-	});
-
-	beforeEach(async () => {
-		await data.reset();
 	});
 
 	afterEach(() => {
@@ -225,25 +221,44 @@ describe('Change Tracking Integration Tests', () => {
 		});
 
 		it('should track update via deep update over composition of one', async () => {
-			const { Volumns } = adminService.entities;
-			const existingVolumnId = 'dd1fdd7d-da2a-4600-940b-0baf2946c9bf';
-			const rootStoreId = '64625905-c234-4d0d-9bc1-283ee8946770';
+			const { BookStores, Volumns } = adminService.entities;
+			const storeId = cds.utils.uuid();
+			const bookId = cds.utils.uuid();
+			const volumnId = cds.utils.uuid();
 
-			await UPDATE(Volumns).where({ ID: existingVolumnId }).with({
-				title: 'Wuthering Heights I - Updated'
+			// Create the hierarchy: BookStore -> Book -> Volumn
+			await INSERT.into(BookStores).entries({
+				ID: storeId,
+				name: 'Store For Volumn Update',
+				location: 'Test Location',
+				books: [{
+					ID: bookId,
+					title: 'Book With Volumn',
+					author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
+					stock: 10,
+					volumns: [{
+						ID: volumnId,
+						title: 'Original Volumn Title',
+						sequence: 1
+					}]
+				}]
+			});
+
+			await UPDATE(Volumns).where({ ID: volumnId }).with({
+				title: 'Updated Volumn Title'
 			});
 
 			const volumnChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Volumns',
-				entityKey: rootStoreId,
+				entityKey: storeId,
 				attribute: 'title',
 				modification: 'update'
 			});
 
 			expect(volumnChanges.length).toEqual(1);
 			expect(volumnChanges[0]).toMatchObject({
-				valueChangedFrom: 'Wuthering Heights I',
-				valueChangedTo: 'Wuthering Heights I - Updated'
+				valueChangedFrom: 'Original Volumn Title',
+				valueChangedTo: 'Updated Volumn Title'
 			});
 		});
 
@@ -320,25 +335,40 @@ describe('Change Tracking Integration Tests', () => {
 		});
 
 		it('should track update via deep update over composition of many', async () => {
-			const { Books } = adminService.entities;
-			const existingBookId = '9d703c23-54a8-4eff-81c1-cdce6b8376b1';
-			const existingStoreId = '64625905-c234-4d0d-9bc1-283ee8946770';
+			const { BookStores, Books } = adminService.entities;
+			const storeId = cds.utils.uuid();
+			const bookId = cds.utils.uuid();
 
-			await UPDATE(Books).where({ ID: existingBookId }).with({ stock: 999 });
+			// Create BookStore with a Book
+			await INSERT.into(BookStores).entries({
+				ID: storeId,
+				name: 'Store For Book Update',
+				location: 'Test Location',
+				books: [{
+					ID: bookId,
+					title: 'Original Book Title',
+					author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
+					stock: 10
+				}]
+			});
 
-			await UPDATE(Books).where({ ID: existingBookId }).with({ title: 'Wuthering Heights - Updated Edition' });
+			// Update stock (not tracked)
+			await UPDATE(Books).where({ ID: bookId }).with({ stock: 999 });
+
+			// Update title (tracked)
+			await UPDATE(Books).where({ ID: bookId }).with({ title: 'Updated Book Title' });
 
 			const titleChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Books',
-				entityKey: existingStoreId,
+				entityKey: storeId,
 				attribute: 'title',
 				modification: 'update'
 			});
 
 			expect(titleChanges.length).toEqual(1);
 			expect(titleChanges[0]).toMatchObject({
-				valueChangedFrom: 'Wuthering Heights',
-				valueChangedTo: 'Wuthering Heights - Updated Edition'
+				valueChangedFrom: 'Original Book Title',
+				valueChangedTo: 'Updated Book Title'
 			});
 		});
 
@@ -570,22 +600,34 @@ describe('Change Tracking Integration Tests', () => {
 
 		it('should track updates on personal data fields only if explicitly enabled', async () => {
 			const { Customers } = adminService.entities;
-			const existingId = 'd4d4a1b3-5b83-4814-8a20-f039af6f0385';
+			const id = cds.utils.uuid();
 
-			await UPDATE(Customers).where({ ID: existingId }).with({
+			// Create a customer with initial values
+			await INSERT.into(Customers).entries({
+				ID: id,
+				name: 'Original Name',
+				city: 'Shanghai',
+				country: 'China',
+				age: 25
+			});
+
+			// Update both a personal data field (name) and a regular field (city)
+			await UPDATE(Customers).where({ ID: id }).with({
 				name: 'Updated Name',
 				city: 'Beijing'
 			});
 
 			const changes = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.Customers',
-				entityKey: existingId,
+				entityKey: id,
 				modification: 'update'
 			});
 
+			// Personal data field (name) should NOT be tracked
 			const nameChange = changes.find(c => c.attribute === 'name');
 			expect(nameChange).toBeUndefined();
 
+			// Regular field (city) SHOULD be tracked
 			expect(changes.find(c => c.attribute === 'city')).toMatchObject({
 				valueChangedFrom: 'Shanghai',
 				valueChangedTo: 'Beijing'
@@ -757,21 +799,28 @@ describe('Change Tracking Integration Tests', () => {
 
 		it('should track updates to draft-enabled entity with string keys', async () => {
 			const { RootSampleDraft } = adminService.entities;
-			const existingDraftId = '/draftone';
+			const draftId = '/draft/update/test';
 
-			await UPDATE(RootSampleDraft).where({ ID: existingDraftId }).with({
+			// Create a draft-enabled entity with string key
+			await INSERT.into(RootSampleDraft).entries({
+				ID: draftId,
+				title: 'Original Draft Title'
+			});
+
+			// Update the entity
+			await UPDATE(RootSampleDraft).where({ ID: draftId }).with({
 				title: 'Updated Draft Title'
 			});
 
 			const changes = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.RootSampleDraft',
-				entityKey: existingDraftId,
+				entityKey: draftId,
 				modification: 'update'
 			});
 
 			expect(changes.length).toEqual(1);
 			expect(changes[0]).toMatchObject({
-				valueChangedFrom: 'Draft title',
+				valueChangedFrom: 'Original Draft Title',
 				valueChangedTo: 'Updated Draft Title'
 			});
 		});

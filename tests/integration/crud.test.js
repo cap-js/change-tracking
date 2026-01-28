@@ -4,16 +4,12 @@ const path = require('path');
 const bookshop = path.resolve(__dirname, '../bookshop');
 
 describe('CRUD Operations', () => {
-    const { data } = cds.test(bookshop);
+    cds.test(bookshop);
     let service, ChangeView;
 
     beforeAll(async () => {
         service = await cds.connect.to('CrudTestService');
         ChangeView = service.entities.ChangeView;
-    });
-
-    beforeEach(async () => {
-        await data.reset();
     });
 
     afterEach(() => {
@@ -160,13 +156,21 @@ describe('CRUD Operations', () => {
     describe('Update Tracking', () => {
         it('should track simple field update', async () => {
             const { Items } = service.entities;
-            const existingId = '64625905-c234-4d0d-9bc1-283ee8946002';
+            const id = cds.utils.uuid();
 
-            await UPDATE(Items).where({ ID: existingId }).with({ name: 'Updated Item Name' });
+            // Create item first
+            await INSERT.into(Items).entries({
+                ID: id,
+                name: 'Item for Update',
+                quantity: 10
+            });
+
+            // Now update it
+            await UPDATE(Items).where({ ID: id }).with({ name: 'Updated Item Name' });
 
             const changes = await SELECT.from(ChangeView).where({
                 entity: 'sap.capire.bookshop.test.crud.Items',
-                entityKey: existingId,
+                entityKey: id,
                 attribute: 'name',
                 modification: 'update'
             });
@@ -180,14 +184,21 @@ describe('CRUD Operations', () => {
 
         it('should not create change log when value does not change', async () => {
             const { Items } = service.entities;
-            const existingId = '64625905-c234-4d0d-9bc1-283ee8946002';
+            const id = cds.utils.uuid();
+
+            // Create item first
+            await INSERT.into(Items).entries({
+                ID: id,
+                name: 'Item for Update',
+                quantity: 10
+            });
 
             // Update with same value
-            await UPDATE(Items).where({ ID: existingId }).with({ name: 'Item for Update' });
+            await UPDATE(Items).where({ ID: id }).with({ name: 'Item for Update' });
 
             const changes = await SELECT.from(ChangeView).where({
                 entity: 'sap.capire.bookshop.test.crud.Items',
-                entityKey: existingId,
+                entityKey: id,
                 modification: 'update'
             });
 
@@ -196,16 +207,25 @@ describe('CRUD Operations', () => {
 
         it('should track update from non-null to null value', async () => {
             const { Products } = service.entities;
-            const existingId = '64625905-c234-4d0d-9bc1-283ee8946010';
+            const id = cds.utils.uuid();
 
-            const before = await SELECT.one.from(Products).where({ ID: existingId });
+            // Create product with category
+            await INSERT.into(Products).entries({
+                ID: id,
+                title: 'Product with Category',
+                stock: 10,
+                category: 'Electronics'
+            });
+
+            const before = await SELECT.one.from(Products).where({ ID: id });
             expect(before.category).toEqual('Electronics');
 
-            await UPDATE(Products).where({ ID: existingId }).with({ category: null });
+            // Update category to null
+            await UPDATE(Products).where({ ID: id }).with({ category: null });
 
             const changes = await SELECT.from(ChangeView).where({
                 entity: 'sap.capire.bookshop.test.crud.Products',
-                entityKey: existingId,
+                entityKey: id,
                 attribute: 'category',
                 modification: 'update'
             });
