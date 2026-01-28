@@ -15,7 +15,7 @@
 	],
 	"scripts": {
 		"lint": "npx eslint .",
-		"test": "npx jest --silent --runInBand",
+		"test": "cds test",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
 	},
