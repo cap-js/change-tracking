@@ -4,21 +4,28 @@ const { data, POST, PATCH, DELETE } = cds.test(bookshop);
 const { RequestSend } = require('../utils/api');
 
 let adminService = null;
+let draftTestService = null;
 let ChangeView = null;
+let DraftTestChangeView = null;
 let db = null;
 let ChangeEntity = null;
 let utils = null;
+let draftUtils = null;
 let ChangeLog = null;
 
 describe('Draft-Enabled Change Tracking', () => {
 	beforeAll(async () => {
 		adminService = await cds.connect.to('AdminService');
+		draftTestService = await cds.connect.to('DraftTestService');
 		ChangeView = adminService.entities.ChangeView;
+		DraftTestChangeView = draftTestService.entities.ChangeView;
 		ChangeView['@cds.autoexposed'] = false;
+		DraftTestChangeView['@cds.autoexposed'] = false;
 		db = await cds.connect.to('db');
 		ChangeEntity = db.model.definitions['sap.changelog.Changes'];
 		ChangeLog = db.model.definitions['sap.changelog.ChangeLog'];
 		utils = new RequestSend(POST);
+		draftUtils = new RequestSend(POST);
 	});
 
 	beforeEach(async () => {
@@ -76,76 +83,74 @@ describe('Draft-Enabled Change Tracking', () => {
 
 	describe('Zero and False Values', () => {
 		it('should generate changelog for numeric zero and boolean false on create', async () => {
-			cds.services.AdminService.entities.Books.elements.price['@changelog'] = true;
+			const bookStoreId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+			const newBookId = '01234567-89ab-cdef-0123-987654fedcba';
 
-			let action = POST.bind({}, `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`, {
-				ID: '01234567-89ab-cdef-0123-987654fedcba',
+			let action = POST.bind({}, `/odata/v4/draft-test/BookStoresBasic(ID=${bookStoreId},IsActiveEntity=false)/books`, {
+				ID: newBookId,
 				price: 0,
 				isUsed: false
 			});
-			await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action);
-			let changes = await adminService.run(SELECT.from(ChangeView));
+			await draftUtils.apiAction('draft-test', 'BookStoresBasic', bookStoreId, 'DraftTestService', action);
+			let changes = await draftTestService.run(SELECT.from(DraftTestChangeView));
 			expect(changes).toHaveLength(2);
 
-			const priceChange = changes.find((c) => c.attribute === 'price');
+			const priceChange = changes.find((c) => c.attribute === 'Price');
 			expect(priceChange).toMatchObject({
-				entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
+				entityKey: bookStoreId,
 				modification: 'Create',
-				entity: 'Book',
+				entity: 'Books With Price Tracking',
 				valueChangedFrom: ''
 			});
 			expect(Number(priceChange.valueChangedTo)).toEqual(0);
 
-			const isUsedChange = changes.find((c) => c.attribute === 'isUsed');
+			const isUsedChange = changes.find((c) => c.attribute === 'Is Used');
 			expect(isUsedChange).toMatchObject({
-				entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
+				entityKey: bookStoreId,
 				modification: 'Create',
-				entity: 'Book',
+				entity: 'Books With Price Tracking',
 				valueChangedFrom: '',
 				valueChangedTo: 'false'
 			});
-
-			delete cds.services.AdminService.entities.Books.elements.price['@changelog'];
 		});
 
 		it('should generate changelog for numeric zero and boolean false on delete', async () => {
-			cds.services.AdminService.entities.Books.elements.price['@changelog'] = true;
+			const bookStoreId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+			const newBookId = '01234567-89ab-cdef-0123-987654fedcba';
 
-			let action = POST.bind({}, `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`, {
-				ID: '01234567-89ab-cdef-0123-987654fedcba',
+			let action = POST.bind({}, `/odata/v4/draft-test/BookStoresBasic(ID=${bookStoreId},IsActiveEntity=false)/books`, {
+				ID: newBookId,
 				price: 0,
 				isUsed: false
 			});
-			await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action);
+			await draftUtils.apiAction('draft-test', 'BookStoresBasic', bookStoreId, 'DraftTestService', action);
 
-			action = DELETE.bind({}, `/odata/v4/admin/Books(ID=01234567-89ab-cdef-0123-987654fedcba,IsActiveEntity=false)`);
-			await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action);
-			const changes = await adminService.run(
-				SELECT.from(ChangeView).where({
+			action = DELETE.bind({}, `/odata/v4/draft-test/BooksWithPriceTracking(ID=${newBookId},IsActiveEntity=false)`);
+			await draftUtils.apiAction('draft-test', 'BookStoresBasic', bookStoreId, 'DraftTestService', action);
+			const changes = await draftTestService.run(
+				SELECT.from(DraftTestChangeView).where({
 					modification: 'delete'
 				})
 			);
 			expect(changes).toHaveLength(2);
 
-			const priceChange = changes.find((c) => c.attribute === 'price');
+			const priceChange = changes.find((c) => c.attribute === 'Price');
 			expect(priceChange).toMatchObject({
-				entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
+				entityKey: bookStoreId,
 				modification: 'Delete',
-				entity: 'Book',
+				entity: 'Books With Price Tracking',
 				valueChangedTo: ''
 			});
 			expect(Number(priceChange.valueChangedFrom)).toEqual(0);
 
-			const isUsedChange = changes.find((c) => c.attribute === 'isUsed');
+			const isUsedChange = changes.find((c) => c.attribute === 'Is Used');
 			expect(isUsedChange).toMatchObject({
-				entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
+				entityKey: bookStoreId,
 				modification: 'Delete',
-				entity: 'Book',
+				entity: 'Books With Price Tracking',
 				valueChangedFrom: 'false',
 				valueChangedTo: ''
 			});
-
-			delete cds.services.AdminService.entities.Books.elements.price['@changelog'];
 		});
 	});
 
@@ -260,112 +265,93 @@ describe('Draft-Enabled Change Tracking', () => {
 
 		describe('Update', () => {
 			it('should log basic data type changes on child entity update', async () => {
-				cds.services.AdminService.entities.Books.elements.price['@changelog'] = true;
+				const bookStoreId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+				const existingBookId = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
 
-				const action = PATCH.bind({}, `/odata/v4/admin/Books(ID=9d703c23-54a8-4eff-81c1-cdce6b8376b1,IsActiveEntity=false)`, {
+				const action = PATCH.bind({}, `/odata/v4/draft-test/BooksWithPriceTracking(ID=${existingBookId},IsActiveEntity=false)`, {
 					title: 'new title',
 					author_ID: '47f97f40-4f41-488a-b10b-a5725e762d5e',
-					genre_ID: 16,
 					isUsed: false,
-					price: 3000
+					price: 2500
 				});
-				await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action);
+				await draftUtils.apiAction('draft-test', 'BookStoresBasic', bookStoreId, 'DraftTestService', action);
 
-				const bookChanges = await adminService.run(
-					SELECT.from(ChangeView).where({
-						entity: 'sap.capire.bookshop.BookStores',
+				const bookChanges = await draftTestService.run(
+					SELECT.from(DraftTestChangeView).where({
+						entity: 'sap.capire.bookshop.test.draft.BookStoresBasic',
 						attribute: 'books'
 					})
 				);
 				expect(bookChanges).toHaveLength(1);
 				expect(bookChanges[0]).toMatchObject({
-					entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
+					entityKey: bookStoreId,
 					attribute: 'Books',
 					modification: 'Update',
-					objectID: 'Shakespeare and Company',
-					entity: 'Book Store',
+					objectID: 'Draft Test Bookstore',
+					entity: 'Book Stores Basic',
 					valueChangedFrom: 'new title',
 					valueChangedTo: 'new title'
 				});
 
-				const titleChanges = await adminService.run(
-					SELECT.from(ChangeView).where({
-						entity: 'sap.capire.bookshop.Books',
+				const titleChanges = await draftTestService.run(
+					SELECT.from(DraftTestChangeView).where({
+						entity: 'sap.capire.bookshop.test.draft.BooksWithPriceTracking',
 						attribute: 'title'
 					})
 				);
 				expect(titleChanges).toHaveLength(1);
 				expect(titleChanges[0]).toMatchObject({
-					entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
+					entityKey: bookStoreId,
 					attribute: 'Title',
 					modification: 'Update',
 					objectID: 'new title, Charlotte, Brontë',
-					entity: 'Book',
-					valueChangedFrom: 'Wuthering Heights',
+					entity: 'Books With Price Tracking',
+					valueChangedFrom: 'Test Book With Price',
 					valueChangedTo: 'new title'
 				});
 
-				const authorChanges = await adminService.run(
-					SELECT.from(ChangeView).where({
-						entity: 'sap.capire.bookshop.Books',
+				const authorChanges = await draftTestService.run(
+					SELECT.from(DraftTestChangeView).where({
+						entity: 'sap.capire.bookshop.test.draft.BooksWithPriceTracking',
 						attribute: 'author'
 					})
 				);
 				expect(authorChanges).toHaveLength(1);
 				expect(authorChanges[0]).toMatchObject({
-					entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
+					entityKey: bookStoreId,
 					attribute: 'Author',
 					modification: 'Update',
 					objectID: 'new title, Charlotte, Brontë',
-					entity: 'Book',
+					entity: 'Books With Price Tracking',
 					valueChangedFrom: 'Emily, Brontë',
 					valueChangedTo: 'Charlotte, Brontë'
 				});
 
-				const genreChanges = await adminService.run(
-					SELECT.from(ChangeView).where({
-						entity: 'sap.capire.bookshop.Books',
-						attribute: 'genre'
-					})
-				);
-				expect(genreChanges).toHaveLength(1);
-				expect(genreChanges[0]).toMatchObject({
-					entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
-					attribute: 'Genres',
-					modification: 'Update',
-					objectID: 'new title, Charlotte, Brontë',
-					entity: 'Book',
-					valueChangedFrom: '11',
-					valueChangedTo: '16'
-				});
-
-				const isUsedChanges = await adminService.run(
-					SELECT.from(ChangeView).where({
-						entity: 'sap.capire.bookshop.Books',
+				const isUsedChanges = await draftTestService.run(
+					SELECT.from(DraftTestChangeView).where({
+						entity: 'sap.capire.bookshop.test.draft.BooksWithPriceTracking',
 						attribute: 'isUsed'
 					})
 				);
 				expect(isUsedChanges).toHaveLength(1);
 				expect(isUsedChanges[0]).toMatchObject({
-					entityKey: '64625905-c234-4d0d-9bc1-283ee8946770',
-					attribute: 'isUsed',
+					entityKey: bookStoreId,
+					attribute: 'Is Used',
 					modification: 'Update',
 					objectID: 'new title, Charlotte, Brontë',
-					entity: 'Book',
+					entity: 'Books With Price Tracking',
 					valueChangedFrom: 'true',
 					valueChangedTo: 'false'
 				});
 
-				// The current price is 3000.0000, and update operation via OData service is price: 3000. In this case, a changelog should not be generated.
-				const priceChanges = await adminService.run(
-					SELECT.from(ChangeView).where({
-						entity: 'sap.capire.bookshop.Books',
+				// The current price is 2500.0000, and update operation via OData service is price: 2500. In this case, a changelog should not be generated.
+				const priceChanges = await draftTestService.run(
+					SELECT.from(DraftTestChangeView).where({
+						entity: 'sap.capire.bookshop.test.draft.BooksWithPriceTracking',
 						attribute: 'price'
 					})
 				);
 				expect(priceChanges).toHaveLength(0);
-
-				delete cds.services.AdminService.entities.Books.elements.price['@changelog'];
 			});
 
 			it('should log unmanaged entity update', async () => {
@@ -1453,27 +1439,22 @@ describe('Draft-Enabled Change Tracking', () => {
 
 	describe('Localization', () => {
 		it('should handle localization when reading change view without required parameters', async () => {
-			const originalChangelog = JSON.parse(JSON.stringify(cds.services.AdminService.entities.BookStores['@changelog']));
-			delete cds.services.AdminService.entities.BookStores['@changelog'];
-			delete cds.db.entities.BookStores['@changelog'];
+			const bookStoreNoObjIdId = 'c3d4e5f6-a7b8-9012-cdef-123456789012';
+			const newBookId = cds.utils.uuid();
 
-			const action = POST.bind({}, `/odata/v4/admin/BookStores(ID=64625905-c234-4d0d-9bc1-283ee8946770,IsActiveEntity=false)/books`, {
-				ID: '9d703c23-54a8-4eff-81c1-cdce6b8376b2',
-				title: 'test title',
-				descr: 'test descr',
-				author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
-				stock: 1,
-				price: 1.0
+			const action = POST.bind({}, `/odata/v4/draft-test/BookStoresNoObjectId(ID=${bookStoreNoObjIdId},IsActiveEntity=false)/books`, {
+				ID: newBookId,
+				title: 'test title'
 			});
-			await utils.apiAction('admin', 'BookStores', '64625905-c234-4d0d-9bc1-283ee8946770', 'AdminService', action);
+			await draftUtils.apiAction('draft-test', 'BookStoresNoObjectId', bookStoreNoObjIdId, 'DraftTestService', action);
 
 			const selectedColumns = ['attribute', 'modification', 'entity', 'objectID', 'parentObjectID'];
 			const bookElementChanges = [];
 			for (const selectedColumn of selectedColumns) {
-				const bookChanges = await adminService.run(
-					SELECT.from(ChangeView)
+				const bookChanges = await draftTestService.run(
+					SELECT.from(DraftTestChangeView)
 						.where({
-							entity: 'sap.capire.bookshop.BookStores',
+							entity: 'sap.capire.bookshop.test.draft.BookStoresNoObjectId',
 							attribute: 'books'
 						})
 						.columns(`${selectedColumn}`)
@@ -1488,14 +1469,11 @@ describe('Draft-Enabled Change Tracking', () => {
 			expect(bookElementChanges[1].modification).toEqual('Create');
 
 			// To do localization, entity only needs parameters entity itself, so the localization could be done
-			expect(bookElementChanges[2].entity).toEqual('sap.capire.bookshop.BookStores');
+			expect(bookElementChanges[2].entity).toEqual('sap.capire.bookshop.test.draft.BookStoresNoObjectId');
 
 			// To do localization, object id needs parameters entity (if no object id is annotated), so the localization could not be done
 			// If no object id is annotated, the real value stored in db of object id should be "".
 			expect(bookElementChanges[3].objectID).toEqual('');
-
-			cds.services.AdminService.entities.BookStores['@changelog'] = originalChangelog;
-			cds.db.entities.BookStores['@changelog'] = originalChangelog;
 		});
 	});
 
@@ -1706,30 +1684,27 @@ describe('Draft-Enabled Change Tracking', () => {
 		});
 
 		it('should handle special characters when creating nested entities simultaneously', async () => {
-			cds.services.AdminService.entities.RootSampleDraft['@changelog'] = [{ '=': 'ID' }, { '=': 'title' }];
-			cds.services.AdminService.entities.Level1SampleDraft['@changelog'] = [{ '=': 'ID' }, { '=': 'title' }, { '=': 'parent.ID' }];
-
-			const createAction = POST.bind({}, `/odata/v4/admin/RootSampleDraft`, {
-				ID: '/drafttwo',
-				title: 'New title for RootSampleDraft',
+			const createAction = POST.bind({}, `/odata/v4/draft-test/RootSampleDraftWithObjectId`, {
+				ID: '/draftwithobjidnew',
+				title: 'New title for RootSampleDraftWithObjectId',
 				child: [
 					{
-						ID: '/level1drafttwo',
-						title: 'New title for Level1SampleDraft',
+						ID: '/level1draftwithobjidnew',
+						title: 'New title for Level1SampleDraftWithObjectId',
 						child: [
 							{
-								ID: '/level2drafttwo',
-								title: 'New title for Level2SampleDraft'
+								ID: '/level2draftwithobjidnew',
+								title: 'New title for Level2SampleDraftWithObjectId'
 							}
 						]
 					}
 				]
 			});
-			await utils.apiAction('admin', 'RootSampleDraft', `'${encodeURIComponent('/drafttwo')}'`, 'AdminService', createAction, true);
+			await draftUtils.apiAction('draft-test', 'RootSampleDraftWithObjectId', `'${encodeURIComponent('/draftwithobjidnew')}'`, 'DraftTestService', createAction, true);
 
-			let changes = await adminService.run(
-				SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.RootSampleDraft',
+			let changes = await draftTestService.run(
+				SELECT.from(DraftTestChangeView).where({
+					entity: 'sap.capire.bookshop.test.draft.RootSampleDraftWithObjectId',
 					attribute: 'title',
 					modification: 'create'
 				})
@@ -1737,15 +1712,15 @@ describe('Draft-Enabled Change Tracking', () => {
 			expect(changes).toHaveLength(1);
 			expect(changes[0]).toMatchObject({
 				valueChangedFrom: '',
-				valueChangedTo: 'New title for RootSampleDraft',
-				entityKey: '/drafttwo',
+				valueChangedTo: 'New title for RootSampleDraftWithObjectId',
+				entityKey: '/draftwithobjidnew',
 				parentKey: '',
-				objectID: '/drafttwo, New title for RootSampleDraft'
+				objectID: '/draftwithobjidnew, New title for RootSampleDraftWithObjectId'
 			});
 
-			changes = await adminService.run(
-				SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.Level1SampleDraft',
+			changes = await draftTestService.run(
+				SELECT.from(DraftTestChangeView).where({
+					entity: 'sap.capire.bookshop.test.draft.Level1SampleDraftWithObjectId',
 					attribute: 'title',
 					modification: 'create'
 				})
@@ -1753,15 +1728,15 @@ describe('Draft-Enabled Change Tracking', () => {
 			expect(changes).toHaveLength(1);
 			expect(changes[0]).toMatchObject({
 				valueChangedFrom: '',
-				valueChangedTo: 'New title for Level1SampleDraft',
-				entityKey: '/drafttwo',
-				parentKey: '/drafttwo',
-				objectID: '/level1drafttwo, New title for Level1SampleDraft, /drafttwo'
+				valueChangedTo: 'New title for Level1SampleDraftWithObjectId',
+				entityKey: '/draftwithobjidnew',
+				parentKey: '/draftwithobjidnew',
+				objectID: '/level1draftwithobjidnew, New title for Level1SampleDraftWithObjectId, /draftwithobjidnew'
 			});
 
-			changes = await adminService.run(
-				SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.Level2SampleDraft',
+			changes = await draftTestService.run(
+				SELECT.from(DraftTestChangeView).where({
+					entity: 'sap.capire.bookshop.test.draft.Level2SampleDraftWithObjectId',
 					attribute: 'title',
 					modification: 'create'
 				})
@@ -1769,14 +1744,11 @@ describe('Draft-Enabled Change Tracking', () => {
 			expect(changes).toHaveLength(1);
 			expect(changes[0]).toMatchObject({
 				valueChangedFrom: '',
-				valueChangedTo: 'New title for Level2SampleDraft',
-				entityKey: '/drafttwo',
-				parentKey: '/level1drafttwo',
-				objectID: '/level2drafttwo, New title for Level2SampleDraft, /drafttwo'
+				valueChangedTo: 'New title for Level2SampleDraftWithObjectId',
+				entityKey: '/draftwithobjidnew',
+				parentKey: '/level1draftwithobjidnew',
+				objectID: '/level2draftwithobjidnew, New title for Level2SampleDraftWithObjectId, /draftwithobjidnew'
 			});
-
-			cds.db.entities.RootSampleDraft['@changelog'] = [{ '=': 'ID' }, { '=': 'title' }];
-			cds.db.entities.Level1SampleDraft['@changelog'] = [{ '=': 'ID' }, { '=': 'title' }, { '=': 'parent.ID' }];
 		});
 	});
 });

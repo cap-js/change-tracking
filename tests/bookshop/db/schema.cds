@@ -18,6 +18,7 @@ using from './incidents/attachments';
 using from './test-crud';
 using from './test-config';
 using from './test-objectid';
+using from './test-draft';
 
 namespace sap.capire.bookshop;
 
