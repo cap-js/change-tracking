@@ -15,7 +15,8 @@
 	],
 	"scripts": {
 		"lint": "npx eslint .",
-		"test": "npx jest --silent --runInBand",
+		"test": "CDS_ENV=node npx jest --silent --runInBand",
+		"test:java": "npx jest --silent --runInBand",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
 	},
@@ -36,7 +37,8 @@
 		"requires": {
 			"change-tracking": {
 				"model": "@cap-js/change-tracking",
-				"considerLocalizedValues": false
+				"considerLocalizedValues": false,
+				"preserveDeletes": false
 			}
 		}
 	},
