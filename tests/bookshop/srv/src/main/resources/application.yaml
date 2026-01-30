@@ -14,6 +14,7 @@ cds:
           tenant: t1
           roles:
             - admin
+            - support
         - name: bob
           tenant: t1
           roles:

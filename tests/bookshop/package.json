@@ -6,10 +6,16 @@
 		"@cap-js/postgres": "^2.1.2"
 	},
 	"devDependencies": {
+		"@sap/cds-dk": "^9.6.1",
 		"@cap-js/sqlite": "*"
 	},
 	"scripts": {
-		"deploy:postgres": "cds build --production  && cds deploy --profile pg"
+		"watch:sqlite": "cds watch --with sqlite",
+		"watch:h2": "mvn spring-boot:run",
+		"watch:hana": "cds watch --profile hybrid",
+		"deploy:hana": "cds deploy --to hana",
+		"deploy:postgres": "cds build --production  && cds deploy --profile pg",
+		"watch:postgres": "cds watch --with pg"
 	},
 	"cds": {
 		"requires": {
