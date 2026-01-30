@@ -275,30 +275,33 @@ cds.on('loaded', enhanceModel);
 cds.once('served', async () => {
 	const kind = cds.env.requires?.db?.kind;
 	const isInMemory = cds.env.requires?.db?.credentials?.url === ':memory:';
+	const isSQLiteInMemory = kind === 'sqlite' && isInMemory;
+	const isPostgres = kind === 'postgres';
 
-	if (kind !== 'sqlite' || !isInMemory) return;
-
-	const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
+	if (!isSQLiteInMemory && !isPostgres) return;
 
 	const triggers = [], entities = [];
 
 	for (const def of cds.model.definitions) {
 		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
 		if (!isTableEntity || !isChangeTracked(def)) continue;
-
-		const rootEntityName = hierarchyMap.get(def.name);
-		const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null;
-
-		const entityTrigger = generateSQLiteTriggers(def, rootEntity);
-		triggers.push(...entityTrigger);
 		entities.push(def);
+
+		// Only generate triggers for SQLite in-memory (PostgreSQL triggers are deployed via compile.to.dbx)
+		if (isSQLiteInMemory) {
+			const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
+			const rootEntityName = hierarchyMap.get(def.name);
+			const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null;
+			const entityTrigger = generateSQLiteTriggers(def, rootEntity);
+			triggers.push(...entityTrigger);
+		}
 	}
 
 	const labels = getLabelTranslations(entities);
 	const { i18nKeys } = cds.entities('sap.changelog');
 
 	await Promise.all([
-		triggers.map((t) => cds.db.run(t)),
+		...triggers.map((t) => cds.db.run(t)),
 		cds.delete(i18nKeys),
 		cds.insert(labels).into(i18nKeys)
 	]);
@@ -414,63 +417,6 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 	return ret;
 };
 
-// PostgreSQL Build Plugin for change tracking triggers
-cds.build?.register?.('change-tracking-postgres', class ChangeTrackingPostgresBuildPlugin extends cds.build.Plugin {
-	static taskDefaults = { src: cds.env.folders.db }
-
-	static hasTask() {
-		return cds.requires.db?.kind === 'postgres';
-	}
-
-	init() {
-		this.task.dest = path.join(cds.root, cds.env.build.target !== '.' ? cds.env.build.target : 'gen', 'pg');
-	}
-
-	async build() {
-		const model = await this.model();
-		if (!model) return;
-
-		const runtimeCSN = cds.compile.for.nodejs(model);
-		const hierarchyMap = analyzeCompositions(runtimeCSN);
-
-		const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
-
-		const allCreates = [];
-		const allDrops = [];
-		const entities = [];
-
-		for (const def of runtimeCSN.definitions) {
-			const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
-			if (!isTableEntity || !isChangeTracked(def)) continue;
-
-			const rootEntityName = hierarchyMap.get(def.name);
-			const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
-
-			const { creates, drops } = generatePostgresTriggers(runtimeCSN, def, rootEntity);
-			allCreates.push(...creates);
-			allDrops.push(...drops);
-			entities.push(def);
-		}
-
-		if (allCreates.length === 0) return;
-
-		// Write trigger SQL file (drops first, then creates)
-		const triggerSQL = [...allDrops, ...allCreates].join('\n\n');
-		await this.write(triggerSQL).to(path.join('db', 'changelog-triggers.sql'));
-
-		// Write label translations CSV using fs directly to handle existing directory
-		const labels = getLabelTranslations(entities);
-		if (labels.length > 0) {
-			const header = 'ID;locale;text';
-			const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
-			const content = [header, ...rows].join('\n') + '\n';
-
-			const dataDir = path.join(this.task.dest, 'db', 'data');
-			await fs.promises.mkdir(dataDir, { recursive: true });
-			await fs.promises.writeFile(path.join(dataDir, 'sap.changelog-i18nKeys.csv'), content);
-		}
-	}
-});
 
 function getLabelTranslations(entities) {
 	// Get translations for entity and attribute labels
