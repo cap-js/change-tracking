@@ -340,6 +340,48 @@ cds.compile.to.sql = function (csn, options) {
 }
 Object.assign(cds.compile.to.sql, _sql_original)
 
+// PostgreSQL trigger injection via compile.to.dbx event (auto-deploys triggers with cds deploy)
+cds.on('compile.to.dbx', (csn, options, next) => {
+	const ddl = next();
+	if (options?.dialect !== 'postgres') return ddl;
+
+	const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
+
+	const clonedCSN = structuredClone(csn);
+	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
+	const hierarchyMap = analyzeCompositions(runtimeCSN);
+
+	const triggerCreates = [];
+	const triggerDrops = [];
+
+	for (const def of runtimeCSN.definitions) {
+		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+		if (!isTableEntity || !isChangeTracked(def)) continue;
+
+		const rootEntityName = hierarchyMap.get(def.name);
+		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
+
+		const { creates, drops } = generatePostgresTriggers(runtimeCSN, def, rootEntity);
+		triggerCreates.push(...creates);
+		triggerDrops.push(...drops);
+	}
+
+	if (triggerCreates.length === 0) return ddl;
+
+	// For standard compilation (array) or delta compilation (object with createsAndAlters/drops)
+	if (Array.isArray(ddl)) {
+		// Standard mode: drops run first, then creates
+		return [...triggerDrops, ...ddl, ...triggerCreates];
+	} else if (ddl.createsAndAlters) {
+		// Delta mode: separate drops and creates
+		ddl.drops = [...(ddl.drops || []), ...triggerDrops];
+		ddl.createsAndAlters.push(...triggerCreates);
+		return ddl;
+	}
+
+	return ddl;
+});
+
 // Generate HDI artifacts for change tracking
 const _hdi_migration = cds.compiler.to.hdi.migration;
 cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
@@ -393,7 +435,8 @@ cds.build?.register?.('change-tracking-postgres', class ChangeTrackingPostgresBu
 
 		const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
 
-		const triggers = [];
+		const allCreates = [];
+		const allDrops = [];
 		const entities = [];
 
 		for (const def of runtimeCSN.definitions) {
@@ -403,15 +446,16 @@ cds.build?.register?.('change-tracking-postgres', class ChangeTrackingPostgresBu
 			const rootEntityName = hierarchyMap.get(def.name);
 			const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
 
-			const entityTriggers = generatePostgresTriggers(runtimeCSN, def, rootEntity);
-			triggers.push(...entityTriggers);
+			const { creates, drops } = generatePostgresTriggers(runtimeCSN, def, rootEntity);
+			allCreates.push(...creates);
+			allDrops.push(...drops);
 			entities.push(def);
 		}
 
-		if (triggers.length === 0) return;
+		if (allCreates.length === 0) return;
 
-		// Write trigger SQL file
-		const triggerSQL = triggers.join('\n\n');
+		// Write trigger SQL file (drops first, then creates)
+		const triggerSQL = [...allDrops, ...allCreates].join('\n\n');
 		await this.write(triggerSQL).to(path.join('db', 'changelog-triggers.sql'));
 
 		// Write label translations CSV using fs directly to handle existing directory
