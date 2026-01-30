@@ -3,7 +3,7 @@
 		"@cap-js/attachments": "^2",
 		"@cap-js/change-tracking": "file:../../.",
 		"@cap-js/hana": "^2.3.4",
-		"@cap-js/postgres": "^2.1.0"
+		"@cap-js/postgres": "^2.1.2"
 	},
 	"devDependencies": {
 		"@cap-js/sqlite": "*"

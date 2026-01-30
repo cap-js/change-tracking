@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const LOG = cds.log('change-tracking');
 const DEBUG = cds.debug('change-tracking');
 
-const { fs } = cds.utils;
+const { fs, path } = cds.utils;
 
 const isRoot = 'change-tracking-isRootEntity';
 const hasParent = 'change-tracking-parentEntity';
@@ -273,24 +273,12 @@ function enhanceModel(m) {
 cds.on('loaded', enhanceModel);
 
 cds.once('served', async () => {
-	const kind = cds.env.requires?.db?.kind
+	const kind = cds.env.requires?.db?.kind;
 	const isInMemory = cds.env.requires?.db?.credentials?.url === ':memory:';
 
-	const isSQLite = kind === 'sqlite' && isInMemory;
-	const isPostgres = kind === 'postgres';
+	if (kind !== 'sqlite' || !isInMemory) return;
 
-	// Set appropriate trigger generator based on the database kind
-	let generateTriggers;
-	if (isSQLite) {
-		const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
-		generateTriggers = generateSQLiteTriggers;
-	} else if (isPostgres) {
-		const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
-		generateTriggers = generatePostgresTriggers;
-	} else {
-		LOG.warn(`Change tracking triggers are not supported for database kind: ${kind}`);
-		return;
-	}
+	const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
 
 	const triggers = [], entities = [];
 
@@ -298,20 +286,17 @@ cds.once('served', async () => {
 		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
 		if (!isTableEntity || !isChangeTracked(def)) continue;
 
-		// Resolve root entity name from your hierarchyMap
-		const rootEntityName = hierarchyMap.get(def.name)
-		const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null
+		const rootEntityName = hierarchyMap.get(def.name);
+		const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null;
 
-		const entityTrigger = generateTriggers(def, rootEntity);
+		const entityTrigger = generateSQLiteTriggers(def, rootEntity);
 		triggers.push(...entityTrigger);
 		entities.push(def);
 	}
 
-	// Get all label translations
 	const labels = getLabelTranslations(entities);
 	const { i18nKeys } = cds.entities('sap.changelog');
 
-	// Create the DB triggers and add label translations
 	await Promise.all([
 		triggers.map((t) => cds.db.run(t)),
 		cds.delete(i18nKeys),
@@ -323,7 +308,7 @@ const _sql_original = cds.compile.to.sql
 cds.compile.to.sql = function (csn, options) {
 	let ret = _sql_original.call(this, csn, options);
 	const isH2 = options?.to === 'h2';
-	if (!isH2) return ret; // skip for sqlite and postgres which are handled in 'served' hook
+	if (!isH2) return ret;
 
 	const triggers = [], entities = [];
 	const { generateH2Trigger } = require('./lib/trigger/h2.js');
@@ -386,6 +371,62 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 	ret.definitions = [...ret.definitions, ...triggers];
 	return ret;
 };
+
+// PostgreSQL Build Plugin for change tracking triggers
+cds.build?.register?.('change-tracking-postgres', class ChangeTrackingPostgresBuildPlugin extends cds.build.Plugin {
+	static taskDefaults = { src: cds.env.folders.db }
+
+	static hasTask() {
+		return cds.requires.db?.kind === 'postgres';
+	}
+
+	init() {
+		this.task.dest = path.join(cds.root, cds.env.build.target !== '.' ? cds.env.build.target : 'gen', 'pg');
+	}
+
+	async build() {
+		const model = await this.model();
+		if (!model) return;
+
+		const runtimeCSN = cds.compile.for.nodejs(model);
+		const hierarchyMap = analyzeCompositions(runtimeCSN);
+
+		const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
+
+		const triggers = [];
+		const entities = [];
+
+		for (const def of runtimeCSN.definitions) {
+			const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
+			if (!isTableEntity || !isChangeTracked(def)) continue;
+
+			const rootEntityName = hierarchyMap.get(def.name);
+			const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
+
+			const entityTriggers = generatePostgresTriggers(runtimeCSN, def, rootEntity);
+			triggers.push(...entityTriggers);
+			entities.push(def);
+		}
+
+		if (triggers.length === 0) return;
+
+		// Write trigger SQL file
+		const triggerSQL = triggers.join('\n\n');
+		await this.write(triggerSQL).to(path.join('db', 'changelog-triggers.sql'));
+
+		// Write label translations CSV using fs directly to handle existing directory
+		const labels = getLabelTranslations(entities);
+		if (labels.length > 0) {
+			const header = 'ID;locale;text';
+			const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
+			const content = [header, ...rows].join('\n') + '\n';
+
+			const dataDir = path.join(this.task.dest, 'db', 'data');
+			await fs.promises.mkdir(dataDir, { recursive: true });
+			await fs.promises.writeFile(path.join(dataDir, 'sap.changelog-i18nKeys.csv'), content);
+		}
+	}
+});
 
 function getLabelTranslations(entities) {
 	// Get translations for entity and attribute labels
