@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const LOG = cds.log('change-tracking');
 const DEBUG = cds.debug('change-tracking');
 
-const { fs, path } = cds.utils;
+const { fs } = cds.utils;
 
 const isRoot = 'change-tracking-isRootEntity';
 const hasParent = 'change-tracking-parentEntity';
@@ -271,6 +271,27 @@ function enhanceModel(m) {
 
 // Register plugin hooks
 cds.on('loaded', enhanceModel);
+
+cds.on('listening', ({ server, url }) => {
+
+	cds.db.before(['INSERT', 'UPDATE', 'DELETE'], async (req) => {
+		if (!req.target || !isChangeTracked(req.target) ||req. target?.name.endsWith('.drafts')) return;
+		// check if request is for a service to skip
+		const srv = req.target?._service; if (!srv) return;
+		if (srv['@changelog'] === false || srv['@changelog'] === null) {
+			DEBUG(`Set session variable CT_SKIP_VAR for ${srv.name} to true!`);
+			req._tx.set({ CT_SKIP_VAR: 'true' }); // set session variable
+			req._ctSkipWasSet = true; // mark that variable was set
+		}
+	});
+
+	cds.db.after(['INSERT', 'UPDATE', 'DELETE'], async (_, req) => {
+		if (req._ctSkipWasSet) {
+			req._tx.set({ CT_SKIP_VAR: 'false' }); // reset session variable
+			delete req._ctSkipWasSet;
+		}
+	});
+})
 
 cds.once('served', async () => {
 	const kind = cds.env.requires?.db?.kind;
