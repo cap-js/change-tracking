@@ -1,0 +1,16 @@
+requires:
+  db:
+    "[sqlite]":
+      kind: sqlite
+      credentials:
+        database: "db.sqlite"
+    "[pg]":
+      kind: postgres
+      credentials:
+        host: localhost
+        port: 5432
+        user: postgres
+        password: postgres
+        database: postgres
+    "[hana]":
+      kind: hana

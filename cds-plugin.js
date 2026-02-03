@@ -184,11 +184,10 @@ cds.on('listening', ({ server, url }) => {
 
 cds.once('served', async () => {
 	const kind = cds.env.requires?.db?.kind;
-	const isInMemory = cds.env.requires?.db?.credentials?.url === ':memory:';
-	const isSQLiteInMemory = kind === 'sqlite' && isInMemory;
+	const isSQLite = kind === 'sqlite';
 	const isPostgres = kind === 'postgres';
 
-	if (!isSQLiteInMemory && !isPostgres) return;
+	if (!isSQLite && !isPostgres) return;
 
 	const triggers = [], entities = [];
 
@@ -198,7 +197,7 @@ cds.once('served', async () => {
 		entities.push(def);
 
 		// Only generate triggers for SQLite in-memory (PostgreSQL triggers are deployed via compile.to.dbx)
-		if (isSQLiteInMemory) {
+		if (isSQLite) {
 			const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
 			const rootEntityName = hierarchyMap.get(def.name);
 			const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null;
