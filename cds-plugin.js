@@ -177,6 +177,7 @@ cds.on('listening', ({ server, url }) => {
 	});
 
 	cds.db.after(['INSERT', 'UPDATE', 'DELETE'], async (_, req) => {
+		if (!req.target || !isChangeTracked(req.target) || req.target?.name.endsWith('.drafts')) return;
 		resetSkipSessionVariables(req);
 	});
 })
