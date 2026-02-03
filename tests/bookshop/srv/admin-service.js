@@ -5,10 +5,6 @@ module.exports = cds.service.impl(async (srv) => {
 		const newBookStores = req.data;
 		newBookStores.lifecycleStatus_code = 'IP';
 	});
-	srv.before('CREATE', 'RootEntity.drafts', async (req) => {
-		const newRootEntity = req.data;
-		newRootEntity.lifecycleStatus_code = 'IP';
-	});
 
 	const onActivateVolumns = async (req) => {
 		const entity = req.entity;
@@ -21,13 +17,11 @@ module.exports = cds.service.impl(async (srv) => {
 	};
 
 	const onActivateOrderItemNote = async (req) => {
-		const entity = req.entity;
-		const entityID = 'a40a9fd8-573d-4f41-1111-fa8ea0d8b1bc';
-		await UPDATE.entity(entity).where({ ID: entityID }).set({ ActivationStatus_code: 'VALID' });
+		await UPDATE.entity(req.entity)
+			.where({ ID: req.params.at(-1).ID ?? req.params.at(-1) })
+			.set({ ActivationStatus_code: 'VALID' });
 
-		const Level2Object = 'AdminService.Level2Object';
-		const Level2ObjectID = '55bb60e4-ed86-46e6-9378-346153eba8d4';
-		await UPDATE.entity(Level2Object, { ID: Level2ObjectID }).set({ title: 'Game Science' });
+		await UPDATE.entity('VariantTesting.Level2Sample', { ID: req.data.ID }).set({ title: 'Game Science' });
 	};
 
 	const onActivateLevel2Sample = async (req) => {
@@ -40,7 +34,7 @@ module.exports = cds.service.impl(async (srv) => {
 		await UPDATE.entity(rootSampleEntity, { ID: rootSampleID }).set({ title: 'Black Myth Zhong Kui' });
 	};
 
-	srv.on('activate', 'AdminService.Volumns', onActivateVolumns);
+	srv.on('activate', 'AdminService.Volumes', onActivateVolumns);
 	srv.on('activate', 'AdminService.OrderItemNote', onActivateOrderItemNote);
 	srv.on('activate', 'AdminService.Level2Sample', onActivateLevel2Sample);
 });
