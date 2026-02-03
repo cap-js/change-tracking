@@ -8,6 +8,65 @@ const isRoot = 'change-tracking-isRootEntity';
 const hasParent = 'change-tracking-parentEntity';
 let hierarchyMap = new Map();
 
+// Session context variable names for skipping change tracking
+const CT_SKIP_VAR = 'CT_SKIP_VAR';
+const CT_SKIP_ENTITY_PREFIX = 'CT_SKIP_ENTITY_';
+
+function getEntitySkipVarName(entityName) {
+	return `${CT_SKIP_ENTITY_PREFIX}${entityName.replace(/\./g, '_')}`;
+}
+
+function findServiceEntity(service, dbEntity) {
+	if (!service || !dbEntity) return null;
+	for (const def of service.entities) {
+		const projectionTarget = cds.db.resolve.table(def)?.name;
+		if (projectionTarget === dbEntity.name) return def;
+	}
+	return null;
+}
+
+function collectSkipEntities(rootTarget, query, service) {
+	const toSkip = new Set();
+	const dbEntity = cds.db.resolve.table(rootTarget);
+
+	// Check root entity annotation
+	if (rootTarget['@changelog'] === false || rootTarget['@changelog'] === null) {
+		toSkip.add(dbEntity.name);
+	}
+
+	// For deep operations, extract data from query and traverse compositions
+	const data = query?.INSERT?.entries || query?.UPDATE?.data || query?.UPDATE?.with;
+	if (!data || !dbEntity?.compositions) return toSkip;
+
+	// Filter all compositions inside data and map on composition target
+	const dataArray = Array.isArray(data) ? data : [data];
+	for (const row of dataArray) {
+		collectDeepEntities(dbEntity, row, service, toSkip);
+	}
+
+	return Array.from(toSkip);
+}
+
+function collectDeepEntities(entity, data, service, toSkip) {
+	if (!entity.compositions) return;
+	for (const comp of entity.compositions) {
+		const compData = data[comp.name];
+		if (compData === undefined) continue;
+
+		const targetEntity = comp._target || cds.model.definitions[comp.target];
+		if (!targetEntity) continue;
+
+		// Check annotations of target entity (on service level)
+		const serviceEntity = findServiceEntity(service, targetEntity);
+		if (serviceEntity && (serviceEntity['@changelog'] === false || serviceEntity['@changelog'] === null)) {
+			toSkip.add(targetEntity.name);
+		}
+
+		// Recurse for nested compositions
+		collectDeepEntities(targetEntity, compData, service, toSkip);
+	}
+}
+
 const isChangeTracked = (entity) => {
 	if (entity.query?.SET?.op === 'union') return false; // REVISIT: should that be an error or warning?
 	if (entity['@changelog']) return true;
@@ -275,20 +334,42 @@ cds.on('loaded', enhanceModel);
 cds.on('listening', ({ server, url }) => {
 
 	cds.db.before(['INSERT', 'UPDATE', 'DELETE'], async (req) => {
-		if (!req.target || !isChangeTracked(req.target) ||req. target?.name.endsWith('.drafts')) return;
+		if (!req.target || !isChangeTracked(req.target) || req.target?.name.endsWith('.drafts')) return;
+
 		// check if request is for a service to skip
 		const srv = req.target?._service; if (!srv) return;
 		if (srv['@changelog'] === false || srv['@changelog'] === null) {
-			DEBUG(`Set session variable CT_SKIP_VAR for ${srv.name} to true!`);
-			req._tx.set({ CT_SKIP_VAR: 'true' }); // set session variable
-			req._ctSkipWasSet = true; // mark that variable was set
+			DEBUG(`Set session variable ${CT_SKIP_VAR} for service ${srv.name} to true!`);
+			req._tx.set({ [CT_SKIP_VAR]: 'true' });
+			req._ctSkipWasSet = true;
+		}
+
+		const entitiesToSkip = collectSkipEntities(req.target, req.query, srv);
+		if (entitiesToSkip.length > 0) {
+			const skipVars = {};
+			for (const name of entitiesToSkip) {
+				const varName = getEntitySkipVarName(name);
+				skipVars[varName] = 'true';
+				DEBUG(`Set session variable ${varName} for entity ${name} to true!`);
+			}
+			req._tx.set(skipVars);
+			req._ctSkipEntities = entitiesToSkip; // track for cleanup
 		}
 	});
 
 	cds.db.after(['INSERT', 'UPDATE', 'DELETE'], async (_, req) => {
 		if (req._ctSkipWasSet) {
-			req._tx.set({ CT_SKIP_VAR: 'false' }); // reset session variable
+			req._tx.set({ [CT_SKIP_VAR]: 'false' });
 			delete req._ctSkipWasSet;
+		}
+
+		if (req._ctSkipEntities) {
+			const resetVars = {};
+			for (const name of req._ctSkipEntities) {
+				resetVars[getEntitySkipVarName(name)] = 'false';
+			}
+			req._tx.set(resetVars);
+			delete req._ctSkipEntities;
 		}
 	});
 })
@@ -498,3 +579,10 @@ function getLabelTranslations(entities) {
 
 	return Array.from(rows.values());
 }
+
+// Export constants and helper for use by trigger modules
+module.exports = {
+	CT_SKIP_VAR,
+	CT_SKIP_ENTITY_PREFIX,
+	getEntitySkipVarName
+};
