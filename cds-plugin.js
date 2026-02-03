@@ -59,7 +59,11 @@ function entityKey4(entity) {
 	for (let k in entity.elements) {
 		const e = entity.elements[k];
 		if (!e.key) continue;
-		if (xpr.length) xpr.push('||');
+		if (xpr.length) {
+			xpr.push('||');
+			xpr.push({ val: "||" });
+			xpr.push('||');
+		}
 		if (e.type === 'cds.Association') xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
 		else xpr.push({ ref: [k] });
 	}
