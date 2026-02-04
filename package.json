@@ -15,8 +15,7 @@
 	],
 	"scripts": {
 		"lint": "npx eslint .",
-		"test": "CDS_ENV=node npx jest --silent --runInBand",
-		"test:java": "npx jest --silent --runInBand",
+		"test": "npx jest --silent",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
 	},

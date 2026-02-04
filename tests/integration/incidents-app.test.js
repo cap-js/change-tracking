@@ -1,16 +1,30 @@
 const cds = require('@sap/cds');
 const path = require('path');
 const app = path.join(__dirname, '../bookshop');
-const { test, axios, GET, POST, PATCH, DELETE } = cds.test(app);
+const { axios, GET, POST, PATCH, DELETE } = cds.test(app);
 axios.defaults.auth = { username: 'alice' };
-const incidentID = '3ccf474c-3881-44b7-99fb-59a2a4668418';
 
-beforeEach(async () => {
-	await test.data.reset();
-});
+async function newIncident() {
+	const res = await POST(`odata/v4/processor/Incidents`, {
+		customer_ID: '1004161',
+		title: 'Strange noise when switching off Inverter',
+		urgency_code: 'M',
+		status_code: 'N',
+		conversation: [
+			{
+				timestamp: '2022-09-04T13:00:00Z',
+				author: 'Bradley Flowers',
+				message: 'What exactly is wrong?'
+			}
+		]
+	});
+	await POST(`odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+	return res.data.ID;
+}
 
 describe('Tests for uploading/deleting attachments through API calls', () => {
 	it('Localized values are stored - EN', async () => {
+		const incidentID = await newIncident();
 		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
 		await PATCH(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)`, {
@@ -22,12 +36,13 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`);
-		const statusChange = changes.find((change) => change.attribute === 'Status');
+		const statusChange = changes.find((change) => change.attribute === 'Status' && change.modification === 'Update' && change.entityKey === incidentID);
 		expect(statusChange).toHaveProperty('valueChangedFrom', 'New');
 		expect(statusChange).toHaveProperty('valueChangedTo', 'Resolved');
 	});
 
 	it('Localized values are stored - DE', async () => {
+		const incidentID = await newIncident();
 		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
 		await PATCH(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)?sap-locale=de`, {
@@ -39,13 +54,14 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`);
-		const statusChangeGerman = changes.find((change) => change.attribute === 'Status');
+		const statusChangeGerman = changes.find((change) => change.attribute === 'Status' && change.modification === 'Update' && change.entityKey === incidentID);
 		expect(statusChangeGerman).toHaveProperty('valueChangedFrom', 'Neu');
 		expect(statusChangeGerman).toHaveProperty('valueChangedTo', 'Gelöst');
 	});
 
 	//Draft mode uploading attachment
 	it('Requesting object page to ensure change tracking works with attachments combined', async () => {
+		const incidentID = await newIncident();
 		//read attachments list for Incident
 		const attachmentResponse = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)`);
 		//the data should have only one attachment
@@ -55,14 +71,19 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 
 	//REVISIT: Ideally use OData dynamic types so UI does the formatting and not the backend
 	it('Date and time values are localized', async () => {
-		await POST(`odata/v4/processor/Incidents(ID=${'3583f982-d7df-4aad-ab26-301d4a157cd7'},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+		const incidentID = await newIncident();
+		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
-		await POST(`odata/v4/processor/Incidents(ID=${'3583f982-d7df-4aad-ab26-301d4a157cd7'},IsActiveEntity=false)/ProcessorService.draftActivate?sap-locale=de`, {});
+		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate?sap-locale=de`, {});
 
 		const {
 			data: { value: changes }
-		} = await GET(`odata/v4/processor/Incidents(ID=${'3583f982-d7df-4aad-ab26-301d4a157cd7'},IsActiveEntity=true)/changes?sap-locale=en`);
-		const dbChanges = await SELECT.from('sap.changelog.Changes').where({ attribute: { in: ['date', 'time', 'datetime', 'timestamp'] } });
+		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes?sap-locale=en`);
+		const dbChanges = await SELECT.from('sap.changelog.ChangeView').where({
+			attribute: { in: ['date', 'time', 'datetime', 'timestamp'] },
+			modification: 'update',
+			entityKey: incidentID
+		});
 		const dateChange = changes.find((change) => change.attribute === 'date');
 		const dateDBChange = dbChanges.find((change) => change.attribute === 'date');
 		expect(dateChange.valueChangedFrom).not.toEqual(dateDBChange.valueChangedFrom);
@@ -86,83 +107,116 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 
 describe('Non ID key support', () => {
 	it('Non ID entities can be change tracked', async () => {
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+		const ID = Math.round(Math.random() * 100000).toString();
+		await POST(`odata/v4/processor/BooksNotID`, {
+			NOT_ID: ID,
+			title: 'Inverter not functional'
+		});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
-		await PATCH(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=false)`, {
+		await PATCH(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)`, {
 			title: 'ABCDEF'
 		});
 
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
 		const {
 			data: { value: changes }
-		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=true)/changes`);
-		const change = changes.find((change) => change.attribute === 'title');
+		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
+		const change = changes.find((change) => change.attribute === 'title' && change.modification === 'Update');
 		expect(change).toHaveProperty('valueChangedFrom', 'Inverter not functional');
 		expect(change).toHaveProperty('valueChangedTo', 'ABCDEF');
 	});
 
 	it('Change track new composition with non ID key', async () => {
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+		const ID = Math.round(Math.random() * 100000).toString();
+		const pageID = Math.round(Math.random() * 100000).toString();
+		await POST(`odata/v4/processor/BooksNotID`, {
+			NOT_ID: ID,
+			title: 'Inverter not functional'
+		});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=false)/pages`, {
-			NOT_ID: 6,
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/pages`, {
+			NOT_ID: pageID,
 			page: 2
 		});
 
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
 		const {
 			data: { value: changes }
-		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=true)/changes`);
+		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
 		const change = changes.find((change) => change.attribute === 'page');
 		expect(change).toHaveProperty('valueChangedFrom', '');
 		expect(change).toHaveProperty('valueChangedTo', '2');
 		expect(change).toHaveProperty('modification', 'Create');
-		expect(change).toHaveProperty('serviceEntityPath', 'ProcessorService.BooksNotID(1)/ProcessorService.PagesNotID(6)');
+		expect(change).toHaveProperty('serviceEntityPath', `ProcessorService.BooksNotID(${ID})/ProcessorService.PagesNotID(${pageID})`);
 	});
 
 	it('Change track modified composition with non ID key', async () => {
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+		const ID = Math.round(Math.random() * 100000).toString();
+		const pageID = Math.round(Math.random() * 100000).toString();
+		await POST(`odata/v4/processor/BooksNotID`, {
+			NOT_ID: ID,
+			title: 'Inverter not functional',
+			pages: [{ NOT_ID: pageID, page: 1 }]
+		});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await cds.delete(cds.model.definitions['sap.changelog.ChangeLog']);
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
-		await PATCH(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=false)/pages(NOT_ID=1,IsActiveEntity=false)`, {
+		await PATCH(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/pages(NOT_ID='${pageID}',IsActiveEntity=false)`, {
 			page: 2
 		});
 
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
 		const {
 			data: { value: changes }
-		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=true)/changes`);
+		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
 		const change = changes.find((change) => change.attribute === 'page');
 		expect(change).toHaveProperty('valueChangedFrom', '1');
 		expect(change).toHaveProperty('valueChangedTo', '2');
 		expect(change).toHaveProperty('modification', 'Update');
-		expect(change).toHaveProperty('serviceEntityPath', 'ProcessorService.BooksNotID(1)/ProcessorService.PagesNotID(1)');
+		expect(change).toHaveProperty('serviceEntityPath', `ProcessorService.BooksNotID(${ID})/ProcessorService.PagesNotID(${pageID})`);
 	});
 
 	it('Change track deleted composition with non ID key', async () => {
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+		const ID = Math.round(Math.random() * 100000).toString();
+		const pageID = Math.round(Math.random() * 100000).toString();
+		await POST(`odata/v4/processor/BooksNotID`, {
+			NOT_ID: ID,
+			title: 'Inverter not functional',
+			pages: [{ NOT_ID: pageID, page: 1 }]
+		});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
-		await DELETE(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=false)/pages(NOT_ID=1,IsActiveEntity=false)`);
+		await DELETE(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/pages(NOT_ID='${pageID}',IsActiveEntity=false)`);
 
-		await POST(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
 		const {
 			data: { value: changes }
-		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID=1,IsActiveEntity=true)/changes`);
-		const change = changes.find((change) => change.attribute === 'page');
+		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
+		const change = changes.find((change) => change.attribute === 'page' && change.modification === 'Delete');
 		expect(change).toHaveProperty('valueChangedFrom', '1');
 		expect(change).toHaveProperty('valueChangedTo', '');
-		expect(change).toHaveProperty('modification', 'Delete');
-		expect(change).toHaveProperty('serviceEntityPath', 'ProcessorService.BooksNotID(1)/ProcessorService.PagesNotID(1)');
+		expect(change).toHaveProperty('serviceEntityPath', `ProcessorService.BooksNotID(${ID})/ProcessorService.PagesNotID(${pageID})`);
 	});
 
 	it('Change track patched association on composition using document approach', async () => {
-		const { status } = await PATCH(`odata/v4/processor/Orders(839b2355-b538-4b6d-87f9-6516496843a9)`, {
+		const {
+			data: { ID }
+		} = await POST(`odata/v4/processor/Orders`, {});
+		const innerID = cds.utils.uuid();
+		const { status } = await PATCH(`odata/v4/processor/Orders(${ID})`, {
 			orderProducts: [
 				{
-					ID: 'bda1d416-8747-4fff-a847-9a3b2506927c',
+					ID: innerID,
 					country: {
 						code: 'DE'
 					}
@@ -173,12 +227,12 @@ describe('Non ID key support', () => {
 
 		const {
 			data: { value: changes }
-		} = await GET(`odata/v4/processor/Orders(839b2355-b538-4b6d-87f9-6516496843a9)/changes`);
+		} = await GET(`odata/v4/processor/Orders(${ID})/changes`);
 		expect(changes.length).toEqual(1);
 		const change = changes.find((change) => change.attribute === 'Country/Region');
 		expect(change).toHaveProperty('valueChangedFrom', '');
 		expect(change).toHaveProperty('valueChangedTo', 'DE');
 		expect(change).toHaveProperty('modification', 'Create');
-		expect(change).toHaveProperty('serviceEntityPath', 'ProcessorService.Orders(839b2355-b538-4b6d-87f9-6516496843a9)/ProcessorService.OrderProducts(bda1d416-8747-4fff-a847-9a3b2506927c)');
+		expect(change).toHaveProperty('serviceEntityPath', `ProcessorService.Orders(${ID})/ProcessorService.OrderProducts(${innerID})`);
 	});
 });

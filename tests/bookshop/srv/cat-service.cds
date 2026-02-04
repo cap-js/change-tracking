@@ -13,4 +13,6 @@ service CatalogService @(path:'/browse') {
   // @requires: 'authenticated-user'
   action submitOrder ( book: Books:ID, amount: Integer ) returns { stock: Integer };
   event OrderedBook : { book: Books:ID; amount: Integer; buyer: String };
+
+  entity BookStores as projection on my.BookStores excluding {books,registry};
 }

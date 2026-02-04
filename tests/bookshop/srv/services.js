@@ -1,15 +1,16 @@
 const cds = require('@sap/cds');
+const { SELECT } = cds.ql;
 
 class ProcessorService extends cds.ApplicationService {
 	/** Registering custom event handlers */
 	init() {
-		const { Incidents } = this.entities;
-
-		this.before('UPDATE', Incidents, (req) => this.onUpdate(req));
-		this.before(['CREATE', 'UPDATE'], Incidents, (req) => this.changeUrgencyDueToSubject(req.data));
-		this.before('SAVE', Incidents, (req) => {
-			req.data.time = '01:02:03';
-			req.data.date = '2025-10-18';
+		this.before('UPDATE', 'Incidents', (req) => this.onUpdate(req));
+		this.before(['CREATE', 'UPDATE'], 'Incidents', (req) => this.changeUrgencyDueToSubject(req.data));
+		this.before('SAVE', 'Incidents', (req) => {
+			req.data.time = String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
+			req.data.date = new Date(req.data.date);
+			req.data.date.setDate(new Date(req.data.date).getDate() + 1);
+			req.data.date = req.data.date.toISOString().substring(0, 10);
 			req.data.timestamp = new Date(req.data.timestamp);
 			req.data.timestamp.setDate(new Date(req.data.timestamp).getDate() + 1);
 			req.data.timestamp = req.data.timestamp.toISOString();

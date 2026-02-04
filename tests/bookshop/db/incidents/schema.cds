@@ -99,14 +99,14 @@ entity MultiKeyScenario {
     ],
 }, }
 entity BooksNotID {
-  key NOT_ID : Int16;
+  key NOT_ID : String;
       @changelog
       title  : String;
       pages : Composition of many PagesNotID on pages.book = $self;
 }
 
 entity PagesNotID {
-  key NOT_ID : Int16;
+  key NOT_ID : String;
       book : Association to one BooksNotID;
       @changelog : [book.title, page]
       page  : Integer;
