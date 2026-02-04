@@ -10,6 +10,8 @@ entity DifferentFieldTypes {
       timestamp : Timestamp;
       number    : Decimal;
       bool      : Boolean;
+      image     : LargeBinary;
+      icon      : Binary;
       dppField1 : String @PersonalData.IsPotentiallyPersonal;
       dppField2 : String @PersonalData.IsPotentiallySensitive;
       children  : Composition of many DifferentFieldTypesChildren

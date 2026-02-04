@@ -188,4 +188,11 @@ describe('Special CDS Features', () => {
 			expect(change.objectID).toEqual('');
 		});
 	});
+
+	// TODO: add proper warnings when unsupported data types are annotated
+	describe(`Unsupported data types`, () => {
+		it.skip(`Binary fields cannot be change tracked`, async () => {});
+
+		it.skip(`Vectors cannot be change tracked`, async () => {});
+	});
 });

@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, DELETE } = cds.test(bookshop);
+const { POST, DELETE, GET } = cds.test(bookshop);
 
 describe('Configuration scenarios', () => {
 	it('When preserveDeletes is enabled, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated', async () => {
@@ -133,10 +133,57 @@ describe('Configuration scenarios', () => {
 		});
 		expect(changes.length).toEqual(1);
 	});
+
+	describe('Service specific tracking', () => {
+		it(`Service specific annotations do not cause tracking in a different service`, async () => {
+			const { data: newStore } = await POST(`/browse/BookStores`, {
+				name: 'New book store'
+			});
+
+			const {
+				data: { value: changes }
+			} = await GET(`/odata/v4/admin/BookStores(ID=${newStore.ID},IsActiveEntity=true)/changes`);
+			expect(changes.length).toEqual(0);
+
+			const { data: newStore2 } = await POST(`/odata/v4/admin/BookStores`, {
+				name: 'New book store'
+			});
+			await POST(`/odata/v4/admin/BookStores(ID=${newStore2.ID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+			const {
+				data: { value: changes2 }
+			} = await GET(`/odata/v4/admin/BookStores(ID=${newStore2.ID},IsActiveEntity=true)/changes`);
+			expect(changes2.length).toEqual(2);
+		});
+
+		it(`Service specific annotations do not cause tracking when db entity is directly modified`, async () => {
+			const { Customers } = cds.entities('sap.capire.bookshop');
+			const customerID = cds.utils.uuid();
+			await INSERT.into(Customers).entries({
+				ID: customerID,
+				name: 'Test customer',
+				city: 'Walldorf'
+			});
+
+			const {
+				data: { value: changes }
+			} = await GET(`/odata/v4/admin/Customers(ID=${customerID})/changes`);
+			expect(changes.length).toEqual(0);
+
+			const { data: newCustomer } = await POST(`/odata/v4/admin/Customers`, {
+				name: 'Test customer 2',
+				city: 'Walldorf'
+			});
+
+			const {
+				data: { value: changes2 }
+			} = await GET(`/odata/v4/admin/Customers(ID=${newCustomer.ID})/changes`);
+			expect(changes2.length).toEqual(1);
+		});
+	});
 });
 
 describe('MTX Build', () => {
-	test('Changes association is only added once JSON csn is compiled for runtime', async () => {
+	it('Changes association is only added once JSON csn is compiled for runtime', async () => {
 		const csn = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'xtended' });
 		expect(csn.definitions['AdminService.BookStores'].elements?.changes).toBeFalsy();
 
