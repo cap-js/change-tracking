@@ -2,6 +2,7 @@ using {sap.change_tracking as my} from '../db/index';
 using {sap.changelog as change} from '@cap-js/change-tracking';
 
 service VariantTesting {
+  @cds.redirection.target
   entity DifferentFieldTypes as projection on my.DifferentFieldTypes;
 
   entity RootSample as projection on my.RootSample;
@@ -14,5 +15,8 @@ service VariantTesting {
   entity ComposedEntities as projection on my.ComposedEntities;
 
   entity ChangeView as projection on change.ChangeView;
+
+  @changelog: false
+  entity NotTrackedDifferentFieldTypes as projection on my.DifferentFieldTypes;
 
 }

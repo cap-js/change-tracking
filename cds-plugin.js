@@ -7,6 +7,7 @@ const hasParent = 'change-tracking-parentEntity';
 
 const isChangeTracked = (entity) => {
 	if (entity.query?.SET?.op === 'union') return false; // REVISIT: should that be an error or warning?
+	if (entity['@changelog'] === false) return false;
 	if (entity['@changelog']) return true;
 	if (Object.values(entity.elements).some((e) => e['@changelog'])) return true;
 	return false;

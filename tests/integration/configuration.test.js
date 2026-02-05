@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, DELETE, GET } = cds.test(bookshop);
+const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
 
 describe('Configuration scenarios', () => {
 	it('When preserveDeletes is enabled, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated', async () => {
@@ -179,6 +179,28 @@ describe('Configuration scenarios', () => {
 			} = await GET(`/odata/v4/admin/Customers(ID=${newCustomer.ID})/changes`);
 			expect(changes2.length).toEqual(1);
 		});
+	});
+
+	it('Should not track if entity is annotated @changelog: false', async () => {
+		const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
+			number: 1,
+			bool: true,
+			title: 'My test-record'
+		});
+
+		await PATCH(`/odata/v4/variant-testing/NotTrackedDifferentFieldTypes(ID=${record.ID})`, {
+			number: 2,
+			bool: false
+		});
+
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/variant-testing/NotTrackedDifferentFieldTypes(ID=${record.ID})/changes`);
+
+		const createChanges = changes.filter((c) => c.modification === 'Create');
+		const updateChanges = changes.filter((c) => c.modification === 'Update');
+		expect(createChanges.length).toEqual(2);
+		expect(updateChanges.length).toEqual(0);
 	});
 });
 
