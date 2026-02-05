@@ -3,6 +3,7 @@ using { sap.capire.incidents as my } from '../db/schema';
 /**
  * Service used by support personell, i.e. the incidents' 'processors'.
  */
+ @path: 'processor'
 service ProcessorService {
   entity Incidents as projection on my.Incidents;
   entity Customers @readonly as projection on my.Customers;

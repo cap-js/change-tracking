@@ -2,10 +2,25 @@
 	"dependencies": {
 		"@cap-js/attachments": "^2",
 		"@cap-js/change-tracking": "file:../../.",
-		"@cap-js/hana": "^2"
+		"@cap-js/hana": "^2.3.4",
+		"@cap-js/postgres": "^2.1.2"
 	},
 	"devDependencies": {
+		"@sap/cds-dk": "^9.6.1",
 		"@cap-js/sqlite": "*"
+	},
+	"scripts": {
+		"test": "jest",
+		"test:sqlite": "CDS_ENV=sqlite jest",
+		"test:pg": "CDS_ENV=pg jest",
+		"test:hana": "CDS_ENV=hana jest",
+		"test:all": "npm test && npm run test:sqlite && npm run test:pg && npm run test:hana",
+		"watch:h2": "mvn spring-boot:run",
+		"watch:hana": "cds watch --profile hana",
+		"watch:sqlite": "cds watch --profile sqlite",
+		"watch:postgres": "cds watch --profile pg",
+		"deploy:hana": "cds deploy --to hana",
+		"deploy:postgres": "cds build --production && cds deploy --profile pg"
 	},
 	"cds": {
 		"requires": {
@@ -31,7 +46,8 @@
 				"scan": false
 			},
 			"change-tracking": {
-				"considerLocalizedValues": true
+				"considerLocalizedValues": true,
+				"preserveDeletes": false
 			}
 		},
 		"features": {
