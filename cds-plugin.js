@@ -3,42 +3,16 @@ const LOG = cds.log('change-tracking');
 const DEBUG = cds.debug('change-tracking');
 
 const { fs } = cds.utils;
-const { setSkipSessionVariables, resetSkipSessionVariables, getEntitySkipVarName } = require('./lib/utils/session-variables.js');
+
+const { isChangeTracked, getEntitiesForTriggerGeneration, getBaseEntity, analyzeCompositions } = require('./lib/utils/entity-collector.js');
+const { setSkipSessionVariables, resetSkipSessionVariables, resetAutoSkipForServiceEntity } = require('./lib/utils/session-variables.js');
+const { getLabelTranslations } = require('./lib/localization.js');
 const { isRoot, hasParent } = require('./lib/utils/legacy-entity-processing.js');
 
+// Global state for collected entities and hierarchy
 let hierarchyMap = new Map();
 let collectedEntities = new Map();
 
-const isChangeTracked = (entity) => {
-	if (entity.query?.SET?.op === 'union') return false; // REVISIT: should that be an error or warning?
-	if (entity['@changelog']) return true;
-	return Object.values(entity.elements).some((e) => e['@changelog']);
-};
-
-const analyzeCompositions = (csn) => {
-	const childParentMap = new Map();
-
-	for (const [name, def] of Object.entries(csn.definitions)) {
-		if (def.kind !== 'entity') continue;
-
-		if (def.elements) {
-			for (const element of Object.values(def.elements)) {
-				if (element.type === "cds.Composition" && element.target) {
-					childParentMap.set(element.target, name);
-				}
-			}
-		}
-	}
-	const hierarchy = new Map();
-
-	for (const [childName, parentName] of childParentMap) {
-		let root = parentName;
-		hierarchy.set(childName, root);
-	}
-	return hierarchy;
-};
-
-// Add the appropriate Side Effects attribute to the custom action
 const addSideEffects = (actions, isRootEntity) => {
 	for (const se of Object.values(actions)) {
 		const target = isRootEntity ? 'TargetProperties' : 'TargetEntities';
@@ -71,6 +45,9 @@ function entityKey4(entity) {
 	return xpr;
 }
 
+/**
+ * Replace table name placeholders in ON conditions.
+ */
 function _replaceTablePlaceholders(on, tableName, hierarchy) {
 	const rootEntityName = hierarchy.get(tableName) || tableName;
 	return on.map(part => {
@@ -80,182 +57,17 @@ function _replaceTablePlaceholders(on, tableName, hierarchy) {
 	});
 }
 
+/**
+ * Check if a facet already exists for the changes composition.
+ */
 const hasFacetForComp = (comp, facets) => facets.some((f) => f.Target === `${comp.name}/@UI.LineItem` || (f.Facets && hasFacetForComp(comp, f.Facets)));
 
+// --- Model Enhancement ---
+
 /**
- * Compares two @changelog annotation values for equality.
- * Handles arrays of {['=']: path} objects and boolean/null values.
+ * Unfold @changelog annotations in loaded model.
+ * Adds changes association and UI facets to change-tracked service entities.
  */
-function _annotationsEqual(a, b) {
-	// Handle null/undefined/false cases
-	if (a === b) return true;
-	if (a == null || b == null) return false;
-	// Deep equality via structuredClone + comparison (order-safe)
-	return JSON.stringify(structuredClone(a)) === JSON.stringify(structuredClone(b));
-}
-
-function _getDbElementName(serviceEntity, elementName) {
-	const columns = serviceEntity.projection?.columns;
-	if (!columns) return elementName;
-
-	for (const col of columns) {
-		// Check for a renamed column: { ref: ['title'], as: 'adminTitle' }
-		if (typeof col === 'object' && col.as === elementName && col.ref?.length > 0) {
-			return col.ref[0];
-		}
-	}
-	return elementName;
-}
-
-function mergeChangelogAnnotations(dbEntity, serviceEntities) {
-	// Track merged annotations for conflict detection
-	let mergedEntityAnnotation = dbEntity['@changelog'];
-	let mergedEntityAnnotationSource = mergedEntityAnnotation ? dbEntity.name : null;
-	const mergedElementAnnotations = new Map(); // Map<dbElementName, { annotation, sourceName }>
-
-	// Initialize with DB entity element annotations
-	for (const element of dbEntity.elements) {
-		if (element['@changelog'] !== undefined) {
-			mergedElementAnnotations.set(element.name, {
-				annotation: element['@changelog'],
-				sourceName: dbEntity.name
-			});
-		}
-	}
-
-	// Merge annotations from each service entity
-	for (const { entity: srvEntity, entityAnnotation, elementAnnotations } of serviceEntities) {
-		// Merge entity-level @changelog (ObjectID definition)
-		if (entityAnnotation !== undefined) {
-			if (mergedEntityAnnotation !== undefined && !_annotationsEqual(mergedEntityAnnotation, entityAnnotation)) {
-				throw new Error(
-					`Conflicting @changelog annotations on entity '${dbEntity.name}': ` +
-					`'${mergedEntityAnnotationSource}' has ${JSON.stringify(mergedEntityAnnotation)} but ` +
-					`'${srvEntity.name}' has ${JSON.stringify(entityAnnotation)}`
-				);
-			}
-			if (mergedEntityAnnotation === undefined) {
-				mergedEntityAnnotation = entityAnnotation;
-				mergedEntityAnnotationSource = srvEntity.name;
-			}
-		}
-
-		// Merge element-level @changelog annotations
-		for (const [srvElemName, annotation] of Object.entries(elementAnnotations)) {
-			const dbElemName = _getDbElementName(srvEntity, srvElemName);
-
-			// Skip if annotation is false/null (explicit opt-out)
-			if (annotation === false || annotation === null) continue;
-
-			const existing = mergedElementAnnotations.get(dbElemName);
-			if (existing && !_annotationsEqual(existing.annotation, annotation)) {
-				throw new Error(
-					`Conflicting @changelog annotations on element '${dbElemName}' of entity '${dbEntity.name}': ` +
-					`'${existing.sourceName}' has ${JSON.stringify(existing.annotation)} but ` +
-					`'${srvEntity.name}' has ${JSON.stringify(annotation)}`
-				);
-			}
-			if (!existing) {
-				mergedElementAnnotations.set(dbElemName, {
-					annotation,
-					sourceName: srvEntity.name
-				});
-			}
-		}
-	}
-
-	// Convert Map to plain object for elementAnnotations
-	const elementAnnotationsObj = {};
-	for (const [elemName, { annotation }] of mergedElementAnnotations) {
-		elementAnnotationsObj[elemName] = annotation;
-	}
-
-	return {
-		entityAnnotation: mergedEntityAnnotation,
-		elementAnnotations: elementAnnotationsObj
-	};
-}
-
-function getEntitiesForTriggerGeneration(model, collected) {
-	const result = [];
-	const processedDbEntities = new Set();
-
-	// Process collected service entities - resolve entities and annotations from names
-	for (const [dbEntityName, serviceEntityNames] of collected) {
-		processedDbEntities.add(dbEntityName);
-		const dbEntity = model[dbEntityName];
-		if (!dbEntity) {
-			DEBUG?.(`DB entity ${dbEntityName} not found in model, skipping`);
-			continue;
-		}
-
-		// Resolve service entities and extract their annotations
-		const serviceEntities = [];
-		for (const name of serviceEntityNames) {
-			const serviceEntity = model[name];
-			if (!serviceEntity) {
-				DEBUG?.(`Service entity ${name} not found in model, skipping`);
-				continue;
-			}
-
-			// Extract @changelog annotations from the service entity
-			const entityAnnotation = serviceEntity['@changelog'];
-			const elementAnnotations = {};
-			for (const element of serviceEntity.elements) {
-				if (element['@changelog'] !== undefined) {
-					elementAnnotations[element.name] = element['@changelog'];
-				}
-			}
-
-			serviceEntities.push({
-				entity: serviceEntity,
-				entityAnnotation,
-				elementAnnotations
-			});
-		}
-
-		try {
-			const mergedAnnotations = mergeChangelogAnnotations(dbEntity, serviceEntities);
-			result.push({ dbEntityName, mergedAnnotations });
-			DEBUG?.(`Merged annotations for ${dbEntityName} from ${serviceEntities.length} service entities`);
-		} catch (error) {
-			LOG.error(error.message);
-			throw error;
-		}
-	}
-
-	// Add table entities that have @changelog but weren't collected
-	for (const def of model) {
-		const isTableEntity = def.kind === 'entity' && !def.query && !def.projection;
-		if (!isTableEntity || processedDbEntities.has(def.name)) continue;
-
-		if (isChangeTracked(def)) {
-			// No service entities collected, use null for mergedAnnotations (use entity's own annotations)
-			result.push({ dbEntityName: def.name, mergedAnnotations: null });
-			DEBUG?.(`Including DB entity ${def.name} directly (no service entities collected)`);
-		}
-	}
-
-	return result;
-}
-
-// Helper to get the base entity for projections (handles nested projections recursively)
-function getBaseEntity(entity, model) {
-	const baseRef = entity.projection?.from?.ref?.[0]
-	if (!baseRef || !model) return null
-
-	const baseEntity = model.definitions[baseRef]
-	if (!baseEntity) return null
-
-	// If base entity is also a projection, recurse
-	if (baseEntity.projection?.from?.ref) {
-		return getBaseEntity(baseEntity, model)
-	}
-
-	return { baseRef, baseEntity }
-}
-
-// Unfold @changelog annotations in loaded model
 function enhanceModel(m) {
 	if (m.meta?.flavor !== 'inferred') {
 		// In MTX scenarios with extensibility the runtime model for deployed apps is not
@@ -271,7 +83,6 @@ function enhanceModel(m) {
 	if (!aspect) return; // some other model
 	const { '@UI.Facets': [facet], elements: { changes } } = aspect;
 
-	//processEntities(m); // REVISIT: why is that required ?!?
 	hierarchyMap = analyzeCompositions(m);
 	collectedEntities = new Map();
 
@@ -280,8 +91,9 @@ function enhanceModel(m) {
 		const isServiceEntity = entity.kind === 'entity' && !!(entity.query || entity.projection);
 		if (isServiceEntity && isChangeTracked(entity)) {
 			// Collect change-tracked service entity name with its underlying DB entity name
-			const { baseRef: dbEntityName, baseEntity: dbEntity } = getBaseEntity(entity, m);
-			if (!dbEntity) continue;
+			const baseInfo = getBaseEntity(entity, m);
+			if (!baseInfo) continue;
+			const { baseRef: dbEntityName, baseEntity: dbEntity } = baseInfo;
 
 			if (!collectedEntities.has(dbEntityName)) collectedEntities.set(dbEntityName, []);
 			collectedEntities.get(dbEntityName).push(name);
@@ -359,27 +171,7 @@ cds.on('listening', ({ server, url }) => {
 	cds.db.before(['INSERT', 'UPDATE', 'DELETE'], async (req) => {
 		if (!req.target || req.target?.name.endsWith('.drafts')) return;
 		const srv = req.target?._service; if (!srv) return;
-
-		const serviceEntityIsChangeTracked = isChangeTracked(req.target);
-
-		// Check if this service entity should be skipped automatically
-		// (DB entity has triggers from other service entities, but this one didn't opt-in)
-		if (!serviceEntityIsChangeTracked && shouldSkipServiceEntity(req.target)) {
-			// Set skip variable for the DB entity since this service entity didn't opt-in
-			const dbEntity = cds.db?.resolve?.table(req.target);
-			if (dbEntity) {
-				const varName = getEntitySkipVarName(dbEntity.name);
-				DEBUG(`Auto-skip: Service entity ${req.target.name} didn't opt-in, skipping DB entity ${dbEntity.name}`);
-				req._tx.set({ [varName]: 'true' });
-				req._ctAutoSkipEntity = dbEntity.name;
-			}
-			return;
-		}
-
-		// Only proceed with explicit skip handling if service entity is change-tracked
-		if (!serviceEntityIsChangeTracked) return;
-
-		setSkipSessionVariables(req, srv);
+		setSkipSessionVariables(req, srv, collectedEntities);
 	});
 
 	cds.db.after(['INSERT', 'UPDATE', 'DELETE'], async (_, req) => {
@@ -387,7 +179,7 @@ cds.on('listening', ({ server, url }) => {
 
 		// Reset auto-skip variable if it was set
 		if (req._ctAutoSkipEntity) {
-			req._tx.set({ [getEntitySkipVarName(req._ctAutoSkipEntity)]: 'false' });
+			resetAutoSkipForServiceEntity(req, req._ctAutoSkipEntity);
 			delete req._ctAutoSkipEntity;
 			return;
 		}
@@ -395,7 +187,7 @@ cds.on('listening', ({ server, url }) => {
 		if (!isChangeTracked(req.target)) return;
 		resetSkipSessionVariables(req);
 	});
-})
+});
 
 cds.once('served', async () => {
 	const kind = cds.env.requires?.db?.kind;
@@ -432,7 +224,7 @@ cds.once('served', async () => {
 	]);
 });
 
-const _sql_original = cds.compile.to.sql
+const _sql_original = cds.compile.to.sql;
 cds.compile.to.sql = function (csn, options) {
 	let ret = _sql_original.call(this, csn, options);
 	const isH2 = options?.to === 'h2';
@@ -470,8 +262,8 @@ cds.compile.to.sql = function (csn, options) {
 	// Add semicolon at the end of each DDL statement if not already present
 	ret = ret.map(s => (s.endsWith(';') ? s + ';' : s));
 	return [...ret, ...triggers];
-}
-Object.assign(cds.compile.to.sql, _sql_original)
+};
+Object.assign(cds.compile.to.sql, _sql_original);
 
 // PostgreSQL trigger injection via compile.to.dbx event (auto-deploys triggers with cds deploy)
 cds.on('compile.to.dbx', (csn, options, next) => {
@@ -552,80 +344,3 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 	ret.definitions = [...ret.definitions, ...triggers];
 	return ret;
 };
-
-
-function getLabelTranslations(entities, model) {
-	// Get translations for entity and attribute labels
-	const allLabels = cds.i18n.labels.translations4('all');
-
-	// Get translations for modification texts
-	const bundle = cds.i18n.bundle4({ folders: [cds.utils.path.join(__dirname, '_i18n')] });
-	const modificationLabels = bundle.translations4('all');
-
-	// REVISIT: Map is needed to ensure uniqueness (elements can include associations + association_foreignKey)
-	const rows = new Map();
-
-	const addRow = (ID, locale, text) => {
-		const compositeKey = `${ID}::${locale}`;
-		rows.set(compositeKey, { ID, locale, text });
-	};
-
-	for (const { dbEntityName, mergedAnnotations } of entities) {
-		const entity = model[dbEntityName];
-
-		// Entity labels
-		const entityLabelKey = cds.i18n.labels.key4(entity);
-		if (entityLabelKey && entityLabelKey !== entity.name) {
-			for (const [locale, localeTranslations] of Object.entries(allLabels)) {
-				if (!locale) continue;
-				const text = localeTranslations[entityLabelKey] || entityLabelKey;
-				addRow(entity.name, locale, text);
-			}
-		}
-
-		// Attribute labels
-		for (const element of entity.elements) {
-			// Use merged annotation if available, otherwise use element's own annotation
-			const changelogAnnotation = mergedAnnotations?.elementAnnotations?.[element.name] ?? element['@changelog'];
-			if (!changelogAnnotation) continue;
-			if (element._foreignKey4) continue; // REVISIT: skip foreign keys
-			const attrKey = cds.i18n.labels.key4(element);
-			if (attrKey && attrKey !== element.name) {
-				for (const [locale, localeTranslations] of Object.entries(allLabels)) {
-					if (!locale) continue;
-					const text = localeTranslations[attrKey] || attrKey;
-					addRow(element.name, locale, text);
-				}
-			}
-		}
-	}
-
-	// Modification labels
-	const MODIF_I18N_MAP = {
-		create: 'Changes.modification.create',
-		update: 'Changes.modification.update',
-		delete: 'Changes.modification.delete'
-	};
-
-	for (const [locale, localeTranslations] of Object.entries(modificationLabels)) {
-		if (!locale) continue;
-		for (const [key, i18nKey] of Object.entries(MODIF_I18N_MAP)) {
-			const text = localeTranslations[i18nKey] || key;
-			addRow(key, locale, text);
-		}
-	}
-
-	return Array.from(rows.values());
-}
-
-
-
-function shouldSkipServiceEntity(serviceEntity) {
-	const dbEntityName = cds.db.resolve.table(serviceEntity)?.name;
-	const srvEntities = collectedEntities.get(dbEntityName);
-	if (!srvEntities) return false; // No triggers for this DB entity, nothing to skip
-
-	// If this service entity is NOT collected (didn't opt-in), skip it
-	const isCollected = srvEntities.includes(serviceEntity.name);
-	return !isCollected;
-}
