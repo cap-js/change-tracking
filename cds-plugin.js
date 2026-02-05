@@ -7,7 +7,8 @@ const { fs } = cds.utils;
 const { isChangeTracked, getEntitiesForTriggerGeneration, getBaseEntity, analyzeCompositions } = require('./lib/utils/entity-collector.js');
 const { setSkipSessionVariables, resetSkipSessionVariables, resetAutoSkipForServiceEntity } = require('./lib/utils/session-variables.js');
 const { getLabelTranslations } = require('./lib/localization.js');
-const { isRoot, hasParent } = require('./lib/utils/legacy-entity-processing.js');
+// REVISIT
+const { isRoot, hasParent } = require('./lib/legacy/entity-processing.js');
 
 // Global state for collected entities and hierarchy
 let hierarchyMap = new Map();
