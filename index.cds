@@ -36,11 +36,21 @@ view ChangeView as select from Changes {
         select text from i18nKeys where ID = Changes.entity and locale = $user.locale
       ), Changes.entity
     ) as entityLabel: String(5000) @title: '{i18n>Changes.entity}',
-    COALESCE(
+  COALESCE(
       (
         select text from i18nKeys where ID = Changes.modification and locale = $user.locale
       ), Changes.modification
-    ) as modificationLabel: String(5000) @title: '{i18n>Changes.modification}'
+    ) as modificationLabel: String(5000) @title: '{i18n>Changes.modification}',
+  COALESCE(
+      (
+        select text from i18nKeys where ID = Changes.objectID and locale = $user.locale
+      ), Changes.objectID
+    ) as objectID: String(5000) @title: '{i18n>Changes.objectID}',
+  COALESCE(
+      (
+        select text from i18nKeys where ID = Changes.rootObjectID and locale = $user.locale
+      ), Changes.rootObjectID
+    ) as rootObjectID: String(5000) @title: '{i18n>Changes.rootObjectID}'
 };
 
 entity i18nKeys {
