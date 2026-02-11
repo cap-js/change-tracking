@@ -207,7 +207,6 @@ describe('Non ID key support', () => {
 		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
 	});
 
-	// REVIST: preserveDeletes needs to only decide if all other entries should be kept, delete log should always be created for delete operations
 	it('Change track deleted composition with non ID key', async () => {
 		const ID = Math.round(Math.random() * 100000).toString();
 		const pageID = Math.round(Math.random() * 100000).toString();
@@ -223,19 +222,20 @@ describe('Non ID key support', () => {
 
 		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
+		const x = await SELECT.from('sap.changelog.ChangeView');//.where({ modification: 'delete' });
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
 		const change = changes.find((change) => change.attribute === 'page' && change.modification === 'delete');
 		expect(change).toHaveProperty('valueChangedFrom', '1');
-		expect(change).toHaveProperty('valueChangedTo', '');		
+		expect(change).toHaveProperty('valueChangedTo', null);		
 		expect(change).toHaveProperty('entityKey', pageID);
 		expect(change).toHaveProperty('entity', 'sap.capire.incidents.PagesNotID');
 		expect(change).toHaveProperty('rootEntityKey', ID);
 		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
 	});
 
-	// REVISIT: adjustments in tracking for associtions / compositions (safe code, subselect in index.cds)
+	// REVISIT: adjustments in tracking for associtions / compositions (store code, subselect in index.cds)
 	it('Change track patched association on composition using document approach', async () => {
 		const {
 			data: { ID }
