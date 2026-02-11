@@ -33,12 +33,19 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 
 		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
+		const x = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`);
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`);
-		const statusChange = changes.find((change) => change.attribute === 'Status' && change.modification === 'Update' && change.entityKey === incidentID);
-		expect(statusChange).toHaveProperty('valueChangedFrom', 'New');
-		expect(statusChange).toHaveProperty('valueChangedTo', 'Resolved');
+		const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+		expect(statusChange).toMatchObject({
+			attributeLabel: 'Status',
+			modificationLabel: 'Update',
+			valueChangedFrom: 'N',
+			valueChangedFromLabel: 'New',
+			valueChangedTo: 'R',
+			valueChangedToLabel: 'Resolved'
+		});
 	});
 
 	it('Localized values are stored - DE', async () => {
@@ -54,9 +61,16 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`);
-		const statusChangeGerman = changes.find((change) => change.attribute === 'Status' && change.modification === 'Update' && change.entityKey === incidentID);
-		expect(statusChangeGerman).toHaveProperty('valueChangedFrom', 'Neu');
-		expect(statusChangeGerman).toHaveProperty('valueChangedTo', 'Gelöst');
+		const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);;
+
+		expect(statusChange).toMatchObject({
+			attributeLabel: 'Status',
+			modificationLabel: 'Update',
+			valueChangedFrom: 'N',
+			valueChangedFromLabel: 'Neu',
+			valueChangedTo: 'R',
+			valueChangedToLabel: 'Gelöst'
+		});
 	});
 
 	//Draft mode uploading attachment
@@ -88,14 +102,17 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 		const dateDBChange = dbChanges.find((change) => change.attribute === 'date');
 		expect(dateChange.valueChangedFrom).not.toEqual(dateDBChange.valueChangedFrom);
 		expect(dateChange.valueChangedTo).not.toEqual(dateDBChange.valueChangedTo);
+
 		const timeChange = changes.find((change) => change.attribute === 'time');
 		const timeDBChange = dbChanges.find((change) => change.attribute === 'time');
 		expect(timeChange.valueChangedFrom).not.toEqual(timeDBChange.valueChangedFrom);
 		expect(timeChange.valueChangedTo).not.toEqual(timeDBChange.valueChangedTo);
+
 		const dateTimeChange = changes.find((change) => change.attribute === 'datetime');
 		const dateTimeDBChange = dbChanges.find((change) => change.attribute === 'datetime');
 		expect(dateTimeChange.valueChangedFrom).not.toEqual(dateTimeDBChange.valueChangedFrom);
 		expect(dateTimeChange.valueChangedTo).not.toEqual(dateTimeDBChange.valueChangedTo);
+
 		const timestampChange = changes.find((change) => change.attribute === 'timestamp');
 		const timestampDBChange = dbChanges.find((change) => change.attribute === 'timestamp');
 		expect(timestampChange.valueChangedFrom).not.toEqual(timestampDBChange.valueChangedFrom);
@@ -124,7 +141,7 @@ describe('Non ID key support', () => {
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
-		const change = changes.find((change) => change.attribute === 'title' && change.modification === 'Update');
+		const change = changes.find((change) => change.attribute === 'title' && change.modification === 'update');
 		expect(change).toHaveProperty('valueChangedFrom', 'Inverter not functional');
 		expect(change).toHaveProperty('valueChangedTo', 'ABCDEF');
 	});
@@ -150,10 +167,13 @@ describe('Non ID key support', () => {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
 		const change = changes.find((change) => change.attribute === 'page');
-		expect(change).toHaveProperty('valueChangedFrom', '');
+		expect(change).toHaveProperty('valueChangedFrom', null);
 		expect(change).toHaveProperty('valueChangedTo', '2');
-		expect(change).toHaveProperty('modification', 'Create');
-		expect(change).toHaveProperty('serviceEntityPath', `ProcessorService.BooksNotID(${ID})/ProcessorService.PagesNotID(${pageID})`);
+		expect(change).toHaveProperty('modification', 'create');
+		expect(change).toHaveProperty('entityKey', pageID);
+		expect(change).toHaveProperty('entity', 'sap.capire.incidents.PagesNotID');
+		expect(change).toHaveProperty('rootEntityKey', ID);
+		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
 	});
 
 	it('Change track modified composition with non ID key', async () => {
@@ -165,7 +185,7 @@ describe('Non ID key support', () => {
 			pages: [{ NOT_ID: pageID, page: 1 }]
 		});
 		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
-		await cds.delete(cds.model.definitions['sap.changelog.ChangeLog']);
+		await cds.delete(cds.model.definitions['sap.changelog.Changes']);
 		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
 		await PATCH(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/pages(NOT_ID='${pageID}',IsActiveEntity=false)`, {
@@ -180,10 +200,14 @@ describe('Non ID key support', () => {
 		const change = changes.find((change) => change.attribute === 'page');
 		expect(change).toHaveProperty('valueChangedFrom', '1');
 		expect(change).toHaveProperty('valueChangedTo', '2');
-		expect(change).toHaveProperty('modification', 'Update');
-		expect(change).toHaveProperty('serviceEntityPath', `ProcessorService.BooksNotID(${ID})/ProcessorService.PagesNotID(${pageID})`);
+		expect(change).toHaveProperty('modification', 'update');
+		expect(change).toHaveProperty('entityKey', pageID);
+		expect(change).toHaveProperty('entity', 'sap.capire.incidents.PagesNotID');
+		expect(change).toHaveProperty('rootEntityKey', ID);
+		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
 	});
 
+	// REVIST: preserveDeletes needs to only decide if all other entries should be kept, delete log should always be created for delete operations
 	it('Change track deleted composition with non ID key', async () => {
 		const ID = Math.round(Math.random() * 100000).toString();
 		const pageID = Math.round(Math.random() * 100000).toString();
@@ -202,12 +226,16 @@ describe('Non ID key support', () => {
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
-		const change = changes.find((change) => change.attribute === 'page' && change.modification === 'Delete');
+		const change = changes.find((change) => change.attribute === 'page' && change.modification === 'delete');
 		expect(change).toHaveProperty('valueChangedFrom', '1');
-		expect(change).toHaveProperty('valueChangedTo', '');
-		expect(change).toHaveProperty('serviceEntityPath', `ProcessorService.BooksNotID(${ID})/ProcessorService.PagesNotID(${pageID})`);
+		expect(change).toHaveProperty('valueChangedTo', '');		
+		expect(change).toHaveProperty('entityKey', pageID);
+		expect(change).toHaveProperty('entity', 'sap.capire.incidents.PagesNotID');
+		expect(change).toHaveProperty('rootEntityKey', ID);
+		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
 	});
 
+	// REVISIT: adjustments in tracking for associtions / compositions (safe code, subselect in index.cds)
 	it('Change track patched association on composition using document approach', async () => {
 		const {
 			data: { ID }
@@ -229,10 +257,14 @@ describe('Non ID key support', () => {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/Orders(${ID})/changes`);
 		expect(changes.length).toEqual(1);
-		const change = changes.find((change) => change.attribute === 'Country/Region');
-		expect(change).toHaveProperty('valueChangedFrom', '');
+		const change = changes.find((change) => change.attribute === 'country');
+		expect(change).toHaveProperty('attributeLabel', 'Country/Region');
+		expect(change).toHaveProperty('valueChangedFrom', null);
 		expect(change).toHaveProperty('valueChangedTo', 'DE');
-		expect(change).toHaveProperty('modification', 'Create');
-		expect(change).toHaveProperty('serviceEntityPath', `ProcessorService.Orders(${ID})/ProcessorService.OrderProducts(${innerID})`);
+		expect(change).toHaveProperty('modification', 'create');
+		expect(change).toHaveProperty('entityKey', innerID);
+		expect(change).toHaveProperty('entity', 'sap.capire.incidents.OrderProducts');
+		expect(change).toHaveProperty('rootEntityKey', ID);
+		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.Orders');
 	});
 });
