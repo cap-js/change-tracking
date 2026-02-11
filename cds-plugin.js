@@ -210,7 +210,8 @@ cds.once('served', async () => {
 			if (!entity) continue;
 			const rootEntityName = hierarchyMap.get(dbEntityName);
 			const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null;
-			const entityTrigger = generateSQLiteTriggers(entity, rootEntity, mergedAnnotations);
+			const rootMergedAnnotations = rootEntityName ? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
+			const entityTrigger = generateSQLiteTriggers(entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
 			triggers.push(...entityTrigger);
 		}
 	}
@@ -246,7 +247,8 @@ cds.compile.to.sql = function (csn, options) {
 		if (!entity) continue;
 		const rootEntityName = h2HierarchyMap.get(dbEntityName);
 		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
-		const entityTrigger = generateH2Trigger(runtimeCSN, entity, rootEntity, mergedAnnotations);
+		const rootMergedAnnotations = rootEntityName ? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
+		const entityTrigger = generateH2Trigger(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
 		if (!entityTrigger) continue;
 		triggers.push(entityTrigger);
 	}
@@ -288,8 +290,9 @@ cds.on('compile.to.dbx', (csn, options, next) => {
 		if (!entity) continue;
 		const rootEntityName = pgHierarchyMap.get(dbEntityName);
 		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
+		const rootMergedAnnotations = rootEntityName ? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
 
-		const { creates, drops } = generatePostgresTriggers(runtimeCSN, entity, rootEntity, mergedAnnotations);
+		const { creates, drops } = generatePostgresTriggers(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
 		triggerCreates.push(...creates);
 		triggerDrops.push(...drops);
 	}
@@ -328,7 +331,8 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 		if (!entity) continue;
 		const rootEntityName = hdiHierarchyMap.get(dbEntityName);
 		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
-		const entityTriggers = generateHANATriggers(runtimeCSN, entity, rootEntity, mergedAnnotations);
+		const rootMergedAnnotations = rootEntityName ? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
+		const entityTriggers = generateHANATriggers(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
 		triggers.push(...entityTriggers);
 	}
 
