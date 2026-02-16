@@ -23,6 +23,12 @@
 		"deploy:postgres": "cds build --production && cds deploy --profile pg"
 	},
 	"cds": {
+		"log": {
+			"levels": {
+				"sql": "info",
+				"cds": "info"
+			}
+		},
 		"requires": {
 			"auth": {
 				"[development]": {

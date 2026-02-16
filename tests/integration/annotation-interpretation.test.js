@@ -252,7 +252,6 @@ describe('change log integration test', () => {
 		expect(authorUpdateChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
 	});
 
-	// REVISIT: compistion of many is not supported yet 
 	// REVISIT: breaking change, see if someone complains
 	it('Value data type records data type of native attributes of the entity or attributes from composition which are annotated as the displayed value', async () => {
 		const adminService = await cds.connect.to('AdminService');
