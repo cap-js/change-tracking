@@ -201,10 +201,48 @@ describe('Special CDS Features', () => {
 		});
 	});
 
-	// TODO: add proper warnings when unsupported data types are annotated
 	describe(`Unsupported data types`, () => {
-		it.skip(`Binary fields cannot be change tracked`, async () => { });
+		it(`Binary fields cannot be change tracked`, async () => {
+			const testingSRV = await cds.connect.to('VariantTesting');
+			const { DifferentFieldTypes, ChangeView } = testingSRV.entities;
 
-		it.skip(`Vectors cannot be change tracked`, async () => { });
+			// Create an entry with binary data
+			const testID = cds.utils.uuid();
+			await INSERT.into(DifferentFieldTypes).entries({
+				ID: testID,
+				title: 'Test with binary',
+				image: Buffer.from('test image data').toString('base64'),
+				icon: Buffer.from('icon').toString('base64')
+			});
+
+			// Verify that title change was tracked (supported type)
+			const titleChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: testID,
+				attribute: 'title'
+			});
+			expect(titleChanges.length).toEqual(1);
+			expect(titleChanges[0].valueChangedTo).toEqual('Test with binary');
+
+			// Verify that no change log entries exist for image (LargeBinary)
+			const imageChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: testID,
+				attribute: 'image'
+			});
+			expect(imageChanges.length).toEqual(0);
+
+			// Verify that no change log entries exist for icon (Binary)
+			const iconChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: testID,
+				attribute: 'icon'
+			});
+			expect(iconChanges.length).toEqual(0);
+		});
+
+		it.skip(`Vectors cannot be change tracked`, async () => {
+			// Vector type test is skipped as it requires HANA-specific setup
+		});
 	});
 });
