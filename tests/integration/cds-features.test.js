@@ -7,7 +7,7 @@ const { POST, GET } = cds.test(bookshop);
 describe('Special CDS Features', () => {
 	let log = cds.test.log();
 
-	it.skip('For DateTime and Timestamp, support for input via Date objects.', async () => {
+	it.skip('formats DateTime and Timestamp values from JavaScript Date objects correctly', async () => {
 		cds.env.requires['change-tracking'].preserveDeletes = true;
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const rootEntityData = {
@@ -46,7 +46,7 @@ describe('Special CDS Features', () => {
 	});
 
 	// REVISIT: behaviour in deep operations
-	it('Special Character Handling in service-api', async () => {
+	it('handles special characters in entity keys correctly', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { RootSample, ChangeView } = testingSRV.entities;
 
@@ -109,8 +109,8 @@ describe('Special CDS Features', () => {
 		//expect(changes[0].objectID).toEqual(`${lvl2ID}, Level2Sample title3, ${rootID}`);
 	});
 
-	describe('Localization', () => {
-		it.skip('Leave localization logic early if entity is not part of the model', async () => {
+	describe('localization', () => {
+		it.skip('logs warning when entity is not found in the model during localization', async () => {
 			const { Changes } = cds.entities('sap.changelog');
 			const VolumnsSrv = await cds.connect.to('VolumnsService');
 			const { Volumes, ChangeView } = VolumnsSrv.entities;
@@ -141,7 +141,7 @@ describe('Special CDS Features', () => {
 			expect(log.output).toMatch(/Cannot localize the attribute/);
 		});
 
-		it.skip('Leave localization logic early if attribute value is not part of the model', async () => {
+		it.skip('logs warning when attribute is not found in the model during localization', async () => {
 			const { Changes } = cds.entities('sap.changelog');
 			const { Volumes } = cds.entities('VolumnsService');
 			const volumeID = cds.utils.uuid();
@@ -163,7 +163,7 @@ describe('Special CDS Features', () => {
 			expect(log.output).toMatch(/Cannot localize the attribute/);
 		});
 
-		it('Localization should handle the cases that reading the change view without required parameters obtained', async () => {
+		it('localizes change view entries correctly when queried without filter parameters', async () => {
 			const variantTesting = await cds.connect.to('VariantTesting');
 			const ID = cds.utils.uuid();
 			await INSERT.into(variantTesting.entities.TrackingComposition).entries({
@@ -193,8 +193,8 @@ describe('Special CDS Features', () => {
 		});
 	});
 
-	describe(`Unsupported data types`, () => {
-		it(`Binary fields cannot be change tracked`, async () => {
+	describe('unsupported data types', () => {
+		it('excludes Binary and LargeBinary fields from change tracking', async () => {
 			const testingSRV = await cds.connect.to('VariantTesting');
 			const { DifferentFieldTypes, ChangeView } = testingSRV.entities;
 
@@ -233,7 +233,7 @@ describe('Special CDS Features', () => {
 			expect(iconChanges.length).toEqual(0);
 		});
 
-		it.skip(`Vectors cannot be change tracked`, async () => {
+		it.skip('excludes Vector fields from change tracking (requires HANA)', async () => {
 			// Vector type test is skipped as it requires HANA-specific setup
 		});
 	});

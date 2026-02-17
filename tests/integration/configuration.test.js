@@ -6,7 +6,7 @@ const bookshop = path.resolve(__dirname, './../bookshop');
 const { POST, DELETE, GET, axios } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice', password: 'admin' };
 
-describe('Configuration scenarios', () => {
+describe('Configuration Options', () => {
 	// Entities used in the VariantTesting service tests
 	const variantEntities = [
 		'sap.change_tracking.RootSample',
@@ -14,7 +14,7 @@ describe('Configuration scenarios', () => {
 		'sap.change_tracking.Level2Sample'
 	];
 
-	it('When preserveDeletes is enabled, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated', async () => {
+	it('retains all change logs and logs deletion when preserveDeletes is enabled', async () => {
 		cds.env.requires['change-tracking'].preserveDeletes = true;
 		await regenerateTriggers(variantEntities);
 		const variantSrv = await cds.connect.to('VariantTesting');
@@ -62,7 +62,7 @@ describe('Configuration scenarios', () => {
 		await regenerateTriggers(variantEntities);
 	});
 
-	it(`"disableUpdateTracking" setting`, async () => {
+	it('skips update logging when disableUpdateTracking is enabled', async () => {
 		cds.env.requires['change-tracking'].disableUpdateTracking = true;
 		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
@@ -92,7 +92,7 @@ describe('Configuration scenarios', () => {
 		expect(changes.length).toEqual(1);
 	});
 
-	it(`"disableCreateTracking" setting`, async () => {
+	it('skips create logging when disableCreateTracking is enabled', async () => {
 		cds.env.requires['change-tracking'].disableCreateTracking = true;
 		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
@@ -121,7 +121,7 @@ describe('Configuration scenarios', () => {
 		expect(changes.length).toEqual(1);
 	});
 
-	it(`"disableDeleteTracking" setting`, async () => {
+	it('skips delete logging when disableDeleteTracking is enabled', async () => {
 		cds.env.requires['change-tracking'].disableDeleteTracking = true;
 		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
@@ -151,8 +151,8 @@ describe('Configuration scenarios', () => {
 		expect(changes.length).toEqual(1);
 	});
 
-	describe('Service specific tracking', () => {
-		it(`Service specific annotations do not cause tracking in a different service`, async () => {
+	describe('Service-specific tracking', () => {
+		it('only tracks changes when @changelog is defined on the specific service entity', async () => {
 			// Create via CatalogService (no @changelog) - should NOT be tracked
 			const { data: newStore } = await POST(`/browse/BookStores`, {
 				name: 'New book store via browse'
@@ -182,7 +182,7 @@ describe('Configuration scenarios', () => {
 			});
 		});
 
-		it(`when @changelog annotations is on DB-level, all service entities should be tracked`, async () => {
+		it('tracks changes via all services when @changelog is defined on the DB entity', async () => {
 			const { data: newIncident } = await POST(`/odata/v4/processor/Incidents`, {
 				title: 'Test incident for inheritance',
 				date: '2025-01-15'
@@ -205,7 +205,7 @@ describe('Configuration scenarios', () => {
 			});
 		});
 
-		it(`Service annotated with @changelog: false skips all change tracking`, async () => {
+		it('disables all tracking for a service annotated with @changelog: false', async () => {
 			// IncidentsAdminService has @changelog: false at service level
 			// Even though DB entity has @changelog, changes via this service should NOT be tracked
 			const { data: newIncident } = await POST(`/odata/v4/incidents-admin/Incidents`, {
@@ -221,7 +221,7 @@ describe('Configuration scenarios', () => {
 			expect(changes.length).toEqual(0);
 		});
 
-		it(`Element annotated with @changelog: false is not tracked`, async () => {
+		it('excludes specific fields annotated with @changelog: false from tracking', async () => {
 			// AdminService.Customers.city has @changelog: false
 			// city should NOT be tracked, but name, country, and age SHOULD be tracked
 			const { data: newCustomer } = await POST(`/odata/v4/admin/Customers`, {
@@ -243,7 +243,7 @@ describe('Configuration scenarios', () => {
 			expect(cityChange).toBeFalsy();
 		});
 
-		it(`Direct DB modification tracks changes when DB entity has @changelog`, async () => {
+		it('tracks direct database modifications when DB entity has @changelog', async () => {
 			// sap.capire.incidents.Incidents has @changelog at DB level
 			// Direct INSERT into DB entity SHOULD be tracked
 			const { Incidents } = cds.entities('sap.capire.incidents');
@@ -272,7 +272,7 @@ describe('Configuration scenarios', () => {
 });
 
 describe('MTX Build', () => {
-	it('Changes association is only added once JSON csn is compiled for runtime', async () => {
+	it('adds changes association only during runtime compilation, not during xtended CSN build', async () => {
 		const csn = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'xtended' });
 		expect(csn.definitions['AdminService.BookStores'].elements?.changes).toBeFalsy();
 

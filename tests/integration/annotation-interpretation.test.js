@@ -2,8 +2,8 @@ const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE } = cds.test(bookshop);
 
-describe('change log integration test', () => {
-	it('Annotate multiple native and attributes coming from one or more associated table as the object ID', async () => {
+describe('@changelog annotation interpretation', () => {
+	it('builds objectID from entity fields and associated entity fields when multiple @changelog annotations are used', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const { ChangeView } = adminService.entities;
 
@@ -50,7 +50,7 @@ describe('change log integration test', () => {
 		expect(Number(IDsegments[3])).toEqual(14);
 	});
 
-	it('Annotate multiple native attributes as the object ID', async () => {
+	it('builds objectID from multiple entity fields when @changelog lists several attributes', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const { ChangeView } = adminService.entities;
 
@@ -79,7 +79,7 @@ describe('change log integration test', () => {
 	});
 
 	// REVISIT: db-services only puts the root query of a deep query first
-	it('Annotate fields from chained associated entities as objectID', async () => {
+	it('resolves objectID through chained associations to parent entities', async () => {
 		const variantSrv = await cds.connect.to('VariantTesting');
 		const { ChangeView } = variantSrv.entities;
 
@@ -148,7 +148,7 @@ describe('change log integration test', () => {
 		//expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, new Level2Sample title, ${newRoot.ID}`);
 	});
 
-	it('Child entity update without objectID annotation - should log object type for object ID', async () => {
+	it('uses localized entity label as objectID when no @changelog annotation is present', async () => {
 		const variantSrv = await cds.connect.to('VariantTesting');
 		const { ChangeView } = variantSrv.entities;
 		const bookStoreID = cds.utils.uuid();
@@ -189,7 +189,7 @@ describe('change log integration test', () => {
 		expect(changes[0].rootObjectID).toEqual('Book Store');
 	});
 
-	it('Value data type records data type of native attributes of the entity or attributes from association table which are annotated as the displayed value', async () => {
+	it('records data type and resolves display values for association fields annotated with @changelog', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const { ChangeView } = adminService.entities;
 		const bookStoreID = cds.utils.uuid();
@@ -253,7 +253,7 @@ describe('change log integration test', () => {
 	});
 
 	// REVISIT: breaking change, see if someone complains
-	it('Value data type records data type of native attributes of the entity or attributes from composition which are annotated as the displayed value', async () => {
+	it('records data type and resolves display values for composition fields annotated with @changelog', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const { ChangeView } = adminService.entities;
 
@@ -294,7 +294,7 @@ describe('change log integration test', () => {
 		expect(changesInDb[0].valueDataType).toEqual('cds.Association'); // REVISIT: breaking change, should be cds.String, cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
 	});
 
-	it('Do not change track personal data', async () => {
+	it('excludes fields annotated with @PersonalData from change tracking', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const ID = cds.utils.uuid();
@@ -313,8 +313,8 @@ describe('change log integration test', () => {
 		expect(changes.length).toEqual(0);
 	});
 
-	describe('Code lists', () => {
-		it('Single attribute from the code list could be annotated as value', async () => {
+	describe('Code lists resolution', () => {
+		it('displays human-readable code list name when single attribute is annotated with @changelog', async () => {
 			const adminService = await cds.connect.to('AdminService');
 
 			// Create new BookStore with lifecycle status
@@ -367,7 +367,7 @@ describe('change log integration test', () => {
 			expect(lifecycleStatusUpdateChange.valueChangedToLabel).toEqual('Closed');
 		});
 
-		it('Multiple attributes from the code list could be annotated as value', async () => {
+		it('displays combined code list values when multiple attributes are annotated with @changelog', async () => {
 			const adminService = await cds.connect.to('AdminService');
 
 			// Create new BookStore and Book

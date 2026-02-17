@@ -4,8 +4,8 @@ const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
 
 describe('change log generation', () => {
 
-	describe('Basic change tracking', () => {
-		it('Creation - should log basic data type changes', async () => {
+	describe('Basic CRUD operations', () => {
+		it('logs field values when creating a new record', async () => {
 			const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
 				number: 1,
 				bool: true,
@@ -45,7 +45,7 @@ describe('change log generation', () => {
 			});
 		});
 
-		it('Update - should log basic data type changes', async () => {
+		it('logs old and new values when updating a record', async () => {
 			const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
 				number: 1,
 				title: 'My test-record'
@@ -72,7 +72,7 @@ describe('change log generation', () => {
 			});
 		});
 
-		it('Delete - should delete related changes', async () => {
+		it('logs field values when deleting a record', async () => {
 			const testingSRV = await cds.connect.to('VariantTesting');
 			const { ChangeView } = testingSRV.entities;
 
@@ -92,7 +92,7 @@ describe('change log generation', () => {
 			expect(afterChanges.length).toEqual(2);
 		});
 
-		it('When creating multiple root records, change tracking for each entity should also be generated', async () => {
+		it('generates separate change logs for each entity when batch inserting multiple records', async () => {
 			const testingSRV = await cds.connect.to('VariantTesting');
 			const { ChangeView, DifferentFieldTypes } = testingSRV.entities;
 
@@ -221,8 +221,8 @@ describe('change log generation', () => {
 		});
 	});
 
-	describe('Composition tracking', () => {
-		it('Creation should log changes for root entity', async () => {
+	describe('composition tracking', () => {
+		it('links child entity changes to the root entity when creating nested data', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
@@ -250,7 +250,7 @@ describe('change log generation', () => {
 			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
 		});
 
-		it('Update should log changes for root entity', async () => {
+			it('logs updated child values as changes on the parent entity', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
@@ -278,7 +278,7 @@ describe('change log generation', () => {
 			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
 		});
 
-		it('Delete should log changes for root entity', async () => {
+		it('links child entity changes to the root entity when deleting nested data', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
@@ -306,7 +306,7 @@ describe('change log generation', () => {
 			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
 		});
 
-		it('Create should log changes for root entity if url path contains association entity', async () => {
+		it('correctly identifies root entity when URL path contains associated entities', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const reportID = cds.utils.uuid();
 			const orderID = cds.utils.uuid();
@@ -331,7 +331,7 @@ describe('change log generation', () => {
 			expect(orderChanges.length).toEqual(2);
 		});
 
-		it('Deep update - should log changes on root entity', async () => {
+		it('tracks changes on child entities during deep update operations', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const bookStoreID = cds.utils.uuid();
 			const bookID = cds.utils.uuid();
@@ -360,7 +360,7 @@ describe('change log generation', () => {
 			expect(changes[0].rootObjectID).toEqual('Shakespeare and Company');
 		});
 
-		it('Inline composition is correctly logged', async () => {
+		it('tracks changes on inline composition elements with composite keys', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
@@ -392,7 +392,7 @@ describe('change log generation', () => {
 			expect(change.entityKey).toEqual(`${orderID}||${orderItemID}`);
 		});
 
-		it('Deep delete should log changes on root entity', async () => {
+		it('tracks deletion of child entities during deep delete operations', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const bookStoreID = cds.utils.uuid();
 			const registryID = cds.utils.uuid();
@@ -432,7 +432,7 @@ describe('change log generation', () => {
 		});
 
 		describe('Composition of one', () => {
-			it('Create should log changes for root entity', async () => {
+			it('logs changes on the single child entity during creation', async () => {
 				const id = cds.utils.uuid();
 				const adminService = await cds.connect.to('AdminService');
 				await POST(`/odata/v4/admin/Order`, {
@@ -456,7 +456,7 @@ describe('change log generation', () => {
 				expect(headerChange.rootObjectID).toEqual('sap.capire.bookshop.Order');
 			});
 
-			it('Delete should log changes for root entity', async () => {
+			it('logs changes on the single child entity during deletion', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const orderID = cds.utils.uuid();
 				// Check if the object ID obtaining failed due to lacking rootEntityKey would lead to dump
@@ -487,7 +487,7 @@ describe('change log generation', () => {
 			});
 
 			// REVISIT: Localization of date values not supported yet
-			it('Deep create should log changes on root entity', async () => {
+			it('logs changes on child entity during deep create with draft', async () => {
 				const bookStoreID = cds.utils.uuid();
 				const registryID = cds.utils.uuid();
 
@@ -520,7 +520,7 @@ describe('change log generation', () => {
 			});
 
 			// REVISIT: Localization of date values not supported yet
-			it('updated on root node - should log changes for root entity', async () => {
+			it('logs changes when updating child via deep update on parent entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const id = cds.utils.uuid();
 				const registryID = cds.utils.uuid();
@@ -570,7 +570,7 @@ describe('change log generation', () => {
 				expect(registryChange.rootObjectID).toEqual('Test Bookstore');
 			});
 
-			it('updated on child node - should log changes for root entity', async () => {
+			it('logs changes when updating child directly via its own endpoint', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				// Update by calling API on child node
 				const id = cds.utils.uuid();
@@ -615,7 +615,7 @@ describe('change log generation', () => {
 		});
 
 		describe('Composition of many', () => {
-			it('Create should log changes for root entity', async () => {
+			it('logs each created child as a separate change on the root entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -659,7 +659,7 @@ describe('change log generation', () => {
 				expect(change2.objectID).toEqual('Shakespeare and Company');
 			});
 
-			it('Update should log changes for root entity', async () => {
+		it('links child entity changes to the root entity when updating nested data', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -701,7 +701,7 @@ describe('change log generation', () => {
 				expect(change.objectID).toEqual('Shakespeare and Company');
 			});
 
-			it('Delete should log changes for root entity', async () => {
+			it('logs deleted child values as changes on the root entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -743,7 +743,7 @@ describe('change log generation', () => {
 		});
 	});
 
-	it('When creating or deleting a record with a numeric type of 0 and a boolean type of false, a changelog should also be generated', async () => {
+	it('tracks zero values and false booleans correctly during create and delete', async () => {
 		const testingSrv = await cds.connect.to('VariantTesting');
 		const orderID = cds.utils.uuid();
 
@@ -806,7 +806,7 @@ describe('change log generation', () => {
 		expect(change4.valueChangedTo).toEqual(null);
 	});
 
-	it('The change log should be captured when a child entity triggers a custom action', async () => {
+	it('tracks changes when custom actions modify entities in the composition hierarchy', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const rootID = cds.utils.uuid();
 		const lvl1ID = cds.utils.uuid();
