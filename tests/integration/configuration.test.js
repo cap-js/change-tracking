@@ -7,9 +7,16 @@ const { POST, DELETE, GET, axios } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('Configuration scenarios', () => {
+	// Entities used in the VariantTesting service tests
+	const variantEntities = [
+		'sap.change_tracking.RootSample',
+		'sap.change_tracking.Level1Sample',
+		'sap.change_tracking.Level2Sample'
+	];
+
 	it('When preserveDeletes is enabled, all changelogs should be retained after the root entity is deleted, and a changelog for the deletion operation should be generated', async () => {
 		cds.env.requires['change-tracking'].preserveDeletes = true;
-		await regenerateTriggers();
+		await regenerateTriggers(variantEntities);
 		const variantSrv = await cds.connect.to('VariantTesting');
 
 		const { data: newRoot } = await POST(`/odata/v4/variant-testing/RootSample`, {
@@ -52,12 +59,12 @@ describe('Configuration scenarios', () => {
 		expect(commonItems.length > 0).toBeTruthy();
 
 		cds.env.requires['change-tracking'].preserveDeletes = false;
-		await regenerateTriggers();
+		await regenerateTriggers(variantEntities);
 	});
 
 	it(`"disableUpdateTracking" setting`, async () => {
 		cds.env.requires['change-tracking'].disableUpdateTracking = true;
-		await regenerateTriggers();
+		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const ID = cds.utils.uuid();
 		await INSERT.into(testingSRV.entities.Level2Sample).entries({ ID, title: 'ABC' });
@@ -73,7 +80,7 @@ describe('Configuration scenarios', () => {
 		expect(changes.length).toEqual(0);
 
 		cds.env.requires['change-tracking'].disableUpdateTracking = false;
-		await regenerateTriggers();
+		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		await UPDATE(testingSRV.entities.Level2Sample).where({ ID }).with({ title: 'Another name' });
 
 		changes = await SELECT.from(testingSRV.entities.ChangeView).where({
@@ -87,7 +94,7 @@ describe('Configuration scenarios', () => {
 
 	it(`"disableCreateTracking" setting`, async () => {
 		cds.env.requires['change-tracking'].disableCreateTracking = true;
-		await regenerateTriggers();
+		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
 		let ID = cds.utils.uuid();
 		await INSERT.into(testingSRV.entities.Level2Sample).entries({ ID, title: 'ABC' });
@@ -101,7 +108,7 @@ describe('Configuration scenarios', () => {
 		expect(changes.length).toEqual(0);
 
 		cds.env.requires['change-tracking'].disableCreateTracking = false;
-		await regenerateTriggers();
+		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		ID = cds.utils.uuid();
 		await INSERT.into(testingSRV.entities.Level2Sample).entries({ ID, title: 'ABC' });
 
@@ -116,7 +123,7 @@ describe('Configuration scenarios', () => {
 
 	it(`"disableDeleteTracking" setting`, async () => {
 		cds.env.requires['change-tracking'].disableDeleteTracking = true;
-		await regenerateTriggers();
+		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const ID = cds.utils.uuid();
 		await INSERT.into(testingSRV.entities.Level2Sample).entries({ ID, title: 'ABC' });
@@ -131,7 +138,7 @@ describe('Configuration scenarios', () => {
 		expect(changes.length).toEqual(0);
 
 		cds.env.requires['change-tracking'].disableDeleteTracking = false;
-		await regenerateTriggers();
+		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		await INSERT.into(testingSRV.entities.Level2Sample).entries({ ID, title: 'ABC' });
 		await cds.delete(testingSRV.entities.Level2Sample).where({ ID });
 
