@@ -50,7 +50,9 @@ view ChangeView as select from Changes {
       (
         select text from i18nKeys where ID = Changes.rootObjectID and locale = $user.locale
       ), Changes.rootObjectID
-    ) as rootObjectID: String(5000) @title: '{i18n>Changes.rootObjectID}'
+    ) as rootObjectID: String(5000) @title: '{i18n>Changes.rootObjectID}',
+  COALESCE(Changes.valueChangedFromLabel, Changes.valueChangedFrom) as valueChangedFromLabel: String(5000) @title: '{i18n>Changes.valueChangedFrom}',
+  COALESCE(Changes.valueChangedToLabel, Changes.valueChangedTo) as valueChangedToLabel: String(5000) @title: '{i18n>Changes.valueChangedTo}'
 };
 
 entity i18nKeys {
@@ -60,11 +62,13 @@ entity i18nKeys {
 }
 
 entity Changes : cuid {
-  attribute        : String(5000)      @title: '{i18n>Changes.attribute}';
-  valueChangedFrom : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;
-  valueChangedTo   : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
+  attribute             : String(5000)      @title: '{i18n>Changes.attribute}';
+  valueChangedFrom      : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;
+  valueChangedTo        : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
+  valueChangedFromLabel : String(5000)      @title: '{i18n>Changes.valueChangedFromLabel}';
+  valueChangedToLabel   : String(5000)      @title: '{i18n>Changes.valueChangedToLabel}';
 
-  entity           : String(5000)      @UI.Hidden; // target entity on db level
+  entity                : String(5000)      @UI.Hidden; // target entity on db level
   entityKey        : String(5000)      @title: '{i18n>Changes.entityKey}'; // primary key of target entity
 
   rootEntity       : String(5000)      @title: '{i18n>Changes.rootEntity}';
@@ -130,11 +134,11 @@ annotate ChangeView with @(UI: {
       @HTML5.CssDefaults: {width: '9%'}
     },
     {
-      Value             : valueChangedTo,
+      Value             : valueChangedToLabel,
       @HTML5.CssDefaults: {width: '11%'}
     },
     {
-      Value             : valueChangedFrom,
+      Value             : valueChangedFromLabel,
       @HTML5.CssDefaults: {width: '11%'}
     },
     {

@@ -224,8 +224,8 @@ describe('change log integration test', () => {
 		expect(authorChangesInDb.length).toEqual(1);
 
 		const authorChangeInDb = authorChangesInDb[0];
-		expect(authorChangeInDb.valueChangedFrom).toEqual(null);
-		expect(authorChangeInDb.valueChangedTo).toEqual('Emily, 1818-07-30, Brontë');
+		expect(authorChangeInDb.valueChangedFromLabel).toEqual(null);
+		expect(authorChangeInDb.valueChangedToLabel).toEqual('Emily, 1818-07-30, Brontë');
 		expect(authorChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.Date, cds.String
 
 		await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
@@ -247,8 +247,8 @@ describe('change log integration test', () => {
 		expect(authorUpdateChangesInDb.length).toEqual(1);
 
 		const authorUpdateChangeInDb = authorUpdateChangesInDb[0];
-		expect(authorUpdateChangeInDb.valueChangedFrom).toEqual('Emily, Brontë');
-		expect(authorUpdateChangeInDb.valueChangedTo).toEqual('Charlotte, Brontë');
+		expect(authorUpdateChangeInDb.valueChangedFromLabel).toEqual('Emily, Brontë');
+		expect(authorUpdateChangeInDb.valueChangedToLabel).toEqual('Charlotte, Brontë');
 		expect(authorUpdateChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
 	});
 
@@ -289,8 +289,8 @@ describe('change log integration test', () => {
 		});
 
 		expect(changesInDb.length).toEqual(1);
-		expect(changesInDb[0].valueChangedFrom).toEqual(null);
-		expect(changesInDb[0].valueChangedTo).toEqual('Japan, Honda, Ōsaka');
+		expect(changesInDb[0].valueChangedFromLabel).toEqual(null);
+		expect(changesInDb[0].valueChangedToLabel).toEqual('Japan, Honda, Ōsaka');
 		expect(changesInDb[0].valueDataType).toEqual('cds.Association'); // REVISIT: breaking change, should be cds.String, cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
 	});
 
@@ -338,8 +338,8 @@ describe('change log integration test', () => {
 
 			const lifecycleStatusChange = lifecycleStatusChanges[0];
 			expect(lifecycleStatusChange.modification).toEqual('create');
-			expect(lifecycleStatusChange.valueChangedFrom).toEqual(null);
-			expect(lifecycleStatusChange.valueChangedTo).toEqual('In Preparation');
+			expect(lifecycleStatusChange.valueChangedFromLabel).toEqual(null);
+			expect(lifecycleStatusChange.valueChangedToLabel).toEqual('In Preparation');
 
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
 
@@ -363,8 +363,8 @@ describe('change log integration test', () => {
 
 			const lifecycleStatusUpdateChange = lifecycleStatusUpdateChanges[0];
 			expect(lifecycleStatusUpdateChange.modification).toEqual('update');
-			expect(lifecycleStatusUpdateChange.valueChangedFrom).toEqual('In Preparation');
-			expect(lifecycleStatusUpdateChange.valueChangedTo).toEqual('Closed');
+			expect(lifecycleStatusUpdateChange.valueChangedFromLabel).toEqual('In Preparation');
+			expect(lifecycleStatusUpdateChange.valueChangedToLabel).toEqual('Closed');
 		});
 
 		it('Multiple attributes from the code list could be annotated as value', async () => {
@@ -403,8 +403,8 @@ describe('change log integration test', () => {
 
 			const bookTypeChange = bookTypeChanges[0];
 			expect(bookTypeChange.modification).toEqual('create');
-			expect(bookTypeChange.valueChangedFrom).toEqual(null);
-			expect(bookTypeChange.valueChangedTo).toEqual('Management, Management Books');
+			expect(bookTypeChange.valueChangedFromLabel).toEqual(null);
+			expect(bookTypeChange.valueChangedToLabel).toEqual('Management, Management Books');
 
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
 
@@ -428,8 +428,8 @@ describe('change log integration test', () => {
 
 			const bookTypeUpdateChange = bookTypeUpdateChanges[0];
 			expect(bookTypeUpdateChange.modification).toEqual('update');
-			expect(bookTypeUpdateChange.valueChangedFrom).toEqual('Management, Management Books');
-			expect(bookTypeUpdateChange.valueChangedTo).toEqual('Science, Science Books');
+			expect(bookTypeUpdateChange.valueChangedFromLabel).toEqual('Management, Management Books');
+			expect(bookTypeUpdateChange.valueChangedToLabel).toEqual('Science, Science Books');
 		});
 	});
 });

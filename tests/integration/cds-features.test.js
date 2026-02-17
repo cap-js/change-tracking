@@ -178,8 +178,7 @@ describe('Special CDS Features', () => {
 			});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-			const change = await SELECT.one
-				.from(variantTesting.entities.ChangeView)
+			const change = await SELECT.from(variantTesting.entities.ChangeView)
 				.where({
 					entity: 'sap.change_tracking.TrackingComposition',
 					attribute: 'children'

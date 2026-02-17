@@ -635,7 +635,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changes = await SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.BookStores',
+					rootEntity: 'sap.capire.bookshop.BookStores',
+					rootEntityKey: bookStoreID,
 					attribute: 'books',
 					modification: 'create'
 				});
@@ -645,18 +646,14 @@ describe('change log generation', () => {
 				const change1 = changes.find((change) => change.entityKey === book1ID);
 				const change2 = changes.find((change) => change.entityKey === book2ID);
 
-				expect(change1.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change1.entity).toEqual('sap.capire.bookshop.Books');
 				expect(change1.valueChangedFrom).toEqual(null);
 				expect(change1.valueChangedTo).toEqual('Test Book 1');
-				expect(change1.rootEntity).toEqual('sap.capire.bookshop.BookStores');
-				expect(change1.rootEntityKey).toEqual(bookStoreID);
 				expect(change1.rootObjectID).toEqual('Shakespeare and Company');
 
-				expect(change2.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change2.entity).toEqual('sap.capire.bookshop.Books');
 				expect(change2.valueChangedFrom).toEqual(null);
 				expect(change2.valueChangedTo).toEqual('Test Book 2');
-				expect(change2.rootEntity).toEqual('sap.capire.bookshop.BookStores');
-				expect(change2.rootEntityKey).toEqual(bookStoreID);
 				expect(change2.rootObjectID).toEqual('Shakespeare and Company');
 			});
 
@@ -685,21 +682,19 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changes = await SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.BookStores',
+					rootEntity: 'sap.capire.bookshop.BookStores',
+					rootEntityKey: bookStoreID,
 					attribute: 'books',
-					entityKey: bookID,
 					modification: 'update'
 				});
 
 				expect(changes.length).toEqual(1);
 
 				const change = changes[0];
-				expect(change.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change.entity).toEqual('sap.capire.bookshop.Books');
 				expect(change.entityKey).toEqual(bookID);
 				expect(change.valueChangedFrom).toEqual('Original Title');
 				expect(change.valueChangedTo).toEqual('Updated Title');
-				expect(change.rootEntity).toEqual('sap.capire.bookshop.BookStores');
-				expect(change.rootEntityKey).toEqual(bookStoreID);
 				expect(change.rootObjectID).toEqual('Shakespeare and Company');
 			});
 
@@ -726,21 +721,19 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changes = await SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.BookStores',
+					rootEntity: 'sap.capire.bookshop.BookStores',
+					rootEntityKey: bookStoreID,
 					attribute: 'books',
-					entityKey: bookID,
 					modification: 'delete'
 				});
 
 				expect(changes.length).toEqual(1);
 
 				const change = changes[0];
-				expect(change.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change.entity).toEqual('sap.capire.bookshop.Books');
 				expect(change.entityKey).toEqual(bookID);
 				expect(change.valueChangedFrom).toEqual('Book to Delete');
 				expect(change.valueChangedTo).toEqual(null);
-				expect(change.rootEntity).toEqual('sap.capire.bookshop.BookStores');
-				expect(change.rootEntityKey).toEqual(bookStoreID);
 				expect(change.rootObjectID).toEqual('Shakespeare and Company');
 			});
 		});
@@ -809,8 +802,6 @@ describe('change log generation', () => {
 		expect(change4.valueChangedTo).toEqual(null);
 	});
 
-	// REVISIT: labels for valueChangedFrom and valueChangedTo? 'VALID' is not a value inside the codelist -> therefore the select returns null
-	// SELECT "$A".name FROM sap_capire_common_codelists_ActivationStatusCode as "$A" WHERE "$A".code = new.ActivationStatus_code LIMIT 1
 	it('The change log should be captured when a child entity triggers a custom action', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const rootID = cds.utils.uuid();
@@ -850,7 +841,7 @@ describe('change log generation', () => {
 		changes = await SELECT.from(adminService.entities.ChangeView).where({
 			entity: 'sap.change_tracking.Level2Sample',
 			modification: 'update',
-			entityKey: rootID,
+			entityKey: lvl2ID,
 			attribute: 'title'
 		});
 		expect(changes.length).toEqual(1);

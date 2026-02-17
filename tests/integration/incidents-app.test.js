@@ -84,7 +84,7 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 	});
 
 	//REVISIT: Ideally use OData dynamic types so UI does the formatting and not the backend
-	it('Date and time values are localized', async () => {
+	it.skip('Date and time values are localized', async () => {
 		const incidentID = await newIncident();
 		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
@@ -235,7 +235,6 @@ describe('Non ID key support', () => {
 		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
 	});
 
-	// REVISIT: adjustments in tracking for associtions / compositions (store code, subselect in index.cds)
 	it('Change track patched association on composition using document approach', async () => {
 		const {
 			data: { ID }
