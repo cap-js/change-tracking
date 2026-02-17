@@ -2,7 +2,8 @@ const cds = require('@sap/cds');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, DELETE, GET } = cds.test(bookshop);
+const { POST, DELETE, GET, axios } = cds.test(bookshop);
+axios.defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('Configuration scenarios', () => {
 	// REVISIT: check redeployment of db
@@ -137,13 +138,10 @@ describe('Configuration scenarios', () => {
 	});
 
 	describe('Service specific tracking', () => {
-
-		// Services all always tracked when db entity is annotated
-		// Services are skipped when annotated with @changelog: false
-		// Service specific annotations do not cause tracking in a different service
 		it(`Service specific annotations do not cause tracking in a different service`, async () => {
+			// Create via CatalogService (no @changelog) - should NOT be tracked
 			const { data: newStore } = await POST(`/browse/BookStores`, {
-				name: 'New book store'
+				name: 'New book store via browse'
 			});
 
 			const {
@@ -151,40 +149,110 @@ describe('Configuration scenarios', () => {
 			} = await GET(`/odata/v4/admin/BookStores(ID=${newStore.ID},IsActiveEntity=true)/changes`);
 			expect(changes.length).toEqual(0);
 
+			// Create via AdminService (has @changelog) - SHOULD be tracked
 			const { data: newStore2 } = await POST(`/odata/v4/admin/BookStores`, {
-				name: 'New book store'
+				name: 'New book store via admin'
 			});
 			await POST(`/odata/v4/admin/BookStores(ID=${newStore2.ID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 			const {
 				data: { value: changes2 }
 			} = await GET(`/odata/v4/admin/BookStores(ID=${newStore2.ID},IsActiveEntity=true)/changes`);
 			expect(changes2.length).toEqual(2);
+			const nameChange = changes2.find((change) => change.attribute === 'name');
+
+			expect(nameChange).toMatchObject({
+				entity: 'sap.capire.bookshop.BookStores',
+				attribute: 'name',
+				valueChangedFrom: null,
+				valueChangedTo: 'New book store via admin'
+			});
 		});
 
-		// Service specific annotations do not cause tracking when db entity is directly modified and no annotation is added to the db entity 
-		it(`Service specific annotations do not cause tracking when db entity is directly modified`, async () => {
-			const { Customers } = cds.entities('sap.capire.bookshop');
-			const customerID = cds.utils.uuid();
-			await INSERT.into(Customers).entries({
-				ID: customerID,
-				name: 'Test customer',
-				city: 'Walldorf'
+		it(`when @changelog annotations is on DB-level, all service entities should be tracked`, async () => {
+			const { data: newIncident } = await POST(`/odata/v4/processor/Incidents`, {
+				title: 'Test incident for inheritance',
+				date: '2025-01-15'
+			});
+			await POST(`/odata/v4/processor/Incidents(ID=${newIncident.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+			const {
+				data: { value: changes }
+			} = await GET(`/odata/v4/processor/Incidents(ID=${newIncident.ID},IsActiveEntity=true)/changes`);
+
+			// Should have changelog entries because DB entity has @changelog
+			expect(changes.length).toBeGreaterThan(0);
+
+			const dateChange = changes.find((c) => c.attribute === 'status');
+			expect(dateChange).toMatchObject({
+				entity: 'sap.capire.incidents.Incidents',
+				attribute: 'status',
+				valueChangedTo: 'N',
+				valueChangedToLabel: 'New'
+			});
+		});
+
+		it(`Service annotated with @changelog: false skips all change tracking`, async () => {
+			// IncidentsAdminService has @changelog: false at service level
+			// Even though DB entity has @changelog, changes via this service should NOT be tracked
+			const { data: newIncident } = await POST(`/odata/v4/incidents-admin/Incidents`, {
+				title: 'Test incident via admin',
+				date: '2025-02-20'
+			});
+
+			const changes = await SELECT.from('sap.changelog.Changes').where({
+				entity: 'sap.capire.incidents.Incidents',
+				entityKey: newIncident.ID
+			});
+
+			expect(changes.length).toEqual(0);
+		});
+
+		it(`Element annotated with @changelog: false is not tracked`, async () => {
+			// AdminService.Customers.city has @changelog: false
+			// city should NOT be tracked, but name, country, and age SHOULD be tracked
+			const { data: newCustomer } = await POST(`/odata/v4/admin/Customers`, {
+				name: 'Test customer for element skip', // also skipped since @Personal.data
+				city: 'Munich',
+				country: 'Germany',
+				age: 30
 			});
 
 			const {
 				data: { value: changes }
-			} = await GET(`/odata/v4/admin/Customers(ID=${customerID})/changes`);
-			expect(changes.length).toEqual(0);
+			} = await GET(`/odata/v4/admin/Customers(ID=${newCustomer.ID})/changes`);
 
-			const { data: newCustomer } = await POST(`/odata/v4/admin/Customers`, {
-				name: 'Test customer 2',
-				city: 'Walldorf'
+			const ageChange = changes.find((c) => c.attribute === 'age');
+			expect(ageChange).toBeTruthy();
+			expect(ageChange.valueChangedTo).toBe('30');
+			
+			const cityChange = changes.find((c) => c.attribute === 'city');
+			expect(cityChange).toBeFalsy();
+		});
+
+		it(`Direct DB modification tracks changes when DB entity has @changelog`, async () => {
+			// sap.capire.incidents.Incidents has @changelog at DB level
+			// Direct INSERT into DB entity SHOULD be tracked
+			const { Incidents } = cds.entities('sap.capire.incidents');
+			const incidentID = cds.utils.uuid();
+
+			await INSERT.into(Incidents).entries({
+				ID: incidentID,
+				title: 'Direct DB incident',
+				date: '2025-03-10'
 			});
 
-			const {
-				data: { value: changes2 }
-			} = await GET(`/odata/v4/admin/Customers(ID=${newCustomer.ID})/changes`);
-			expect(changes2.length).toEqual(1);
+			// Query changes from changelog table
+			const changes = await SELECT.from('sap.changelog.Changes').where({
+				entity: 'sap.capire.incidents.Incidents',
+				entityKey: incidentID
+			});
+
+			// Should have changelog entries because DB entity has @changelog
+			expect(changes.length).toBeGreaterThan(0);
+
+			const dateChange = changes.find((c) => c.attribute === 'date');
+			expect(dateChange).toBeTruthy();
+			expect(dateChange.valueChangedTo).toEqual('2025-03-10');
 		});
 	});
 });

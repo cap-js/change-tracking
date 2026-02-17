@@ -27,3 +27,4 @@ service IncidentsAdminService {
 annotate ProcessorService.Incidents with @odata.draft.enabled; 
 annotate ProcessorService with @(requires: 'support');
 annotate IncidentsAdminService with @(requires: 'admin');
+annotate IncidentsAdminService with @changelog: false;

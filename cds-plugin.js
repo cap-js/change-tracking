@@ -58,17 +58,8 @@ function _replaceTablePlaceholders(on, tableName, hierarchy) {
 	});
 }
 
-/**
- * Check if a facet already exists for the changes composition.
- */
 const hasFacetForComp = (comp, facets) => facets.some((f) => f.Target === `${comp.name}/@UI.LineItem` || (f.Facets && hasFacetForComp(comp, f.Facets)));
 
-// --- Model Enhancement ---
-
-/**
- * Unfold @changelog annotations in loaded model.
- * Adds changes association and UI facets to change-tracked service entities.
- */
 function enhanceModel(m) {
 	if (m.meta?.flavor !== 'inferred') {
 		// In MTX scenarios with extensibility the runtime model for deployed apps is not
@@ -164,9 +155,7 @@ function enhanceModel(m) {
 	(m.meta ??= {})[_enhanced] = true;
 }
 
-// Register plugin hooks
 cds.on('loaded', enhanceModel);
-
 cds.on('listening', ({ server, url }) => {
 
 	cds.db.before(['INSERT', 'UPDATE', 'DELETE'], async (req) => {
