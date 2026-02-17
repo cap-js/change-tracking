@@ -178,25 +178,18 @@ describe('Special CDS Features', () => {
 			});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-			const change = await SELECT.from(variantTesting.entities.ChangeView)
+			const change = await SELECT.one.from(variantTesting.entities.ChangeView)
 				.where({
 					entity: 'sap.change_tracking.TrackingComposition',
 					attribute: 'children'
 				})
-				.columns(['attribute', 'modification', 'entity', 'objectID', 'rootObjectID']);
+				.columns(['attribute', 'modification', 'entity', 'objectID', 'valueChangedTo']);
 
-			// To do localization, attribute needs parameters attribute and service entity, so the localization could not be done
 			expect(change.attribute).toEqual('children');
-
-			// To do localization, modification only needs parameters modification itself, so the localization could be done
 			expect(change.modification).toEqual('create');
-
-			// To do localization, entity only needs parameters entity itself, so the localization could be done
 			expect(change.entity).toEqual('sap.change_tracking.TrackingComposition');
-
-			// To do localization, object id needs parameters entity (if no object id is annotated), so the localization could not be done
-			// If no object id is annotated, the real value stored in db of object id should be "".
-			expect(change.objectID).toEqual('');
+			expect(change.objectID).toEqual('Book Store');
+			expect(change.valueChangedTo).toEqual('ABC');
 		});
 	});
 

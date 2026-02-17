@@ -634,27 +634,29 @@ describe('change log generation', () => {
 
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
+				// Composition of many logs on the parent entity (BookStores) since 'books' is an attribute of BookStores
 				const changes = await SELECT.from(ChangeView).where({
-					rootEntity: 'sap.capire.bookshop.BookStores',
-					rootEntityKey: bookStoreID,
+					entity: 'sap.capire.bookshop.BookStores',
+					entityKey: bookStoreID,
 					attribute: 'books',
 					modification: 'create'
 				});
 
 				expect(changes.length).toEqual(2);
 
-				const change1 = changes.find((change) => change.entityKey === book1ID);
-				const change2 = changes.find((change) => change.entityKey === book2ID);
+				const change1 = changes.find((change) => change.valueChangedTo === 'Test Book 1');
+				const change2 = changes.find((change) => change.valueChangedTo === 'Test Book 2');
 
-				expect(change1.entity).toEqual('sap.capire.bookshop.Books');
+				// entity is now the parent (BookStores), not the child (Books)
+				expect(change1.entity).toEqual('sap.capire.bookshop.BookStores');
 				expect(change1.valueChangedFrom).toEqual(null);
 				expect(change1.valueChangedTo).toEqual('Test Book 1');
-				expect(change1.rootObjectID).toEqual('Shakespeare and Company');
+				expect(change1.objectID).toEqual('Shakespeare and Company');
 
-				expect(change2.entity).toEqual('sap.capire.bookshop.Books');
+				expect(change2.entity).toEqual('sap.capire.bookshop.BookStores');
 				expect(change2.valueChangedFrom).toEqual(null);
 				expect(change2.valueChangedTo).toEqual('Test Book 2');
-				expect(change2.rootObjectID).toEqual('Shakespeare and Company');
+				expect(change2.objectID).toEqual('Shakespeare and Company');
 			});
 
 			it('Update should log changes for root entity', async () => {
@@ -681,9 +683,10 @@ describe('change log generation', () => {
 				});
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
+				// Composition of many logs on the parent entity (BookStores)
 				const changes = await SELECT.from(ChangeView).where({
-					rootEntity: 'sap.capire.bookshop.BookStores',
-					rootEntityKey: bookStoreID,
+					entity: 'sap.capire.bookshop.BookStores',
+					entityKey: bookStoreID,
 					attribute: 'books',
 					modification: 'update'
 				});
@@ -691,11 +694,11 @@ describe('change log generation', () => {
 				expect(changes.length).toEqual(1);
 
 				const change = changes[0];
-				expect(change.entity).toEqual('sap.capire.bookshop.Books');
-				expect(change.entityKey).toEqual(bookID);
+				expect(change.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change.entityKey).toEqual(bookStoreID);
 				expect(change.valueChangedFrom).toEqual('Original Title');
 				expect(change.valueChangedTo).toEqual('Updated Title');
-				expect(change.rootObjectID).toEqual('Shakespeare and Company');
+				expect(change.objectID).toEqual('Shakespeare and Company');
 			});
 
 			it('Delete should log changes for root entity', async () => {
@@ -720,9 +723,10 @@ describe('change log generation', () => {
 				await DELETE(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`);
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
+				// Composition of many logs on the parent entity (BookStores)
 				const changes = await SELECT.from(ChangeView).where({
-					rootEntity: 'sap.capire.bookshop.BookStores',
-					rootEntityKey: bookStoreID,
+					entity: 'sap.capire.bookshop.BookStores',
+					entityKey: bookStoreID,
 					attribute: 'books',
 					modification: 'delete'
 				});
@@ -730,11 +734,11 @@ describe('change log generation', () => {
 				expect(changes.length).toEqual(1);
 
 				const change = changes[0];
-				expect(change.entity).toEqual('sap.capire.bookshop.Books');
-				expect(change.entityKey).toEqual(bookID);
+				expect(change.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change.entityKey).toEqual(bookStoreID);
 				expect(change.valueChangedFrom).toEqual('Book to Delete');
 				expect(change.valueChangedTo).toEqual(null);
-				expect(change.rootObjectID).toEqual('Shakespeare and Company');
+				expect(change.objectID).toEqual('Shakespeare and Company');
 			});
 		});
 	});
