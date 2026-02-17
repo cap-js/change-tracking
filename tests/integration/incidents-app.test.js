@@ -119,7 +119,35 @@ describe('Tests for uploading/deleting attachments through API calls', () => {
 		expect(timestampChange.valueChangedTo).not.toEqual(timestampDBChange.valueChangedTo);
 	});
 
-	it.skip('Multi key entities can be change tracked', async () => {});
+	it('Multi key entities can be change tracked', async () => {
+		const GJAHR = 2024;
+		const BUKRS = 'TEST_' + Math.round(Math.random() * 100000).toString();
+		
+		// Create entity with composite key
+		await POST(`odata/v4/processor/MultiKeyScenario`, {
+			GJAHR,
+			BUKRS,
+			foo1: 'Initial value'
+		});
+		await POST(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		
+		// Edit the entity
+		await POST(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+		await PATCH(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=false)`, {
+			foo1: 'Updated value'
+		});
+		await POST(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		
+		// Verify changes are tracked
+		const {
+			data: { value: changes }
+		} = await GET(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=true)/changes`);
+		
+		const updateChange = changes.find((change) => change.attribute === 'foo1' && change.modification === 'update');
+		expect(updateChange).toHaveProperty('valueChangedFrom', 'Initial value');
+		expect(updateChange).toHaveProperty('valueChangedTo', 'Updated value');
+		expect(updateChange).toHaveProperty('entityKey', `${GJAHR}||${BUKRS}`);
+	});
 });
 
 describe('Non ID key support', () => {
