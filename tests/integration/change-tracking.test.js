@@ -250,7 +250,7 @@ describe('change log generation', () => {
 			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
 		});
 
-			it('logs updated child values as changes on the parent entity', async () => {
+		it('logs updated child values as changes on the parent entity', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
@@ -418,7 +418,8 @@ describe('change log generation', () => {
 			const changes = await SELECT.from(adminService.entities.ChangeView).where({
 				entity: 'sap.capire.bookshop.BookStoreRegistry',
 				attribute: 'validOn',
-				modification: 'delete'
+				modification: 'delete',
+				entityKey: registryID
 			});
 
 			expect(changes.length).toEqual(1);
@@ -441,7 +442,7 @@ describe('change log generation', () => {
 						status: 'Ordered'
 					}
 				});
-				const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
+				const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView).where({ rootEntityKey: id }));
 				const headerChanges = changes.filter((change) => {
 					return change.entity === 'sap.capire.bookshop.OrderHeader';
 				});
@@ -471,7 +472,7 @@ describe('change log generation', () => {
 
 				await DELETE(`/odata/v4/admin/Order(ID=${orderID})/header`);
 
-				const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
+				const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView).where({ rootEntityKey: orderID }));
 				const headerChanges = changes.filter((change) => {
 					return change.entity === 'sap.capire.bookshop.OrderHeader' && change.modification === 'delete';
 				});
@@ -481,7 +482,6 @@ describe('change log generation', () => {
 				expect(headerChange.modification).toEqual('delete');
 				expect(headerChange.valueChangedFrom).toEqual('Shipped');
 				expect(headerChange.valueChangedTo).toEqual(null);
-				expect(headerChange.rootEntityKey).toEqual(orderID);
 				expect(headerChange.rootObjectID).toEqual('sap.capire.bookshop.Order');
 				delete cds.services.AdminService.entities.Order['@changelog'];
 			});

@@ -181,7 +181,8 @@ describe('Special CDS Features', () => {
 			const change = await SELECT.one.from(variantTesting.entities.ChangeView)
 				.where({
 					entity: 'sap.change_tracking.TrackingComposition',
-					attribute: 'children'
+					attribute: 'children',
+					entityKey: ID
 				})
 				.columns(['attribute', 'modification', 'entity', 'objectID', 'valueChangedTo']);
 
