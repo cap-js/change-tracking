@@ -6,7 +6,6 @@
 		"@cap-js/postgres": "^2.1.2"
 	},
 	"devDependencies": {
-		"@sap/cds-dk": "^9.6.1",
 		"@cap-js/sqlite": "*"
 	},
 	"scripts": {
