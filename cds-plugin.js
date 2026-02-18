@@ -205,7 +205,7 @@ cds.once('served', async () => {
 		}
 	}
 
-	const labels = getLabelTranslations(entities, cds.model.definitions);
+	const labels = getLabelTranslations(entities, cds.model);
 	const { i18nKeys } = cds.entities('sap.changelog');
 
 	await Promise.all([
@@ -225,7 +225,9 @@ cds.compile.to.sql = function (csn, options) {
 	const { generateH2Trigger } = require('./lib/trigger/h2.js');
 
 	const clonedCSN = structuredClone(csn);
+	clonedCSN.$sources = csn.$sources; // Preserve non-enumerable $sources for i18n bundle resolution
 	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
+	runtimeCSN.$sources = csn.$sources;
 	const h2HierarchyMap = analyzeCompositions(runtimeCSN);
 
 	// Collect entities from CSN and merge annotations
@@ -244,7 +246,7 @@ cds.compile.to.sql = function (csn, options) {
 
 	// Add label translations if there are triggers
 	if (triggers.length > 0) {
-		const labels = getLabelTranslations(entities, runtimeCSN.definitions);
+		const labels = getLabelTranslations(entities, runtimeCSN);
 		const header = 'ID;locale;text';
 		const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
 		const content = [header, ...rows].join('\n') + '\n';
@@ -309,7 +311,9 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 	const { generateHANATriggers } = require('./lib/trigger/hdi.js');
 
 	const clonedCSN = structuredClone(csn);
+	clonedCSN.$sources = csn.$sources; // Preserve non-enumerable $sources for i18n bundle resolution
 	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
+	runtimeCSN.$sources = csn.$sources;
 	const hdiHierarchyMap = analyzeCompositions(runtimeCSN);
 
 	// Collect entities from CSN and merge annotations
@@ -327,7 +331,7 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 
 	// Add label translations if there are triggers
 	if (triggers.length > 0) {
-		const labels = getLabelTranslations(entities, runtimeCSN.definitions);
+		const labels = getLabelTranslations(entities, runtimeCSN);
 		const header = 'ID;locale;text';
 		const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
 		const content = [header, ...rows].join('\n') + '\n';
