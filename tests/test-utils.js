@@ -150,14 +150,7 @@ async function _regenerateHANATriggers(entityNames, allEntities, hierarchyMap) {
 		const rootMergedAnnotations = rootEntityName
 			? allEntities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations
 			: null;
-
-		// Drop existing triggers first
-		const tableName = utils.transformName(dbEntityName);
-		const triggerTypes = ['CREATE', 'UPDATE', 'DELETE'];
-		for (const type of triggerTypes) {
-			const triggerName = `${tableName}_CT_${type}`;
-			await cds.db.run(`DROP TRIGGER IF EXISTS "${triggerName}"`);
-		}
+		
 
 		// Generate and execute new triggers
 		const triggers = generateHANATriggers(cds.model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);

@@ -14,7 +14,9 @@ describe('Configuration Options', () => {
 		'sap.change_tracking.Level2Sample'
 	];
 
-	it('retains all change logs and logs deletion when preserveDeletes is enabled', async () => {
+	const isHana = cds.env.requires?.db?.kind === 'hana';
+
+	(isHana ? it.skip : it)('retains all change logs and logs deletion when preserveDeletes is enabled', async () => {
 		cds.env.requires['change-tracking'].preserveDeletes = true;
 		await regenerateTriggers(variantEntities);
 		const variantSrv = await cds.connect.to('VariantTesting');
@@ -62,7 +64,7 @@ describe('Configuration Options', () => {
 		await regenerateTriggers(variantEntities);
 	});
 
-	it('skips update logging when disableUpdateTracking is enabled', async () => {
+	(isHana ? it.skip : it)('skips update logging when disableUpdateTracking is enabled', async () => {
 		cds.env.requires['change-tracking'].disableUpdateTracking = true;
 		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
@@ -92,7 +94,7 @@ describe('Configuration Options', () => {
 		expect(changes.length).toEqual(1);
 	});
 
-	it('skips create logging when disableCreateTracking is enabled', async () => {
+	(isHana ? it.skip : it)('skips create logging when disableCreateTracking is enabled', async () => {
 		cds.env.requires['change-tracking'].disableCreateTracking = true;
 		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
@@ -121,7 +123,7 @@ describe('Configuration Options', () => {
 		expect(changes.length).toEqual(1);
 	});
 
-	it('skips delete logging when disableDeleteTracking is enabled', async () => {
+	(isHana ? it.skip : it)('skips delete logging when disableDeleteTracking is enabled', async () => {
 		cds.env.requires['change-tracking'].disableDeleteTracking = true;
 		await regenerateTriggers('sap.change_tracking.Level2Sample');
 		const testingSRV = await cds.connect.to('VariantTesting');
