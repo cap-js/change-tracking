@@ -61,6 +61,10 @@ entity i18nKeys {
       text   : String(5000);
 }
 
+entity CHANGE_TRACKING_DUMMY {
+  key X     : String(5);
+}
+
 entity Changes : cuid {
   attribute             : String(5000)      @title: '{i18n>Changes.attribute}';
   valueChangedFrom      : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;

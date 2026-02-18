@@ -1,6 +1,6 @@
 const cds = require('@sap/cds');
 const path = require('path');
-const { regenerateTriggers } = require('../../lib/test-utils.js');
+const { regenerateTriggers } = require('../test-utils.js');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
 const { POST, DELETE, GET, axios } = cds.test(bookshop);

@@ -1,7 +1,7 @@
 const cds = require('@sap/cds');
 
 function _collectEntities() {
-	const { isChangeTracked, getBaseEntity, analyzeCompositions } = require('./utils/entity-collector.js');
+	const { isChangeTracked, getBaseEntity, analyzeCompositions } = require('../lib/utils/entity-collector.js');
 	
 	const collectedEntities = new Map();
 	const hierarchyMap = analyzeCompositions(cds.model);
@@ -23,7 +23,7 @@ function _collectEntities() {
 }
 
 async function _regenerateSQLiteTriggers(entityNames, allEntities, hierarchyMap) {
-	const { generateSQLiteTriggers } = require('./trigger/sqlite.js');
+	const { generateSQLiteTriggers } = require('../lib/trigger/sqlite.js');
 
 	// Filter to specific entities if provided
 	const entities = entityNames
@@ -68,7 +68,7 @@ async function _regenerateSQLiteTriggers(entityNames, allEntities, hierarchyMap)
 }
 
 async function _regeneratePostgresTriggers(entityNames, allEntities, hierarchyMap) {
-	const { generatePostgresTriggers } = require('./trigger/postgres.js');
+	const { generatePostgresTriggers } = require('../lib/trigger/postgres.js');
 
 	// Filter to specific entities if provided
 	const entities = entityNames
@@ -104,7 +104,7 @@ async function _regeneratePostgresTriggers(entityNames, allEntities, hierarchyMa
 }
 
 async function _regenerateH2Triggers(entityNames, allEntities, hierarchyMap) {
-	const { generateH2Trigger } = require('./trigger/h2.js');
+	const { generateH2Trigger } = require('../lib/trigger/h2.js');
 
 	// Filter to specific entities if provided
 	const entities = entityNames
@@ -134,8 +134,8 @@ async function _regenerateH2Triggers(entityNames, allEntities, hierarchyMap) {
 }
 
 async function _regenerateHANATriggers(entityNames, allEntities, hierarchyMap) {
-	const { generateHANATriggers } = require('./trigger/hdi.js');
-	const utils = require('./utils/change-tracking.js');
+	const { generateHANATriggers } = require('../lib/trigger/hdi.js');
+	const utils = require('../lib/utils/change-tracking.js');
 
 	// Filter to specific entities if provided
 	const entities = entityNames
@@ -171,7 +171,7 @@ async function _regenerateHANATriggers(entityNames, allEntities, hierarchyMap) {
 
 async function regenerateTriggers(entityNames) {
 	const kind = cds.env.requires?.db?.kind;
-	const { getEntitiesForTriggerGeneration } = require('./utils/entity-collector.js');
+	const { getEntitiesForTriggerGeneration } = require('../lib/utils/entity-collector.js');
 	const { collectedEntities, hierarchyMap } = _collectEntities();
 	const allEntities = getEntitiesForTriggerGeneration(cds.model.definitions, collectedEntities);
 
