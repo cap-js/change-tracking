@@ -6,6 +6,8 @@ const bookshop = path.resolve(__dirname, './../bookshop');
 const { POST, DELETE, GET, axios } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice', password: 'admin' };
 
+const isHana = cds.env.requires?.db?.kind === 'hana';
+
 describe('Configuration Options', () => {
 	// Entities used in the VariantTesting service tests
 	const variantEntities = [
@@ -13,8 +15,6 @@ describe('Configuration Options', () => {
 		'sap.change_tracking.Level1Sample',
 		'sap.change_tracking.Level2Sample'
 	];
-
-	const isHana = cds.env.requires?.db?.kind === 'hana';
 
 	(isHana ? it.skip : it)('retains all change logs and logs deletion when preserveDeletes is enabled', async () => {
 		cds.env.requires['change-tracking'].preserveDeletes = true;

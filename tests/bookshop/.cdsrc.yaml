@@ -3,7 +3,7 @@ requires:
     "[sqlite]":
       kind: sqlite
       credentials:
-        database: "db.sqlite"
+        url: ":memory:"
     "[pg]":
       kind: postgres
       credentials:
