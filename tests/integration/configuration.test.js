@@ -3,7 +3,7 @@ const path = require('path');
 const { regenerateTriggers } = require('../test-utils.js');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, DELETE, GET, axios } = cds.test(bookshop);
+const { POST, DELETE, PATCH, GET, axios } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice', password: 'admin' };
 
 const isHana = cds.env.requires?.db?.kind === 'hana';
@@ -284,13 +284,14 @@ describe('Configuration Options', () => {
 			bool: false
 		});
 
-		const {
-			data: { value: changes }
-		} = await GET(`/odata/v4/variant-testing/NotTrackedDifferentFieldTypes(ID=${record.ID})/changes`);
+		const changes = await SELECT.from('sap.changelog.Changes').where({
+			entity: 'sap.change_tracking.DifferentFieldTypes',
+			entityKey: record.ID
+		});
 
-		const createChanges = changes.filter((c) => c.modification === 'Create');
-		const updateChanges = changes.filter((c) => c.modification === 'Update');
-		expect(createChanges.length).toEqual(2);
+		const createChanges = changes.filter((c) => c.modification === 'create');
+		const updateChanges = changes.filter((c) => c.modification === 'update');
+		expect(createChanges.length).toEqual(3);
 		expect(updateChanges.length).toEqual(0);
 	});
 });
