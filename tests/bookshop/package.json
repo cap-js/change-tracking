@@ -2,6 +2,7 @@
 	"dependencies": {
 		"@cap-js/attachments": "^2",
 		"@cap-js/change-tracking": "file:../../.",
+		"@cap-js/postgres": "^1 || ^2",
 		"@cap-js/hana": "^2"
 	},
 	"devDependencies": {
