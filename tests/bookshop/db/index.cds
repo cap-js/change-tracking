@@ -5,13 +5,13 @@ namespace sap.change_tracking;
 @title: 'Different field types'
 entity DifferentFieldTypes {
   key ID        : UUID;
-      title     : String;
+      title     : String @changelog;
       dateTime  : DateTime;
       timestamp : Timestamp;
       number    : Decimal;
       bool      : Boolean;
-      image     : LargeBinary;
-      icon      : Binary;
+      image     : LargeBinary @changelog;  // Unsupported - should trigger warning
+      icon      : Binary @changelog;       // Unsupported - should trigger warning
       dppField1 : String @PersonalData.IsPotentiallyPersonal;
       dppField2 : String @PersonalData.IsPotentiallySensitive;
       children  : Composition of many DifferentFieldTypesChildren
