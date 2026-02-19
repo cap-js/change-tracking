@@ -271,6 +271,28 @@ describe('Configuration Options', () => {
 			expect(dateChange.valueChangedTo).toEqual('2025-03-10');
 		});
 	});
+
+	it('Should not track if entity is annotated @changelog: false', async () => {
+		const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
+			number: 1,
+			bool: true,
+			title: 'My test-record'
+		});
+
+		await PATCH(`/odata/v4/variant-testing/NotTrackedDifferentFieldTypes(ID=${record.ID})`, {
+			number: 2,
+			bool: false
+		});
+
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/variant-testing/NotTrackedDifferentFieldTypes(ID=${record.ID})/changes`);
+
+		const createChanges = changes.filter((c) => c.modification === 'Create');
+		const updateChanges = changes.filter((c) => c.modification === 'Update');
+		expect(createChanges.length).toEqual(2);
+		expect(updateChanges.length).toEqual(0);
+	});
 });
 
 describe('MTX Build', () => {
