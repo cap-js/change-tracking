@@ -10,11 +10,13 @@ const { getLabelTranslations } = require('./lib/localization.js');
 // REVISIT
 const { isRoot, hasParent } = require('./lib/legacy/entity-processing.js');
 
-// Global state for collected entities and hierarchy
 let hierarchyMap = new Map();
 let collectedEntities = new Map();
 
-const addSideEffects = (actions, isRootEntity) => {
+/**
+ * Add side effects annotations for actions to refresh the changes association.
+ */
+function addSideEffects(actions, isRootEntity, element) {
 	for (const se of Object.values(actions)) {
 		const target = isRootEntity ? 'TargetProperties' : 'TargetEntities';
 		const sideEffectAttr = se[`@Common.SideEffects.${target}`];
@@ -25,40 +27,90 @@ const addSideEffects = (actions, isRootEntity) => {
 			se[`@Common.SideEffects.${target}`] = [property];
 		}
 	}
-};
+}
 
 /**
- * Returns an expression for the key of the given entity, which we can use as the right-hand-side of an ON condition.
+ * Returns a CQN expression for the composite key of an entity.
+ * Used for the ON condition when associating changes.
  */
 function entityKey4(entity) {
 	const xpr = [];
-	for (let k in entity.elements) {
+	for (const k in entity.elements) {
 		const e = entity.elements[k];
 		if (!e.key) continue;
 		if (xpr.length) {
 			xpr.push('||');
-			xpr.push({ val: "||" });
+			xpr.push({ val: '||' });
 			xpr.push('||');
 		}
-		if (e.type === 'cds.Association') xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
-		else xpr.push({ ref: [k] });
+		if (e.type === 'cds.Association') {
+			xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
+		} else {
+			xpr.push({ ref: [k] });
+		}
 	}
 	return xpr;
 }
 
 /**
- * Replace table name placeholders in ON conditions.
+ * Replace ENTITY and ROOTENTITY placeholders in ON conditions.
  */
 function _replaceTablePlaceholders(on, tableName, hierarchy) {
 	const rootEntityName = hierarchy.get(tableName) || tableName;
 	return on.map(part => {
-		if (part && part.val === 'ENTITY') return { ...part, val: tableName };
-		if (part && part.val === 'ROOTENTITY') return { ...part, val: rootEntityName };
+		if (part?.val === 'ENTITY') return { ...part, val: tableName };
+		if (part?.val === 'ROOTENTITY') return { ...part, val: rootEntityName };
 		return part;
 	});
 }
 
-const hasFacetForComp = (comp, facets) => facets.some((f) => f.Target === `${comp.name}/@UI.LineItem` || (f.Facets && hasFacetForComp(comp, f.Facets)));
+/**
+ * Check if a facet already exists for the changes composition.
+ */
+function hasFacetForComp(comp, facets) {
+	return facets.some(f =>
+		f.Target === `${comp.name}/@UI.LineItem` ||
+		(f.Facets && hasFacetForComp(comp, f.Facets))
+	);
+}
+
+function prepareCSNForTriggers(csn, preserveSources = false) {
+	const clonedCSN = structuredClone(csn);
+	if (preserveSources) clonedCSN.$sources = csn.$sources;
+	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
+	if (preserveSources) runtimeCSN.$sources = csn.$sources;
+	const hierarchy = analyzeCompositions(runtimeCSN);
+	const entities = getEntitiesForTriggerGeneration(runtimeCSN.definitions, collectedEntities);
+	return { runtimeCSN, hierarchy, entities };
+}
+
+// Generate triggers for all collected entities using the provided generator function
+function generateTriggersForEntities(runtimeCSN, hierarchy, entities, generator) {
+	const triggers = [];
+	for (const { dbEntityName, mergedAnnotations } of entities) {
+		const entity = runtimeCSN.definitions[dbEntityName];
+		if (!entity) continue;
+		const rootEntityName = hierarchy.get(dbEntityName);
+		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
+		const rootMergedAnnotations = rootEntityName
+			? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations
+			: null;
+		const result = generator(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
+		if (result) triggers.push(...(Array.isArray(result) ? result : [result]));
+	}
+	return triggers;
+}
+
+/**
+ * Write i18n labels CSV file for H2/HDI deployments.
+ */
+function writeLabelsCSV(entities, model) {
+	const labels = getLabelTranslations(entities, model);
+	const header = 'ID;locale;text';
+	const rows = labels.map(row => `${row.ID};${row.locale};${row.text}`);
+	const content = [header, ...rows].join('\n') + '\n';
+	fs.writeFileSync('db/data/sap.changelog-i18nKeys.csv', content);
+}
 
 function enhanceModel(m) {
 	if (m.meta?.flavor !== 'inferred') {
@@ -156,16 +208,17 @@ function enhanceModel(m) {
 }
 
 cds.on('loaded', enhanceModel);
-cds.on('listening', ({ server, url }) => {
 
+cds.on('listening', () => {
 	cds.db.before(['INSERT', 'UPDATE', 'DELETE'], async (req) => {
-		if (!req.target || req.target?.name.endsWith('.drafts')) return;
-		const srv = req.target?._service; if (!srv) return;
+		if (!req.target || req.target.name.endsWith('.drafts')) return;
+		const srv = req.target._service;
+		if (!srv) return;
 		setSkipSessionVariables(req, srv, collectedEntities);
 	});
 
 	cds.db.after(['INSERT', 'UPDATE', 'DELETE'], async (_, req) => {
-		if (!req.target || req.target?.name.endsWith('.drafts')) return;
+		if (!req.target || req.target.name.endsWith('.drafts')) return;
 
 		// Reset auto-skip variable if it was set
 		if (req._ctAutoSkipEntity) {
@@ -181,161 +234,89 @@ cds.on('listening', ({ server, url }) => {
 
 cds.once('served', async () => {
 	const kind = cds.env.requires?.db?.kind;
-	const isSQLite = kind === 'sqlite';
-	const isPostgres = kind === 'postgres';
+	if (kind !== 'sqlite') return;
 
-	if (!isSQLite && !isPostgres) return;
-
-	const triggers = [];
-
-	// Use collected entities with merged annotations for trigger generation
+	const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
 	const entities = getEntitiesForTriggerGeneration(cds.model.definitions, collectedEntities);
 
-	for (const { dbEntityName, mergedAnnotations } of entities) {
-		// Only generate triggers for SQLite in-memory (PostgreSQL triggers are deployed via compile.to.dbx)
-		if (isSQLite) {
-			const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
-			const entity = cds.model.definitions[dbEntityName];
-			if (!entity) continue;
-			const rootEntityName = hierarchyMap.get(dbEntityName);
-			const rootEntity = rootEntityName ? cds.model.definitions[rootEntityName] : null;
-			const rootMergedAnnotations = rootEntityName ? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
-			const entityTrigger = generateSQLiteTriggers(entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
-			triggers.push(...entityTrigger);
-		}
-	}
+	const triggers = generateTriggersForEntities(
+		cds.model,
+		hierarchyMap,
+		entities,
+		(_, entity, rootEntity, mergedAnnotations, rootMergedAnnotations) =>
+			generateSQLiteTriggers(entity, rootEntity, mergedAnnotations, rootMergedAnnotations)
+	);
 
 	const labels = getLabelTranslations(entities, cds.model);
 	const { i18nKeys } = cds.entities('sap.changelog');
 
 	await Promise.all([
-		...triggers.map((t) => cds.db.run(t)),
+		...triggers.map(t => cds.db.run(t)),
 		cds.delete(i18nKeys),
 		cds.insert(labels).into(i18nKeys)
 	]);
 });
 
+/**
+ * H2 Database Triggers via compile.to.sql
+ */
 const _sql_original = cds.compile.to.sql;
 cds.compile.to.sql = function (csn, options) {
 	let ret = _sql_original.call(this, csn, options);
-	const isH2 = options?.to === 'h2';
-	if (!isH2) return ret;
+	if (options?.to !== 'h2') return ret;
 
-	const triggers = [];
 	const { generateH2Trigger } = require('./lib/trigger/h2.js');
+	const { runtimeCSN, hierarchy, entities } = prepareCSNForTriggers(csn, true);
 
-	const clonedCSN = structuredClone(csn);
-	clonedCSN.$sources = csn.$sources; // Preserve non-enumerable $sources for i18n bundle resolution
-	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
-	runtimeCSN.$sources = csn.$sources;
-	const h2HierarchyMap = analyzeCompositions(runtimeCSN);
+	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generateH2Trigger);
 
-	// Collect entities from CSN and merge annotations
-	const entities = getEntitiesForTriggerGeneration(runtimeCSN.definitions, collectedEntities);
-
-	for (const { dbEntityName, mergedAnnotations } of entities) {
-		const entity = runtimeCSN.definitions[dbEntityName];
-		if (!entity) continue;
-		const rootEntityName = h2HierarchyMap.get(dbEntityName);
-		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
-		const rootMergedAnnotations = rootEntityName ? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
-		const entityTrigger = generateH2Trigger(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
-		if (!entityTrigger) continue;
-		triggers.push(entityTrigger);
-	}
-
-	// Add label translations if there are triggers
 	if (triggers.length > 0) {
-		const labels = getLabelTranslations(entities, runtimeCSN);
-		const header = 'ID;locale;text';
-		const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
-		const content = [header, ...rows].join('\n') + '\n';
-		fs.writeFileSync('db/data/sap.changelog-i18nKeys.csv', content);
+		writeLabelsCSV(entities, runtimeCSN);
 	}
 
 	// Add semicolon at the end of each DDL statement if not already present
-	ret = ret.map(s => (s.endsWith(';') ? s + ';' : s));
+	ret = ret.map(s => s.endsWith(';') ? s : s + ';');
 	return [...ret, ...triggers];
 };
 Object.assign(cds.compile.to.sql, _sql_original);
 
-// PostgreSQL trigger injection via compile.to.dbx event (auto-deploys triggers with cds deploy)
+/**
+ * PostgreSQL Triggers via compile.to.dbx
+ */
 cds.on('compile.to.dbx', (csn, options, next) => {
 	const ddl = next();
 	if (options?.dialect !== 'postgres') return ddl;
 
 	const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
+	const { runtimeCSN, hierarchy, entities } = prepareCSNForTriggers(csn);
 
-	const clonedCSN = structuredClone(csn);
-	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
-	const pgHierarchyMap = analyzeCompositions(runtimeCSN);
+	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generatePostgresTriggers);
 
-	// Collect entities from CSN and merge annotations
-	const entities = getEntitiesForTriggerGeneration(runtimeCSN.definitions, collectedEntities);
+	if (triggers.length === 0) return ddl;
 
-	const triggerCreates = [];
-	const triggerDrops = [];
-
-	for (const { dbEntityName, mergedAnnotations } of entities) {
-		const entity = runtimeCSN.definitions[dbEntityName];
-		if (!entity) continue;
-		const rootEntityName = pgHierarchyMap.get(dbEntityName);
-		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
-		const rootMergedAnnotations = rootEntityName ? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
-
-		const { creates, drops } = generatePostgresTriggers(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
-		triggerCreates.push(...creates);
-		triggerDrops.push(...drops);
-	}
-
-	if (triggerCreates.length === 0) return ddl;
-
-	// For standard compilation (array) or delta compilation (object with createsAndAlters/drops)
+	// Handle standard compilation (array) or delta compilation (object with createsAndAlters/drops)
 	if (Array.isArray(ddl)) {
-		// Standard mode: drops run first, then creates
-		return [...triggerDrops, ...ddl, ...triggerCreates];
+		return [...ddl, ...triggers];
 	} else if (ddl.createsAndAlters) {
-		// Delta mode: separate drops and creates
-		ddl.drops = [...(ddl.drops || []), ...triggerDrops];
-		ddl.createsAndAlters.push(...triggerCreates);
+		ddl.createsAndAlters.push(...triggers);
 		return ddl;
 	}
 
 	return ddl;
 });
 
-// Generate HDI artifacts for change tracking
+/**
+ * HANA HDI Triggers via compiler.to.hdi.migration
+ */
 const _hdi_migration = cds.compiler.to.hdi.migration;
 cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
-	const triggers = [];
 	const { generateHANATriggers } = require('./lib/trigger/hdi.js');
+	const { runtimeCSN, hierarchy, entities } = prepareCSNForTriggers(csn, true);
 
-	const clonedCSN = structuredClone(csn);
-	clonedCSN.$sources = csn.$sources; // Preserve non-enumerable $sources for i18n bundle resolution
-	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
-	runtimeCSN.$sources = csn.$sources;
-	const hdiHierarchyMap = analyzeCompositions(runtimeCSN);
+	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generateHANATriggers);
 
-	// Collect entities from CSN and merge annotations
-	const entities = getEntitiesForTriggerGeneration(runtimeCSN.definitions, collectedEntities);
-
-	for (const { dbEntityName, mergedAnnotations } of entities) {
-		const entity = runtimeCSN.definitions[dbEntityName];
-		if (!entity) continue;
-		const rootEntityName = hdiHierarchyMap.get(dbEntityName);
-		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
-		const rootMergedAnnotations = rootEntityName ? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
-		const entityTriggers = generateHANATriggers(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
-		triggers.push(...entityTriggers);
-	}
-
-	// Add label translations if there are triggers
 	if (triggers.length > 0) {
-		const labels = getLabelTranslations(entities, runtimeCSN);
-		const header = 'ID;locale;text';
-		const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
-		const content = [header, ...rows].join('\n') + '\n';
-		fs.writeFileSync('db/data/sap.changelog-i18nKeys.csv', content);
+		writeLabelsCSV(entities, runtimeCSN);
 	}
 
 	const ret = _hdi_migration(csn, options, beforeImage);

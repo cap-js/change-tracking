@@ -75,10 +75,7 @@ async function _regeneratePostgresTriggers(entityNames, allEntities, hierarchyMa
 		? allEntities.filter(e => entityNames.includes(e.dbEntityName))
 		: allEntities;
 
-
-	// Collect all drop and create statements
-	const allDrops = [];
-	const allCreates = [];
+	const triggers = [];
 
 	for (const { dbEntityName, mergedAnnotations } of entities) {
 		const entity = cds.model.definitions[dbEntityName];
@@ -89,18 +86,11 @@ async function _regeneratePostgresTriggers(entityNames, allEntities, hierarchyMa
 			? allEntities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations
 			: null;
 
-		const { creates, drops } = generatePostgresTriggers(cds.model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
-		allDrops.push(...drops);
-		allCreates.push(...creates);
+		const entityTriggers = generatePostgresTriggers(cds.model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
+		triggers.push(...entityTriggers);
 	}
 
-	// Execute drops first, then creates
-	for (const sql of allDrops) {
-		await cds.db.run(sql);
-	}
-	for (const sql of allCreates) {
-		await cds.db.run(sql);
-	}
+	await Promise.all(triggers.map(t => cds.db.run(t)));
 }
 
 async function _regenerateH2Triggers(entityNames, allEntities, hierarchyMap) {
