@@ -57,9 +57,10 @@ runs:
     - name: Set CDS version-specific dependencies
       shell: bash
       run: |
-        if [ "${{ inputs.CDS_VERSION }}" == "8" ]; then
+        if [ "${​{ inputs.CDS_VERSION }}" == "8" ]; then
           echo "Installing CDS 8 compatible packages..."
           npm pkg set "devDependencies.@cap-js/sqlite=^1"
+          npm pkg set "overrides.@sap/cds=^8"
           npm pkg set "overrides.@cap-js/sqlite=^1"
           npm pkg set "overrides.@cap-js/hana=^1"
           npm pkg set "overrides.@cap-js/db-service=^1"
