@@ -68,9 +68,7 @@ jobs:
       - run: cd tests/bookshop && npm i
       - run: cd tests/bookshop-mtx && npm i
       - name: Deploy to PostgreSQL
-        run: cd tests/bookshop && npx cds deploy -2 postgres
-        env:
-          CDS_ENV: pg
+        run: cd tests/bookshop && npm run deploy:postgres
       - name: Run PostgreSQL tests
         run: npm run test:postgres
 
