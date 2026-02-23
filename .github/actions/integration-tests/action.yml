@@ -19,6 +19,9 @@ inputs:
   NODE_VERSION:
     description: "Node.js version to use for tests"
     required: true
+  CDS_VERSION:
+    description: "CDS version to use for tests (e.g., 'latest' or '8')"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -57,7 +60,7 @@ runs:
     - name: Set CDS version-specific dependencies
       shell: bash
       run: |
-        if [ "${{ matrix.cds-version }}" == "8" ]; then
+        if [ "${{ inputs.CDS_VERSION }}" == "8" ]; then
           echo "Installing CDS 8 compatible packages..."
           npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
           npm pkg set "overrides.@cap-js/sqlite=^1.0.0"
@@ -75,28 +78,28 @@ runs:
 
     - name: Install global CDS
       shell: bash
-      run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
+      run: npm i -g @sap/cds-dk@${{ inputs.CDS_VERSION }}
     - name: Install root dependencies
       shell: bash
       run: |
-        npm install @sap/cds@${{ matrix.cds-version }}
+        npm install @sap/cds@${{ inputs.CDS_VERSION }}
         npm install
     - name: Install bookshop dependencies
       shell: bash
       run: |
-        cd tests/bookshop && npm install @sap/cds@${{ matrix.cds-version }}
+        cd tests/bookshop && npm install @sap/cds@${{ inputs.CDS_VERSION }}
         npm install
     - name: Install bookshop mtx dependencies
       shell: bash
       run: |
-        cd tests/bookshop-mtx && npm install @sap/cds@${{ matrix.cds-version }}
+        cd tests/bookshop-mtx && npm install @sap/cds@${{ inputs.CDS_VERSION }}
         npm install
       
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV
       shell: bash
     - name: Set node env for CDS
-      run: echo "CDS_VERSION=$(echo ${{ matrix.cds-version }} | tr . _)" >> $GITHUB_ENV
+      run: echo "CDS_VERSION=$(echo ${{ inputs.CDS_VERSION }} | tr . _)" >> $GITHUB_ENV
       shell: bash
     - name: CDS Versions being used
       run: cds v -i
