@@ -20,7 +20,7 @@ inputs:
     description: "Node.js version to use for tests"
     required: true
   CDS_VERSION:
-    description: "CDS version to use for tests (e.g., 'latest' or '8')"
+    description: "CDS version to use for tests"
     required: true
 runs:
   using: "composite"
@@ -50,9 +50,6 @@ runs:
           fi
         done
 
-    - uses: actions/checkout@v5
-      with:
-        ref: ${{ github.event.pull_request.head.sha || github.sha }}
     - name: Use Node.js ${{ inputs.NODE_VERSION}}
       uses: actions/setup-node@v6
       with:
@@ -62,17 +59,17 @@ runs:
       run: |
         if [ "${{ inputs.CDS_VERSION }}" == "8" ]; then
           echo "Installing CDS 8 compatible packages..."
-          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
-          npm pkg set "overrides.@cap-js/sqlite=^1.0.0"
-          npm pkg set "overrides.@cap-js/hana=^1.0.0"
-          npm pkg set "overrides.@cap-js/db-service=^1.0.0"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1"
+          npm pkg set "overrides.@cap-js/sqlite=^1"
+          npm pkg set "overrides.@cap-js/hana=^1"
+          npm pkg set "overrides.@cap-js/db-service=^1"
           cd tests/bookshop
-          npm pkg set "dependencies.@cap-js/hana=^1.0.0"
-          npm pkg set "dependencies.@cap-js/db-service=^1.0.0"
+          npm pkg set "dependencies.@cap-js/hana=^1"
+          npm pkg set "dependencies.@cap-js/db-service=^1"
           cd ../..
           cd tests/bookshop-mtx
-          npm pkg set "dependencies.@cap-js/hana=^1.0.0"
-          npm pkg set "dependencies.@cap-js/db-service=^1.0.0"
+          npm pkg set "dependencies.@cap-js/hana=^1"
+          npm pkg set "dependencies.@cap-js/db-service=^1"
           cd ../..
         fi
 
@@ -82,8 +79,8 @@ runs:
     - name: Install root dependencies
       shell: bash
       run: |
-        npm install @sap/cds@${{ inputs.CDS_VERSION }}
         npm install
+        npm install @sap/cds@${{ inputs.CDS_VERSION }}
     - name: Install bookshop dependencies
       shell: bash
       run: |
@@ -101,9 +98,9 @@ runs:
     - name: Set node env for CDS
       run: echo "CDS_VERSION=$(echo ${{ inputs.CDS_VERSION }} | tr . _)" >> $GITHUB_ENV
       shell: bash
-    - name: CDS Versions being used
-      run: cds v -i
-      shell: bash
+    # - name: CDS Versions being used
+    #   run: cds v -i
+    #   shell: bash
 
     # Deploy model to HANA
     - name: Create HDI Container
