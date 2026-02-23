@@ -95,3 +95,4 @@ jobs:
           CF_ORG: ${{ secrets['CF_ORG'] }}
           CF_SPACE: ${{ secrets['CF_SPACE'] }}
           NODE_VERSION: ${{ matrix.node-version }}
+          CDS_VERSION: ${{ matrix.cds-version }}
