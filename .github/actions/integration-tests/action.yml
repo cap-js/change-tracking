@@ -62,38 +62,40 @@ runs:
       run: |
         if [ "${{ inputs.CDS_VERSION }}" == "8" ]; then
           echo "Installing CDS 8 compatible packages..."
+          # Add @sap/cds as direct devDependency to anchor the version
+          # This prevents npm from resolving to v9 due to open-ended peer deps like ">=8"
+          npm pkg set "devDependencies.@sap/cds=^8.9.8"
           npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
+          # Root overrides enforce versions across the entire workspace
           npm pkg set "overrides.@cap-js/sqlite=^1.0.0"
           npm pkg set "overrides.@cap-js/hana=^1.0.0"
           npm pkg set "overrides.@cap-js/db-service=^1.0.0"
+          npm pkg set "overrides.@cap-js/postgres=^1.0.0"
+          npm pkg set "overrides.@sap/cds-mtxs=^2.0.0"
+          # Update workspace package dependencies to CDS 8 compatible versions
           cd tests/bookshop
           npm pkg set "dependencies.@cap-js/hana=^1.0.0"
-          npm pkg set "dependencies.@cap-js/db-service=^1.0.0"
+          npm pkg set "dependencies.@cap-js/postgres=^1.0.0"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
           cd ../..
           cd tests/bookshop-mtx
-          npm pkg set "dependencies.@cap-js/hana=^1.0.0"
-          npm pkg set "dependencies.@cap-js/db-service=^1.0.0"
+          npm pkg set "dependencies.@sap/cds-mtxs=^2.0.0"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
           cd ../..
         fi
 
     - name: Install global CDS
       shell: bash
-      run: npm i -g @sap/cds-dk@${{ inputs.CDS_VERSION }}
-    - name: Install root dependencies
+      run: npm i -g @sap/cds-dk@${​{ inputs.CDS_VERSION }}
+    - name: Install all dependencies
       shell: bash
       run: |
-        npm install @sap/cds@${{ inputs.CDS_VERSION }}
+        # Install from root - npm workspaces will handle all workspace packages
         npm install
-    - name: Install bookshop dependencies
-      shell: bash
-      run: |
-        cd tests/bookshop && npm install @sap/cds@${{ inputs.CDS_VERSION }}
-        npm install
-    - name: Install bookshop mtx dependencies
-      shell: bash
-      run: |
-        cd tests/bookshop-mtx && npm install @sap/cds@${{ inputs.CDS_VERSION }}
-        npm install
+        echo "=== Verifying @sap/cds version ==="
+        npm ls @sap/cds --depth=0
+        echo "=== Verifying @cap-js/postgres version ==="
+        npm ls @cap-js/postgres 2>/dev/null || echo "postgres not installed at root level"
       
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV
