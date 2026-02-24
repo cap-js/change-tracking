@@ -121,7 +121,7 @@ describe('Incidents Application Scenarios', () => {
 
 	it('supports entities with composite keys (multi-key entities)', async () => {
 		const GJAHR = 2024;
-		const BUKRS = 'TEST_' + Math.round(Math.random() * 100000).toString();
+		const BUKRS = 'TEST_' + Math.round(Math.random() * 10000000).toString();
 		
 		// Create entity with composite key
 		await POST(`odata/v4/processor/MultiKeyScenario`, {
@@ -152,7 +152,7 @@ describe('Incidents Application Scenarios', () => {
 
 describe('Non-ID key support', () => {
 	it('tracks changes on entities that use a non-ID primary key', async () => {
-		const ID = Math.round(Math.random() * 100000).toString();
+		const ID = Math.round(Math.random() * 10000000).toString();
 		await POST(`odata/v4/processor/BooksNotID`, {
 			NOT_ID: ID,
 			title: 'Inverter not functional'
@@ -175,8 +175,8 @@ describe('Non-ID key support', () => {
 	});
 
 	it('tracks creation of child entities with non-ID keys', async () => {
-		const ID = Math.round(Math.random() * 100000).toString();
-		const pageID = Math.round(Math.random() * 100000).toString();
+		const ID = Math.round(Math.random() * 10000000).toString();
+		const pageID = Math.round(Math.random() * 10000000).toString();
 		await POST(`odata/v4/processor/BooksNotID`, {
 			NOT_ID: ID,
 			title: 'Inverter not functional'
@@ -205,8 +205,8 @@ describe('Non-ID key support', () => {
 	});
 
 	it('tracks updates on child entities with non-ID keys', async () => {
-		const ID = Math.round(Math.random() * 100000).toString();
-		const pageID = Math.round(Math.random() * 100000).toString();
+		const ID = Math.round(Math.random() * 10000000).toString();
+		const pageID = Math.round(Math.random() * 10000000).toString();
 		await POST(`odata/v4/processor/BooksNotID`, {
 			NOT_ID: ID,
 			title: 'Inverter not functional',
@@ -236,8 +236,8 @@ describe('Non-ID key support', () => {
 	});
 
 	it('tracks deletion of child entities with non-ID keys', async () => {
-		const ID = Math.round(Math.random() * 100000).toString();
-		const pageID = Math.round(Math.random() * 100000).toString();
+		const ID = Math.round(Math.random() * 10000000).toString();
+		const pageID = Math.round(Math.random() * 10000000).toString();
 		await POST(`odata/v4/processor/BooksNotID`, {
 			NOT_ID: ID,
 			title: 'Inverter not functional',
@@ -250,7 +250,6 @@ describe('Non-ID key support', () => {
 
 		await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
-		const x = await SELECT.from('sap.changelog.ChangeView');//.where({ modification: 'delete' });
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
