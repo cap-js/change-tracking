@@ -6,6 +6,7 @@ namespace sap.change_tracking;
 entity DifferentFieldTypes {
   key ID        : UUID;
       title     : String @changelog;
+      largeText : LargeString @changelog;
       dateTime  : DateTime;
       timestamp : Timestamp;
       number    : Decimal;

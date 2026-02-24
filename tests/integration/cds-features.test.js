@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, GET } = cds.test(bookshop);
+const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
 
 describe('Special CDS Features', () => {
 	let log = cds.test.log();
@@ -236,6 +236,116 @@ describe('Special CDS Features', () => {
 
 		it.skip('excludes Vector fields from change tracking (requires HANA)', async () => {
 			// Vector type test is skipped as it requires HANA-specific setup
+		});
+	});
+
+	describe('Large string truncation', () => {
+		it.only('truncates strings larger than 5000 characters with ellipsis', async () => {
+			const testingSrv = await cds.connect.to('VariantTesting');
+			const recordID = cds.utils.uuid();
+
+			// Create a string with exactly 5001 characters (should be truncated)
+			const largeString = 'x'.repeat(5001);
+
+			await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
+				ID: recordID,
+				largeText: largeString
+			});
+
+			const changes = await testingSrv.run(
+				SELECT.from(testingSrv.entities.ChangeView).where({
+					entityKey: recordID,
+					attribute: 'largeText',
+					modification: 'create'
+				})
+			);
+
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedTo.length).toEqual(5000);
+			expect(changes[0].valueChangedTo).toEqual('x'.repeat(4997) + '...');
+		});
+
+		it('does not truncate strings with exactly 5000 characters', async () => {
+			const testingSrv = await cds.connect.to('VariantTesting');
+			const recordID = cds.utils.uuid();
+
+			// Create a string with exactly 5000 characters (should not be truncated)
+			const exactString = 'y'.repeat(5000);
+
+			await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
+				ID: recordID,
+				largeText: exactString
+			});
+
+			const changes = await testingSrv.run(
+				SELECT.from(testingSrv.entities.ChangeView).where({
+					entityKey: recordID,
+					attribute: 'largeText',
+					modification: 'create'
+				})
+			);
+
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedTo.length).toEqual(5000);
+			expect(changes[0].valueChangedTo).toEqual(exactString);
+		});
+
+		it('truncates both old and new values during update when they exceed 5000 characters', async () => {
+			const testingSrv = await cds.connect.to('VariantTesting');
+			const recordID = cds.utils.uuid();
+
+			const oldLargeString = 'a'.repeat(6000);
+			const newLargeString = 'b'.repeat(7000);
+
+			await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
+				ID: recordID,
+				largeText: oldLargeString
+			});
+
+			await PATCH(`/odata/v4/variant-testing/DifferentFieldTypes(ID=${recordID})`, {
+				largeText: newLargeString
+			});
+
+			const changes = await testingSrv.run(
+				SELECT.from(testingSrv.entities.ChangeView).where({
+					entityKey: recordID,
+					attribute: 'largeText',
+					modification: 'update'
+				})
+			);
+
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedFrom.length).toEqual(5000);
+			expect(changes[0].valueChangedFrom).toEqual('a'.repeat(4997) + '...');
+			expect(changes[0].valueChangedTo.length).toEqual(5000);
+			expect(changes[0].valueChangedTo).toEqual('b'.repeat(4997) + '...');
+		});
+
+		it('truncates string value during delete when it exceeds 5000 characters', async () => {
+			const testingSrv = await cds.connect.to('VariantTesting');
+			const recordID = cds.utils.uuid();
+
+			const largeString = 'z'.repeat(8000);
+
+			await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
+				ID: recordID,
+				largeText: largeString
+			});
+
+			await DELETE(`/odata/v4/variant-testing/DifferentFieldTypes(ID=${recordID})`);
+
+			const changes = await testingSrv.run(
+				SELECT.from(testingSrv.entities.ChangeView).where({
+					entityKey: recordID,
+					attribute: 'largeText',
+					modification: 'delete'
+				})
+			);
+
+			expect(changes.length).toEqual(1);
+			expect(changes[0].valueChangedFrom.length).toEqual(5000);
+			expect(changes[0].valueChangedFrom).toEqual('z'.repeat(4997) + '...');
+			expect(changes[0].valueChangedTo).toEqual(null);
 		});
 	});
 });

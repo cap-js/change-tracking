@@ -17,8 +17,8 @@
 		"lint": "npx eslint .",
 		"test": "npx jest --silent",
 		"test:sqlite": "CDS_ENV=sqlite npx jest --silent",
-		"test:postgres": "CDS_ENV=pg npx jest --runInBand --silent",
-		"test:hana": "cds bind --exec --profile hana -- npx jest --silent",
+		"test:postgres": "CDS_ENV=pg npx jest --silent",
+		"test:hana": "cds bind --exec -- npx jest --silent",
 		"test:all": "npm run test:sqlite && npm run test:postgres && npm run test:hana",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
