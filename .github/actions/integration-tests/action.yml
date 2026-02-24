@@ -86,7 +86,7 @@ runs:
 
     - name: Install global CDS
       shell: bash
-      run: npm i -g @sap/cds-dk@${​{ inputs.CDS_VERSION }}
+      run: npm i -g @sap/cds-dk@${{ inputs.CDS_VERSION }}
     - name: Install all dependencies
       shell: bash
       run: |
