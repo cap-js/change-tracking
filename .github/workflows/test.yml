@@ -11,51 +11,101 @@ on:
 jobs:
   requires-approval:
     runs-on: ubuntu-latest
-    name: "Waiting for PR approval as this workflow runs on pull_request_target"
+    name: Waiting for PR approval as this workflow runs on pull_request_target
     if: github.event_name == 'pull_request_target' && github.event.pull_request.base.user.login != 'cap-js'
     environment: pr-approval
     steps:
       - name: Approval Step
         run: echo "This job has been approved!"
-  test:
+
+  test-sqlite:
     runs-on: ubuntu-latest
     needs: requires-approval
     if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
+    name: SQLite Tests on Node.js ${{ matrix.node-version }} and CAP ${{ matrix.cds-version }}
     strategy:
       fail-fast: false
       matrix:
         node-version: [20.x, 22.x]
         cds-version: [latest, 8]
     steps:
-    - uses: actions/checkout@v5
-      with:
-        ref: ${{ github.event.pull_request.head.sha || github.sha }}
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
-    - run: npm i
-    - run: cd tests/bookshop && npm i
-    - run: cd tests/bookshop-mtx && npm i
-    - run: npm run test
-    
-  integration-tests:
-    runs-on: ubuntu-latest
-    needs: requires-approval
-    if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
-    name: Integration Tests on Node.js ${{ matrix['node-version'] }} and CAP ${{ matrix['cds-version'] }}
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: [20.x, 22.x]
-        cds-version: [latest, 8]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Integration tests
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
+      - run: npm i
+      - run: cd tests/bookshop && npm i
+      - run: cd tests/bookshop-mtx && npm i
+      - name: Run SQLite tests
+        run: npm run test
+
+  test-postgres:
+    runs-on: ubuntu-latest
+    needs: requires-approval
+    if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
+    name: PostgreSQL Tests on Node.js ${{ matrix.node-version }} and CAP ${{ matrix.cds-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 22.x]
+        cds-version: [latest, 8]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Set CDS 8 compatible dependencies
+        if: matrix.cds-version == 8
+        run: |
+          # Add @sap/cds as direct devDependency to anchor the version
+          npm pkg set "devDependencies.@sap/cds=^8.9.8"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
+          # Root overrides enforce versions across the entire workspace
+          npm pkg set "overrides.@cap-js/sqlite=^1.0.0"
+          npm pkg set "overrides.@cap-js/hana=^1.0.0"
+          npm pkg set "overrides.@cap-js/db-service=^1.0.0"
+          npm pkg set "overrides.@cap-js/postgres=^1.0.0"
+          npm pkg set "overrides.@sap/cds-mtxs=^2.0.0"
+          # Update workspace package dependencies
+          cd tests/bookshop
+          npm pkg set "dependencies.@cap-js/hana=^1.0.0"
+          npm pkg set "dependencies.@cap-js/postgres=^1.0.0"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
+          cd ../..
+          cd tests/bookshop-mtx
+          npm pkg set "dependencies.@sap/cds-mtxs=^2.0.0"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
+      - name: Start PostgreSQL
+        run: docker compose -f pg-stack.yml up -d --wait
+      - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
+      - run: npm i
+      - name: Deploy to PostgreSQL
+        run: cd tests/bookshop && npm run deploy:postgres
+      - name: Run PostgreSQL tests
+        run: npm run test:postgres
+
+  test-hana:
+    runs-on: ubuntu-latest
+    needs: requires-approval
+    if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
+    name: HANA Integration Tests on Node.js ${{ matrix.node-version }} and CAP ${{ matrix.cds-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 22.x]
+        cds-version: [latest, 8]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Run HANA integration tests
         uses: ./.github/actions/integration-tests
         with:
           CF_API: ${{ secrets['CF_API'] }}
@@ -64,3 +114,4 @@ jobs:
           CF_ORG: ${{ secrets['CF_ORG'] }}
           CF_SPACE: ${{ secrets['CF_SPACE'] }}
           NODE_VERSION: ${{ matrix.node-version }}
+          CDS_VERSION: ${{ matrix.cds-version }}

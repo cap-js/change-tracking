@@ -1,0 +1,21 @@
+requires:
+  db:
+    "[sqlite]":
+      kind: sqlite
+      credentials:
+        url: ":memory:"
+    "[pg]":
+      kind: postgres
+      credentials:
+        host: localhost
+        port: 5432
+        user: postgres
+        password: postgres
+        database: postgres
+      pool:
+        min: 0
+        max: 10
+        acquireTimeoutMillis: 1000
+        destroyTimeoutMillis: 1000
+    "[hana]":
+      kind: hana

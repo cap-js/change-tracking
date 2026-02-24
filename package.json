@@ -16,6 +16,7 @@
 	"scripts": {
 		"lint": "npx eslint .",
 		"test": "npx jest --silent",
+		"test:postgres": "CDS_ENV=pg npx jest --runInBand --silent",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
 	},
