@@ -61,12 +61,31 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Set CDS 8 compatible dependencies
+        if: matrix.cds-version == 8
+        run: |
+          # Add @sap/cds as direct devDependency to anchor the version
+          npm pkg set "devDependencies.@sap/cds=^8.9.8"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
+          # Root overrides enforce versions across the entire workspace
+          npm pkg set "overrides.@cap-js/sqlite=^1.0.0"
+          npm pkg set "overrides.@cap-js/hana=^1.0.0"
+          npm pkg set "overrides.@cap-js/db-service=^1.0.0"
+          npm pkg set "overrides.@cap-js/postgres=^1.0.0"
+          npm pkg set "overrides.@sap/cds-mtxs=^2.0.0"
+          # Update workspace package dependencies
+          cd tests/bookshop
+          npm pkg set "dependencies.@cap-js/hana=^1.0.0"
+          npm pkg set "dependencies.@cap-js/postgres=^1.0.0"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
+          cd ../..
+          cd tests/bookshop-mtx
+          npm pkg set "dependencies.@sap/cds-mtxs=^2.0.0"
+          npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
       - name: Start PostgreSQL
         run: docker compose -f pg-stack.yml up -d --wait
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
       - run: npm i
-      - run: cd tests/bookshop && npm i
-      - run: cd tests/bookshop-mtx && npm i
       - name: Deploy to PostgreSQL
         run: cd tests/bookshop && npm run deploy:postgres
       - name: Run PostgreSQL tests
