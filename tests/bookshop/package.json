@@ -6,7 +6,7 @@
 		"@cap-js/hana": "^2"
 	},
 	"devDependencies": {
-		"@cap-js/sqlite": "*"
+		"@cap-js/sqlite": "^1 || ^2"
 	},
 	"scripts": {
 		"watch:h2": "mvn spring-boot:run",
@@ -15,7 +15,7 @@
 		"watch:postgres": "cds watch --profile pg",
 		"deploy:hana": "cds deploy --to hana",
 		"deploy:postgres": "cds build --production && cds deploy --profile pg",
-		"start:pg": "docker compose -f pg.yml up -d"
+		"start:pg": "docker compose -f pg.yml up -d && npm run deploy:postgres"
 	},
 	"cds": {
 		"log": {

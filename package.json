@@ -17,8 +17,11 @@
 		"lint": "npx eslint .",
 		"test": "npx jest --silent",
 		"test:sqlite": "CDS_ENV=sqlite npx jest --silent",
-		"test:postgres": "CDS_ENV=pg npx jest --silent",
-		"test:hana": "cds bind --exec -- npx jest --silent",
+		"test:postgres": "npm run start:pg && CDS_ENV=pg npx jest --silent",
+		"test:hana": "npm run start:hana && cds bind --exec -- npx jest --silent",
+		"start:pg": "cd tests/bookshop/ && docker compose -f pg.yml up -d && npm run deploy:postgres && cd ../..",
+		"deploy:postgres": "cds build --production && cds deploy --profile pg",
+		"start:hana": "cd tests/bookshop/ && cds deploy -2 hana && cd ../..",
 		"test:all": "npm run test:sqlite && npm run test:postgres && npm run test:hana",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
@@ -30,11 +33,7 @@
 		"node": ">=20.0.0"
 	},
 	"devDependencies": {
-		"@cap-js/attachments": "^2",
-		"@cap-js/cds-test": "*",
-		"@cap-js/change-tracking": "file:.",
-		"@cap-js/sqlite": "^1 || ^2",
-		"express": "^4"
+		"@cap-js/cds-test": "*"
 	},
 	"cds": {
 		"requires": {
