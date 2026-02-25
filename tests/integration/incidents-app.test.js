@@ -60,7 +60,9 @@ describe('Incidents Application Scenarios', () => {
 
 		const {
 			data: { value: changes }
-		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`);
+		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+			headers: { 'Accept-Language': 'de' }
+		});
 		const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);;
 
 		expect(statusChange).toMatchObject({
