@@ -5,7 +5,9 @@ using { sap.capire.incidents as my } from '../db/schema';
  */
  @path: 'processor'
 service ProcessorService {
-  entity Incidents as projection on my.Incidents;
+  entity Incidents as projection on my.Incidents actions {
+    action setToDone() returns Incidents;
+  };
   entity Customers @readonly as projection on my.Customers;
   
   @odata.draft.enabled

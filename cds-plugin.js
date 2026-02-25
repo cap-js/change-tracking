@@ -7,8 +7,6 @@ const { fs } = cds.utils;
 const { isChangeTracked, getEntitiesForTriggerGeneration, getBaseEntity, analyzeCompositions } = require('./lib/utils/entity-collector.js');
 const { setSkipSessionVariables, resetSkipSessionVariables, resetAutoSkipForServiceEntity } = require('./lib/utils/session-variables.js');
 const { getLabelTranslations } = require('./lib/localization.js');
-// REVISIT
-const { isRoot, hasParent } = require('./lib/legacy/entity-processing.js');
 
 let hierarchyMap = new Map();
 let collectedEntities = new Map();
@@ -16,11 +14,29 @@ let collectedEntities = new Map();
 /**
  * Add side effects annotations for actions to refresh the changes association.
  */
-function addSideEffects(actions, isRootEntity, element) {
+function addSideEffects(actions, entityName, hierarchyMap, model) {
+	const isRootEntity = !hierarchyMap.has(entityName);
+
+	// If not a root entity, find the parent association name
+	let parentAssociationName = null;
+	if (!isRootEntity) {
+		const parentEntityName = hierarchyMap.get(entityName);
+		const parentEntity = model.definitions[parentEntityName];
+		if (parentEntity?.elements) {
+			// Find the composition element in the parent that points to this entity
+			for (const [elemName, elem] of Object.entries(parentEntity.elements)) {
+				if (elem.type === 'cds.Composition' && elem.target === entityName) {
+					parentAssociationName = elemName;
+					break;
+				}
+			}
+		}
+	}
+
 	for (const se of Object.values(actions)) {
 		const target = isRootEntity ? 'TargetProperties' : 'TargetEntities';
 		const sideEffectAttr = se[`@Common.SideEffects.${target}`];
-		const property = isRootEntity ? 'changes' : { '=': `${element}.changes` };
+		const property = isRootEntity ? 'changes' : { '=': `${parentAssociationName}.changes` };
 		if (sideEffectAttr?.length >= 0) {
 			sideEffectAttr.findIndex((item) => (item['='] ? item['='] : item) === (property['='] ? property['='] : property)) === -1 && sideEffectAttr.push(property);
 		} else {
@@ -190,16 +206,10 @@ function enhanceModel(m) {
 			}
 
 			if (entity.actions) {
-				const hasParentInfo = entity[hasParent];
-				const entityName = hasParentInfo?.entityName;
-				const parentEntity = entityName ? m.definitions[entityName] : null;
-				const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets'];
-				if (entity[isRoot] && entity['@UI.Facets']) {
-					// Add side effects for root entity
-					addSideEffects(entity.actions, true);
-				} else if (isParentRootAndHasFacets) {
-					// Add side effects for child entity
-					addSideEffects(entity.actions, false, hasParentInfo?.associationName);
+				const baseInfo = getBaseEntity(entity, m);
+				if (baseInfo) {
+					const { baseRef: dbEntityName } = baseInfo;
+					addSideEffects(entity.actions, dbEntityName, hierarchyMap, m);
 				}
 			}
 		}
