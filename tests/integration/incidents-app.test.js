@@ -65,7 +65,7 @@ describe('Incidents Application Scenarios', () => {
 
 		expect(statusChange).toMatchObject({
 			attributeLabel: 'Status',
-			modificationLabel: 'Update',
+			modificationLabel: 'Aktualisieren',
 			valueChangedFrom: 'N',
 			valueChangedFromLabel: 'Neu',
 			valueChangedTo: 'R',
