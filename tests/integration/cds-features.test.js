@@ -109,6 +109,32 @@ describe('Special CDS Features', () => {
 		//expect(changes[0].objectID).toEqual(`${lvl2ID}, Level2Sample title3, ${rootID}`);
 	});
 
+	it('Works for <as select from> views as well', async () => {
+		const { data: record } = await POST(`/odata/v4/variant-testing/SelectionView`, {
+				number: 1,
+				bool: true,
+				title: 'My test-record'
+			});
+
+			const {
+				data: { value: changes }
+			} = await GET(`/odata/v4/variant-testing/SelectionView(ID=${record.ID})/changes`);
+			const numberLog = changes.find((change) => change.attribute === 'number');
+
+			expect(numberLog).toBeTruthy();
+			expect(numberLog).toMatchObject({
+				entityKey: record.ID,
+				modification: 'create',
+				modificationLabel: 'Create',
+				objectID: 'My test-record',
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityLabel: 'Different field types',
+				rootEntity: null,
+				valueChangedFrom: null,
+				valueChangedTo: '1'
+			});
+	});
+
 	describe('localization', () => {
 		it.skip('logs warning when entity is not found in the model during localization', async () => {
 			const { Changes } = cds.entities('sap.changelog');
