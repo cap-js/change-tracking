@@ -4,7 +4,7 @@ const DEBUG = cds.debug('change-tracking');
 
 const { fs } = cds.utils;
 
-const { isChangeTracked, getEntitiesForTriggerGeneration, getBaseEntity, analyzeCompositions } = require('./lib/utils/entity-collector.js');
+const { isChangeTracked, getEntitiesForTriggerGeneration, getBaseEntity, analyzeCompositions, getService } = require('./lib/utils/entity-collector.js');
 const { setSkipSessionVariables, resetSkipSessionVariables, resetAutoSkipForServiceEntity } = require('./lib/utils/session-variables.js');
 const { getLabelTranslations } = require('./lib/localization.js');
 
@@ -149,7 +149,8 @@ function enhanceModel(m) {
 	for (let name in m.definitions) {
 		const entity = m.definitions[name];
 		const isServiceEntity = entity.kind === 'entity' && !!(entity.query || entity.projection);
-		if (isServiceEntity && isChangeTracked(entity)) {
+		const serviceName = getService(name, m)
+		if (isServiceEntity && isChangeTracked(entity) && serviceName) {
 			// Collect change-tracked service entity name with its underlying DB entity name
 			const baseInfo = getBaseEntity(entity, m);
 			if (!baseInfo) continue;
@@ -164,9 +165,47 @@ function enhanceModel(m) {
 				if (!keys.length) continue; // skip if no key attribute is defined
 
 				const onCondition = changes.on.flatMap((p) => (p?.ref && p.ref[0] === 'ID' ? keys : [p]));
-				const tableName = entity.projection?.from?.ref[0];
+				const tableName = (entity.projection ?? entity.query?.SELECT)?.from?.ref[0];
 				const on = _replaceTablePlaceholders(onCondition, tableName, hierarchyMap);
 				const assoc = new cds.builtin.classes.Association({ ...changes, on });
+				assoc.target = `${serviceName}.ChangeView`;
+				if (!m.definitions[`${serviceName}.ChangeView`]) {
+					m.definitions[`${serviceName}.ChangeView`] = structuredClone(m.definitions['sap.changelog.ChangeView'])
+					m.definitions[`${serviceName}.ChangeView`].query = {
+						SELECT: {
+							from: {
+								ref: ['sap.changelog.ChangeView']
+							}
+						}
+					}
+
+					for (const ele in m.definitions[`${serviceName}.ChangeView`].elements) {
+						if (
+							m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target &&
+							!m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target.startsWith(serviceName)
+						) {
+							const target = m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target;
+							const serviceEntity = Object.keys(m.definitions).filter(e => e.startsWith(serviceName)).find(e => {
+								let baseE = e;
+								while (baseE) {
+									if (baseE === target) {
+										return true;
+									}
+									const artefact = m.definitions[baseE];
+									const cqn = artefact.projection ?? artefact.query?.SELECT;
+									if (!cqn) {
+										return false
+									}
+									baseE = cqn.from?.ref?.[0];
+								}
+								return false;
+							});
+							if (serviceEntity) {
+								m.definitions[`${serviceName}.ChangeView`].elements[ele].target = serviceEntity;
+							}
+						}
+					}
+				}
 
 				DEBUG?.(
 					`\n
@@ -179,7 +218,6 @@ function enhanceModel(m) {
 				const query = entity.projection || entity.query?.SELECT;
 				if (query) {
 					(query.columns ??= ['*']).push({ as: 'changes', cast: assoc });
-				} else if (entity.elements) {
 					entity.elements.changes = assoc;
 				}
 
