@@ -21,6 +21,7 @@ entity aspect @(UI.Facets: [{
 
 
 // This is a helper view to flatten the assoc path to the entityKey
+// Locale fallback: tries exact locale first (e.g., en_GB), then base locale (e.g., en)
 @readonly
 @cds.autoexpose
 view ChangeView as select from Changes {
@@ -29,27 +30,47 @@ view ChangeView as select from Changes {
   COALESCE(
       (
         select text from i18nKeys where ID = Changes.attribute and locale = $user.locale
-      ), Changes.attribute
+      ),
+      (
+        select text from i18nKeys where ID = Changes.attribute and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+      ),
+      Changes.attribute
     ) as attributeLabel: String(5000) @title: '{i18n>Changes.attribute}',
   COALESCE(
       (
         select text from i18nKeys where ID = Changes.entity and locale = $user.locale
-      ), Changes.entity
+      ),
+      (
+        select text from i18nKeys where ID = Changes.entity and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+      ),
+      Changes.entity
     ) as entityLabel: String(5000) @title: '{i18n>Changes.entity}',
   COALESCE(
       (
         select text from i18nKeys where ID = Changes.modification and locale = $user.locale
-      ), Changes.modification
+      ),
+      (
+        select text from i18nKeys where ID = Changes.modification and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+      ),
+      Changes.modification
     ) as modificationLabel: String(5000) @title: '{i18n>Changes.modification}',
   COALESCE(
       (
         select text from i18nKeys where ID = Changes.objectID and locale = $user.locale
-      ), Changes.objectID
+      ),
+      (
+        select text from i18nKeys where ID = Changes.objectID and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+      ),
+      Changes.objectID
     ) as objectID: String(5000) @title: '{i18n>Changes.objectID}',
   COALESCE(
       (
         select text from i18nKeys where ID = Changes.rootObjectID and locale = $user.locale
-      ), Changes.rootObjectID
+      ),
+      (
+        select text from i18nKeys where ID = Changes.rootObjectID and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+      ),
+      Changes.rootObjectID
     ) as rootObjectID: String(5000) @title: '{i18n>Changes.rootObjectID}',
   COALESCE(Changes.valueChangedFromLabel, Changes.valueChangedFrom) as valueChangedFromLabel: String(5000) @title: '{i18n>Changes.valueChangedFrom}',
   COALESCE(Changes.valueChangedToLabel, Changes.valueChangedTo) as valueChangedToLabel: String(5000) @title: '{i18n>Changes.valueChangedTo}'

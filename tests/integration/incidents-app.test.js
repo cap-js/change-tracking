@@ -75,6 +75,35 @@ describe('Incidents Application Scenarios', () => {
 		});
 	});
 
+	it('falls back to base locale when specific locale is not available (en_GB -> en)', async () => {
+		const incidentID = await newIncident();
+		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+
+		await PATCH(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)`, {
+			status_code: 'R'
+		});
+
+		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+		// Request with en_GB locale - should fall back to en translations
+		const {
+			data: { value: changes }
+		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+			headers: { 'Accept-Language': 'en-GB' }
+		});
+		const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+
+		// Should get English translations (fallback from en_GB to en)
+		expect(statusChange).toMatchObject({
+			attributeLabel: 'Status',
+			modificationLabel: 'Update',
+			valueChangedFrom: 'N',
+			valueChangedFromLabel: 'New',
+			valueChangedTo: 'R',
+			valueChangedToLabel: 'Resolved'
+		});
+	});
+
 	//Draft mode uploading attachment
 	it('works correctly when entity uses attachments plugin', async () => {
 		const incidentID = await newIncident();
