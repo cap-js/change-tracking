@@ -21,7 +21,10 @@ entity aspect @(UI.Facets: [{
 
 
 // This is a helper view to flatten the assoc path to the entityKey
-// Locale fallback: tries exact locale first (e.g., en_GB), then base locale (e.g., en)
+// Locale fallback: tries exact locale first (e.g., en_GB), then falls back to 'en'
+// REVISIT: When dropping CDS 8 support, use base locale extraction instead of hardcoded 'en' fallback:
+//   substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+//   This would extract 'en' from 'en_GB', 'de' from 'de_DE', etc. (indexof was introduced in CDS 9)
 @readonly
 @cds.autoexpose
 view ChangeView as select from Changes {
@@ -32,7 +35,7 @@ view ChangeView as select from Changes {
         select text from i18nKeys where ID = Changes.attribute and locale = $user.locale
       ),
       (
-        select text from i18nKeys where ID = Changes.attribute and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+        select text from i18nKeys where ID = Changes.attribute and locale = 'en'
       ),
       Changes.attribute
     ) as attributeLabel: String(5000) @title: '{i18n>Changes.attribute}',
@@ -41,7 +44,7 @@ view ChangeView as select from Changes {
         select text from i18nKeys where ID = Changes.entity and locale = $user.locale
       ),
       (
-        select text from i18nKeys where ID = Changes.entity and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+        select text from i18nKeys where ID = Changes.entity and locale = 'en'
       ),
       Changes.entity
     ) as entityLabel: String(5000) @title: '{i18n>Changes.entity}',
@@ -50,7 +53,7 @@ view ChangeView as select from Changes {
         select text from i18nKeys where ID = Changes.modification and locale = $user.locale
       ),
       (
-        select text from i18nKeys where ID = Changes.modification and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+        select text from i18nKeys where ID = Changes.modification and locale = 'en'
       ),
       Changes.modification
     ) as modificationLabel: String(5000) @title: '{i18n>Changes.modification}',
@@ -59,7 +62,7 @@ view ChangeView as select from Changes {
         select text from i18nKeys where ID = Changes.objectID and locale = $user.locale
       ),
       (
-        select text from i18nKeys where ID = Changes.objectID and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+        select text from i18nKeys where ID = Changes.objectID and locale = 'en'
       ),
       Changes.objectID
     ) as objectID: String(5000) @title: '{i18n>Changes.objectID}',
@@ -68,7 +71,7 @@ view ChangeView as select from Changes {
         select text from i18nKeys where ID = Changes.rootObjectID and locale = $user.locale
       ),
       (
-        select text from i18nKeys where ID = Changes.rootObjectID and locale = substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+        select text from i18nKeys where ID = Changes.rootObjectID and locale = 'en'
       ),
       Changes.rootObjectID
     ) as rootObjectID: String(5000) @title: '{i18n>Changes.rootObjectID}',
