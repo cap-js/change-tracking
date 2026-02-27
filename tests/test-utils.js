@@ -23,7 +23,7 @@ function _collectEntities() {
 }
 
 async function _regenerateSQLiteTriggers(entityNames, allEntities, hierarchyMap) {
-	const { generateSQLiteTriggers } = require('../lib/trigger/sqlite.js');
+	const { generateSQLiteTrigger } = require('../lib/trigger/sqlite.js');
 
 	// Filter to specific entities if provided
 	const entities = entityNames
@@ -60,8 +60,10 @@ async function _regenerateSQLiteTriggers(entityNames, allEntities, hierarchyMap)
 		const rootMergedAnnotations = rootEntityName
 			? allEntities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations
 			: null;
-		const entityTriggers = generateSQLiteTriggers(entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
-		triggers.push(...entityTriggers);
+		const entityTriggers = generateSQLiteTrigger(cds.model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
+		if (entityTriggers) {
+			triggers.push(...(Array.isArray(entityTriggers) ? entityTriggers : [entityTriggers]));
+		}
 	}
 
 	await Promise.all(triggers.map(t => cds.db.run(t)));

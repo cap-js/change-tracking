@@ -125,7 +125,11 @@ function writeLabelsCSV(entities, model) {
 	const header = 'ID;locale;text';
 	const rows = labels.map(row => `${row.ID};${row.locale};${row.text}`);
 	const content = [header, ...rows].join('\n') + '\n';
-	fs.writeFileSync('db/data/sap.changelog-i18nKeys.csv', content);
+	const dir = 'db/data';
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
+	fs.writeFileSync(`${dir}/sap.changelog-i18nKeys.csv`, content);
 }
 
 function enhanceModel(m) {
@@ -280,23 +284,22 @@ cds.on('listening', () => {
 	});
 });
 
+// Fill i18nKeys table for in-memory SQLite
 cds.once('served', async () => {
-	const kind = cds.env.requires?.db?.kind;
-	if (kind !== 'sqlite') return;
+	const db = cds.env.requires?.db;
+	if (db?.kind !== 'sqlite') return;
 
-	const { generateSQLiteTriggers } = require('./lib/trigger/sqlite.js');
+	const { generateSQLiteTrigger } = require('./lib/trigger/sqlite.js');
 	const entities = getEntitiesForTriggerGeneration(cds.model.definitions, collectedEntities);
 
-	const triggers = generateTriggersForEntities(
-		cds.model,
-		hierarchyMap,
-		entities,
-		(_, entity, rootEntity, mergedAnnotations, rootMergedAnnotations) =>
-			generateSQLiteTriggers(entity, rootEntity, mergedAnnotations, rootMergedAnnotations)
-	);
+	const triggers = generateTriggersForEntities(cds.model, hierarchyMap, entities, generateSQLiteTrigger);
+	let deleteTriggers = triggers.map(t => t.match(/CREATE\s+TRIGGER\s+IF NOT EXISTS\s+(\w+)/i)).map(m => `DROP TRIGGER IF EXISTS ${m[1]};`);
 
 	const labels = getLabelTranslations(entities, cds.model);
 	const { i18nKeys } = cds.entities('sap.changelog');
+
+	// Delete existing triggers
+	await Promise.all(deleteTriggers.map(t => cds.db.run(t)));
 
 	await Promise.all([
 		...triggers.map(t => cds.db.run(t)),
@@ -306,25 +309,25 @@ cds.once('served', async () => {
 });
 
 /**
- * H2 Database Triggers via compile.to.sql
+ * H2 Database Triggers
  */
 const _sql_original = cds.compile.to.sql;
 cds.compile.to.sql = function (csn, options) {
 	let ret = _sql_original.call(this, csn, options);
-	if (options?.to !== 'h2') return ret;
+	const kind = options?.kind ?? options?.to;
+	if (kind !== 'h2') return ret;
 
-	const { generateH2Trigger } = require('./lib/trigger/h2.js');
 	const { runtimeCSN, hierarchy, entities } = prepareCSNForTriggers(csn, true);
-
-	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generateH2Trigger);
+	const { generateH2Triggers } = require('./lib/trigger/h2.js');
+	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generateH2Triggers);
 
 	if (triggers.length > 0) {
 		writeLabelsCSV(entities, runtimeCSN);
 	}
-
 	// Add semicolon at the end of each DDL statement if not already present
 	ret = ret.map(s => s.endsWith(';') ? s : s + ';');
-	return [...ret, ...triggers];
+	
+	return ret.concat(triggers);
 };
 Object.assign(cds.compile.to.sql, _sql_original);
 
