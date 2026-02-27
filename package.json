@@ -17,7 +17,7 @@
 		"lint": "npx eslint .",
 		"test": "npx jest --silent",
 		"test:sqlite": "CDS_ENV=sqlite npx jest --silent",
-		"test:postgres": "npm run start:pg && CDS_ENV=pg npx jest --silent",
+		"test:postgres": "CDS_ENV=pg npx jest --silent",
 		"test:hana": "npm run start:hana && cds bind --exec -- npx jest --silent",
 		"start:pg": "cd tests/bookshop/ && docker compose -f pg.yml up -d && npm run deploy:postgres && cd ../..",
 		"deploy:postgres": "cds build --production && cds deploy --profile pg",
