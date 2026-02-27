@@ -1,11 +1,19 @@
 const cds = require('@sap/cds');
-const { SELECT } = cds.ql;
+const { SELECT, UPDATE } = cds.ql;
 
 class ProcessorService extends cds.ApplicationService {
 	/** Registering custom event handlers */
 	init() {
 		this.before('UPDATE', 'Incidents', (req) => this.onUpdate(req));
 		this.before(['CREATE', 'UPDATE'], 'Incidents', (req) => this.changeUrgencyDueToSubject(req.data));
+		const { Incidents } = this.entities;
+
+		// Register for both active entity and draft entity
+		this.on('setToDone', Incidents, async (req) => {
+			const { ID } = req.params[0];
+			await UPDATE(Incidents).set({ status_code: 'C' }).where({ ID });
+		});
+
 		this.before('SAVE', 'Incidents', (req) => {
 			req.data.time = String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
 			req.data.date = new Date(req.data.date);

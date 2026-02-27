@@ -19,4 +19,7 @@ service VariantTesting {
   @changelog: false
   entity NotTrackedDifferentFieldTypes as projection on my.DifferentFieldTypes;
 
+
+  entity SelectionView as select from my.DifferentFieldTypes;
+
 }

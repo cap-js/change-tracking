@@ -20,14 +20,10 @@ namespace sap.capire.bookshop;
 @fiori.draft.enabled
 @title : '{i18n>bookStore.objectTitle}'
 entity BookStores @(cds.autoexpose) : managed, cuid {
-  @title : '{i18n>bookStore.name}'
-  name            : String;
-
-  @title : '{i18n>bookStore.location}'
-  location        : String;
-
+  name            : String @title : '{i18n>bookStore.name}';
+  location        : String @title : '{i18n>bookStore.location}';
   lifecycleStatus : LifecycleStatusCode;
-
+  
   @title : '{i18n>bookStore.city}'
   city            : Association to one City;
 
@@ -125,9 +121,7 @@ entity Report : cuid {
 }
 
 entity Order : cuid {
-  @title     : '{i18n>title}'
-  @changelog
-  title      : String;
+  title      : String @title : '{i18n>title}' @changelog;
   type       : Association to one OrderType;
   report     : Association to one Report;
   header     : Composition of one OrderHeader;
@@ -211,7 +205,7 @@ entity SecondEntity : managed, cuid {
   children : Association to one Children;
 }
 
-@changelog : [one_ID]
+@changelog : [one.ID]
 entity Children : managed {
   @changelog
   key one : Association to one FirstEntity;

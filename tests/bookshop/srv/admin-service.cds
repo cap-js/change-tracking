@@ -81,7 +81,7 @@ annotate AdminService.OrderItemNote with {
 
 annotate AdminService.Customers with {
   name    @changelog;
-  city    @changelog;
+  city    @changelog: false;  // Explicitly skip tracking for this element
   country @changelog;
   age     @changelog;
 }

@@ -89,13 +89,7 @@ runs:
       run: npm i -g @sap/cds-dk@${{ inputs.CDS_VERSION }}
     - name: Install all dependencies
       shell: bash
-      run: |
-        # Install from root - npm workspaces will handle all workspace packages
-        npm install
-        echo "=== Verifying @sap/cds version ==="
-        npm ls @sap/cds --depth=0
-        echo "=== Verifying @cap-js/postgres version ==="
-        npm ls @cap-js/postgres 2>/dev/null || echo "postgres not installed at root level"
+      run: npm install
       
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV

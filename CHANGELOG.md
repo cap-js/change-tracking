@@ -4,13 +4,40 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.1.5 - TBD
+## Version 2.0.0 - TBD
 
 ### Added
 
 ### Fixed
 
 ### Changed
+
+## Version 2.0.0-beta - 27.02.26
+
+### Added
+- Trigger generation for SQLite, HANA, Postgres and H2 to perform change tracking on a database level
+- Allow grouping of changes via new `transactionID` column
+- Added `valueChangedFromLabel` and `valueChangedToLabel` to `sap.changelog.Changes` for localized labels
+- Allow change tracking skip via session variables for entire transactions, entities, elements (`ct.skip`)
+
+### Fixed
+- Performance issues when working with entities that include a large number of fields and children
+- Creation of changelogs at bulk operations
+- Fixed search and sort functionality on the `ChangeView`
+- `LargeString` are truncated and don't lead to failing insert
+- Supports change tracking with every kind of update operation 
+
+### Changed
+- Switch from event handler registration to native database triggers for change capture mechanism
+- Removed table entity `sap.changelog.ChangeLog` and flattened into `sap.changelog.Changes`
+- Modifications on `sap.changelog.Changes`
+    - Removed `serviceEntityPath`, `keys` and foreign key `changeLog`
+    - Renamed `entityID` to `objectID`
+    - Renamed `parentEntityID` to `rootObjectID` and `parentKey` to `rootEntityKey`
+    - Added `entityKey`, `createdAt` and `createdBy` from deleted entity `sap.changelog.ChangeLog`
+    - Added `rootEntity` field 
+- Localization is performed on database level and therefore the table `sap.changelog.i18nKeys` that stores localized labels was added
+- Expose localized label fields on `sap.changelog.ChangeView`
 
 ## Version 1.1.4 - 03.12.25
 

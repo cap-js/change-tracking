@@ -1,0 +1,1297 @@
+ID;locale;text
+sap.capire.bookshop.BookStores;ar;Book Store
+sap.capire.bookshop.BookStores;bg;Book Store
+sap.capire.bookshop.BookStores;cs;Book Store
+sap.capire.bookshop.BookStores;da;Book Store
+sap.capire.bookshop.BookStores;de;Book Store
+sap.capire.bookshop.BookStores;el;Book Store
+sap.capire.bookshop.BookStores;en;Book Store
+sap.capire.bookshop.BookStores;en_US_saptrc;Book Store
+sap.capire.bookshop.BookStores;es;Book Store
+sap.capire.bookshop.BookStores;es_MX;Book Store
+sap.capire.bookshop.BookStores;fi;Book Store
+sap.capire.bookshop.BookStores;fr;Book Store
+sap.capire.bookshop.BookStores;he;Book Store
+sap.capire.bookshop.BookStores;hr;Book Store
+sap.capire.bookshop.BookStores;hu;Book Store
+sap.capire.bookshop.BookStores;it;Book Store
+sap.capire.bookshop.BookStores;ja;Book Store
+sap.capire.bookshop.BookStores;kk;Book Store
+sap.capire.bookshop.BookStores;ko;Book Store
+sap.capire.bookshop.BookStores;ms;Book Store
+sap.capire.bookshop.BookStores;nl;Book Store
+sap.capire.bookshop.BookStores;no;Book Store
+sap.capire.bookshop.BookStores;pl;Book Store
+sap.capire.bookshop.BookStores;pt;Book Store
+sap.capire.bookshop.BookStores;ro;Book Store
+sap.capire.bookshop.BookStores;ru;Book Store
+sap.capire.bookshop.BookStores;sh;Book Store
+sap.capire.bookshop.BookStores;sk;Book Store
+sap.capire.bookshop.BookStores;sl;Book Store
+sap.capire.bookshop.BookStores;sv;Book Store
+sap.capire.bookshop.BookStores;th;Book Store
+sap.capire.bookshop.BookStores;tr;Book Store
+sap.capire.bookshop.BookStores;uk;Book Store
+sap.capire.bookshop.BookStores;vi;Book Store
+sap.capire.bookshop.BookStores;zh_CN;Book Store
+sap.capire.bookshop.BookStores;zh_TW;Book Store
+name;ar;Book Store Name
+name;bg;Book Store Name
+name;cs;Book Store Name
+name;da;Book Store Name
+name;de;Book Store Name
+name;el;Book Store Name
+name;en;Book Store Name
+name;en_US_saptrc;Book Store Name
+name;es;Book Store Name
+name;es_MX;Book Store Name
+name;fi;Book Store Name
+name;fr;Book Store Name
+name;he;Book Store Name
+name;hr;Book Store Name
+name;hu;Book Store Name
+name;it;Book Store Name
+name;ja;Book Store Name
+name;kk;Book Store Name
+name;ko;Book Store Name
+name;ms;Book Store Name
+name;nl;Book Store Name
+name;no;Book Store Name
+name;pl;Book Store Name
+name;pt;Book Store Name
+name;ro;Book Store Name
+name;ru;Book Store Name
+name;sh;Book Store Name
+name;sk;Book Store Name
+name;sl;Book Store Name
+name;sv;Book Store Name
+name;th;Book Store Name
+name;tr;Book Store Name
+name;uk;Book Store Name
+name;vi;Book Store Name
+name;zh_CN;Book Store Name
+name;zh_TW;Book Store Name
+location;ar;Book Store Location
+location;bg;Book Store Location
+location;cs;Book Store Location
+location;da;Book Store Location
+location;de;Book Store Location
+location;el;Book Store Location
+location;en;Book Store Location
+location;en_US_saptrc;Book Store Location
+location;es;Book Store Location
+location;es_MX;Book Store Location
+location;fi;Book Store Location
+location;fr;Book Store Location
+location;he;Book Store Location
+location;hr;Book Store Location
+location;hu;Book Store Location
+location;it;Book Store Location
+location;ja;Book Store Location
+location;kk;Book Store Location
+location;ko;Book Store Location
+location;ms;Book Store Location
+location;nl;Book Store Location
+location;no;Book Store Location
+location;pl;Book Store Location
+location;pt;Book Store Location
+location;ro;Book Store Location
+location;ru;Book Store Location
+location;sh;Book Store Location
+location;sk;Book Store Location
+location;sl;Book Store Location
+location;sv;Book Store Location
+location;th;Book Store Location
+location;tr;Book Store Location
+location;uk;Book Store Location
+location;vi;Book Store Location
+location;zh_CN;Book Store Location
+location;zh_TW;Book Store Location
+city;ar;City
+city;bg;City
+city;cs;City
+city;da;City
+city;de;City
+city;el;City
+city;en;City
+city;en_US_saptrc;City
+city;es;City
+city;es_MX;City
+city;fi;City
+city;fr;City
+city;he;City
+city;hr;City
+city;hu;City
+city;it;City
+city;ja;City
+city;kk;City
+city;ko;City
+city;ms;City
+city;nl;City
+city;no;City
+city;pl;City
+city;pt;City
+city;ro;City
+city;ru;City
+city;sh;City
+city;sk;City
+city;sl;City
+city;sv;City
+city;th;City
+city;tr;City
+city;uk;City
+city;vi;City
+city;zh_CN;City
+city;zh_TW;City
+city_ID;ar;City
+city_ID;bg;City
+city_ID;cs;City
+city_ID;da;City
+city_ID;de;City
+city_ID;el;City
+city_ID;en;City
+city_ID;en_US_saptrc;City
+city_ID;es;City
+city_ID;es_MX;City
+city_ID;fi;City
+city_ID;fr;City
+city_ID;he;City
+city_ID;hr;City
+city_ID;hu;City
+city_ID;it;City
+city_ID;ja;City
+city_ID;kk;City
+city_ID;ko;City
+city_ID;ms;City
+city_ID;nl;City
+city_ID;no;City
+city_ID;pl;City
+city_ID;pt;City
+city_ID;ro;City
+city_ID;ru;City
+city_ID;sh;City
+city_ID;sk;City
+city_ID;sl;City
+city_ID;sv;City
+city_ID;th;City
+city_ID;tr;City
+city_ID;uk;City
+city_ID;vi;City
+city_ID;zh_CN;City
+city_ID;zh_TW;City
+books;ar;Books
+books;bg;Books
+books;cs;Books
+books;da;Books
+books;de;Books
+books;el;Books
+books;en;Books
+books;en_US_saptrc;Books
+books;es;Books
+books;es_MX;Books
+books;fi;Books
+books;fr;Books
+books;he;Books
+books;hr;Books
+books;hu;Books
+books;it;Books
+books;ja;Books
+books;kk;Books
+books;ko;Books
+books;ms;Books
+books;nl;Books
+books;no;Books
+books;pl;Books
+books;pt;Books
+books;ro;Books
+books;ru;Books
+books;sh;Books
+books;sk;Books
+books;sl;Books
+books;sv;Books
+books;th;Books
+books;tr;Books
+books;uk;Books
+books;vi;Books
+books;zh_CN;Books
+books;zh_TW;Books
+sap.capire.bookshop.Authors;ar;Author
+sap.capire.bookshop.Authors;bg;Author
+sap.capire.bookshop.Authors;cs;Author
+sap.capire.bookshop.Authors;da;Author
+sap.capire.bookshop.Authors;de;Author
+sap.capire.bookshop.Authors;el;Author
+sap.capire.bookshop.Authors;en;Author
+sap.capire.bookshop.Authors;en_US_saptrc;Author
+sap.capire.bookshop.Authors;es;Author
+sap.capire.bookshop.Authors;es_MX;Author
+sap.capire.bookshop.Authors;fi;Author
+sap.capire.bookshop.Authors;fr;Author
+sap.capire.bookshop.Authors;he;Author
+sap.capire.bookshop.Authors;hr;Author
+sap.capire.bookshop.Authors;hu;Author
+sap.capire.bookshop.Authors;it;Author
+sap.capire.bookshop.Authors;ja;Author
+sap.capire.bookshop.Authors;kk;Author
+sap.capire.bookshop.Authors;ko;Author
+sap.capire.bookshop.Authors;ms;Author
+sap.capire.bookshop.Authors;nl;Author
+sap.capire.bookshop.Authors;no;Author
+sap.capire.bookshop.Authors;pl;Author
+sap.capire.bookshop.Authors;pt;Author
+sap.capire.bookshop.Authors;ro;Author
+sap.capire.bookshop.Authors;ru;Author
+sap.capire.bookshop.Authors;sh;Author
+sap.capire.bookshop.Authors;sk;Author
+sap.capire.bookshop.Authors;sl;Author
+sap.capire.bookshop.Authors;sv;Author
+sap.capire.bookshop.Authors;th;Author
+sap.capire.bookshop.Authors;tr;Author
+sap.capire.bookshop.Authors;uk;Author
+sap.capire.bookshop.Authors;vi;Author
+sap.capire.bookshop.Authors;zh_CN;Author
+sap.capire.bookshop.Authors;zh_TW;Author
+name_firstName;ar;Name
+name_firstName;bg;Name
+name_firstName;cs;Name
+name_firstName;da;Name
+name_firstName;de;Name
+name_firstName;el;Name
+name_firstName;en;Name
+name_firstName;en_US_saptrc;Name
+name_firstName;es;Name
+name_firstName;es_MX;Name
+name_firstName;fi;Name
+name_firstName;fr;Name
+name_firstName;he;Name
+name_firstName;hr;Name
+name_firstName;hu;Name
+name_firstName;it;Name
+name_firstName;ja;Name
+name_firstName;kk;Name
+name_firstName;ko;Name
+name_firstName;ms;Name
+name_firstName;nl;Name
+name_firstName;no;Name
+name_firstName;pl;Name
+name_firstName;pt;Name
+name_firstName;ro;Name
+name_firstName;ru;Name
+name_firstName;sh;Name
+name_firstName;sk;Name
+name_firstName;sl;Name
+name_firstName;sv;Name
+name_firstName;th;Name
+name_firstName;tr;Name
+name_firstName;uk;Name
+name_firstName;vi;Name
+name_firstName;zh_CN;Name
+name_firstName;zh_TW;Name
+name_lastName;ar;Name
+name_lastName;bg;Name
+name_lastName;cs;Name
+name_lastName;da;Name
+name_lastName;de;Name
+name_lastName;el;Name
+name_lastName;en;Name
+name_lastName;en_US_saptrc;Name
+name_lastName;es;Name
+name_lastName;es_MX;Name
+name_lastName;fi;Name
+name_lastName;fr;Name
+name_lastName;he;Name
+name_lastName;hr;Name
+name_lastName;hu;Name
+name_lastName;it;Name
+name_lastName;ja;Name
+name_lastName;kk;Name
+name_lastName;ko;Name
+name_lastName;ms;Name
+name_lastName;nl;Name
+name_lastName;no;Name
+name_lastName;pl;Name
+name_lastName;pt;Name
+name_lastName;ro;Name
+name_lastName;ru;Name
+name_lastName;sh;Name
+name_lastName;sk;Name
+name_lastName;sl;Name
+name_lastName;sv;Name
+name_lastName;th;Name
+name_lastName;tr;Name
+name_lastName;uk;Name
+name_lastName;vi;Name
+name_lastName;zh_CN;Name
+name_lastName;zh_TW;Name
+placeOfBirth;ar;Place Of Birth
+placeOfBirth;bg;Place Of Birth
+placeOfBirth;cs;Place Of Birth
+placeOfBirth;da;Place Of Birth
+placeOfBirth;de;Place Of Birth
+placeOfBirth;el;Place Of Birth
+placeOfBirth;en;Place Of Birth
+placeOfBirth;en_US_saptrc;Place Of Birth
+placeOfBirth;es;Place Of Birth
+placeOfBirth;es_MX;Place Of Birth
+placeOfBirth;fi;Place Of Birth
+placeOfBirth;fr;Place Of Birth
+placeOfBirth;he;Place Of Birth
+placeOfBirth;hr;Place Of Birth
+placeOfBirth;hu;Place Of Birth
+placeOfBirth;it;Place Of Birth
+placeOfBirth;ja;Place Of Birth
+placeOfBirth;kk;Place Of Birth
+placeOfBirth;ko;Place Of Birth
+placeOfBirth;ms;Place Of Birth
+placeOfBirth;nl;Place Of Birth
+placeOfBirth;no;Place Of Birth
+placeOfBirth;pl;Place Of Birth
+placeOfBirth;pt;Place Of Birth
+placeOfBirth;ro;Place Of Birth
+placeOfBirth;ru;Place Of Birth
+placeOfBirth;sh;Place Of Birth
+placeOfBirth;sk;Place Of Birth
+placeOfBirth;sl;Place Of Birth
+placeOfBirth;sv;Place Of Birth
+placeOfBirth;th;Place Of Birth
+placeOfBirth;tr;Place Of Birth
+placeOfBirth;uk;Place Of Birth
+placeOfBirth;vi;Place Of Birth
+placeOfBirth;zh_CN;Place Of Birth
+placeOfBirth;zh_TW;Place Of Birth
+sap.capire.bookshop.OrderItemWithLongerName;ar;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;bg;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;cs;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;da;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;de;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;el;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;en;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;en_US_saptrc;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;es;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;es_MX;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;fi;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;fr;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;he;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;hr;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;hu;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;it;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;ja;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;kk;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;ko;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;ms;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;nl;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;no;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;pl;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;pt;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;ro;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;ru;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;sh;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;sk;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;sl;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;sv;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;th;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;tr;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;uk;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;vi;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;zh_CN;Order Item with longer name
+sap.capire.bookshop.OrderItemWithLongerName;zh_TW;Order Item with longer name
+sap.capire.bookshop.AuthorsWithLongerChangelog;ar;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;bg;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;cs;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;da;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;de;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;el;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;en;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;en_US_saptrc;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;es;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;es_MX;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;fi;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;fr;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;he;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;hr;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;hu;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;it;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;ja;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;kk;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;ko;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;ms;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;nl;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;no;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;pl;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;pt;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;ro;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;ru;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;sh;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;sk;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;sl;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;sv;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;th;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;tr;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;uk;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;vi;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;zh_CN;Author
+sap.capire.bookshop.AuthorsWithLongerChangelog;zh_TW;Author
+ActivationStatus;ar;Status
+ActivationStatus;bg;Status
+ActivationStatus;cs;Status
+ActivationStatus;da;Status
+ActivationStatus;de;Status
+ActivationStatus;el;Status
+ActivationStatus;en;Status
+ActivationStatus;en_US_saptrc;Status
+ActivationStatus;es;Status
+ActivationStatus;es_MX;Status
+ActivationStatus;fi;Status
+ActivationStatus;fr;Status
+ActivationStatus;he;Status
+ActivationStatus;hr;Status
+ActivationStatus;hu;Status
+ActivationStatus;it;Status
+ActivationStatus;ja;Status
+ActivationStatus;kk;Status
+ActivationStatus;ko;Status
+ActivationStatus;ms;Status
+ActivationStatus;nl;Status
+ActivationStatus;no;Status
+ActivationStatus;pl;Status
+ActivationStatus;pt;Status
+ActivationStatus;ro;Status
+ActivationStatus;ru;Status
+ActivationStatus;sh;Status
+ActivationStatus;sk;Status
+ActivationStatus;sl;Status
+ActivationStatus;sv;Status
+ActivationStatus;th;Status
+ActivationStatus;tr;Status
+ActivationStatus;uk;Status
+ActivationStatus;vi;Status
+ActivationStatus;zh_CN;Status
+ActivationStatus;zh_TW;Status
+ActivationStatus_code;ar;Status
+ActivationStatus_code;bg;Status
+ActivationStatus_code;cs;Status
+ActivationStatus_code;da;Status
+ActivationStatus_code;de;Status
+ActivationStatus_code;el;Status
+ActivationStatus_code;en;Status
+ActivationStatus_code;en_US_saptrc;Status
+ActivationStatus_code;es;Status
+ActivationStatus_code;es_MX;Status
+ActivationStatus_code;fi;Status
+ActivationStatus_code;fr;Status
+ActivationStatus_code;he;Status
+ActivationStatus_code;hr;Status
+ActivationStatus_code;hu;Status
+ActivationStatus_code;it;Status
+ActivationStatus_code;ja;Status
+ActivationStatus_code;kk;Status
+ActivationStatus_code;ko;Status
+ActivationStatus_code;ms;Status
+ActivationStatus_code;nl;Status
+ActivationStatus_code;no;Status
+ActivationStatus_code;pl;Status
+ActivationStatus_code;pt;Status
+ActivationStatus_code;ro;Status
+ActivationStatus_code;ru;Status
+ActivationStatus_code;sh;Status
+ActivationStatus_code;sk;Status
+ActivationStatus_code;sl;Status
+ActivationStatus_code;sv;Status
+ActivationStatus_code;th;Status
+ActivationStatus_code;tr;Status
+ActivationStatus_code;uk;Status
+ActivationStatus_code;vi;Status
+ActivationStatus_code;zh_CN;Status
+ActivationStatus_code;zh_TW;Status
+sap.capire.bookshop.Volumes;ar;Volumn
+sap.capire.bookshop.Volumes;bg;Volumn
+sap.capire.bookshop.Volumes;cs;Volumn
+sap.capire.bookshop.Volumes;da;Volumn
+sap.capire.bookshop.Volumes;de;Volumn
+sap.capire.bookshop.Volumes;el;Volumn
+sap.capire.bookshop.Volumes;en;Volumn
+sap.capire.bookshop.Volumes;en_US_saptrc;Volumn
+sap.capire.bookshop.Volumes;es;Volumn
+sap.capire.bookshop.Volumes;es_MX;Volumn
+sap.capire.bookshop.Volumes;fi;Volumn
+sap.capire.bookshop.Volumes;fr;Volumn
+sap.capire.bookshop.Volumes;he;Volumn
+sap.capire.bookshop.Volumes;hr;Volumn
+sap.capire.bookshop.Volumes;hu;Volumn
+sap.capire.bookshop.Volumes;it;Volumn
+sap.capire.bookshop.Volumes;ja;Volumn
+sap.capire.bookshop.Volumes;kk;Volumn
+sap.capire.bookshop.Volumes;ko;Volumn
+sap.capire.bookshop.Volumes;ms;Volumn
+sap.capire.bookshop.Volumes;nl;Volumn
+sap.capire.bookshop.Volumes;no;Volumn
+sap.capire.bookshop.Volumes;pl;Volumn
+sap.capire.bookshop.Volumes;pt;Volumn
+sap.capire.bookshop.Volumes;ro;Volumn
+sap.capire.bookshop.Volumes;ru;Volumn
+sap.capire.bookshop.Volumes;sh;Volumn
+sap.capire.bookshop.Volumes;sk;Volumn
+sap.capire.bookshop.Volumes;sl;Volumn
+sap.capire.bookshop.Volumes;sv;Volumn
+sap.capire.bookshop.Volumes;th;Volumn
+sap.capire.bookshop.Volumes;tr;Volumn
+sap.capire.bookshop.Volumes;uk;Volumn
+sap.capire.bookshop.Volumes;vi;Volumn
+sap.capire.bookshop.Volumes;zh_CN;Volumn
+sap.capire.bookshop.Volumes;zh_TW;Volumn
+title;ar;Task Title
+title;bg;Task Title
+title;cs;Task Title
+title;da;Task Title
+title;de;Task Title
+title;el;Task Title
+title;en;Task Title
+title;en_US_saptrc;Task Title
+title;es;Task Title
+title;es_MX;Task Title
+title;fi;Task Title
+title;fr;Task Title
+title;he;Task Title
+title;hr;Task Title
+title;hu;Task Title
+title;it;Task Title
+title;ja;Task Title
+title;kk;Task Title
+title;ko;Task Title
+title;ms;Task Title
+title;nl;Task Title
+title;no;Task Title
+title;pl;Task Title
+title;pt;Task Title
+title;ro;Task Title
+title;ru;Task Title
+title;sh;Task Title
+title;sk;Task Title
+title;sl;Task Title
+title;sv;Task Title
+title;th;Task Title
+title;tr;Task Title
+title;uk;Task Title
+title;vi;Task Title
+title;zh_CN;Task Title
+title;zh_TW;Task Title
+sequence;ar;Sequence
+sequence;bg;Sequence
+sequence;cs;Sequence
+sequence;da;Sequence
+sequence;de;Sequence
+sequence;el;Sequence
+sequence;en;Sequence
+sequence;en_US_saptrc;Sequence
+sequence;es;Sequence
+sequence;es_MX;Sequence
+sequence;fi;Sequence
+sequence;fr;Sequence
+sequence;he;Sequence
+sequence;hr;Sequence
+sequence;hu;Sequence
+sequence;it;Sequence
+sequence;ja;Sequence
+sequence;kk;Sequence
+sequence;ko;Sequence
+sequence;ms;Sequence
+sequence;nl;Sequence
+sequence;no;Sequence
+sequence;pl;Sequence
+sequence;pt;Sequence
+sequence;ro;Sequence
+sequence;ru;Sequence
+sequence;sh;Sequence
+sequence;sk;Sequence
+sequence;sl;Sequence
+sequence;sv;Sequence
+sequence;th;Sequence
+sequence;tr;Sequence
+sequence;uk;Sequence
+sequence;vi;Sequence
+sequence;zh_CN;Sequence
+sequence;zh_TW;Sequence
+sap.capire.bookshop.Books;ar;Book
+sap.capire.bookshop.Books;bg;Book
+sap.capire.bookshop.Books;cs;Book
+sap.capire.bookshop.Books;da;Book
+sap.capire.bookshop.Books;de;Book
+sap.capire.bookshop.Books;el;Book
+sap.capire.bookshop.Books;en;Book
+sap.capire.bookshop.Books;en_US_saptrc;Book
+sap.capire.bookshop.Books;es;Book
+sap.capire.bookshop.Books;es_MX;Book
+sap.capire.bookshop.Books;fi;Book
+sap.capire.bookshop.Books;fr;Book
+sap.capire.bookshop.Books;he;Book
+sap.capire.bookshop.Books;hr;Book
+sap.capire.bookshop.Books;hu;Book
+sap.capire.bookshop.Books;it;Book
+sap.capire.bookshop.Books;ja;Book
+sap.capire.bookshop.Books;kk;Book
+sap.capire.bookshop.Books;ko;Book
+sap.capire.bookshop.Books;ms;Book
+sap.capire.bookshop.Books;nl;Book
+sap.capire.bookshop.Books;no;Book
+sap.capire.bookshop.Books;pl;Book
+sap.capire.bookshop.Books;pt;Book
+sap.capire.bookshop.Books;ro;Book
+sap.capire.bookshop.Books;ru;Book
+sap.capire.bookshop.Books;sh;Book
+sap.capire.bookshop.Books;sk;Book
+sap.capire.bookshop.Books;sl;Book
+sap.capire.bookshop.Books;sv;Book
+sap.capire.bookshop.Books;th;Book
+sap.capire.bookshop.Books;tr;Book
+sap.capire.bookshop.Books;uk;Book
+sap.capire.bookshop.Books;vi;Book
+sap.capire.bookshop.Books;zh_CN;Book
+sap.capire.bookshop.Books;zh_TW;Book
+descr;ar;Description
+descr;bg;Description
+descr;cs;Description
+descr;da;Description
+descr;de;Description
+descr;el;Description
+descr;en;Description
+descr;en_US_saptrc;Description
+descr;es;Description
+descr;es_MX;Description
+descr;fi;Description
+descr;fr;Description
+descr;he;Description
+descr;hr;Description
+descr;hu;Description
+descr;it;Description
+descr;ja;Description
+descr;kk;Description
+descr;ko;Description
+descr;ms;Description
+descr;nl;Description
+descr;no;Description
+descr;pl;Description
+descr;pt;Description
+descr;ro;Description
+descr;ru;Description
+descr;sh;Description
+descr;sk;Description
+descr;sl;Description
+descr;sv;Description
+descr;th;Description
+descr;tr;Description
+descr;uk;Description
+descr;vi;Description
+descr;zh_CN;Description
+descr;zh_TW;Description
+genre;ar;Genres
+genre;bg;Genres
+genre;cs;Genres
+genre;da;Genres
+genre;de;Genres
+genre;el;Genres
+genre;en;Genres
+genre;en_US_saptrc;Genres
+genre;es;Genres
+genre;es_MX;Genres
+genre;fi;Genres
+genre;fr;Genres
+genre;he;Genres
+genre;hr;Genres
+genre;hu;Genres
+genre;it;Genres
+genre;ja;Genres
+genre;kk;Genres
+genre;ko;Genres
+genre;ms;Genres
+genre;nl;Genres
+genre;no;Genres
+genre;pl;Genres
+genre;pt;Genres
+genre;ro;Genres
+genre;ru;Genres
+genre;sh;Genres
+genre;sk;Genres
+genre;sl;Genres
+genre;sv;Genres
+genre;th;Genres
+genre;tr;Genres
+genre;uk;Genres
+genre;vi;Genres
+genre;zh_CN;Genres
+genre;zh_TW;Genres
+genre_ID;ar;Genres
+genre_ID;bg;Genres
+genre_ID;cs;Genres
+genre_ID;da;Genres
+genre_ID;de;Genres
+genre_ID;el;Genres
+genre_ID;en;Genres
+genre_ID;en_US_saptrc;Genres
+genre_ID;es;Genres
+genre_ID;es_MX;Genres
+genre_ID;fi;Genres
+genre_ID;fr;Genres
+genre_ID;he;Genres
+genre_ID;hr;Genres
+genre_ID;hu;Genres
+genre_ID;it;Genres
+genre_ID;ja;Genres
+genre_ID;kk;Genres
+genre_ID;ko;Genres
+genre_ID;ms;Genres
+genre_ID;nl;Genres
+genre_ID;no;Genres
+genre_ID;pl;Genres
+genre_ID;pt;Genres
+genre_ID;ro;Genres
+genre_ID;ru;Genres
+genre_ID;sh;Genres
+genre_ID;sk;Genres
+genre_ID;sl;Genres
+genre_ID;sv;Genres
+genre_ID;th;Genres
+genre_ID;tr;Genres
+genre_ID;uk;Genres
+genre_ID;vi;Genres
+genre_ID;zh_CN;Genres
+genre_ID;zh_TW;Genres
+bookType;ar;Book Types
+bookType;bg;Book Types
+bookType;cs;Book Types
+bookType;da;Book Types
+bookType;de;Book Types
+bookType;el;Book Types
+bookType;en;Book Types
+bookType;en_US_saptrc;Book Types
+bookType;es;Book Types
+bookType;es_MX;Book Types
+bookType;fi;Book Types
+bookType;fr;Book Types
+bookType;he;Book Types
+bookType;hr;Book Types
+bookType;hu;Book Types
+bookType;it;Book Types
+bookType;ja;Book Types
+bookType;kk;Book Types
+bookType;ko;Book Types
+bookType;ms;Book Types
+bookType;nl;Book Types
+bookType;no;Book Types
+bookType;pl;Book Types
+bookType;pt;Book Types
+bookType;ro;Book Types
+bookType;ru;Book Types
+bookType;sh;Book Types
+bookType;sk;Book Types
+bookType;sl;Book Types
+bookType;sv;Book Types
+bookType;th;Book Types
+bookType;tr;Book Types
+bookType;uk;Book Types
+bookType;vi;Book Types
+bookType;zh_CN;Book Types
+bookType;zh_TW;Book Types
+bookType_code;ar;Book Types
+bookType_code;bg;Book Types
+bookType_code;cs;Book Types
+bookType_code;da;Book Types
+bookType_code;de;Book Types
+bookType_code;el;Book Types
+bookType_code;en;Book Types
+bookType_code;en_US_saptrc;Book Types
+bookType_code;es;Book Types
+bookType_code;es_MX;Book Types
+bookType_code;fi;Book Types
+bookType_code;fr;Book Types
+bookType_code;he;Book Types
+bookType_code;hr;Book Types
+bookType_code;hu;Book Types
+bookType_code;it;Book Types
+bookType_code;ja;Book Types
+bookType_code;kk;Book Types
+bookType_code;ko;Book Types
+bookType_code;ms;Book Types
+bookType_code;nl;Book Types
+bookType_code;no;Book Types
+bookType_code;pl;Book Types
+bookType_code;pt;Book Types
+bookType_code;ro;Book Types
+bookType_code;ru;Book Types
+bookType_code;sh;Book Types
+bookType_code;sk;Book Types
+bookType_code;sl;Book Types
+bookType_code;sv;Book Types
+bookType_code;th;Book Types
+bookType_code;tr;Book Types
+bookType_code;uk;Book Types
+bookType_code;vi;Book Types
+bookType_code;zh_CN;Book Types
+bookType_code;zh_TW;Book Types
+sap.change_tracking.DifferentFieldTypes;ar;Different field types
+sap.change_tracking.DifferentFieldTypes;bg;Different field types
+sap.change_tracking.DifferentFieldTypes;cs;Different field types
+sap.change_tracking.DifferentFieldTypes;da;Different field types
+sap.change_tracking.DifferentFieldTypes;de;Different field types
+sap.change_tracking.DifferentFieldTypes;el;Different field types
+sap.change_tracking.DifferentFieldTypes;en;Different field types
+sap.change_tracking.DifferentFieldTypes;en_US_saptrc;Different field types
+sap.change_tracking.DifferentFieldTypes;es;Different field types
+sap.change_tracking.DifferentFieldTypes;es_MX;Different field types
+sap.change_tracking.DifferentFieldTypes;fi;Different field types
+sap.change_tracking.DifferentFieldTypes;fr;Different field types
+sap.change_tracking.DifferentFieldTypes;he;Different field types
+sap.change_tracking.DifferentFieldTypes;hr;Different field types
+sap.change_tracking.DifferentFieldTypes;hu;Different field types
+sap.change_tracking.DifferentFieldTypes;it;Different field types
+sap.change_tracking.DifferentFieldTypes;ja;Different field types
+sap.change_tracking.DifferentFieldTypes;kk;Different field types
+sap.change_tracking.DifferentFieldTypes;ko;Different field types
+sap.change_tracking.DifferentFieldTypes;ms;Different field types
+sap.change_tracking.DifferentFieldTypes;nl;Different field types
+sap.change_tracking.DifferentFieldTypes;no;Different field types
+sap.change_tracking.DifferentFieldTypes;pl;Different field types
+sap.change_tracking.DifferentFieldTypes;pt;Different field types
+sap.change_tracking.DifferentFieldTypes;ro;Different field types
+sap.change_tracking.DifferentFieldTypes;ru;Different field types
+sap.change_tracking.DifferentFieldTypes;sh;Different field types
+sap.change_tracking.DifferentFieldTypes;sk;Different field types
+sap.change_tracking.DifferentFieldTypes;sl;Different field types
+sap.change_tracking.DifferentFieldTypes;sv;Different field types
+sap.change_tracking.DifferentFieldTypes;th;Different field types
+sap.change_tracking.DifferentFieldTypes;tr;Different field types
+sap.change_tracking.DifferentFieldTypes;uk;Different field types
+sap.change_tracking.DifferentFieldTypes;vi;Different field types
+sap.change_tracking.DifferentFieldTypes;zh_CN;Different field types
+sap.change_tracking.DifferentFieldTypes;zh_TW;Different field types
+sap.change_tracking.TrackingComposition;ar;Book Store
+sap.change_tracking.TrackingComposition;bg;Book Store
+sap.change_tracking.TrackingComposition;cs;Book Store
+sap.change_tracking.TrackingComposition;da;Book Store
+sap.change_tracking.TrackingComposition;de;Book Store
+sap.change_tracking.TrackingComposition;el;Book Store
+sap.change_tracking.TrackingComposition;en;Book Store
+sap.change_tracking.TrackingComposition;en_US_saptrc;Book Store
+sap.change_tracking.TrackingComposition;es;Book Store
+sap.change_tracking.TrackingComposition;es_MX;Book Store
+sap.change_tracking.TrackingComposition;fi;Book Store
+sap.change_tracking.TrackingComposition;fr;Book Store
+sap.change_tracking.TrackingComposition;he;Book Store
+sap.change_tracking.TrackingComposition;hr;Book Store
+sap.change_tracking.TrackingComposition;hu;Book Store
+sap.change_tracking.TrackingComposition;it;Book Store
+sap.change_tracking.TrackingComposition;ja;Book Store
+sap.change_tracking.TrackingComposition;kk;Book Store
+sap.change_tracking.TrackingComposition;ko;Book Store
+sap.change_tracking.TrackingComposition;ms;Book Store
+sap.change_tracking.TrackingComposition;nl;Book Store
+sap.change_tracking.TrackingComposition;no;Book Store
+sap.change_tracking.TrackingComposition;pl;Book Store
+sap.change_tracking.TrackingComposition;pt;Book Store
+sap.change_tracking.TrackingComposition;ro;Book Store
+sap.change_tracking.TrackingComposition;ru;Book Store
+sap.change_tracking.TrackingComposition;sh;Book Store
+sap.change_tracking.TrackingComposition;sk;Book Store
+sap.change_tracking.TrackingComposition;sl;Book Store
+sap.change_tracking.TrackingComposition;sv;Book Store
+sap.change_tracking.TrackingComposition;th;Book Store
+sap.change_tracking.TrackingComposition;tr;Book Store
+sap.change_tracking.TrackingComposition;uk;Book Store
+sap.change_tracking.TrackingComposition;vi;Book Store
+sap.change_tracking.TrackingComposition;zh_CN;Book Store
+sap.change_tracking.TrackingComposition;zh_TW;Book Store
+sap.change_tracking.ComposedEntities;ar;Book
+sap.change_tracking.ComposedEntities;bg;Book
+sap.change_tracking.ComposedEntities;cs;Book
+sap.change_tracking.ComposedEntities;da;Book
+sap.change_tracking.ComposedEntities;de;Book
+sap.change_tracking.ComposedEntities;el;Book
+sap.change_tracking.ComposedEntities;en;Book
+sap.change_tracking.ComposedEntities;en_US_saptrc;Book
+sap.change_tracking.ComposedEntities;es;Book
+sap.change_tracking.ComposedEntities;es_MX;Book
+sap.change_tracking.ComposedEntities;fi;Book
+sap.change_tracking.ComposedEntities;fr;Book
+sap.change_tracking.ComposedEntities;he;Book
+sap.change_tracking.ComposedEntities;hr;Book
+sap.change_tracking.ComposedEntities;hu;Book
+sap.change_tracking.ComposedEntities;it;Book
+sap.change_tracking.ComposedEntities;ja;Book
+sap.change_tracking.ComposedEntities;kk;Book
+sap.change_tracking.ComposedEntities;ko;Book
+sap.change_tracking.ComposedEntities;ms;Book
+sap.change_tracking.ComposedEntities;nl;Book
+sap.change_tracking.ComposedEntities;no;Book
+sap.change_tracking.ComposedEntities;pl;Book
+sap.change_tracking.ComposedEntities;pt;Book
+sap.change_tracking.ComposedEntities;ro;Book
+sap.change_tracking.ComposedEntities;ru;Book
+sap.change_tracking.ComposedEntities;sh;Book
+sap.change_tracking.ComposedEntities;sk;Book
+sap.change_tracking.ComposedEntities;sl;Book
+sap.change_tracking.ComposedEntities;sv;Book
+sap.change_tracking.ComposedEntities;th;Book
+sap.change_tracking.ComposedEntities;tr;Book
+sap.change_tracking.ComposedEntities;uk;Book
+sap.change_tracking.ComposedEntities;vi;Book
+sap.change_tracking.ComposedEntities;zh_CN;Book
+sap.change_tracking.ComposedEntities;zh_TW;Book
+sap.capire.incidents.Incidents;ar;Support Incidents
+sap.capire.incidents.Incidents;bg;Support Incidents
+sap.capire.incidents.Incidents;cs;Support Incidents
+sap.capire.incidents.Incidents;da;Support Incidents
+sap.capire.incidents.Incidents;de;Support Incidents
+sap.capire.incidents.Incidents;el;Support Incidents
+sap.capire.incidents.Incidents;en;Support Incidents
+sap.capire.incidents.Incidents;en_US_saptrc;Support Incidents
+sap.capire.incidents.Incidents;es;Support Incidents
+sap.capire.incidents.Incidents;es_MX;Support Incidents
+sap.capire.incidents.Incidents;fi;Support Incidents
+sap.capire.incidents.Incidents;fr;Support Incidents
+sap.capire.incidents.Incidents;he;Support Incidents
+sap.capire.incidents.Incidents;hr;Support Incidents
+sap.capire.incidents.Incidents;hu;Support Incidents
+sap.capire.incidents.Incidents;it;Support Incidents
+sap.capire.incidents.Incidents;ja;Support Incidents
+sap.capire.incidents.Incidents;kk;Support Incidents
+sap.capire.incidents.Incidents;ko;Support Incidents
+sap.capire.incidents.Incidents;ms;Support Incidents
+sap.capire.incidents.Incidents;nl;Support Incidents
+sap.capire.incidents.Incidents;no;Support Incidents
+sap.capire.incidents.Incidents;pl;Support Incidents
+sap.capire.incidents.Incidents;pt;Support Incidents
+sap.capire.incidents.Incidents;ro;Support Incidents
+sap.capire.incidents.Incidents;ru;Support Incidents
+sap.capire.incidents.Incidents;sh;Support Incidents
+sap.capire.incidents.Incidents;sk;Support Incidents
+sap.capire.incidents.Incidents;sl;Support Incidents
+sap.capire.incidents.Incidents;sv;Support Incidents
+sap.capire.incidents.Incidents;th;Support Incidents
+sap.capire.incidents.Incidents;tr;Support Incidents
+sap.capire.incidents.Incidents;uk;Support Incidents
+sap.capire.incidents.Incidents;vi;Support Incidents
+sap.capire.incidents.Incidents;zh_CN;Support Incidents
+sap.capire.incidents.Incidents;zh_TW;Support Incidents
+status;ar;Status
+status;bg;Status
+status;cs;Status
+status;da;Status
+status;de;Status
+status;el;Status
+status;en;Status
+status;en_US_saptrc;Status
+status;es;Status
+status;es_MX;Status
+status;fi;Status
+status;fr;Status
+status;he;Status
+status;hr;Status
+status;hu;Status
+status;it;Status
+status;ja;Status
+status;kk;Status
+status;ko;Status
+status;ms;Status
+status;nl;Status
+status;no;Status
+status;pl;Status
+status;pt;Status
+status;ro;Status
+status;ru;Status
+status;sh;Status
+status;sk;Status
+status;sl;Status
+status;sv;Status
+status;th;Status
+status;tr;Status
+status;uk;Status
+status;vi;Status
+status;zh_CN;Status
+status;zh_TW;Status
+status_code;ar;Status
+status_code;bg;Status
+status_code;cs;Status
+status_code;da;Status
+status_code;de;Status
+status_code;el;Status
+status_code;en;Status
+status_code;en_US_saptrc;Status
+status_code;es;Status
+status_code;es_MX;Status
+status_code;fi;Status
+status_code;fr;Status
+status_code;he;Status
+status_code;hr;Status
+status_code;hu;Status
+status_code;it;Status
+status_code;ja;Status
+status_code;kk;Status
+status_code;ko;Status
+status_code;ms;Status
+status_code;nl;Status
+status_code;no;Status
+status_code;pl;Status
+status_code;pt;Status
+status_code;ro;Status
+status_code;ru;Status
+status_code;sh;Status
+status_code;sk;Status
+status_code;sl;Status
+status_code;sv;Status
+status_code;th;Status
+status_code;tr;Status
+status_code;uk;Status
+status_code;vi;Status
+status_code;zh_CN;Status
+status_code;zh_TW;Status
+sap.capire.bookshop.BookStoreRegistry;ar;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;bg;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;cs;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;da;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;de;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;el;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;en;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;en_US_saptrc;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;es;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;es_MX;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;fi;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;fr;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;he;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;hr;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;hu;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;it;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;ja;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;kk;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;ko;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;ms;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;nl;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;no;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;pl;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;pt;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;ro;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;ru;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;sh;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;sk;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;sl;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;sv;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;th;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;tr;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;uk;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;vi;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;zh_CN;Book Store Registry
+sap.capire.bookshop.BookStoreRegistry;zh_TW;Book Store Registry
+validOn;ar;Valid On
+validOn;bg;Valid On
+validOn;cs;Valid On
+validOn;da;Valid On
+validOn;de;Valid On
+validOn;el;Valid On
+validOn;en;Valid On
+validOn;en_US_saptrc;Valid On
+validOn;es;Valid On
+validOn;es_MX;Valid On
+validOn;fi;Valid On
+validOn;fr;Valid On
+validOn;he;Valid On
+validOn;hr;Valid On
+validOn;hu;Valid On
+validOn;it;Valid On
+validOn;ja;Valid On
+validOn;kk;Valid On
+validOn;ko;Valid On
+validOn;ms;Valid On
+validOn;nl;Valid On
+validOn;no;Valid On
+validOn;pl;Valid On
+validOn;pt;Valid On
+validOn;ro;Valid On
+validOn;ru;Valid On
+validOn;sh;Valid On
+validOn;sk;Valid On
+validOn;sl;Valid On
+validOn;sv;Valid On
+validOn;th;Valid On
+validOn;tr;Valid On
+validOn;uk;Valid On
+validOn;vi;Valid On
+validOn;zh_CN;Valid On
+validOn;zh_TW;Valid On
+country;ar;الدولة/المنطقة
+country;bg;Държава/регион
+country;cs;Stát/region
+country;da;Land/region
+country;de;Land/Region
+country;el;Χώρα/Περιοχή
+country;en;Country/Region
+country;en_US_saptrc;AbsSu8Y0n1nvBQMk+UaLfw_Country/Region
+country;es;País/Región
+country;es_MX;País/Región
+country;fi;Maa/alue
+country;fr;Pays/Région
+country;he;מדינה/אזור
+country;hr;Država/regija
+country;hu;Ország/régió
+country;it;Paese/regione
+country;ja;国/地域
+country;kk;Ел/аймақ
+country;ko;국가/지역
+country;ms;Negara/Wilayah
+country;nl;Land/regio
+country;no;Land/region
+country;pl;Kraj/region
+country;pt;País/região
+country;ro;Țară/regiune
+country;ru;Страна/регион
+country;sh;Zemlja/regija
+country;sk;Štát/región
+country;sl;Država/regija
+country;sv;Land/region
+country;th;ประเทศ/ภูมิภาค
+country;tr;Ülke/bölge
+country;uk;Країна/регіон
+country;vi;Quốc gia/Vùng
+country;zh_CN;国家/地区
+country;zh_TW;國家/地區
+country_code;ar;الدولة/المنطقة
+country_code;bg;Държава/регион
+country_code;cs;Stát/region
+country_code;da;Land/region
+country_code;de;Land/Region
+country_code;el;Χώρα/Περιοχή
+country_code;en;Country/Region
+country_code;en_US_saptrc;AbsSu8Y0n1nvBQMk+UaLfw_Country/Region
+country_code;es;País/Región
+country_code;es_MX;País/Región
+country_code;fi;Maa/alue
+country_code;fr;Pays/Région
+country_code;he;מדינה/אזור
+country_code;hr;Država/regija
+country_code;hu;Ország/régió
+country_code;it;Paese/regione
+country_code;ja;国/地域
+country_code;kk;Ел/аймақ
+country_code;ko;국가/지역
+country_code;ms;Negara/Wilayah
+country_code;nl;Land/regio
+country_code;no;Land/region
+country_code;pl;Kraj/region
+country_code;pt;País/região
+country_code;ro;Țară/regiune
+country_code;ru;Страна/регион
+country_code;sh;Zemlja/regija
+country_code;sk;Štát/región
+country_code;sl;Država/regija
+country_code;sv;Land/region
+country_code;th;ประเทศ/ภูมิภาค
+country_code;tr;Ülke/bölge
+country_code;uk;Країна/регіон
+country_code;vi;Quốc gia/Vùng
+country_code;zh_CN;国家/地区
+country_code;zh_TW;國家/地區
+create;ar;إنشاء
+update;ar;تحديث
+delete;ar;حذف
+create;bg;Създаване
+update;bg;Актуализация
+delete;bg;Изтриване
+create;cs;Vytvořit
+update;cs;Aktualizovat
+delete;cs;Odstranit
+create;da;Opret
+update;da;Opdater
+delete;da;Slet
+create;de;Anlegen
+update;de;Aktualisieren
+delete;de;Löschen
+create;el;Δημιουργία
+update;el;Ενημέρωση
+delete;el;Διαγραφή
+create;en;Create
+update;en;Update
+delete;en;Delete
+create;en_US_saptrc;HzvJkMkINr79zGGMJxCQhg_Create
+update;en_US_saptrc;Jy7YgwcIfJ78NVdC9GBHXg_Update
+delete;en_US_saptrc;6Vb15r75SwLYaAwPBAAlXA_Delete
+create;es;Crear
+update;es;Actualizar
+delete;es;Eliminar
+create;es_MX;Crear
+update;es_MX;Actualizar
+delete;es_MX;Eliminar
+create;fi;Luo
+update;fi;Päivitä
+delete;fi;Poista
+create;fr;Créer
+update;fr;Mettre à jour
+delete;fr;Supprimer
+create;he;צור
+update;he;עדכן
+delete;he;מחק
+create;hr;Stvori
+update;hr;Ažuriraj
+delete;hr;Izbriši
+create;hu;Létrehozás
+update;hu;Aktualizálás
+delete;hu;Törlés
+create;it;Crea
+update;it;Aggiorna
+delete;it;Elimina
+create;ja;作成
+update;ja;更新
+delete;ja;削除
+create;kk;Жасау
+update;kk;Жаңарту
+delete;kk;Жою
+create;ko;생성
+update;ko;업데이트
+delete;ko;삭제
+create;ms;Cipta
+update;ms;Kemas kini
+delete;ms;Padam
+create;nl;Creëren
+update;nl;Actualiseren
+delete;nl;Verwijderen
+create;no;Opprett
+update;no;Oppdater
+delete;no;Slett
+create;pl;Utwórz
+update;pl;Aktualizuj
+delete;pl;Usuń
+create;pt;Criar
+update;pt;Atualizar
+delete;pt;Excluir
+create;ro;Creare
+update;ro;Actualizare
+delete;ro;Ștergere
+create;ru;Создать
+update;ru;Обновить
+delete;ru;Удалить
+create;sh;Kreiraj
+update;sh;Ažuriraj
+delete;sh;Izbriši
+create;sk;Vytvoriť
+update;sk;Aktualizácia
+delete;sk;Odstrániť
+create;sl;Ustvari
+update;sl;Posodobi
+delete;sl;Izbriši
+create;sv;Skapa
+update;sv;Uppdatera
+delete;sv;Radera
+create;th;สร้าง
+update;th;อัพเดท
+delete;th;ลบ
+create;tr;Oluştur
+update;tr;Güncelle
+delete;tr;Sil
+create;uk;Створити
+update;uk;Оновити
+delete;uk;Видалити
+create;vi;Tạo
+update;vi;Cập nhật
+delete;vi;Xóa
+create;zh_CN;创建
+update;zh_CN;更新
+delete;zh_CN;删除
+create;zh_TW;建立
+update;zh_TW;更新
+delete;zh_TW;刪除

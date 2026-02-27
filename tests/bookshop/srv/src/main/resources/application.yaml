@@ -1,0 +1,25 @@
+
+---
+spring:
+  config.activate.on-profile: default
+  sql.init.platform: h2
+  sql.init.separator: ";;"
+cds:
+  data-source.auto-config.enabled: false
+  security:
+    # Match mock users with default node mock users
+    mock:
+      users:
+        - name: alice
+          tenant: t1
+          roles:
+            - admin
+            - support
+        - name: bob
+          tenant: t1
+          roles:
+            - builder
+
+# logging:
+#   level:
+#     com.sap.cds.persistence.sql: DEBUG

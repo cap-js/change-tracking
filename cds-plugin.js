@@ -1,158 +1,132 @@
 const cds = require('@sap/cds');
-const LOG = cds.log('changelog');
-const DEBUG = cds.debug('changelog');
+const LOG = cds.log('change-tracking');
+const DEBUG = cds.debug('change-tracking');
 
-const isRoot = 'change-tracking-isRootEntity';
-const hasParent = 'change-tracking-parentEntity';
+const { fs } = cds.utils;
 
-const isChangeTracked = (entity) => {
-	if (entity.query?.SET?.op === 'union') return false; // REVISIT: should that be an error or warning?
-	if (entity['@changelog'] === false) return false;
-	if (entity['@changelog']) return true;
-	if (Object.values(entity.elements).some((e) => e['@changelog'])) return true;
-	return false;
-};
+const { isChangeTracked, getEntitiesForTriggerGeneration, getBaseEntity, analyzeCompositions, getService } = require('./lib/utils/entity-collector.js');
+const { setSkipSessionVariables, resetSkipSessionVariables, resetAutoSkipForServiceEntity } = require('./lib/utils/session-variables.js');
+const { getLabelTranslations } = require('./lib/localization.js');
 
-// Add the appropriate Side Effects attribute to the custom action
-const addSideEffects = (actions, flag, element) => {
-	if (!flag && (element === undefined || element === null)) {
-		return;
+let hierarchyMap = new Map();
+let collectedEntities = new Map();
+
+/**
+ * Add side effects annotations for actions to refresh the changes association.
+ */
+function addSideEffects(actions, entityName, hierarchyMap, model) {
+	const isRootEntity = !hierarchyMap.has(entityName);
+
+	// If not a root entity, find the parent association name
+	let parentAssociationName = null;
+	if (!isRootEntity) {
+		const parentEntityName = hierarchyMap.get(entityName);
+		const parentEntity = model.definitions[parentEntityName];
+		if (parentEntity?.elements) {
+			// Find the composition element in the parent that points to this entity
+			for (const [elemName, elem] of Object.entries(parentEntity.elements)) {
+				if (elem.type === 'cds.Composition' && elem.target === entityName) {
+					parentAssociationName = elemName;
+					break;
+				}
+			}
+		}
 	}
 
 	for (const se of Object.values(actions)) {
-		const target = flag ? 'TargetProperties' : 'TargetEntities';
+		const target = isRootEntity ? 'TargetProperties' : 'TargetEntities';
 		const sideEffectAttr = se[`@Common.SideEffects.${target}`];
-		const property = flag ? 'changes' : { '=': `${element}.changes` };
+		const property = isRootEntity ? 'changes' : { '=': `${parentAssociationName}.changes` };
 		if (sideEffectAttr?.length >= 0) {
 			sideEffectAttr.findIndex((item) => (item['='] ? item['='] : item) === (property['='] ? property['='] : property)) === -1 && sideEffectAttr.push(property);
 		} else {
 			se[`@Common.SideEffects.${target}`] = [property];
 		}
 	}
-};
-
-function setChangeTrackingIsRootEntity(entity, csn, val = true) {
-	if (csn.definitions?.[entity.name]) {
-		csn.definitions[entity.name][isRoot] = val;
-	}
-}
-
-function checkAndSetRootEntity(parentEntity, entity, csn) {
-	if (entity[isRoot] === false) {
-		return entity;
-	}
-	if (parentEntity) {
-		return compositionRoot(parentEntity, csn);
-	} else {
-		setChangeTrackingIsRootEntity(entity, csn);
-		return { ...csn.definitions?.[entity.name], name: entity.name };
-	}
-}
-
-function processEntities(m) {
-	for (let name in m.definitions) {
-		compositionRoot({ ...m.definitions[name], name }, m);
-	}
-}
-
-function compositionRoot(entity, csn) {
-	if (!entity || entity.kind !== 'entity') {
-		return;
-	}
-	const parentEntity = compositionParent(entity, csn);
-	return checkAndSetRootEntity(parentEntity, entity, csn);
-}
-
-function compositionParent(entity, csn) {
-	if (!entity || entity.kind !== 'entity') {
-		return;
-	}
-	const parentAssociation = compositionParentAssociation(entity, csn);
-	return parentAssociation ?? null;
-}
-
-function compositionParentAssociation(entity, csn) {
-	if (!entity || entity.kind !== 'entity') {
-		return;
-	}
-	const elements = entity.elements ?? {};
-
-	// Add the change-tracking-isRootEntity attribute of the child entity
-	processCompositionElements(entity, csn, elements);
-
-	const hasChildFlag = entity[isRoot] !== false;
-	const hasParentEntity = entity[hasParent];
-
-	if (hasChildFlag || !hasParentEntity) {
-		// Find parent association of the entity
-		const parentAssociation = findParentAssociation(entity, csn, elements);
-		if (parentAssociation) {
-			const parentAssociationTarget = elements[parentAssociation]?.target;
-			if (hasChildFlag) setChangeTrackingIsRootEntity(entity, csn, false);
-			return {
-				...csn.definitions?.[parentAssociationTarget],
-				name: parentAssociationTarget
-			};
-		} else return;
-	}
-	return { ...csn.definitions?.[entity.name], name: entity.name };
-}
-
-function processCompositionElements(entity, csn, elements) {
-	for (const name in elements) {
-		const element = elements[name];
-		const target = element?.target;
-		const definition = csn.definitions?.[target];
-		if (element.type !== 'cds.Composition' || target === entity.name || !definition || definition[isRoot] === false) {
-			continue;
-		}
-		setChangeTrackingIsRootEntity({ ...definition, name: target }, csn, false);
-	}
-}
-
-function findParentAssociation(entity, csn, elements) {
-	return Object.keys(elements).find((name) => {
-		const element = elements[name];
-		const target = element?.target;
-		if (element.type === 'cds.Association' && target !== entity.name) {
-			const parentDefinition = csn.definitions?.[target] ?? {};
-			const parentElements = parentDefinition?.elements ?? {};
-			return !!Object.keys(parentElements).find((parentEntityName) => {
-				const parentElement = parentElements?.[parentEntityName] ?? {};
-				if (parentElement.type === 'cds.Composition') {
-					const isCompositionEntity = parentElement.target === entity.name;
-					// add parent information in the current entity
-					if (isCompositionEntity) {
-						csn.definitions[entity.name][hasParent] = {
-							associationName: name,
-							entityName: target
-						};
-					}
-					return isCompositionEntity;
-				}
-			});
-		}
-	});
 }
 
 /**
- * Returns an expression for the key of the given entity, which we can use as the right-hand-side of an ON condition.
+ * Returns a CQN expression for the composite key of an entity.
+ * Used for the ON condition when associating changes.
  */
 function entityKey4(entity) {
 	const xpr = [];
-	for (let k in entity.elements) {
+	for (const k in entity.elements) {
 		const e = entity.elements[k];
 		if (!e.key) continue;
-		if (xpr.length) xpr.push('||');
-		if (e.type === 'cds.Association') xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
-		else xpr.push({ ref: [k] });
+		if (xpr.length) {
+			xpr.push('||');
+			xpr.push({ val: '||' });
+			xpr.push('||');
+		}
+		if (e.type === 'cds.Association') {
+			xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
+		} else {
+			xpr.push({ ref: [k] });
+		}
 	}
 	return xpr;
 }
 
-const hasFacetForComp = (comp, facets) => facets.some((f) => f.Target === `${comp.name}/@UI.LineItem` || (f.Facets && hasFacetForComp(comp, f.Facets)));
+/**
+ * Replace ENTITY and ROOTENTITY placeholders in ON conditions.
+ */
+function _replaceTablePlaceholders(on, tableName, hierarchy) {
+	const rootEntityName = hierarchy.get(tableName) || tableName;
+	return on.map((part) => {
+		if (part?.val === 'ENTITY') return { ...part, val: tableName };
+		if (part?.val === 'ROOTENTITY') return { ...part, val: rootEntityName };
+		return part;
+	});
+}
 
-// Unfold @changelog annotations in loaded model
+/**
+ * Check if a facet already exists for the changes composition.
+ */
+function hasFacetForComp(comp, facets) {
+	return facets.some((f) => f.Target === `${comp.name}/@UI.LineItem` || (f.Facets && hasFacetForComp(comp, f.Facets)));
+}
+
+function prepareCSNForTriggers(csn, preserveSources = false) {
+	const clonedCSN = structuredClone(csn);
+	if (preserveSources) clonedCSN.$sources = csn.$sources;
+	const runtimeCSN = cds.compile.for.nodejs(clonedCSN);
+	if (preserveSources) runtimeCSN.$sources = csn.$sources;
+	const hierarchy = analyzeCompositions(runtimeCSN);
+	const entities = getEntitiesForTriggerGeneration(runtimeCSN.definitions, collectedEntities);
+	return { runtimeCSN, hierarchy, entities };
+}
+
+// Generate triggers for all collected entities using the provided generator function
+function generateTriggersForEntities(runtimeCSN, hierarchy, entities, generator) {
+	const triggers = [];
+	for (const { dbEntityName, mergedAnnotations } of entities) {
+		const entity = runtimeCSN.definitions[dbEntityName];
+		if (!entity) continue;
+		const rootEntityName = hierarchy.get(dbEntityName);
+		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
+		const rootMergedAnnotations = rootEntityName ? entities.find((d) => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
+		const result = generator(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
+		if (result) triggers.push(...(Array.isArray(result) ? result : [result]));
+	}
+	return triggers;
+}
+
+/**
+ * Write i18n labels CSV file for H2/HDI deployments.
+ */
+function writeLabelsCSV(entities, model) {
+	const labels = getLabelTranslations(entities, model);
+	const header = 'ID;locale;text';
+	const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
+	const content = [header, ...rows].join('\n') + '\n';
+	const dir = 'db/data';
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
+	fs.writeFileSync(`${dir}/sap.changelog-i18nKeys.csv`, content);
+}
+
 function enhanceModel(m) {
 	if (m.meta?.flavor !== 'inferred') {
 		// In MTX scenarios with extensibility the runtime model for deployed apps is not
@@ -170,40 +144,74 @@ function enhanceModel(m) {
 		'@UI.Facets': [facet],
 		elements: { changes }
 	} = aspect;
-	if (changes.on.length > 2) changes.on.pop(); // remove ID -> filled in below
 
-	processEntities(m); // REVISIT: why is that required ?!?
+	hierarchyMap = analyzeCompositions(m);
+	collectedEntities = new Map();
 
 	for (let name in m.definitions) {
 		const entity = m.definitions[name];
-		if (entity.kind === 'entity' && !entity['@cds.autoexposed'] && isChangeTracked(entity)) {
-			if (!entity['@changelog.disable_assoc']) {
-				// Add association to ChangeView...
-				const keys = entityKey4(entity);
-				if (!keys.length) continue; // If no key attribute is defined for the entity, the logic to add association to ChangeView should be skipped.
-				const assoc = new cds.builtin.classes.Association({ ...changes, on: [...changes.on, ...keys] });
+		const isServiceEntity = entity.kind === 'entity' && !!(entity.query || entity.projection);
+		const serviceName = getService(name, m);
+		if (isServiceEntity && isChangeTracked(entity) && serviceName) {
+			// Collect change-tracked service entity name with its underlying DB entity name
+			const baseInfo = getBaseEntity(entity, m);
+			if (!baseInfo) continue;
+			const { baseRef: dbEntityName } = baseInfo;
 
-				// --------------------------------------------------------------------
-				// PARKED: Add auto-exposed projection on ChangeView to service if applicable
-				// const namespace = name.match(/^(.*)\.[^.]+$/)[1]
-				// const service = m.definitions[namespace]
-				// if (service) {
-				//   const projection = {from:{ref:[assoc.target]}}
-				//   m.definitions[assoc.target = namespace + '.' + Changes] = {
-				//     '@cds.autoexposed':true, kind:'entity', projection
-				//   }
-				//   DEBUG?.(`\n
-				//     extend service ${namespace} with {
-				//       entity ${Changes} as projection on ${projection.from.ref[0]};
-				//     }
-				//   `.replace(/ {10}/g,''))
-				// }
-				// --------------------------------------------------------------------
+			if (!collectedEntities.has(dbEntityName)) collectedEntities.set(dbEntityName, []);
+			collectedEntities.get(dbEntityName).push(name);
+
+			if (!entity['@changelog.disable_assoc']) {
+				// Add association to ChangeView
+				const keys = entityKey4(entity);
+				if (!keys.length) continue; // skip if no key attribute is defined
+
+				const onCondition = changes.on.flatMap((p) => (p?.ref && p.ref[0] === 'ID' ? keys : [p]));
+				const tableName = (entity.projection ?? entity.query?.SELECT)?.from?.ref[0];
+				const on = _replaceTablePlaceholders(onCondition, tableName, hierarchyMap);
+				const assoc = new cds.builtin.classes.Association({ ...changes, on });
+				assoc.target = `${serviceName}.ChangeView`;
+				if (!m.definitions[`${serviceName}.ChangeView`]) {
+					m.definitions[`${serviceName}.ChangeView`] = structuredClone(m.definitions['sap.changelog.ChangeView']);
+					m.definitions[`${serviceName}.ChangeView`].query = {
+						SELECT: {
+							from: {
+								ref: ['sap.changelog.ChangeView']
+							}
+						}
+					};
+
+					for (const ele in m.definitions[`${serviceName}.ChangeView`].elements) {
+						if (m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target && !m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target.startsWith(serviceName)) {
+							const target = m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target;
+							const serviceEntity = Object.keys(m.definitions)
+								.filter((e) => e.startsWith(serviceName))
+								.find((e) => {
+									let baseE = e;
+									while (baseE) {
+										if (baseE === target) {
+											return true;
+										}
+										const artefact = m.definitions[baseE];
+										const cqn = artefact.projection ?? artefact.query?.SELECT;
+										if (!cqn) {
+											return false;
+										}
+										baseE = cqn.from?.ref?.[0];
+									}
+									return false;
+								});
+							if (serviceEntity) {
+								m.definitions[`${serviceName}.ChangeView`].elements[ele].target = serviceEntity;
+							}
+						}
+					}
+				}
 
 				DEBUG?.(
 					`\n
           extend ${name} with {
-            changes : Association to many ${assoc.target} on ${assoc.on.map((x) => x.ref?.join('.') || x).join(' ')};
+            changes : Association to many ${assoc.target} on ${assoc.on.map((x) => x.ref?.join('.') || x.val || x).join(' ')};
           }
         `.replace(/ {8}/g, '')
 				);
@@ -211,7 +219,6 @@ function enhanceModel(m) {
 				const query = entity.projection || entity.query?.SELECT;
 				if (query) {
 					(query.columns ??= ['*']).push({ as: 'changes', cast: assoc });
-				} else if (entity.elements) {
 					entity.elements.changes = assoc;
 				}
 
@@ -238,16 +245,10 @@ function enhanceModel(m) {
 			}
 
 			if (entity.actions) {
-				const hasParentInfo = entity[hasParent];
-				const entityName = hasParentInfo?.entityName;
-				const parentEntity = entityName ? m.definitions[entityName] : null;
-				const isParentRootAndHasFacets = parentEntity?.[isRoot] && parentEntity?.['@UI.Facets'];
-				if (entity[isRoot] && entity['@UI.Facets']) {
-					// Add side effects for root entity
-					addSideEffects(entity.actions, true);
-				} else if (isParentRootAndHasFacets) {
-					// Add side effects for child entity
-					addSideEffects(entity.actions, false, hasParentInfo?.associationName);
+				const baseInfo = getBaseEntity(entity, m);
+				if (baseInfo) {
+					const { baseRef: dbEntityName } = baseInfo;
+					addSideEffects(entity.actions, dbEntityName, hierarchyMap, m);
 				}
 			}
 		}
@@ -255,38 +256,114 @@ function enhanceModel(m) {
 	(m.meta ??= {})[_enhanced] = true;
 }
 
-// Add generic change tracking handlers
-function addGenericHandlers() {
-	const { track_changes, _afterReadChangeView } = require('./lib/change-log');
-	for (const srv of cds.services) {
-		if (srv instanceof cds.ApplicationService) {
-			let any = false;
-			for (const entity of Object.values(srv.entities)) {
-				if (isChangeTracked(entity)) {
-					cds.db.before('CREATE', entity, track_changes);
-					cds.db.before('UPDATE', entity, track_changes);
-					cds.db.before('DELETE', entity, track_changes);
-					any = true;
-				}
-			}
-			if (any && srv.entities.ChangeView) {
-				srv.after('READ', srv.entities.ChangeView, _afterReadChangeView);
-			}
-		}
-	}
-}
+cds.on('loaded', enhanceModel);
 
-// Register plugin hooks
-cds.on('compile.for.runtime', (csn) => {
-	DEBUG?.('on', 'compile.for.runtime');
-	enhanceModel(csn);
+cds.on('listening', () => {
+	cds.db.before(['INSERT', 'UPDATE', 'DELETE'], async (req) => {
+		if (!req.target || req.target.name.endsWith('.drafts')) return;
+		const srv = req.target._service;
+		if (!srv) return;
+		setSkipSessionVariables(req, srv, collectedEntities);
+	});
+
+	cds.db.after(['INSERT', 'UPDATE', 'DELETE'], async (_, req) => {
+		if (!req.target || req.target.name.endsWith('.drafts')) return;
+
+		// Reset auto-skip variable if it was set
+		if (req._ctAutoSkipEntity) {
+			resetAutoSkipForServiceEntity(req, req._ctAutoSkipEntity);
+			delete req._ctAutoSkipEntity;
+			return;
+		}
+
+		if (!isChangeTracked(req.target)) return;
+		resetSkipSessionVariables(req);
+	});
 });
-cds.on('compile.to.edmx', (csn) => {
-	DEBUG?.('on', 'compile.to.edmx');
-	enhanceModel(csn);
+
+// Fill i18nKeys table for in-memory SQLite
+cds.once('served', async () => {
+	const db = cds.env.requires?.db;
+	if (db?.kind !== 'sqlite') return;
+
+	const { generateSQLiteTrigger } = require('./lib/trigger/sqlite.js');
+	const entities = getEntitiesForTriggerGeneration(cds.model.definitions, collectedEntities);
+
+	const triggers = generateTriggersForEntities(cds.model, hierarchyMap, entities, generateSQLiteTrigger);
+	let deleteTriggers = triggers.map((t) => t.match(/CREATE\s+TRIGGER\s+IF NOT EXISTS\s+(\w+)/i)).map((m) => `DROP TRIGGER IF EXISTS ${m[1]};`);
+
+	const labels = getLabelTranslations(entities, cds.model);
+	const { i18nKeys } = cds.entities('sap.changelog');
+
+	// Delete existing triggers
+	await Promise.all(deleteTriggers.map((t) => cds.db.run(t)));
+
+	await Promise.all([...triggers.map((t) => cds.db.run(t)), cds.delete(i18nKeys), cds.insert(labels).into(i18nKeys)]);
 });
-cds.on('compile.to.dbx', (csn) => {
-	DEBUG?.('on', 'compile.to.dbx');
-	enhanceModel(csn);
+
+/**
+ * H2 Database Triggers
+ */
+const _sql_original = cds.compile.to.sql;
+cds.compile.to.sql = function (csn, options) {
+	let ret = _sql_original.call(this, csn, options);
+	const kind = options?.kind ?? options?.to;
+	if (kind !== 'h2') return ret;
+
+	const { runtimeCSN, hierarchy, entities } = prepareCSNForTriggers(csn, true);
+	const { generateH2Triggers } = require('./lib/trigger/h2.js');
+	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generateH2Triggers);
+
+	if (triggers.length > 0) {
+		writeLabelsCSV(entities, runtimeCSN);
+	}
+	// Add semicolon at the end of each DDL statement if not already present
+	ret = ret.map((s) => (s.endsWith(';') ? s : s + ';'));
+
+	return ret.concat(triggers);
+};
+Object.assign(cds.compile.to.sql, _sql_original);
+
+/**
+ * PostgreSQL Triggers via compile.to.dbx
+ */
+cds.on('compile.to.dbx', (csn, options, next) => {
+	const ddl = next();
+	if (options?.dialect !== 'postgres') return ddl;
+
+	const { generatePostgresTriggers } = require('./lib/trigger/postgres.js');
+	const { runtimeCSN, hierarchy, entities } = prepareCSNForTriggers(csn);
+
+	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generatePostgresTriggers);
+
+	if (triggers.length === 0) return ddl;
+
+	// Handle standard compilation (array) or delta compilation (object with createsAndAlters/drops)
+	if (Array.isArray(ddl)) {
+		return [...ddl, ...triggers];
+	} else if (ddl.createsAndAlters) {
+		ddl.createsAndAlters.push(...triggers);
+		return ddl;
+	}
+
+	return ddl;
 });
-cds.on('served', addGenericHandlers);
+
+/**
+ * HANA HDI Triggers via compiler.to.hdi.migration
+ */
+const _hdi_migration = cds.compiler.to.hdi.migration;
+cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
+	const { generateHANATriggers } = require('./lib/trigger/hdi.js');
+	const { runtimeCSN, hierarchy, entities } = prepareCSNForTriggers(csn, true);
+
+	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generateHANATriggers);
+
+	if (triggers.length > 0) {
+		writeLabelsCSV(entities, runtimeCSN);
+	}
+
+	const ret = _hdi_migration(csn, options, beforeImage);
+	ret.definitions = [...ret.definitions, ...triggers];
+	return ret;
+};

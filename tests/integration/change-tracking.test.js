@@ -3,8 +3,8 @@ const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
 
 describe('change log generation', () => {
-	describe('Root entity tracking', () => {
-		it('Creation - should log basic data type changes', async () => {
+	describe('Basic CRUD operations', () => {
+		it('logs field values when creating a new record', async () => {
 			const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
 				number: 1,
 				bool: true,
@@ -14,31 +14,37 @@ describe('change log generation', () => {
 			const {
 				data: { value: changes }
 			} = await GET(`/odata/v4/variant-testing/DifferentFieldTypes(ID=${record.ID})/changes`);
-			const numberLog = changes.sort((a, b) => a.valueChangedTo - b.valueChangedTo).find((change) => change.attribute === 'number');
+			const numberLog = changes.find((change) => change.attribute === 'number');
 			const boolLog = changes.find((change) => change.attribute === 'bool');
 
 			expect(numberLog).toBeTruthy();
-			expect(numberLog.entityKey).toEqual(record.ID);
-			expect(numberLog.modification).toEqual('Create');
-			expect(numberLog.objectID).toEqual('My test-record');
-			expect(numberLog.entity).toEqual('Different field types');
-			expect(!numberLog.parentObjectID).toBeTruthy();
-			expect(!numberLog.parentKey).toBeTruthy();
-			expect(numberLog.valueChangedFrom).toEqual('');
-			expect(numberLog.valueChangedTo).toEqual('1');
+			expect(numberLog).toMatchObject({
+				entityKey: record.ID,
+				modification: 'create',
+				modificationLabel: 'Create',
+				objectID: 'My test-record',
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityLabel: 'Different field types',
+				rootEntity: null,
+				valueChangedFrom: null,
+				valueChangedTo: '1'
+			});
 
 			expect(boolLog).toBeTruthy();
-			expect(boolLog.entityKey).toEqual(record.ID);
-			expect(boolLog.modification).toEqual('Create');
-			expect(boolLog.objectID).toEqual('My test-record');
-			expect(boolLog.entity).toEqual('Different field types');
-			expect(!boolLog.parentObjectID).toBeTruthy();
-			expect(!boolLog.parentKey).toBeTruthy();
-			expect(boolLog.valueChangedFrom).toEqual('');
-			expect(boolLog.valueChangedTo).toEqual('true');
+			expect(boolLog).toMatchObject({
+				entityKey: record.ID,
+				modification: 'create',
+				modificationLabel: 'Create',
+				objectID: 'My test-record',
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityLabel: 'Different field types',
+				rootEntity: null,
+				valueChangedFrom: null,
+				valueChangedTo: 'true'
+			});
 		});
 
-		it('Update - should log basic data type changes', async () => {
+		it('logs old and new values when updating a record', async () => {
 			const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
 				number: 1,
 				title: 'My test-record'
@@ -51,21 +57,24 @@ describe('change log generation', () => {
 				data: { value: changes }
 			} = await GET(`/odata/v4/variant-testing/DifferentFieldTypes(ID=${record.ID})/changes?$filter=modification eq 'update'`);
 			expect(changes.length).toEqual(1);
-
-			const change = changes[0];
-			expect(change.attribute).toEqual('bool');
-			expect(change.entityKey).toEqual(record.ID);
-			expect(change.modification).toEqual('Update');
-			expect(change.objectID).toEqual('My test-record');
-			expect(change.entity).toEqual('Different field types');
-			expect(!change.parentObjectID).toBeTruthy();
-			expect(!change.parentKey).toBeTruthy();
-			expect(change.valueChangedFrom).toEqual('');
-			expect(change.valueChangedTo).toEqual('true');
+			expect(changes[0]).toMatchObject({
+				attribute: 'bool',
+				entityKey: record.ID,
+				modification: 'update',
+				modificationLabel: 'Update',
+				objectID: 'My test-record',
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityLabel: 'Different field types',
+				rootEntity: null,
+				valueChangedFrom: null,
+				valueChangedTo: 'true'
+			});
 		});
 
-		it('Delete - should delete related changes', async () => {
+		it('logs field values when deleting a record', async () => {
 			const testingSRV = await cds.connect.to('VariantTesting');
+			const { ChangeView } = testingSRV.entities;
+
 			const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
 				number: 1,
 				bool: true
@@ -78,13 +87,14 @@ describe('change log generation', () => {
 
 			await DELETE(`/odata/v4/variant-testing/DifferentFieldTypes(ID=${record.ID})`);
 
-			const afterChanges = await SELECT.from(testingSRV.entities.ChangeView).where({ entityKey: record.ID });
-			expect(afterChanges.length).toEqual(0);
+			const afterChanges = await SELECT.from(ChangeView).where({ entityKey: record.ID, modification: 'delete' });
+			expect(afterChanges.length).toEqual(2);
 		});
 
-		it('When creating multiple root records, change tracking for each entity should also be generated', async () => {
-			cds.env.requires['change-tracking'].preserveDeletes = true;
+		it('generates separate change logs for each entity when batch inserting multiple records', async () => {
 			const testingSRV = await cds.connect.to('VariantTesting');
+			const { ChangeView, DifferentFieldTypes } = testingSRV.entities;
+
 			const e1ID = cds.utils.uuid();
 			const e2ID = cds.utils.uuid();
 			const e3ID = cds.utils.uuid();
@@ -136,110 +146,110 @@ describe('change log generation', () => {
 				}
 			];
 
-			await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries(data);
-			let changes = await SELECT.from(testingSRV.entities.ChangeView).where({
-				entityKey: { in: [e1ID, e2ID, e3ID] }
-			});
+			await INSERT.into(DifferentFieldTypes).entries(data);
+
+			const ids = [e1ID, e2ID, e3ID];
+			let changes = await SELECT.from(ChangeView).where`entityKey in ${ids} or rootEntityKey in ${ids}`;
 
 			expect(changes.length).toEqual(12);
 
 			expect(changes.some((c) => c.modification !== 'create')).toEqual(false);
 
-			let changesOrder1 = await SELECT.from(testingSRV.entities.ChangeView).where({ entityKey: e1ID });
+			let changesOrder1 = await SELECT.from(ChangeView).where`entityKey = ${e1ID} or rootEntityKey = ${e1ID}`;
 
 			const change1 = changesOrder1.find((change) => change.attribute === 'number');
 			expect(change1.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change1.valueChangedFrom).toEqual('');
+			expect(change1.valueChangedFrom).toEqual(null);
 			expect(Number(change1.valueChangedTo)).toEqual(0);
 
 			const change2 = changesOrder1.find((change) => change.attribute === 'bool');
 			expect(change2.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change2.valueChangedFrom).toEqual('');
+			expect(change2.valueChangedFrom).toEqual(null);
 			expect(change2.valueChangedTo).toEqual('false');
 
 			const quantityChanges1 = changesOrder1.filter((change) => change.attribute === 'double').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
 			expect(quantityChanges1[0].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges1[0].valueChangedFrom).toEqual('');
+			expect(quantityChanges1[0].valueChangedFrom).toEqual(null);
 			expect(Number(quantityChanges1[0].valueChangedTo)).toEqual(10);
 
 			expect(quantityChanges1[1].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges1[1].valueChangedFrom).toEqual('');
+			expect(quantityChanges1[1].valueChangedFrom).toEqual(null);
 			expect(Number(quantityChanges1[1].valueChangedTo)).toEqual(12);
 
-			let changesOrder2 = await SELECT.from(testingSRV.entities.ChangeView).where({ entityKey: e2ID });
+			let changesOrder2 = await SELECT.from(ChangeView).where`entityKey = ${e2ID} or rootEntityKey = ${e2ID}`;
 
 			const change3 = changesOrder2.find((change) => change.attribute === 'number');
 			expect(change3.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change3.valueChangedFrom).toEqual('');
+			expect(change3.valueChangedFrom).toEqual(null);
 			expect(Number(change3.valueChangedTo)).toEqual(10);
 
 			const change4 = changesOrder2.find((change) => change.attribute === 'bool');
 			expect(change4.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change4.valueChangedFrom).toEqual('');
+			expect(change4.valueChangedFrom).toEqual(null);
 			expect(change4.valueChangedTo).toEqual('true');
 
 			const quantityChanges2 = changesOrder2.filter((change) => change.attribute === 'double').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
 			expect(quantityChanges2[0].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges2[0].valueChangedFrom).toEqual('');
+			expect(quantityChanges2[0].valueChangedFrom).toEqual(null);
 			expect(Number(quantityChanges2[0].valueChangedTo)).toEqual(10);
 
 			expect(quantityChanges2[1].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges2[1].valueChangedFrom).toEqual('');
+			expect(quantityChanges2[1].valueChangedFrom).toEqual(null);
 			expect(Number(quantityChanges2[1].valueChangedTo)).toEqual(12);
 
-			let changesOrder3 = await SELECT.from(testingSRV.entities.ChangeView).where({ entityKey: e3ID });
+			let changesOrder3 = await SELECT.from(ChangeView).where`entityKey = ${e3ID} or rootEntityKey = ${e3ID}`;
 
 			const change5 = changesOrder3.find((change) => change.attribute === 'number');
 			expect(change5.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change5.valueChangedFrom).toEqual('');
+			expect(change5.valueChangedFrom).toEqual(null);
 			expect(Number(change5.valueChangedTo)).toEqual(20);
 
 			const change6 = changesOrder3.find((change) => change.attribute === 'bool');
 			expect(change6.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change6.valueChangedFrom).toEqual('');
+			expect(change6.valueChangedFrom).toEqual(null);
 			expect(change6.valueChangedTo).toEqual('false');
 
 			const quantityChanges3 = changesOrder3.filter((change) => change.attribute === 'double').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
 			expect(quantityChanges3[0].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges3[0].valueChangedFrom).toEqual('');
+			expect(quantityChanges3[0].valueChangedFrom).toEqual(null);
 			expect(Number(quantityChanges3[0].valueChangedTo)).toEqual(10);
 
 			expect(quantityChanges3[1].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges3[1].valueChangedFrom).toEqual('');
+			expect(quantityChanges3[1].valueChangedFrom).toEqual(null);
 			expect(Number(quantityChanges3[1].valueChangedTo)).toEqual(12);
-
-			cds.env.requires['change-tracking'].preserveDeletes = false;
 		});
 	});
 
-	describe('Composition tracking', () => {
-		it('Creation should log changes for root entity', async () => {
+	describe('composition tracking', () => {
+		it('links child entity changes to the root entity when creating nested data', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
+			const orderItemNoteID = cds.utils.uuid();
 			await POST(`/odata/v4/admin/Order`, {
 				ID: orderID,
 				orderItems: [{ ID: orderItemID }]
 			});
 			await POST(`/odata/v4/admin/Order(ID=${orderID})/orderItems(ID=${orderItemID})/notes`, {
+				ID: orderItemNoteID,
 				content: 'new content'
 			});
 			let changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
 			const orderChanges = changes.filter((change) => {
-				return change.entityKey === orderID && change.parentKey === orderItemID;
+				return change.entityKey === orderItemNoteID && change.rootEntityKey === orderItemID;
 			});
 			expect(orderChanges.length).toEqual(1);
 			const orderChange = orderChanges[0];
 			expect(orderChange.entity).toEqual('sap.capire.bookshop.OrderItemNote');
 			expect(orderChange.attribute).toEqual('content');
-			expect(orderChange.modification).toEqual('Create');
-			expect(orderChange.valueChangedFrom).toEqual('');
+			expect(orderChange.modification).toEqual('create');
+			expect(orderChange.valueChangedFrom).toEqual(null);
 			expect(orderChange.valueChangedTo).toEqual('new content');
-			expect(orderChange.parentKey).toEqual(orderItemID);
-			expect(orderChange.parentObjectID).toEqual('sap.capire.bookshop.OrderItem');
+			expect(orderChange.rootEntityKey).toEqual(orderItemID);
+			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
 		});
 
-		it('Update should log changes for root entity', async () => {
+		it('logs updated child values as changes on the parent entity', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
@@ -254,20 +264,20 @@ describe('change log generation', () => {
 
 			let changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
 			const orderChanges = changes.filter((change) => {
-				return change.entityKey === orderID && change.modification === 'Update';
+				return change.entityKey === noteID && change.modification === 'update';
 			});
 			expect(orderChanges.length).toEqual(1);
 			const orderChange = orderChanges[0];
 			expect(orderChange.entity).toEqual('sap.capire.bookshop.OrderItemNote');
 			expect(orderChange.attribute).toEqual('content');
-			expect(orderChange.modification).toEqual('Update');
+			expect(orderChange.modification).toEqual('update');
 			expect(orderChange.valueChangedFrom).toEqual('original note');
 			expect(orderChange.valueChangedTo).toEqual('new content');
-			expect(orderChange.parentKey).toEqual(orderItemID);
-			expect(orderChange.parentObjectID).toEqual('sap.capire.bookshop.OrderItem');
+			expect(orderChange.rootEntityKey).toEqual(orderItemID);
+			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
 		});
 
-		it('Delete should log changes for root entity', async () => {
+		it('links child entity changes to the root entity when deleting nested data', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
@@ -280,20 +290,22 @@ describe('change log generation', () => {
 
 			let changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
 			const orderChanges = changes.filter((change) => {
-				return change.entityKey === orderID && change.modification === 'Delete';
+				return change.rootEntityKey === orderItemID && change.modification === 'delete';
 			});
 			expect(orderChanges.length).toEqual(1);
 			const orderChange = orderChanges[0];
 			expect(orderChange.entity).toEqual('sap.capire.bookshop.OrderItemNote');
+			expect(orderChange.entityKey).toEqual(noteID);
 			expect(orderChange.attribute).toEqual('content');
-			expect(orderChange.modification).toEqual('Delete');
+			expect(orderChange.modification).toEqual('delete');
 			expect(orderChange.valueChangedFrom).toEqual('note to delete');
-			expect(orderChange.valueChangedTo).toEqual('');
-			expect(orderChange.parentKey).toEqual(orderItemID);
-			expect(orderChange.parentObjectID).toEqual('sap.capire.bookshop.OrderItem');
+			expect(orderChange.valueChangedTo).toEqual(null);
+			expect(orderChange.rootEntity).toEqual('sap.capire.bookshop.OrderItem');
+			expect(orderChange.rootEntityKey).toEqual(orderItemID);
+			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
 		});
 
-		it('Create should log changes for root entity if url path contains association entity', async () => {
+		it('correctly identifies root entity when URL path contains associated entities', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const reportID = cds.utils.uuid();
 			const orderID = cds.utils.uuid();
@@ -313,12 +325,12 @@ describe('change log generation', () => {
 
 			let changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
 			const orderChanges = changes.filter((change) => {
-				return change.entityKey === orderID && change.modification === 'Create';
+				return change.rootEntityKey === orderID && change.modification === 'create';
 			});
 			expect(orderChanges.length).toEqual(2);
 		});
 
-		it('Deep update - should log changes on root entity', async () => {
+		it('tracks changes on child entities during deep update operations', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const bookStoreID = cds.utils.uuid();
 			const bookID = cds.utils.uuid();
@@ -337,17 +349,17 @@ describe('change log generation', () => {
 			let changes = await SELECT.from(adminService.entities.ChangeView).where({
 				entity: 'sap.capire.bookshop.Books',
 				attribute: 'title',
-				entityKey: bookStoreID,
+				rootEntityKey: bookStoreID,
 				modification: 'update'
 			});
 
 			expect(changes.length).toEqual(1);
-			expect(changes[0].entityKey).toEqual(bookStoreID);
+			expect(changes[0].entityKey).toEqual(bookID);
 			expect(changes[0].objectID).toEqual('Wuthering Heights Test, Emily, Brontë');
-			expect(changes[0].parentObjectID).toEqual('Shakespeare and Company');
+			expect(changes[0].rootObjectID).toEqual('Shakespeare and Company');
 		});
 
-		it('Inline composition is correctly logged', async () => {
+		it('tracks changes on inline composition elements with composite keys', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
@@ -366,20 +378,20 @@ describe('change log generation', () => {
 				quantity: 12
 			});
 
-			const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView).where({ entityKey: orderID }));
-			const updateChanges = changes.filter((c) => c.modification === 'Update' && c.attribute === 'quantity');
+			const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView).where({ rootEntityKey: orderID }));
+			const updateChanges = changes.filter((c) => c.modification === 'update' && c.attribute === 'quantity');
 
 			expect(updateChanges.length).toEqual(1);
 			const change = updateChanges[0];
 			expect(change.attribute).toEqual('quantity');
-			expect(change.modification).toEqual('Update');
+			expect(change.modification).toEqual('update');
 			expect(change.valueChangedFrom).toEqual('10');
 			expect(change.valueChangedTo).toEqual('12');
-			expect(change.parentKey).toEqual(orderID);
-			expect(change.keys).toEqual(`ID=${orderItemID}`);
+			expect(change.rootEntityKey).toEqual(orderID);
+			expect(change.entityKey).toEqual(`${orderID}||${orderItemID}`);
 		});
 
-		it('Deep delete should log changes on root entity', async () => {
+		it('tracks deletion of child entities during deep delete operations', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const bookStoreID = cds.utils.uuid();
 			const registryID = cds.utils.uuid();
@@ -404,20 +416,22 @@ describe('change log generation', () => {
 			const changes = await SELECT.from(adminService.entities.ChangeView).where({
 				entity: 'sap.capire.bookshop.BookStoreRegistry',
 				attribute: 'validOn',
-				modification: 'delete'
+				modification: 'delete',
+				entityKey: registryID
 			});
 
 			expect(changes.length).toEqual(1);
-			expect(changes[0].entityKey).toEqual(bookStoreID);
+			expect(changes[0].entityKey).toEqual(registryID);
+			expect(changes[0].rootEntityKey).toEqual(bookStoreID);
 			expect(changes[0].objectID).toEqual('TEST-1');
 			expect(changes[0].modification).toEqual('delete');
-			expect(changes[0].parentObjectID).toEqual('Test Bookstore');
+			expect(changes[0].rootObjectID).toEqual('Test Bookstore');
 			expect(changes[0].valueChangedFrom).toEqual('2012-01-01');
-			expect(changes[0].valueChangedTo).toEqual('');
+			expect(changes[0].valueChangedTo).toEqual(null);
 		});
 
 		describe('Composition of one', () => {
-			it('Create should log changes for root entity', async () => {
+			it('logs changes on the single child entity during creation', async () => {
 				const id = cds.utils.uuid();
 				const adminService = await cds.connect.to('AdminService');
 				await POST(`/odata/v4/admin/Order`, {
@@ -426,24 +440,25 @@ describe('change log generation', () => {
 						status: 'Ordered'
 					}
 				});
-				const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
+				const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView).where({ rootEntityKey: id }));
 				const headerChanges = changes.filter((change) => {
 					return change.entity === 'sap.capire.bookshop.OrderHeader';
 				});
 				expect(headerChanges.length).toEqual(1);
 				const headerChange = headerChanges[0];
 				expect(headerChange.attribute).toEqual('status');
-				expect(headerChange.modification).toEqual('Create');
-				expect(headerChange.valueChangedFrom).toEqual('');
+				expect(headerChange.modification).toEqual('create');
+				expect(headerChange.valueChangedFrom).toEqual(null);
 				expect(headerChange.valueChangedTo).toEqual('Ordered');
-				expect(headerChange.parentKey).toEqual(id);
-				expect(headerChange.parentObjectID).toEqual('sap.capire.bookshop.Order');
+				expect(headerChange.rootEntityKey).toEqual(id);
+				expect(headerChange.rootEntity).toEqual('sap.capire.bookshop.Order');
+				expect(headerChange.rootObjectID).toEqual('sap.capire.bookshop.Order');
 			});
 
-			it('Delete should log changes for root entity', async () => {
+			it('logs changes on the single child entity during deletion', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const orderID = cds.utils.uuid();
-				// Check if the object ID obtaining failed due to lacking parentKey would lead to dump
+				// Check if the object ID obtaining failed due to lacking rootEntityKey would lead to dump
 				cds.services.AdminService.entities.Order['@changelog'] = [{ '=': 'status' }];
 
 				await POST(`/odata/v4/admin/Order`, {
@@ -455,22 +470,22 @@ describe('change log generation', () => {
 
 				await DELETE(`/odata/v4/admin/Order(ID=${orderID})/header`);
 
-				const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
+				const changes = await adminService.run(SELECT.from(adminService.entities.ChangeView).where({ rootEntityKey: orderID }));
 				const headerChanges = changes.filter((change) => {
-					return change.entity === 'sap.capire.bookshop.OrderHeader' && change.modification === 'Delete';
+					return change.entity === 'sap.capire.bookshop.OrderHeader' && change.modification === 'delete';
 				});
 				expect(headerChanges.length).toEqual(1);
 				const headerChange = headerChanges[0];
 				expect(headerChange.attribute).toEqual('status');
-				expect(headerChange.modification).toEqual('Delete');
+				expect(headerChange.modification).toEqual('delete');
 				expect(headerChange.valueChangedFrom).toEqual('Shipped');
-				expect(headerChange.valueChangedTo).toEqual('');
-				expect(headerChange.parentKey).toEqual(orderID);
-				expect(headerChange.parentObjectID).toEqual('sap.capire.bookshop.Order');
+				expect(headerChange.valueChangedTo).toEqual(null);
+				expect(headerChange.rootObjectID).toEqual('sap.capire.bookshop.Order');
 				delete cds.services.AdminService.entities.Order['@changelog'];
 			});
 
-			it('Deep create should log changes on root entity', async () => {
+			// REVISIT: Localization of date values not supported yet
+			it('logs changes on child entity during deep create with draft', async () => {
 				const bookStoreID = cds.utils.uuid();
 				const registryID = cds.utils.uuid();
 
@@ -490,15 +505,20 @@ describe('change log generation', () => {
 				} = await GET(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/changes?$filter=attribute eq 'validOn'`);
 
 				expect(changes.length).toEqual(1);
-				expect(changes[0].entityKey).toEqual(bookStoreID);
+				expect(changes[0].entity).toEqual('sap.capire.bookshop.BookStoreRegistry');
+				expect(changes[0].entityKey).toEqual(registryID);
 				expect(changes[0].objectID).toEqual('San Francisco-2');
-				expect(changes[0].valueChangedFrom).toEqual('');
-				expect(changes[0].valueChangedTo).toEqual('Jan 1, 2022');
-				expect(changes[0].parentKey).toEqual(bookStoreID);
-				expect(changes[0].parentObjectID).toEqual('test bookstore name');
+				expect(changes[0].valueChangedFrom).toEqual(null);
+				// intended
+				//expect(changes[0].valueChangedTo).toEqual('Jan 1, 2022');
+				expect(changes[0].valueChangedTo).toEqual('2022-01-01');
+				expect(changes[0].rootEntity).toEqual('sap.capire.bookshop.BookStores');
+				expect(changes[0].rootEntityKey).toEqual(bookStoreID);
+				expect(changes[0].rootObjectID).toEqual('test bookstore name');
 			});
 
-			it('updated on root node - should log changes for root entity', async () => {
+			// REVISIT: Localization of date values not supported yet
+			it('logs changes when updating child via deep update on parent entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const id = cds.utils.uuid();
 				const registryID = cds.utils.uuid();
@@ -531,22 +551,24 @@ describe('change log generation', () => {
 				const registryChanges = await adminService.run(
 					SELECT.from(adminService.entities.ChangeView).where({
 						entity: 'sap.capire.bookshop.BookStoreRegistry',
-						entityKey: id,
+						entityKey: registryID,
 						attribute: 'validOn',
 						modification: 'update'
 					})
 				);
 				expect(registryChanges.length).toEqual(1);
 				const registryChange = registryChanges[0];
-				expect(registryChange.attribute).toEqual('Valid On');
-				expect(registryChange.modification).toEqual('Update');
-				expect(registryChange.valueChangedFrom).toEqual('Oct 15, 2022');
-				expect(registryChange.valueChangedTo).toEqual('Jan 1, 2022');
-				expect(registryChange.parentKey).toEqual(id);
-				expect(registryChange.parentObjectID).toEqual('Test Bookstore');
+				expect(registryChange.attributeLabel).toEqual('Valid On');
+				expect(registryChange.modification).toEqual('update');
+				// expect(registryChange.valueChangedFrom).toEqual('Oct 15, 2022');
+				// expect(registryChange.valueChangedTo).toEqual('Jan 1, 2022');
+				expect(registryChange.valueChangedFrom).toEqual('2022-10-15');
+				expect(registryChange.valueChangedTo).toEqual('2022-01-01');
+				expect(registryChange.rootEntityKey).toEqual(id);
+				expect(registryChange.rootObjectID).toEqual('Test Bookstore');
 			});
 
-			it('updated on child node - should log changes for root entity', async () => {
+			it('logs changes when updating child directly via its own endpoint', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				// Update by calling API on child node
 				const id = cds.utils.uuid();
@@ -572,27 +594,152 @@ describe('change log generation', () => {
 				const registryChanges = await adminService.run(
 					SELECT.from(adminService.entities.ChangeView).where({
 						entity: 'sap.capire.bookshop.BookStoreRegistry',
-						entityKey: id,
+						entityKey: registryID,
 						attribute: 'validOn',
 						modification: 'update'
 					})
 				);
 				expect(registryChanges.length).toEqual(1);
 				const registryChange = registryChanges[0];
-				expect(registryChange.attribute).toEqual('Valid On');
-				expect(registryChange.modification).toEqual('Update');
-				expect(registryChange.valueChangedFrom).toEqual('Sep 1, 2018');
-				expect(registryChange.valueChangedTo).toEqual('Jan 1, 2022');
-				expect(registryChange.parentKey).toEqual(id);
-				expect(registryChange.parentObjectID).toEqual('Test Bookstore');
+				expect(registryChange.attributeLabel).toEqual('Valid On');
+				expect(registryChange.modification).toEqual('update');
+				// expect(registryChange.valueChangedFrom).toEqual('Sep 1, 2018');
+				// expect(registryChange.valueChangedTo).toEqual('Jan 1, 2022');
+				expect(registryChange.valueChangedFrom).toEqual('2018-09-01');
+				expect(registryChange.valueChangedTo).toEqual('2022-01-01');
+				expect(registryChange.rootEntityKey).toEqual(id);
+				expect(registryChange.rootObjectID).toEqual('Test Bookstore');
+			});
+		});
+
+		describe('Composition of many', () => {
+			it('logs each created child as a separate change on the root entity', async () => {
+				const adminService = await cds.connect.to('AdminService');
+				const { ChangeView } = adminService.entities;
+
+				const bookStoreID = cds.utils.uuid();
+				const book1ID = cds.utils.uuid();
+				const book2ID = cds.utils.uuid();
+
+				await POST(`/odata/v4/admin/BookStores`, {
+					ID: bookStoreID,
+					name: 'Shakespeare and Company',
+					books: [
+						{ ID: book1ID, title: 'Test Book 1' },
+						{ ID: book2ID, title: 'Test Book 2' }
+					]
+				});
+
+				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+				// Composition of many logs on the parent entity (BookStores) since 'books' is an attribute of BookStores
+				const changes = await SELECT.from(ChangeView).where({
+					entity: 'sap.capire.bookshop.BookStores',
+					entityKey: bookStoreID,
+					attribute: 'books',
+					modification: 'create'
+				});
+
+				expect(changes.length).toEqual(2);
+
+				const change1 = changes.find((change) => change.valueChangedTo === 'Test Book 1');
+				const change2 = changes.find((change) => change.valueChangedTo === 'Test Book 2');
+
+				// entity is now the parent (BookStores), not the child (Books)
+				expect(change1.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change1.valueChangedFrom).toEqual(null);
+				expect(change1.valueChangedTo).toEqual('Test Book 1');
+				expect(change1.objectID).toEqual('Shakespeare and Company');
+
+				expect(change2.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change2.valueChangedFrom).toEqual(null);
+				expect(change2.valueChangedTo).toEqual('Test Book 2');
+				expect(change2.objectID).toEqual('Shakespeare and Company');
+			});
+
+			it('links child entity changes to the root entity when updating nested data', async () => {
+				const adminService = await cds.connect.to('AdminService');
+				const { ChangeView } = adminService.entities;
+
+				const bookStoreID = cds.utils.uuid();
+				const bookID = cds.utils.uuid();
+
+				// Create BookStore with a book
+				await POST(`/odata/v4/admin/BookStores`, {
+					ID: bookStoreID,
+					name: 'Shakespeare and Company',
+					books: [{ ID: bookID, title: 'Original Title' }]
+				});
+				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+				// Edit draft and update the book title
+				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+				await PATCH(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`, {
+					title: 'Updated Title'
+				});
+				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+				// Composition of many logs on the parent entity (BookStores)
+				const changes = await SELECT.from(ChangeView).where({
+					entity: 'sap.capire.bookshop.BookStores',
+					entityKey: bookStoreID,
+					attribute: 'books',
+					modification: 'update'
+				});
+
+				expect(changes.length).toEqual(1);
+
+				const change = changes[0];
+				expect(change.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change.entityKey).toEqual(bookStoreID);
+				expect(change.valueChangedFrom).toEqual('Original Title');
+				expect(change.valueChangedTo).toEqual('Updated Title');
+				expect(change.objectID).toEqual('Shakespeare and Company');
+			});
+
+			it('logs deleted child values as changes on the root entity', async () => {
+				const adminService = await cds.connect.to('AdminService');
+				const { ChangeView } = adminService.entities;
+
+				const bookStoreID = cds.utils.uuid();
+				const bookID = cds.utils.uuid();
+
+				// Create BookStore with a book
+				await POST(`/odata/v4/admin/BookStores`, {
+					ID: bookStoreID,
+					name: 'Shakespeare and Company',
+					books: [{ ID: bookID, title: 'Book to Delete' }]
+				});
+				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+				// Edit draft and delete the book
+				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+				await DELETE(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`);
+				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+				// Composition of many logs on the parent entity (BookStores)
+				const changes = await SELECT.from(ChangeView).where({
+					entity: 'sap.capire.bookshop.BookStores',
+					entityKey: bookStoreID,
+					attribute: 'books',
+					modification: 'delete'
+				});
+
+				expect(changes.length).toEqual(1);
+
+				const change = changes[0];
+				expect(change.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change.entityKey).toEqual(bookStoreID);
+				expect(change.valueChangedFrom).toEqual('Book to Delete');
+				expect(change.valueChangedTo).toEqual(null);
+				expect(change.objectID).toEqual('Shakespeare and Company');
 			});
 		});
 	});
 
-	it('When creating or deleting a record with a numeric type of 0 and a boolean type of false, a changelog should also be generated', async () => {
+	it('tracks zero values and false booleans correctly during create and delete', async () => {
 		const testingSrv = await cds.connect.to('VariantTesting');
 		const orderID = cds.utils.uuid();
-		cds.env.requires['change-tracking'].preserveDeletes = true;
 
 		await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
 			ID: orderID,
@@ -612,17 +759,17 @@ describe('change log generation', () => {
 		const change1 = changes.find((c) => c.attribute === 'number');
 
 		expect(change1).toHaveProperty('entityKey', orderID);
-		expect(change1).toHaveProperty('modification', 'Create');
-		expect(change1).toHaveProperty('entity', 'Different field types');
-		expect(change1.valueChangedFrom).toEqual('');
+		expect(change1).toHaveProperty('modification', 'create');
+		expect(change1).toHaveProperty('entityLabel', 'Different field types');
+		expect(change1.valueChangedFrom).toEqual(null);
 		expect(Number(change1.valueChangedTo)).toEqual(0);
 
 		const change2 = changes.find((c) => c.attribute === 'bool');
 
 		expect(change2).toHaveProperty('entityKey', orderID);
-		expect(change2).toHaveProperty('modification', 'Create');
-		expect(change2).toHaveProperty('entity', 'Different field types');
-		expect(change2.valueChangedFrom).toEqual('');
+		expect(change2).toHaveProperty('modification', 'create');
+		expect(change2).toHaveProperty('entityLabel', 'Different field types');
+		expect(change2.valueChangedFrom).toEqual(null);
 		expect(change2.valueChangedTo).toEqual('false');
 
 		await DELETE(`/odata/v4/variant-testing/DifferentFieldTypes(ID=${orderID})`);
@@ -639,23 +786,21 @@ describe('change log generation', () => {
 		const change3 = changes.find((c) => c.attribute === 'number');
 
 		expect(change3).toHaveProperty('entityKey', orderID);
-		expect(change3).toHaveProperty('modification', 'Delete');
-		expect(change3).toHaveProperty('entity', 'Different field types');
+		expect(change3).toHaveProperty('modification', 'delete');
+		expect(change3).toHaveProperty('entityLabel', 'Different field types');
 		expect(Number(change3.valueChangedFrom)).toEqual(0);
-		expect(change3.valueChangedTo).toEqual('');
+		expect(change3.valueChangedTo).toEqual(null);
 
 		const change4 = changes.find((c) => c.attribute === 'bool');
 
 		expect(change4).toHaveProperty('entityKey', orderID);
-		expect(change4).toHaveProperty('modification', 'Delete');
-		expect(change4).toHaveProperty('entity', 'Different field types');
+		expect(change4).toHaveProperty('modification', 'delete');
+		expect(change4).toHaveProperty('entityLabel', 'Different field types');
 		expect(change4.valueChangedFrom).toEqual('false');
-		expect(change4.valueChangedTo).toEqual('');
-
-		cds.env.requires['change-tracking'].preserveDeletes = false;
+		expect(change4.valueChangedTo).toEqual(null);
 	});
 
-	it('The change log should be captured when a child entity triggers a custom action', async () => {
+	it('tracks changes when custom actions modify entities in the composition hierarchy', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const rootID = cds.utils.uuid();
 		const lvl1ID = cds.utils.uuid();
@@ -683,23 +828,23 @@ describe('change log generation', () => {
 		await POST(`/odata/v4/admin/Order(ID=${orderID})/orderItems(ID=${orderItemID})/notes(ID=${noteID})/AdminService.activate`, { ID: lvl2ID });
 		let changes = await SELECT.from(adminService.entities.ChangeView).where({
 			entity: 'sap.capire.bookshop.OrderItemNote',
-			entityKey: orderID,
+			entityKey: noteID,
 			attribute: 'ActivationStatus'
 		});
 		expect(changes.length).toEqual(1);
-		expect(changes[0].valueChangedFrom).toEqual('');
+		expect(changes[0].valueChangedFrom).toEqual(null);
 		expect(changes[0].valueChangedTo).toEqual('VALID');
-		expect(changes[0].parentKey).toEqual(orderItemID);
+		expect(changes[0].rootEntityKey).toEqual(orderItemID);
 
 		changes = await SELECT.from(adminService.entities.ChangeView).where({
 			entity: 'sap.change_tracking.Level2Sample',
 			modification: 'update',
-			entityKey: rootID,
+			entityKey: lvl2ID,
 			attribute: 'title'
 		});
 		expect(changes.length).toEqual(1);
 		expect(changes[0].valueChangedFrom).toEqual('Level2Sample title');
 		expect(changes[0].valueChangedTo).toEqual('Game Science');
-		expect(changes[0].parentKey).toEqual(lvl1ID);
+		expect(changes[0].rootEntityKey).toEqual(lvl1ID);
 	});
 });
