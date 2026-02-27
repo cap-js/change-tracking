@@ -111,7 +111,7 @@ async function _regenerateH2Triggers(entityNames, allEntities, hierarchyMap) {
 
 async function _regenerateHANATriggers(entityNames, allEntities, hierarchyMap) {
 	const { generateHANATriggers } = require('../lib/trigger/hdi.js');
-	const utils = require('../lib/utils/change-tracking.js');
+	require('../lib/utils/change-tracking.js');
 
 	// Filter to specific entities if provided
 	const entities = entityNames ? allEntities.filter((e) => entityNames.includes(e.dbEntityName)) : allEntities;

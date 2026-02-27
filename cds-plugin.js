@@ -156,7 +156,7 @@ function enhanceModel(m) {
 			// Collect change-tracked service entity name with its underlying DB entity name
 			const baseInfo = getBaseEntity(entity, m);
 			if (!baseInfo) continue;
-			const { baseRef: dbEntityName, baseEntity: dbEntity } = baseInfo;
+			const { baseRef: dbEntityName } = baseInfo;
 
 			if (!collectedEntities.has(dbEntityName)) collectedEntities.set(dbEntityName, []);
 			collectedEntities.get(dbEntityName).push(name);
