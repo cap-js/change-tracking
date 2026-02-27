@@ -111,28 +111,28 @@ describe('Special CDS Features', () => {
 
 	it('Works for <as select from> views as well', async () => {
 		const { data: record } = await POST(`/odata/v4/variant-testing/SelectionView`, {
-				number: 1,
-				bool: true,
-				title: 'My test-record'
-			});
+			number: 1,
+			bool: true,
+			title: 'My test-record'
+		});
 
-			const {
-				data: { value: changes }
-			} = await GET(`/odata/v4/variant-testing/SelectionView(ID=${record.ID})/changes`);
-			const numberLog = changes.find((change) => change.attribute === 'number');
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/variant-testing/SelectionView(ID=${record.ID})/changes`);
+		const numberLog = changes.find((change) => change.attribute === 'number');
 
-			expect(numberLog).toBeTruthy();
-			expect(numberLog).toMatchObject({
-				entityKey: record.ID,
-				modification: 'create',
-				modificationLabel: 'Create',
-				objectID: 'My test-record',
-				entity: 'sap.change_tracking.DifferentFieldTypes',
-				entityLabel: 'Different field types',
-				rootEntity: null,
-				valueChangedFrom: null,
-				valueChangedTo: '1'
-			});
+		expect(numberLog).toBeTruthy();
+		expect(numberLog).toMatchObject({
+			entityKey: record.ID,
+			modification: 'create',
+			modificationLabel: 'Create',
+			objectID: 'My test-record',
+			entity: 'sap.change_tracking.DifferentFieldTypes',
+			entityLabel: 'Different field types',
+			rootEntity: null,
+			valueChangedFrom: null,
+			valueChangedTo: '1'
+		});
 	});
 
 	describe('localization', () => {
@@ -142,17 +142,21 @@ describe('Special CDS Features', () => {
 			const { Volumes, ChangeView } = VolumnsSrv.entities;
 
 			const volumeID = cds.utils.uuid();
-			await INSERT.into(Volumes).entries([{
-				ID: volumeID,
-				title: 'Wuthering Heights I',
-				sequence: '1',
-				book_ID: '9d703c23-54a8-4eff-81c1-cdce6b8376b1'
-			}]);
+			await INSERT.into(Volumes).entries([
+				{
+					ID: volumeID,
+					title: 'Wuthering Heights I',
+					sequence: '1',
+					book_ID: '9d703c23-54a8-4eff-81c1-cdce6b8376b1'
+				}
+			]);
 
 			await cds.delete(ChangeView).where({ entityKey: volumeID });
-			await VolumnsSrv.run(UPDATE.entity(Volumes).where({ ID: volumeID }).set({ 
-				title: 'new title' 
-			}));
+			await VolumnsSrv.run(
+				UPDATE.entity(Volumes).where({ ID: volumeID }).set({
+					title: 'new title'
+				})
+			);
 			const {
 				data: { value: changes }
 			} = await GET(`/odata/v4/volumns/Volumes(ID=${volumeID})/changes`);
@@ -204,7 +208,8 @@ describe('Special CDS Features', () => {
 			});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-			const change = await SELECT.one.from(variantTesting.entities.ChangeView)
+			const change = await SELECT.one
+				.from(variantTesting.entities.ChangeView)
 				.where({
 					entity: 'sap.change_tracking.TrackingComposition',
 					attribute: 'children',

@@ -63,7 +63,7 @@ describe('Incidents Application Scenarios', () => {
 		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
 			headers: { 'Accept-Language': 'de' }
 		});
-		const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);;
+		const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
 
 		expect(statusChange).toMatchObject({
 			attributeLabel: 'Status',
@@ -153,7 +153,7 @@ describe('Incidents Application Scenarios', () => {
 	it('supports entities with composite keys (multi-key entities)', async () => {
 		const GJAHR = 2024;
 		const BUKRS = 'TEST_' + Math.round(Math.random() * 10000000).toString();
-		
+
 		// Create entity with composite key
 		await POST(`odata/v4/processor/MultiKeyScenario`, {
 			GJAHR,
@@ -161,19 +161,19 @@ describe('Incidents Application Scenarios', () => {
 			foo1: 'Initial value'
 		});
 		await POST(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
-		
+
 		// Edit the entity
 		await POST(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 		await PATCH(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=false)`, {
 			foo1: 'Updated value'
 		});
 		await POST(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
-		
+
 		// Verify changes are tracked
 		const {
 			data: { value: changes }
 		} = await GET(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=true)/changes`);
-		
+
 		const updateChange = changes.find((change) => change.attribute === 'foo1' && change.modification === 'update');
 		expect(updateChange).toHaveProperty('valueChangedFrom', 'Initial value');
 		expect(updateChange).toHaveProperty('valueChangedTo', 'Updated value');
@@ -286,7 +286,7 @@ describe('Non-ID key support', () => {
 		} = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
 		const change = changes.find((change) => change.attribute === 'page' && change.modification === 'delete');
 		expect(change).toHaveProperty('valueChangedFrom', '1');
-		expect(change).toHaveProperty('valueChangedTo', null);		
+		expect(change).toHaveProperty('valueChangedTo', null);
 		expect(change).toHaveProperty('entityKey', pageID);
 		expect(change).toHaveProperty('entity', 'sap.capire.incidents.PagesNotID');
 		expect(change).toHaveProperty('rootEntityKey', ID);

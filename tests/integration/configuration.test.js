@@ -10,11 +10,7 @@ const isHana = cds.env.requires?.db?.kind === 'hana';
 
 describe('Configuration Options', () => {
 	// Entities used in the VariantTesting service tests
-	const variantEntities = [
-		'sap.change_tracking.RootSample',
-		'sap.change_tracking.Level1Sample',
-		'sap.change_tracking.Level2Sample'
-	];
+	const variantEntities = ['sap.change_tracking.RootSample', 'sap.change_tracking.Level1Sample', 'sap.change_tracking.Level2Sample'];
 
 	(isHana ? it.skip : it)('retains all change logs and logs deletion when preserveDeletes is enabled', async () => {
 		cds.env.requires['change-tracking'].preserveDeletes = true;
@@ -240,7 +236,7 @@ describe('Configuration Options', () => {
 			const ageChange = changes.find((c) => c.attribute === 'age');
 			expect(ageChange).toBeTruthy();
 			expect(ageChange.valueChangedTo).toBe('30');
-			
+
 			const cityChange = changes.find((c) => c.attribute === 'city');
 			expect(cityChange).toBeFalsy();
 		});
