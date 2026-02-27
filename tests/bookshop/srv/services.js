@@ -14,7 +14,6 @@ class ProcessorService extends cds.ApplicationService {
 			await UPDATE(Incidents).set({ status_code: 'C' }).where({ ID });
 		});
 
-		
 		this.before('SAVE', 'Incidents', (req) => {
 			req.data.time = String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
 			req.data.date = new Date(req.data.date);

@@ -73,7 +73,7 @@ function entityKey4(entity) {
  */
 function _replaceTablePlaceholders(on, tableName, hierarchy) {
 	const rootEntityName = hierarchy.get(tableName) || tableName;
-	return on.map(part => {
+	return on.map((part) => {
 		if (part?.val === 'ENTITY') return { ...part, val: tableName };
 		if (part?.val === 'ROOTENTITY') return { ...part, val: rootEntityName };
 		return part;
@@ -84,10 +84,7 @@ function _replaceTablePlaceholders(on, tableName, hierarchy) {
  * Check if a facet already exists for the changes composition.
  */
 function hasFacetForComp(comp, facets) {
-	return facets.some(f =>
-		f.Target === `${comp.name}/@UI.LineItem` ||
-		(f.Facets && hasFacetForComp(comp, f.Facets))
-	);
+	return facets.some((f) => f.Target === `${comp.name}/@UI.LineItem` || (f.Facets && hasFacetForComp(comp, f.Facets)));
 }
 
 function prepareCSNForTriggers(csn, preserveSources = false) {
@@ -108,9 +105,7 @@ function generateTriggersForEntities(runtimeCSN, hierarchy, entities, generator)
 		if (!entity) continue;
 		const rootEntityName = hierarchy.get(dbEntityName);
 		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
-		const rootMergedAnnotations = rootEntityName
-			? entities.find(d => d.dbEntityName === rootEntityName)?.mergedAnnotations
-			: null;
+		const rootMergedAnnotations = rootEntityName ? entities.find((d) => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
 		const result = generator(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
 		if (result) triggers.push(...(Array.isArray(result) ? result : [result]));
 	}
@@ -123,7 +118,7 @@ function generateTriggersForEntities(runtimeCSN, hierarchy, entities, generator)
 function writeLabelsCSV(entities, model) {
 	const labels = getLabelTranslations(entities, model);
 	const header = 'ID;locale;text';
-	const rows = labels.map(row => `${row.ID};${row.locale};${row.text}`);
+	const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
 	const content = [header, ...rows].join('\n') + '\n';
 	const dir = 'db/data';
 	if (!fs.existsSync(dir)) {
@@ -145,7 +140,10 @@ function enhanceModel(m) {
 	// Get definitions from Dummy entity in our models
 	const { 'sap.changelog.aspect': aspect } = m.definitions;
 	if (!aspect) return; // some other model
-	const { '@UI.Facets': [facet], elements: { changes } } = aspect;
+	const {
+		'@UI.Facets': [facet],
+		elements: { changes }
+	} = aspect;
 
 	hierarchyMap = analyzeCompositions(m);
 	collectedEntities = new Map();
@@ -153,7 +151,7 @@ function enhanceModel(m) {
 	for (let name in m.definitions) {
 		const entity = m.definitions[name];
 		const isServiceEntity = entity.kind === 'entity' && !!(entity.query || entity.projection);
-		const serviceName = getService(name, m)
+		const serviceName = getService(name, m);
 		if (isServiceEntity && isChangeTracked(entity) && serviceName) {
 			// Collect change-tracked service entity name with its underlying DB entity name
 			const baseInfo = getBaseEntity(entity, m);
@@ -174,36 +172,35 @@ function enhanceModel(m) {
 				const assoc = new cds.builtin.classes.Association({ ...changes, on });
 				assoc.target = `${serviceName}.ChangeView`;
 				if (!m.definitions[`${serviceName}.ChangeView`]) {
-					m.definitions[`${serviceName}.ChangeView`] = structuredClone(m.definitions['sap.changelog.ChangeView'])
+					m.definitions[`${serviceName}.ChangeView`] = structuredClone(m.definitions['sap.changelog.ChangeView']);
 					m.definitions[`${serviceName}.ChangeView`].query = {
 						SELECT: {
 							from: {
 								ref: ['sap.changelog.ChangeView']
 							}
 						}
-					}
+					};
 
 					for (const ele in m.definitions[`${serviceName}.ChangeView`].elements) {
-						if (
-							m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target &&
-							!m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target.startsWith(serviceName)
-						) {
+						if (m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target && !m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target.startsWith(serviceName)) {
 							const target = m.definitions[`${serviceName}.ChangeView`].elements[ele]?.target;
-							const serviceEntity = Object.keys(m.definitions).filter(e => e.startsWith(serviceName)).find(e => {
-								let baseE = e;
-								while (baseE) {
-									if (baseE === target) {
-										return true;
+							const serviceEntity = Object.keys(m.definitions)
+								.filter((e) => e.startsWith(serviceName))
+								.find((e) => {
+									let baseE = e;
+									while (baseE) {
+										if (baseE === target) {
+											return true;
+										}
+										const artefact = m.definitions[baseE];
+										const cqn = artefact.projection ?? artefact.query?.SELECT;
+										if (!cqn) {
+											return false;
+										}
+										baseE = cqn.from?.ref?.[0];
 									}
-									const artefact = m.definitions[baseE];
-									const cqn = artefact.projection ?? artefact.query?.SELECT;
-									if (!cqn) {
-										return false
-									}
-									baseE = cqn.from?.ref?.[0];
-								}
-								return false;
-							});
+									return false;
+								});
 							if (serviceEntity) {
 								m.definitions[`${serviceName}.ChangeView`].elements[ele].target = serviceEntity;
 							}
@@ -293,19 +290,15 @@ cds.once('served', async () => {
 	const entities = getEntitiesForTriggerGeneration(cds.model.definitions, collectedEntities);
 
 	const triggers = generateTriggersForEntities(cds.model, hierarchyMap, entities, generateSQLiteTrigger);
-	let deleteTriggers = triggers.map(t => t.match(/CREATE\s+TRIGGER\s+IF NOT EXISTS\s+(\w+)/i)).map(m => `DROP TRIGGER IF EXISTS ${m[1]};`);
+	let deleteTriggers = triggers.map((t) => t.match(/CREATE\s+TRIGGER\s+IF NOT EXISTS\s+(\w+)/i)).map((m) => `DROP TRIGGER IF EXISTS ${m[1]};`);
 
 	const labels = getLabelTranslations(entities, cds.model);
 	const { i18nKeys } = cds.entities('sap.changelog');
 
 	// Delete existing triggers
-	await Promise.all(deleteTriggers.map(t => cds.db.run(t)));
+	await Promise.all(deleteTriggers.map((t) => cds.db.run(t)));
 
-	await Promise.all([
-		...triggers.map(t => cds.db.run(t)),
-		cds.delete(i18nKeys),
-		cds.insert(labels).into(i18nKeys)
-	]);
+	await Promise.all([...triggers.map((t) => cds.db.run(t)), cds.delete(i18nKeys), cds.insert(labels).into(i18nKeys)]);
 });
 
 /**
@@ -325,8 +318,8 @@ cds.compile.to.sql = function (csn, options) {
 		writeLabelsCSV(entities, runtimeCSN);
 	}
 	// Add semicolon at the end of each DDL statement if not already present
-	ret = ret.map(s => s.endsWith(';') ? s : s + ';');
-	
+	ret = ret.map((s) => (s.endsWith(';') ? s : s + ';'));
+
 	return ret.concat(triggers);
 };
 Object.assign(cds.compile.to.sql, _sql_original);

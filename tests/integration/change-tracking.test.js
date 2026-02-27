@@ -3,7 +3,6 @@ const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
 
 describe('change log generation', () => {
-
 	describe('Basic CRUD operations', () => {
 		it('logs field values when creating a new record', async () => {
 			const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
@@ -414,7 +413,6 @@ describe('change log generation', () => {
 				registry_ID: null
 			});
 
-
 			const changes = await SELECT.from(adminService.entities.ChangeView).where({
 				entity: 'sap.capire.bookshop.BookStoreRegistry',
 				attribute: 'validOn',
@@ -628,7 +626,7 @@ describe('change log generation', () => {
 					name: 'Shakespeare and Company',
 					books: [
 						{ ID: book1ID, title: 'Test Book 1' },
-						{ ID: book2ID, title: 'Test Book 2' },
+						{ ID: book2ID, title: 'Test Book 2' }
 					]
 				});
 
@@ -659,7 +657,7 @@ describe('change log generation', () => {
 				expect(change2.objectID).toEqual('Shakespeare and Company');
 			});
 
-		it('links child entity changes to the root entity when updating nested data', async () => {
+			it('links child entity changes to the root entity when updating nested data', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -670,9 +668,7 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores`, {
 					ID: bookStoreID,
 					name: 'Shakespeare and Company',
-					books: [
-						{ ID: bookID, title: 'Original Title' }
-					]
+					books: [{ ID: bookID, title: 'Original Title' }]
 				});
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
@@ -712,9 +708,7 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores`, {
 					ID: bookStoreID,
 					name: 'Shakespeare and Company',
-					books: [
-						{ ID: bookID, title: 'Book to Delete' }
-					]
+					books: [{ ID: bookID, title: 'Book to Delete' }]
 				});
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 

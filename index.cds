@@ -93,8 +93,8 @@ entity Changes : cuid {
   attribute             : String(5000)      @title: '{i18n>Changes.attribute}';
   valueChangedFrom      : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;
   valueChangedTo        : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
-  valueChangedFromLabel : String(5000)      @title: '{i18n>Changes.valueChangedFromLabel}';
-  valueChangedToLabel   : String(5000)      @title: '{i18n>Changes.valueChangedToLabel}';
+  valueChangedFromLabel : String(5000)      @title: '{i18n>Changes.valueChangedFrom}';
+  valueChangedToLabel   : String(5000)      @title: '{i18n>Changes.valueChangedTo}';
 
   entity                : String(5000)      @UI.Hidden; // target entity on db level
   entityKey        : String(5000)      @title: '{i18n>Changes.entityKey}'; // primary key of target entity

@@ -37,10 +37,12 @@ describe('@changelog annotation interpretation', () => {
 			quantity: 14
 		});
 
-		let changes = await adminService.run(SELECT.from(ChangeView).where({
-			modification: 'update',
-			entityKey: orderItemID
-		}));
+		let changes = await adminService.run(
+			SELECT.from(ChangeView).where({
+				modification: 'update',
+				entityKey: orderItemID
+			})
+		);
 		expect(changes.length).toEqual(1);
 		const change = changes[0];
 		const IDsegments = change.objectID.split(', ');
@@ -70,10 +72,12 @@ describe('@changelog annotation interpretation', () => {
 			placeOfBirth: 'new placeOfBirth'
 		});
 
-		const changes = await adminService.run(SELECT.from(ChangeView).where({
-			modification: 'update',
-			entityKey: authorID
-		}));
+		const changes = await adminService.run(
+			SELECT.from(ChangeView).where({
+				modification: 'update',
+				entityKey: authorID
+			})
+		);
 		expect(changes.length).toEqual(1);
 		expect(changes[0].objectID).toEqual('new placeOfBirth, Emily, Brontë, Haworth, Yorkshire, 1848-12-19, 1818-07-30');
 	});
@@ -175,11 +179,12 @@ describe('@changelog annotation interpretation', () => {
 
 		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${bookStoreID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-		const changes = await variantSrv.run(SELECT.from(ChangeView).where({
-			modification: 'update',
-			attribute: 'title',
-			entityKey: bookID
-		})
+		const changes = await variantSrv.run(
+			SELECT.from(ChangeView).where({
+				modification: 'update',
+				attribute: 'title',
+				entityKey: bookID
+			})
 		);
 		expect(changes.length).toEqual(1);
 
@@ -392,13 +397,11 @@ describe('@changelog annotation interpretation', () => {
 
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
-			const bookTypeChanges = await adminService.run(
-				SELECT.from(adminService.entities.ChangeView).where({
-					entity: 'sap.capire.bookshop.Books',
-					attribute: 'bookType',
-					rootEntityKey: bookStoreID
-				})
-			);
+			const bookTypeChanges = await SELECT.from(adminService.entities.ChangeView).where({
+				entity: 'sap.capire.bookshop.Books',
+				attribute: 'bookType',
+				rootEntityKey: bookStoreID
+			});
 			expect(bookTypeChanges.length).toEqual(1);
 
 			const bookTypeChange = bookTypeChanges[0];
