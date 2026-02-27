@@ -264,7 +264,6 @@ describe('@changelog annotation interpretation', () => {
 
 		// Create test data: Customer, Order, and OrderItem
 		const customerID = cds.utils.uuid();
-		const orderID = cds.utils.uuid();
 		const orderItemID = cds.utils.uuid();
 
 		await INSERT.into('sap.capire.bookshop.Customers').entries({
