@@ -359,11 +359,19 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 
 	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generateHANATriggers);
 
+	const ret = _hdi_migration(csn, options, beforeImage);
+
 	if (triggers.length > 0) {
+		const dummyTable = {
+			name: 'sap.changelog.CHANGE_TRACKING_DUMMY',
+			sql: 'COLUMN TABLE sap_changelog_CHANGE_TRACKING_DUMMY (X NVARCHAR(5) NOT NULL, PRIMARY KEY(X))',
+			suffix: '.hdbtable',
+		};
+		ret.definitions.push(dummyTable);
 		writeLabelsCSV(entities, runtimeCSN);
+		fs.writeFileSync(`db/data/sap.changelog-CHANGE_TRACKING_DUMMY.csv`, `X\n1`);
 	}
 
-	const ret = _hdi_migration(csn, options, beforeImage);
 	ret.definitions = [...ret.definitions, ...triggers];
 	return ret;
 };
