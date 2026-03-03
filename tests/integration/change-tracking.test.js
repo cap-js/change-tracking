@@ -640,21 +640,29 @@ describe('change log generation', () => {
 					modification: 'create'
 				});
 
-				expect(changes.length).toEqual(2);
+				expect(changes.length).toEqual(1);
+				expect(changes[0].entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(changes[0].valueChangedFrom).toEqual(null);
+				expect(changes[0].valueChangedTo).toEqual(null);
+				expect(changes[0].objectID).toEqual('Shakespeare and Company');
 
-				const change1 = changes.find((change) => change.valueChangedTo === 'Test Book 1');
-				const change2 = changes.find((change) => change.valueChangedTo === 'Test Book 2');
+				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes[0].ID });
+				expect(relatedChanges.length).toEqual(2);
+				const change1 = relatedChanges.find((change) => change.valueChangedTo === 'Test Book 1');
+				const change2 = relatedChanges.find((change) => change.valueChangedTo === 'Test Book 2');
 
 				// entity is now the parent (BookStores), not the child (Books)
-				expect(change1.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change1.entity).toEqual('sap.capire.bookshop.Books');
+				expect(change1.entityKey).toEqual(book1ID);
+				expect(change1.attribute).toEqual('title');
 				expect(change1.valueChangedFrom).toEqual(null);
 				expect(change1.valueChangedTo).toEqual('Test Book 1');
-				expect(change1.objectID).toEqual('Shakespeare and Company');
 
-				expect(change2.entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(change2.entity).toEqual('sap.capire.bookshop.Books');
+				expect(change2.entityKey).toEqual(book2ID);
+				expect(change2.attribute).toEqual('title');
 				expect(change2.valueChangedFrom).toEqual(null);
 				expect(change2.valueChangedTo).toEqual('Test Book 2');
-				expect(change2.objectID).toEqual('Shakespeare and Company');
 			});
 
 			it('links child entity changes to the root entity when updating nested data', async () => {
@@ -688,13 +696,21 @@ describe('change log generation', () => {
 				});
 
 				expect(changes.length).toEqual(1);
+				expect(changes[0].entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(changes[0].entityKey).toEqual(bookStoreID);
+				expect(changes[0].valueChangedFrom).toEqual(null);
+				expect(changes[0].valueChangedTo).toEqual(null);
+				expect(changes[0].objectID).toEqual('Shakespeare and Company');
 
-				const change = changes[0];
-				expect(change.entity).toEqual('sap.capire.bookshop.BookStores');
-				expect(change.entityKey).toEqual(bookStoreID);
-				expect(change.valueChangedFrom).toEqual('Original Title');
-				expect(change.valueChangedTo).toEqual('Updated Title');
-				expect(change.objectID).toEqual('Shakespeare and Company');
+				// check related changes
+				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes[0].ID });
+				expect(relatedChanges.length).toEqual(1);
+				expect(relatedChanges[0].entity).toEqual('sap.capire.bookshop.Books');
+				expect(relatedChanges[0].entityKey).toEqual(bookID);
+				expect(relatedChanges[0].attribute).toEqual('title');
+				expect(relatedChanges[0].modification).toEqual('update');
+				expect(relatedChanges[0].valueChangedFrom).toEqual('Original Title');
+				expect(relatedChanges[0].valueChangedTo).toEqual('Updated Title');
 			});
 
 			it('logs deleted child values as changes on the root entity', async () => {
@@ -726,13 +742,19 @@ describe('change log generation', () => {
 				});
 
 				expect(changes.length).toEqual(1);
+				expect(changes[0].entity).toEqual('sap.capire.bookshop.BookStores');
+				expect(changes[0].entityKey).toEqual(bookStoreID);
+				expect(changes[0].valueChangedFrom).toEqual(null);
+				expect(changes[0].valueChangedTo).toEqual(null);
+				expect(changes[0].objectID).toEqual('Shakespeare and Company');
 
-				const change = changes[0];
-				expect(change.entity).toEqual('sap.capire.bookshop.BookStores');
-				expect(change.entityKey).toEqual(bookStoreID);
-				expect(change.valueChangedFrom).toEqual('Book to Delete');
-				expect(change.valueChangedTo).toEqual(null);
-				expect(change.objectID).toEqual('Shakespeare and Company');
+				// check related changes
+				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes[0].ID });
+				expect(relatedChanges.length).toEqual(1);
+				expect(relatedChanges[0].entity).toEqual('sap.capire.bookshop.Books');
+				expect(relatedChanges[0].entityKey).toEqual(bookID);
+				expect(relatedChanges[0].valueChangedFrom).toEqual('Book to Delete');
+				expect(relatedChanges[0].valueChangedTo).toEqual(null);
 			});
 		});
 	});
