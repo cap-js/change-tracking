@@ -350,6 +350,26 @@ cds.on('compile.to.dbx', (csn, options, next) => {
 });
 
 /**
+ * Ensures the undeploy.json file contains the hdbtrigger pattern
+ */
+function ensureUndeployJsonHasTriggerPattern() {
+	const undeployPath = 'db/undeploy.json';
+	const triggerPattern = 'src/gen/**/*.hdbtrigger';
+
+	let undeploy = [];
+	if (fs.existsSync(undeployPath)) {
+		undeploy = JSON.parse(fs.readFileSync(undeployPath, 'utf8'));
+	}
+	if (!Array.isArray(undeploy)) return;
+
+	if (!undeploy.includes(triggerPattern)) {
+		undeploy.push(triggerPattern);
+		fs.writeFileSync(undeployPath, JSON.stringify(undeploy, null, 4) + '\n');
+		LOG.info(`Added '${triggerPattern}' to ${undeployPath}`);
+	}
+}
+
+/**
  * HANA HDI Triggers via compiler.to.hdi.migration
  */
 const _hdi_migration = cds.compiler.to.hdi.migration;
@@ -370,6 +390,7 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 		ret.definitions.push(dummyTable);
 		writeLabelsCSV(entities, runtimeCSN);
 		fs.writeFileSync(`db/data/sap.changelog-CHANGE_TRACKING_DUMMY.csv`, `X\n1`);
+		ensureUndeployJsonHasTriggerPattern();
 	}
 
 	ret.definitions = [...ret.definitions, ...triggers];

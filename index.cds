@@ -152,10 +152,6 @@ annotate ChangeView with @(UI: {
   PresentationVariant #ChangeHierarchy: {RecursiveHierarchyQualifier: 'ChangeHierarchy',},
   PresentationVariant: {
     Visualizations: ['@UI.LineItem'],
-    RequestAtLeast: [
-      rootEntityKey,
-      valueDataType
-    ],
     SortOrder     : [{
       Property  : createdAt,
       Descending: true
