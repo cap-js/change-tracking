@@ -1,6 +1,8 @@
 const cds = require('@sap/cds');
+const { message, expected } = require('@sap/cds/lib/log/cds-error');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
+const { POST, PATCH, DELETE, GET, axios } = cds.test(bookshop);
+axios.defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('change log generation', () => {
 	describe('Basic CRUD operations', () => {
@@ -145,84 +147,135 @@ describe('change log generation', () => {
 					]
 				}
 			];
-
 			await INSERT.into(DifferentFieldTypes).entries(data);
 
-			const ids = [e1ID, e2ID, e3ID];
-			let changes = await SELECT.from(ChangeView).where`entityKey in ${ids} or rootEntityKey in ${ids}`;
-
-			expect(changes.length).toEqual(12);
-
+			const changes = await SELECT.from(ChangeView).where`entityKey in ${[e1ID, e2ID, e3ID]}`;
+			expect(changes.length).toEqual(6);
 			expect(changes.some((c) => c.modification !== 'create')).toEqual(false);
+			expect(changes.some((c) => c.entity !== 'sap.change_tracking.DifferentFieldTypes')).toEqual(false);
 
-			let changesOrder1 = await SELECT.from(ChangeView).where`entityKey = ${e1ID} or rootEntityKey = ${e1ID}`;
+			const changesOrder1 = changes.filter((change) => change.entityKey === e1ID);
 
-			const change1 = changesOrder1.find((change) => change.attribute === 'number');
-			expect(change1.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change1.valueChangedFrom).toEqual(null);
-			expect(Number(change1.valueChangedTo)).toEqual(0);
+			const numberChange1 = changesOrder1.find((change) => change.attribute === 'number');
+			expect(numberChange1.valueChangedFrom).toEqual(null);
+			expect(Number(numberChange1.valueChangedTo)).toEqual(0);
 
-			const change2 = changesOrder1.find((change) => change.attribute === 'bool');
-			expect(change2.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change2.valueChangedFrom).toEqual(null);
-			expect(change2.valueChangedTo).toEqual('false');
+			const boolChange1 = changesOrder1.find((change) => change.attribute === 'bool');
+			expect(boolChange1.valueChangedFrom).toEqual(null);
+			expect(boolChange1.valueChangedTo).toEqual('false');
 
-			const quantityChanges1 = changesOrder1.filter((change) => change.attribute === 'double').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
-			expect(quantityChanges1[0].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges1[0].valueChangedFrom).toEqual(null);
-			expect(Number(quantityChanges1[0].valueChangedTo)).toEqual(10);
+			const changesOrder2 = changes.filter((change) => change.entityKey === e2ID);
 
-			expect(quantityChanges1[1].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges1[1].valueChangedFrom).toEqual(null);
-			expect(Number(quantityChanges1[1].valueChangedTo)).toEqual(12);
+			const numberChange2 = changesOrder2.find((change) => change.attribute === 'number');
+			expect(numberChange2.valueChangedFrom).toEqual(null);
+			expect(Number(numberChange2.valueChangedTo)).toEqual(10);
 
-			let changesOrder2 = await SELECT.from(ChangeView).where`entityKey = ${e2ID} or rootEntityKey = ${e2ID}`;
+			const boolChange2 = changesOrder2.find((change) => change.attribute === 'bool');
+			expect(boolChange2.valueChangedFrom).toEqual(null);
+			expect(boolChange2.valueChangedTo).toEqual('true');
 
-			const change3 = changesOrder2.find((change) => change.attribute === 'number');
-			expect(change3.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change3.valueChangedFrom).toEqual(null);
-			expect(Number(change3.valueChangedTo)).toEqual(10);
+			const changesOrder3 = changes.filter((change) => change.entityKey === e3ID);
 
-			const change4 = changesOrder2.find((change) => change.attribute === 'bool');
-			expect(change4.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change4.valueChangedFrom).toEqual(null);
-			expect(change4.valueChangedTo).toEqual('true');
+			const numberChange3 = changesOrder3.find((change) => change.attribute === 'number');
+			expect(numberChange3.valueChangedFrom).toEqual(null);
+			expect(Number(numberChange3.valueChangedTo)).toEqual(20);
 
-			const quantityChanges2 = changesOrder2.filter((change) => change.attribute === 'double').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
-			expect(quantityChanges2[0].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges2[0].valueChangedFrom).toEqual(null);
-			expect(Number(quantityChanges2[0].valueChangedTo)).toEqual(10);
-
-			expect(quantityChanges2[1].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges2[1].valueChangedFrom).toEqual(null);
-			expect(Number(quantityChanges2[1].valueChangedTo)).toEqual(12);
-
-			let changesOrder3 = await SELECT.from(ChangeView).where`entityKey = ${e3ID} or rootEntityKey = ${e3ID}`;
-
-			const change5 = changesOrder3.find((change) => change.attribute === 'number');
-			expect(change5.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change5.valueChangedFrom).toEqual(null);
-			expect(Number(change5.valueChangedTo)).toEqual(20);
-
-			const change6 = changesOrder3.find((change) => change.attribute === 'bool');
-			expect(change6.entity).toEqual('sap.change_tracking.DifferentFieldTypes');
-			expect(change6.valueChangedFrom).toEqual(null);
-			expect(change6.valueChangedTo).toEqual('false');
-
-			const quantityChanges3 = changesOrder3.filter((change) => change.attribute === 'double').sort((a, b) => a.valueChangedTo - b.valueChangedTo);
-			expect(quantityChanges3[0].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges3[0].valueChangedFrom).toEqual(null);
-			expect(Number(quantityChanges3[0].valueChangedTo)).toEqual(10);
-
-			expect(quantityChanges3[1].entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
-			expect(quantityChanges3[1].valueChangedFrom).toEqual(null);
-			expect(Number(quantityChanges3[1].valueChangedTo)).toEqual(12);
+			const boolChange3 = changesOrder3.find((change) => change.attribute === 'bool');
+			expect(boolChange3.valueChangedFrom).toEqual(null);
+			expect(boolChange3.valueChangedTo).toEqual('false');
 		});
 	});
 
 	describe('composition tracking', () => {
+
+		it('does not link child entity changes to the root entity when composition field is not annotated', async () => {
+			const processorService = await cds.connect.to('ProcessorService');
+			const { ChangeView } = processorService.entities;
+
+			const incidentsID = cds.utils.uuid();
+			const conversationID = cds.utils.uuid();
+			await POST(`/odata/v4/processor/Incidents`, {
+				ID: incidentsID,
+				conversation: [{ ID: conversationID, message: 'test message' }]
+			});
+			await POST(`/odata/v4/processor/Incidents(ID=${incidentsID}, IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+			const changes = await SELECT.one.from(ChangeView).where({ entityKey: `${incidentsID}||${conversationID}` });
+			expect(changes.entity).toEqual('sap.capire.incidents.Incidents.conversation');
+			expect(changes.attribute).toEqual('message');
+			expect(changes.modification).toEqual('create');
+			expect(changes.valueChangedFrom).toEqual(null);
+			expect(changes.valueChangedTo).toEqual('test message');
+			expect(changes.parent_ID).toEqual(null);
+		});
+
+		// Limitation because deep queries are not run in sequential order
+		it.skip('links child entity changes to the root entity when deep creating nested data', async () => {
+			const adminService = await cds.connect.to('AdminService');
+			const { ChangeView } = adminService.entities;
+
+			const orderID = cds.utils.uuid();
+			const orderItemID = cds.utils.uuid();
+			const orderItemNoteID = cds.utils.uuid();
+			await POST(`/odata/v4/admin/Order`, {
+				ID: orderID,
+				orderItems: [{ ID: orderItemID, notes: [{ ID: orderItemNoteID, content: 'new content' }] }]
+			});
+			const changes = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, orderItemNoteID]}`;
+			expect(changes.length).toEqual(4);
+
+			// Find the new Order.orderItems entry (different from the one created during initial POST)
+			const orderChange = changes.find(c => c.entityKey === orderID);
+			expect(orderChange).toMatchObject({
+				entity: 'sap.capire.bookshop.Order',
+				attribute: 'orderItems',
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: null,
+				parent_ID: null,
+				valueDataType: 'cds.Composition'
+			});
+
+			const orderItemChanges = changes.filter(c => c.entityKey === orderItemID);
+			expect(orderItemChanges.length).toEqual(2);
+
+			const orderItemChangeOrder = orderItemChanges.find(c => c.attribute === 'order');
+			expect(orderItemChangeOrder).toMatchObject({
+				entity: 'sap.capire.bookshop.OrderItem',
+				attribute: 'order',
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: orderID,
+				parent_ID: orderChange.ID,
+				valueDataType: 'cds.Association'
+			});
+
+			const orderItemChangeNotes = orderItemChanges.find(c => c.attribute === 'notes');
+			expect(orderItemChangeNotes).toMatchObject({
+				entity: 'sap.capire.bookshop.OrderItem',
+				attribute: 'notes',
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: null,
+				parent_ID: orderChange.ID,
+				valueDataType: 'cds.Composition'
+			});
+
+			const orderItemNoteChange = changes.find(c => c.entityKey === orderItemNoteID);
+			expect(orderItemNoteChange).toMatchObject({
+				entity: 'sap.capire.bookshop.OrderItemNote',
+				attribute: 'content',
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: 'new content',
+				parent_ID: orderItemChangeNotes.ID,
+				valueDataType: 'cds.String'
+			});
+		});
 		it('links child entity changes to the root entity when creating nested data', async () => {
 			const adminService = await cds.connect.to('AdminService');
+			const { ChangeView } = adminService.entities;
+
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
 			const orderItemNoteID = cds.utils.uuid();
@@ -230,51 +283,121 @@ describe('change log generation', () => {
 				ID: orderID,
 				orderItems: [{ ID: orderItemID }]
 			});
+
+			// Check changes before creating OrderItemNote
+			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID]}`;
+			expect(changesBefore.length).toEqual(2);
+			const orderChangeBefore = changesBefore.find(c => c.entityKey === orderID);
+			expect(orderChangeBefore).toMatchObject({
+				entity: 'sap.capire.bookshop.Order',
+				attribute: 'orderItems',
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: null,
+				parent_ID: null
+			});
+
+			const orderItemChangeBefore = changesBefore.find(c => c.entityKey === orderItemID);
+			expect(orderItemChangeBefore).toMatchObject({
+				entity: 'sap.capire.bookshop.OrderItem',
+				attribute: 'order',
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: orderID,
+				parent_ID: orderChangeBefore.ID
+			});
+
 			await POST(`/odata/v4/admin/Order(ID=${orderID})/orderItems(ID=${orderItemID})/notes`, {
 				ID: orderItemNoteID,
 				content: 'new content'
 			});
-			let changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
-			const orderChanges = changes.filter((change) => {
-				return change.entityKey === orderItemNoteID && change.rootEntityKey === orderItemID;
+			// Should create new change for field orderItems on Order with a link to OrderItemNote change (three new changes in total)
+			const changes = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, orderItemNoteID]}`;
+			expect(changes.length).toEqual(5);
+
+			// Find the new Order.orderItems entry (different from the one created during initial POST)
+			const newOrderChange = changes.find(c => c.entityKey === orderID && c.ID !== orderChangeBefore.ID);
+			expect(newOrderChange).toMatchObject({
+				entity: 'sap.capire.bookshop.Order',
+				attribute: 'orderItems',
+				modification: 'update',
+				valueChangedFrom: null,
+				valueChangedTo: null,
+				parent_ID: null,
+				valueDataType: 'cds.Composition'
 			});
-			expect(orderChanges.length).toEqual(1);
-			const orderChange = orderChanges[0];
-			expect(orderChange.entity).toEqual('sap.capire.bookshop.OrderItemNote');
-			expect(orderChange.attribute).toEqual('content');
-			expect(orderChange.modification).toEqual('create');
-			expect(orderChange.valueChangedFrom).toEqual(null);
-			expect(orderChange.valueChangedTo).toEqual('new content');
-			expect(orderChange.rootEntityKey).toEqual(orderItemID);
-			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
+
+			// The OrderItem entry should be for the 'notes' composition field, linking to the Order.orderItems entry
+			const noteChange = changes.find(c => c.entityKey === orderItemID && c.ID !== orderItemChangeBefore.ID);
+			expect(noteChange).toMatchObject({
+				entity: 'sap.capire.bookshop.OrderItem',
+				attribute: 'notes',
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: null,
+				parent_ID: newOrderChange.ID,
+				valueDataType: 'cds.Composition'
+			});
+
+			const orderItemNoteChange = changes.find(c => c.entityKey === orderItemNoteID);
+			expect(orderItemNoteChange).toMatchObject({
+				entity: 'sap.capire.bookshop.OrderItemNote',
+				attribute: 'content',
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: 'new content',
+				parent_ID: noteChange.ID
+			});
 		});
 
 		it('logs updated child values as changes on the parent entity', async () => {
 			const adminService = await cds.connect.to('AdminService');
+			const { ChangeView } = adminService.entities;
+
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
 			const noteID = cds.utils.uuid();
+
 			await POST(`/odata/v4/admin/Order`, {
 				ID: orderID,
 				orderItems: [{ ID: orderItemID, notes: [{ ID: noteID, content: 'original note' }] }]
 			});
+
+			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, noteID]}`;
+			const transactionID = changesBefore.find(c => c.transactionID).transactionID;
 			await PATCH(`/odata/v4/admin/Order(ID=${orderID})/orderItems(ID=${orderItemID})/notes(ID=${noteID})`, {
 				content: 'new content'
 			});
 
-			let changes = await adminService.run(SELECT.from(adminService.entities.ChangeView));
-			const orderChanges = changes.filter((change) => {
-				return change.entityKey === noteID && change.modification === 'update';
+			const changes = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, noteID]} and transactionID != ${transactionID}`;
+			expect(changes.length).toEqual(3);
+
+			const orderChange = changes.find(c => c.entityKey === orderID);
+			expect(orderChange).toMatchObject({
+				entity: 'sap.capire.bookshop.Order',
+				attribute: 'orderItems',
+				modification: 'update',
+				parent_ID: null,
+				valueDataType: 'cds.Composition'
 			});
-			expect(orderChanges.length).toEqual(1);
-			const orderChange = orderChanges[0];
-			expect(orderChange.entity).toEqual('sap.capire.bookshop.OrderItemNote');
-			expect(orderChange.attribute).toEqual('content');
-			expect(orderChange.modification).toEqual('update');
-			expect(orderChange.valueChangedFrom).toEqual('original note');
-			expect(orderChange.valueChangedTo).toEqual('new content');
-			expect(orderChange.rootEntityKey).toEqual(orderItemID);
-			expect(orderChange.rootObjectID).toEqual('sap.capire.bookshop.OrderItem');
+
+			const orderItemChange = changes.find(c => c.entityKey === orderItemID);
+			expect(orderItemChange).toMatchObject({
+				entity: 'sap.capire.bookshop.OrderItem',
+				attribute: 'notes',
+				modification: 'update',
+				parent_ID: orderChange.ID,
+				valueDataType: 'cds.Composition'
+			});
+
+			const orderItemNoteChange = changes.find(c => c.entityKey === noteID);
+			expect(orderItemNoteChange).toMatchObject({
+				entity: 'sap.capire.bookshop.OrderItemNote',
+				attribute: 'content',
+				modification: 'update',
+				parent_ID: orderItemChange.ID,
+				valueDataType: 'cds.String'
+			});
 		});
 
 		it('links child entity changes to the root entity when deleting nested data', async () => {
