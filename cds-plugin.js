@@ -147,22 +147,21 @@ function enhanceModel(m) {
 	collectedEntities = new Map();
 
 	const replaceReferences = (xpr, depth) => {
-		const parents = []
-		for (let i = 0; i < depth; i++)
-			parents.push('parent')
+		const parents = [];
+		for (let i = 0; i < depth; i++) parents.push('parent');
 		for (const ele of xpr) {
 			if (ele.ref && ele.ref[0] === 'changes') {
-				const lastEle = ele.ref.pop()
-				ele.ref.push(parents.join('_') + '_' + lastEle)
+				const lastEle = ele.ref.pop();
+				ele.ref.push(parents.join('_') + '_' + lastEle);
 			}
 		}
 		return xpr;
-	}
+	};
 	if (cds.env.requires['change-tracking'].maxDisplayHierarchyDepth > 1) {
-		const depth = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth
-		const parents = []
+		const depth = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth;
+		const parents = [];
 		for (let i = 1; i < depth; i++) {
-			parents.push('parent')
+			parents.push('parent');
 			m.definitions['sap.changelog.ChangeView'].query.SELECT.columns.push(
 				{
 					ref: ['change', ...parents, 'entityKey'],
@@ -173,8 +172,8 @@ function enhanceModel(m) {
 					as: parents.join('_') + '_' + 'entity'
 				}
 			);
-			m.definitions['sap.changelog.ChangeView'].elements[parents.join('_') + '_' + 'entityKey'] = structuredClone(m.definitions['sap.changelog.ChangeView'].elements.entityKey)
-			m.definitions['sap.changelog.ChangeView'].elements[parents.join('_') + '_' + 'entity'] = structuredClone(m.definitions['sap.changelog.ChangeView'].elements.entity)
+			m.definitions['sap.changelog.ChangeView'].elements[parents.join('_') + '_' + 'entityKey'] = structuredClone(m.definitions['sap.changelog.ChangeView'].elements.entityKey);
+			m.definitions['sap.changelog.ChangeView'].elements[parents.join('_') + '_' + 'entity'] = structuredClone(m.definitions['sap.changelog.ChangeView'].elements.entity);
 		}
 	}
 	for (let name in m.definitions) {
@@ -198,14 +197,9 @@ function enhanceModel(m) {
 				const onCondition = changes.on.flatMap((p) => (p?.ref && p.ref[0] === 'ID' ? keys : [p]));
 				const tableName = (entity.projection ?? entity.query?.SELECT)?.from?.ref[0];
 				const onTemplate = _replaceTablePlaceholders(onCondition, tableName);
-				const on = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth > 1
-					? [{ xpr: structuredClone(onTemplate) }]
-					: onTemplate;
+				const on = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth > 1 ? [{ xpr: structuredClone(onTemplate) }] : onTemplate;
 				for (let i = 1; i < cds.env.requires['change-tracking'].maxDisplayHierarchyDepth; i++) {
-					on.push(
-						'or',
-						{ xpr: replaceReferences(structuredClone(onTemplate), i) }
-					)
+					on.push('or', { xpr: replaceReferences(structuredClone(onTemplate), i) });
 				}
 				const assoc = new cds.builtin.classes.Association({ ...changes, on });
 				assoc.target = `${serviceName}.ChangeView`;
@@ -425,7 +419,7 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 		const dummyTable = {
 			name: 'sap.changelog.CHANGE_TRACKING_DUMMY',
 			sql: 'COLUMN TABLE sap_changelog_CHANGE_TRACKING_DUMMY (X NVARCHAR(5) NOT NULL, PRIMARY KEY(X))',
-			suffix: '.hdbtable',
+			suffix: '.hdbtable'
 		};
 		ret.definitions.push(dummyTable);
 		writeLabelsCSV(entities, runtimeCSN);
