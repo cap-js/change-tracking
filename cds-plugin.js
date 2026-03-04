@@ -69,13 +69,11 @@ function entityKey4(entity) {
 }
 
 /**
- * Replace ENTITY and ROOTENTITY placeholders in ON conditions.
+ * Replace ENTITY placeholders in ON conditions.
  */
-function _replaceTablePlaceholders(on, tableName, hierarchy) {
-	const rootEntityName = hierarchy.get(tableName) || tableName;
+function _replaceTablePlaceholders(on, tableName) {
 	return on.map((part) => {
 		if (part?.val === 'ENTITY') return { ...part, val: tableName };
-		if (part?.val === 'ROOTENTITY') return { ...part, val: rootEntityName };
 		return part;
 	});
 }
@@ -148,6 +146,37 @@ function enhanceModel(m) {
 	hierarchyMap = analyzeCompositions(m);
 	collectedEntities = new Map();
 
+	const replaceReferences = (xpr, depth) => {
+		const parents = []
+		for (let i = 0; i < depth; i++)
+			parents.push('parent')
+		for (const ele of xpr) {
+			if (ele.ref && ele.ref[0] === 'changes') {
+				const lastEle = ele.ref.pop()
+				ele.ref.push(parents.join('_') + '_' + lastEle)
+			}
+		}
+		return xpr;
+	}
+	if (cds.env.requires['change-tracking'].maxDisplayHierarchyDepth > 1) {
+		const depth = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth
+		const parents = []
+		for (let i = 1; i < depth; i++) {
+			parents.push('parent')
+			m.definitions['sap.changelog.ChangeView'].query.SELECT.columns.push(
+				{
+					ref: ['change', ...parents, 'entityKey'],
+					as: parents.join('_') + '_' + 'entityKey'
+				},
+				{
+					ref: ['change', ...parents, 'entity'],
+					as: parents.join('_') + '_' + 'entity'
+				}
+			);
+			m.definitions['sap.changelog.ChangeView'].elements[parents.join('_') + '_' + 'entityKey'] = structuredClone(m.definitions['sap.changelog.ChangeView'].elements.entityKey)
+			m.definitions['sap.changelog.ChangeView'].elements[parents.join('_') + '_' + 'entity'] = structuredClone(m.definitions['sap.changelog.ChangeView'].elements.entity)
+		}
+	}
 	for (let name in m.definitions) {
 		const entity = m.definitions[name];
 		const isServiceEntity = entity.kind === 'entity' && !!(entity.query || entity.projection);
@@ -168,7 +197,16 @@ function enhanceModel(m) {
 
 				const onCondition = changes.on.flatMap((p) => (p?.ref && p.ref[0] === 'ID' ? keys : [p]));
 				const tableName = (entity.projection ?? entity.query?.SELECT)?.from?.ref[0];
-				const on = _replaceTablePlaceholders(onCondition, tableName, hierarchyMap);
+				const onTemplate = _replaceTablePlaceholders(onCondition, tableName);
+				const on = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth > 1
+					? [{ xpr: structuredClone(onTemplate) }]
+					: onTemplate;
+				for (let i = 1; i < cds.env.requires['change-tracking'].maxDisplayHierarchyDepth; i++) {
+					on.push(
+						'or',
+						{ xpr: replaceReferences(structuredClone(onTemplate), i) }
+					)
+				}
 				const assoc = new cds.builtin.classes.Association({ ...changes, on });
 				assoc.target = `${serviceName}.ChangeView`;
 				if (!m.definitions[`${serviceName}.ChangeView`]) {
@@ -177,7 +215,8 @@ function enhanceModel(m) {
 						SELECT: {
 							from: {
 								ref: ['sap.changelog.ChangeView']
-							}
+							},
+							columns: ['*']
 						}
 					};
 
@@ -197,7 +236,8 @@ function enhanceModel(m) {
 										if (!cqn) {
 											return false;
 										}
-										baseE = cqn.from?.ref?.[0];
+										// from.args is the case for joins
+										baseE = cqn.from?.ref?.[0] ?? cqn.from?.args?.[0]?.ref?.[0];
 									}
 									return false;
 								});

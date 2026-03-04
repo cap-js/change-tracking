@@ -18,9 +18,7 @@ entity aspect @(UI.Facets: [{
 }]) {
       changes : Association to many ChangeView
                   on  changes.entityKey     = ID
-                  and changes.entity        = 'ENTITY'
-                  or  changes.rootEntityKey = ID
-                  and changes.rootEntity    = 'ROOTENTITY';
+                  and changes.entity        = 'ENTITY';
   key ID      : String;
 }
 
@@ -33,80 +31,73 @@ entity aspect @(UI.Facets: [{
 @readonly
 @cds.autoexpose
 view ChangeView as
-  select from Changes {
+  select from Changes as change {
+    key change.ID                                        @UI.Hidden,
     *,
-    ID                                        @UI.Hidden,
     COALESCE(
       (
         select text from i18nKeys
         where
-              ID     = Changes.attribute
+              ID     = change.attribute
           and locale = $user.locale
       ), (
         select text from i18nKeys
         where
-              ID     = Changes.attribute
+              ID     = change.attribute
           and locale = 'en'
-      ), Changes.attribute
+      ), change.attribute
     ) as attributeLabel        : String(5000) @title: '{i18n>Changes.attribute}',
     COALESCE(
       (
         select text from i18nKeys
         where
-              ID     = Changes.entity
+              ID     = change.entity
           and locale = $user.locale
       ), (
         select text from i18nKeys
         where
-              ID     = Changes.entity
+              ID     = change.entity
           and locale = 'en'
-      ), Changes.entity
+      ), change.entity
     ) as entityLabel           : String(5000) @title: '{i18n>Changes.entity}',
     COALESCE(
       (
         select text from i18nKeys
         where
-              ID     = Changes.modification
+              ID     = change.modification
           and locale = $user.locale
       ), (
         select text from i18nKeys
         where
-              ID     = Changes.modification
+              ID     = change.modification
           and locale = 'en'
-      ), Changes.modification
+      ), change.modification
     ) as modificationLabel     : String(5000) @title: '{i18n>Changes.modification}',
     COALESCE(
       (
         select text from i18nKeys
         where
-              ID     = Changes.objectID
+              ID     = change.objectID
           and locale = $user.locale
       ), (
         select text from i18nKeys
         where
-              ID     = Changes.objectID
+              ID     = change.objectID
           and locale = 'en'
-      ), Changes.objectID
+      ), change.objectID
     ) as objectID              : String(5000) @title: '{i18n>Changes.objectID}',
     COALESCE(
-      (
-        select text from i18nKeys
-        where
-              ID     = Changes.rootObjectID
-          and locale = $user.locale
-      ), (
-        select text from i18nKeys
-        where
-              ID     = Changes.rootObjectID
-          and locale = 'en'
-      ), Changes.rootObjectID
-    ) as rootObjectID          : String(5000) @title: '{i18n>Changes.rootObjectID}',
-    COALESCE(
-      Changes.valueChangedFromLabel, Changes.valueChangedFrom
+      change.valueChangedFromLabel, change.valueChangedFrom
     ) as valueChangedFromLabel : String(5000) @title: '{i18n>Changes.valueChangedFrom}',
     COALESCE(
-      Changes.valueChangedToLabel, Changes.valueChangedTo
-    ) as valueChangedToLabel   : String(5000) @title: '{i18n>Changes.valueChangedTo}'
+      change.valueChangedToLabel, change.valueChangedTo
+    ) as valueChangedToLabel   : String(5000) @title: '{i18n>Changes.valueChangedTo}',
+    
+    // For the hierarchy
+    null as LimitedDescendantCount : Int16,
+    null as DistanceFromRoot       : Int16,
+    null as DrillState             : String,
+    null as LimitedRank            : Int16,
   };
 
 entity i18nKeys {
@@ -116,9 +107,10 @@ entity i18nKeys {
 }
 
 entity Changes : cuid {
-  parent : Association to one Changes;
-  children : Composition of many Changes on children.parent = $self;
-  
+  parent                : Association to one Changes;
+  children              : Composition of many Changes
+                            on children.parent = $self;
+
   attribute             : String(5000)      @title: '{i18n>Changes.attribute}';
   valueChangedFrom      : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;
   valueChangedTo        : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
@@ -149,20 +141,21 @@ entity Changes : cuid {
 }
 
 annotate ChangeView with @(UI: {
-  PresentationVariant #ChangeHierarchy: {RecursiveHierarchyQualifier: 'ChangeHierarchy',},
-  PresentationVariant: {
+  PresentationVariant #ChangeHierarchy: {RecursiveHierarchyQualifier: 'ChangeHierarchy',
+  },
+  PresentationVariant                 : {
     Visualizations: ['@UI.LineItem'],
     SortOrder     : [{
       Property  : createdAt,
       Descending: true
     }],
   },
-  HeaderInfo         : {
+  HeaderInfo                          : {
     $Type         : 'UI.HeaderInfoType',
     TypeName      : '{i18n>ChangeHistory}',
     TypeNamePlural: '{i18n>ChangeHistory}',
   },
-  LineItem           : [
+  LineItem                            : [
     {
       Value             : modificationLabel,
       @HTML5.CssDefaults: {width: '9%'}
@@ -201,7 +194,7 @@ annotate ChangeView with @(UI: {
       ![@UI.Hidden]     : true
     }
   ],
-  DeleteHidden       : true,
+  DeleteHidden                        : true,
 });
 
 annotate ChangeView with @(
@@ -211,7 +204,7 @@ annotate ChangeView with @(
   },
   Hierarchy.RecursiveHierarchyActions #ChangeHierarchy   : {ChangeSiblingForRootsSupported: false,
   },
-  Hierarchy.RecursiveHierarchy #ChangeHierarchy        : {
+  Hierarchy.RecursiveHierarchy #ChangeHierarchy          : {
     LimitedDescendantCount: LimitedDescendantCount,
     DistanceFromRoot      : DistanceFromRoot,
     DrillState            : DrillState,
@@ -232,10 +225,3 @@ annotate ChangeView with @(
     'LimitedRank'
   ],
 );
-
-extend ChangeView with columns { // Ensure we can query these fields from database
-    null as LimitedDescendantCount : Int16,
-    null as DistanceFromRoot       : Int16,
-    null as DrillState             : String,
-    null as LimitedRank            : Int16,
-};

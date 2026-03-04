@@ -33,13 +33,15 @@
 		"node": ">=20.0.0"
 	},
 	"devDependencies": {
-		"@cap-js/cds-test": "*"
+		"@cap-js/cds-test": "*",
+		"@cap-js/cds-types": "^0.16.0"
 	},
 	"cds": {
 		"requires": {
 			"change-tracking": {
 				"model": "@cap-js/change-tracking",
 				"considerLocalizedValues": false,
+				"maxDisplayHierarchyDepth": 3,
 				"preserveDeletes": false
 			}
 		}
