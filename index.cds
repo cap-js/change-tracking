@@ -46,7 +46,7 @@ view ChangeView as
               ID     = change.attribute
           and locale = 'en'
       ), change.attribute
-    ) as attributeLabel        : String(5000) @title: '{i18n>Changes.attribute}',
+    ) as attributeLabel        : String(15) @title: '{i18n>Changes.attribute}',
     COALESCE(
       (
         select text from i18nKeys
@@ -59,7 +59,7 @@ view ChangeView as
               ID     = change.entity
           and locale = 'en'
       ), change.entity
-    ) as entityLabel           : String(5000) @title: '{i18n>Changes.entity}',
+    ) as entityLabel           : String(24) @title: '{i18n>Changes.entity}',
     COALESCE(
       (
         select text from i18nKeys
@@ -72,7 +72,7 @@ view ChangeView as
               ID     = change.modification
           and locale = 'en'
       ), change.modification
-    ) as modificationLabel     : String(5000) @title: '{i18n>Changes.modification}',
+    ) as modificationLabel     : String(16) @title: '{i18n>Changes.modification}',
     COALESCE(
       (
         select text from i18nKeys
@@ -85,7 +85,7 @@ view ChangeView as
               ID     = change.objectID
           and locale = 'en'
       ), change.objectID
-    ) as objectID              : String(5000) @title: '{i18n>Changes.objectID}',
+    ) as objectID              : String(24) @title: '{i18n>Changes.objectID}',
     COALESCE(
       change.valueChangedFromLabel, change.valueChangedFrom
     ) as valueChangedFromLabel : String(5000) @title: '{i18n>Changes.valueChangedFrom}',
@@ -94,10 +94,10 @@ view ChangeView as
     ) as valueChangedToLabel   : String(5000) @title: '{i18n>Changes.valueChangedTo}',
     
     // For the hierarchy
-    null as LimitedDescendantCount : Int16,
-    null as DistanceFromRoot       : Int16,
-    null as DrillState             : String,
-    null as LimitedRank            : Int16,
+    null as LimitedDescendantCount : Int16 @UI.Hidden,
+    null as DistanceFromRoot       : Int16 @UI.Hidden,
+    null as DrillState             : String @UI.Hidden,
+    null as LimitedRank            : Int16 @UI.Hidden,
   };
 
 entity i18nKeys {
@@ -111,13 +111,13 @@ entity Changes : cuid {
   children              : Composition of many Changes
                             on children.parent = $self;
 
-  attribute             : String(5000)      @title: '{i18n>Changes.attribute}';
+  attribute             : String(127)       @title: '{i18n>Changes.attribute}';
   valueChangedFrom      : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;
   valueChangedTo        : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
   valueChangedFromLabel : String(5000)      @title: '{i18n>Changes.valueChangedFrom}';
   valueChangedToLabel   : String(5000)      @title: '{i18n>Changes.valueChangedTo}';
 
-  entity                : String(5000)      @UI.Hidden; // target entity on db level
+  entity                : String(150)       @UI.Hidden; // target entity on db level
   entityKey             : String(5000)      @title: '{i18n>Changes.entityKey}'; // primary key of target entity
 
   rootEntity            : String(5000)      @title: '{i18n>Changes.rootEntity}';
@@ -128,7 +128,7 @@ entity Changes : cuid {
   rootObjectID          : String(5000)      @title: '{i18n>Changes.rootObjectID}';
 
   @title: '{i18n>Changes.modification}'
-  modification          : String enum {
+  modification          : String(6) enum {
     Create = 'create';
     Update = 'update';
     Delete = 'delete';
@@ -158,44 +158,46 @@ annotate ChangeView with @(UI: {
   LineItem                            : [
     {
       Value             : modificationLabel,
-      @HTML5.CssDefaults: {width: '9%'}
-    },
-    {
-      Value             : createdAt,
-      @HTML5.CssDefaults: {width: '12%'}
-    },
-    {
-      Value             : createdBy,
-      @HTML5.CssDefaults: {width: '9%'}
+      @UI.Importance : #Low
     },
     {
       Value             : entityLabel,
-      @HTML5.CssDefaults: {width: '11%'}
+      @UI.Importance : #Medium
     },
     {
       Value             : objectID,
-      @HTML5.CssDefaults: {width: '14%'}
+      @UI.Importance : #Medium
     },
     {
       Value             : attributeLabel,
-      @HTML5.CssDefaults: {width: '9%'}
+      @UI.Importance : #Medium
     },
     {
       Value             : valueChangedToLabel,
-      @HTML5.CssDefaults: {width: '11%'}
+      @UI.Importance : #High
     },
     {
       Value             : valueChangedFromLabel,
-      @HTML5.CssDefaults: {width: '11%'}
+      @UI.Importance : #High
     },
     {
-      Value             : rootObjectID,
-      @HTML5.CssDefaults: {width: '14%'},
-      ![@UI.Hidden]     : true
-    }
+      Value             : createdAt,
+      @UI.Importance : #Low
+    },
+    {
+      Value             : createdBy,
+      @UI.Importance : #Low
+    },
   ],
   DeleteHidden                        : true,
-});
+}) {
+  valueChangedFrom @UI.Hidden;
+  valueChangedTo @UI.Hidden;
+  parent @UI.Hidden;
+  entityKey @UI.Hidden;
+  entity @UI.Hidden;
+  attribute @UI.Hidden;
+};
 
 annotate ChangeView with @(
   Aggregation.RecursiveHierarchy #ChangeHierarchy        : {
