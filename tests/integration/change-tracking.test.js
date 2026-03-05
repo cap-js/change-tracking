@@ -1142,7 +1142,6 @@ describe('change log generation', () => {
 				}
 			]
 		});
-		const x = await SELECT.from(ChangeView).where`entityKey in ${[rootID, lvl1ID, lvl2ID]}`;
 		const orderID = cds.utils.uuid();
 		const orderItemID = cds.utils.uuid();
 		const noteID = cds.utils.uuid();

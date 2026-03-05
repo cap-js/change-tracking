@@ -101,10 +101,23 @@ function generateTriggersForEntities(runtimeCSN, hierarchy, entities, generator)
 	for (const { dbEntityName, mergedAnnotations } of entities) {
 		const entity = runtimeCSN.definitions[dbEntityName];
 		if (!entity) continue;
-		const rootEntityName = hierarchy.get(dbEntityName);
+		
+		const hierarchyInfo = hierarchy.get(dbEntityName);
+		const rootEntityName = hierarchyInfo?.parent ?? null;
 		const rootEntity = rootEntityName ? runtimeCSN.definitions[rootEntityName] : null;
 		const rootMergedAnnotations = rootEntityName ? entities.find((d) => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
-		const result = generator(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
+		
+		// Get grandparent info for deep linking
+		const grandParentEntityName = hierarchyInfo?.grandParent ?? null;
+		const grandParentEntity = grandParentEntityName ? runtimeCSN.definitions[grandParentEntityName] : null;
+		const grandParentMergedAnnotations = grandParentEntityName ? entities.find((d) => d.dbEntityName === grandParentEntityName)?.mergedAnnotations : null;
+		const grandParentCompositionField = hierarchyInfo?.grandParentCompositionField ?? null;
+		
+		const result = generator(runtimeCSN, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, {
+			grandParentEntity,
+			grandParentMergedAnnotations,
+			grandParentCompositionField
+		});
 		if (result) triggers.push(...(Array.isArray(result) ? result : [result]));
 	}
 	return triggers;
