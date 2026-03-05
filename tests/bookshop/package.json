@@ -14,7 +14,7 @@
 		"watch:sqlite": "cds watch --profile sqlite",
 		"watch:postgres": "cds watch --profile pg",
 		"deploy:hana": "cds deploy --to hana",
-		"deploy:postgres": "cds build --production && cds deploy --profile pg",
+		"deploy:postgres": "CDS_ENV=pg cds build --production && cds deploy --profile pg",
 		"start:pg": "docker compose -f pg-stack.yml up -d && npm run deploy:postgres"
 	},
 	"cds": {

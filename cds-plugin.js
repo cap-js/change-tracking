@@ -328,6 +328,18 @@ cds.on('listening', () => {
 	});
 });
 
+// Fill i18nKeys table for Postgres
+cds.once('served', async () => {
+	const db = cds.env.requires?.db;
+	if (db?.kind !== 'postgres') return;
+	
+	const entities = getEntitiesForTriggerGeneration(cds.model.definitions, collectedEntities);
+	const labels = getLabelTranslations(entities, cds.model);
+	const { i18nKeys } = cds.entities('sap.changelog');
+
+	await Promise.all([cds.delete(i18nKeys), cds.insert(labels).into(i18nKeys)]);
+});
+
 // Fill i18nKeys table for in-memory SQLite
 cds.once('served', async () => {
 	const db = cds.env.requires?.db;
