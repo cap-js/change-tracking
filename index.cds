@@ -186,7 +186,7 @@ annotate ChangeView with @(UI: {
     },
     {
       Value             : createdBy,
-      @UI.Importance : #Low
+      @UI.Importance : #High
     },
   ],
   DeleteHidden                        : true,
