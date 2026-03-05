@@ -15,7 +15,7 @@
 		"watch:postgres": "cds watch --profile pg",
 		"deploy:hana": "cds deploy --to hana",
 		"deploy:postgres": "cds build --production && cds deploy --profile pg",
-		"start:pg": "docker compose -f pg.yml up -d && npm run deploy:postgres"
+		"start:pg": "docker compose -f pg-stack.yml up -d && npm run deploy:postgres"
 	},
 	"cds": {
 		"log": {
