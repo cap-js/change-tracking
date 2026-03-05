@@ -1,4 +1,3 @@
-const { entity } = require('@sap/cds');
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE } = cds.test(bookshop);

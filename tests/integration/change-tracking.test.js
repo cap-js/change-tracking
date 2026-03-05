@@ -1,5 +1,4 @@
 const cds = require('@sap/cds');
-const { message, expected } = require('@sap/cds/lib/log/cds-error');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE, GET, axios } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice', password: 'admin' };
