@@ -195,7 +195,9 @@ describe('change log generation', () => {
 			});
 			await POST(`/odata/v4/processor/Incidents(ID=${incidentsID}, IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
-			const changes = await SELECT.one.from(ChangeView).where({ entityKey: `${incidentsID}||${conversationID}` });
+			const compositeKey = `${String(incidentsID).length},${incidentsID};${String(conversationID).length},${conversationID}`;
+
+			const changes = await SELECT.one.from(ChangeView).where({ entityKey: compositeKey });
 			expect(changes.entity).toEqual('sap.capire.incidents.Incidents.conversation');
 			expect(changes.attribute).toEqual('message');
 			expect(changes.modification).toEqual('create');
@@ -553,7 +555,7 @@ describe('change log generation', () => {
 
 			const orderID = cds.utils.uuid();
 			const orderItemID = cds.utils.uuid();
-			const compositeKey = `${orderID}||${orderItemID}`;
+			const compositeKey = `${String(orderID).length},${orderID};${String(orderItemID).length},${orderItemID}`;
 
 			await POST(`/odata/v4/admin/Order`, {
 				ID: orderID,
@@ -1069,7 +1071,7 @@ describe('change log generation', () => {
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-				const compositeKey = `${parentID}||${childID}`;
+				const compositeKey = `${String(parentID).length},${parentID};${String(childID).length},${childID}`;
 				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]}`;
 
 				// Parent composition entry
@@ -1121,7 +1123,7 @@ describe('change log generation', () => {
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-				const compositeKey = `${parentID}||${childID}`;
+				const compositeKey = `${String(parentID).length},${parentID};${String(childID).length},${childID}`;
 				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]} and transactionID != ${transactionID}`;
 
 				// Parent composition entry
@@ -1171,7 +1173,7 @@ describe('change log generation', () => {
 				await DELETE(`/odata/v4/variant-testing/TrackingComposition_childrenAspectOne(up__ID=${parentID},ID=${childID},IsActiveEntity=false)`);
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-				const compositeKey = `${parentID}||${childID}`;
+				const compositeKey = `${String(parentID).length},${parentID};${String(childID).length},${childID}`;
 				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]} and transactionID != ${transactionID}`;
 
 				const parentChange = changes.find((c) => c.entityKey === parentID);
@@ -1213,8 +1215,8 @@ describe('change log generation', () => {
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-				const compositeKey1 = `${parentID}||${child1ID}`;
-				const compositeKey2 = `${parentID}||${child2ID}`;
+				const compositeKey1 = `${String(parentID).length},${parentID};${String(child1ID).length},${child1ID}`;
+				const compositeKey2 = `${String(parentID).length},${parentID};${String(child2ID).length},${child2ID}`;
 
 				// Composition entry on the parent
 				const x = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey1, compositeKey2]}`;
@@ -1275,7 +1277,7 @@ describe('change log generation', () => {
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-				const compositeKey = `${parentID}||${childID}`;
+				const compositeKey = `${String(parentID).length},${parentID};${String(childID).length},${childID}`;
 				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]} and transactionID != ${transactionID}`;
 
 				const parentChange = changes.find((c) => c.entityKey === parentID);
@@ -1319,7 +1321,7 @@ describe('change log generation', () => {
 				await DELETE(`/odata/v4/variant-testing/TrackingComposition_childrenAspectMany(up__ID=${parentID},ID=${childID},IsActiveEntity=false)`);
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-				const compositeKey = `${parentID}||${childID}`;
+				const compositeKey = `${String(parentID).length},${parentID};${String(childID).length},${childID}`;
 				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]} and transactionID != ${transactionID}`;
 
 				const parentChange = changes.find((c) => c.entityKey === parentID);

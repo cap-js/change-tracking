@@ -50,20 +50,31 @@ function addSideEffects(actions, entityName, hierarchyMap, model) {
  * Used for the ON condition when associating changes.
  */
 function entityKey4(entity) {
-	const xpr = [];
+	const keys = [];
 	for (const k in entity.elements) {
 		const e = entity.elements[k];
 		if (!e.key) continue;
-		if (xpr.length) {
-			xpr.push('||');
-			xpr.push({ val: '||' });
-			xpr.push('||');
-		}
 		if (e.type === 'cds.Association') {
-			xpr.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
+			keys.push({ ref: [k, e.keys?.[0]?.ref?.[0]] });
 		} else {
-			xpr.push({ ref: [k] });
+			keys.push({ ref: [k] });
 		}
+	}
+	if (keys.length <= 1) return keys;
+
+	const xpr = [];
+	for (let i = 0; i < keys.length; i++) {
+		if (i > 0) {
+			xpr.push('||');
+			xpr.push({ val: ';' });
+			xpr.push('||');
+		}
+		const keyAsStr = { ...keys[i], cast: { type: 'cds.String' } };
+		xpr.push({ func: 'LENGTH', args: [keyAsStr] });
+		xpr.push('||');
+		xpr.push({ val: ',' });
+		xpr.push('||');
+		xpr.push(keyAsStr);
 	}
 	return xpr;
 }

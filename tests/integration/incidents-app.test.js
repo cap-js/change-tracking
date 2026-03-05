@@ -177,7 +177,7 @@ describe('Incidents Application Scenarios', () => {
 		const updateChange = changes.find((change) => change.attribute === 'foo1' && change.modification === 'update');
 		expect(updateChange).toHaveProperty('valueChangedFrom', 'Initial value');
 		expect(updateChange).toHaveProperty('valueChangedTo', 'Updated value');
-		expect(updateChange).toHaveProperty('entityKey', `${GJAHR}||${BUKRS}`);
+		expect(updateChange).toHaveProperty('entityKey', `4,2024;${BUKRS.length},${BUKRS}`);
 	});
 });
 

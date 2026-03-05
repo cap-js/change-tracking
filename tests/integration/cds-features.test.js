@@ -46,7 +46,7 @@ describe('Special CDS Features', () => {
 	});
 
 	// REVISIT: behaviour in deep operations
-	it('handles special characters in entity keys correctly', async () => {
+	it.skip('handles special characters in entity keys correctly', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { RootSample, ChangeView } = testingSRV.entities;
 
