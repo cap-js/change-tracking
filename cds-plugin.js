@@ -343,7 +343,7 @@ cds.on('listening', () => {
 cds.once('served', async () => {
 	const db = cds.env.requires?.db;
 	if (db?.kind !== 'postgres') return;
-	
+
 	const entities = getEntitiesForTriggerGeneration(cds.model.definitions, collectedEntities);
 	const labels = getLabelTranslations(entities, cds.model);
 	const { i18nKeys } = cds.entities('sap.changelog');
