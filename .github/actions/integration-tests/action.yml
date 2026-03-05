@@ -113,7 +113,7 @@ runs:
       shell: bash
 
     # Run tests in hybrid mode
-    - run: cds bind --exec npm run test
+    - run: cds bind --exec -- npx jest --silent
       shell: bash
 
     # Cleanup BTP services
