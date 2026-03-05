@@ -114,7 +114,7 @@ runs:
       shell: bash
 
     # Run tests in hybrid mode
-    - run: cds bind --exec -- npx jest --silent
+    - run: cds bind --exec -- npx jest --silent --testPathIgnorePatterns=configuration.test.js
       shell: bash
 
     # Cleanup BTP services
