@@ -24,4 +24,7 @@ service VariantTesting {
 
   entity SelectionView as select from my.DifferentFieldTypes;
 
+  entity ExtendedEvents as select from my.ExtendedEvents;
+  entity DataExtractionSummaryView as select from my.DataExtractionSummaryView;
+
 }

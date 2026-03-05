@@ -1,4 +1,5 @@
 using from './change-logs';
+using from './joins-and-unions';
 
 namespace sap.change_tracking;
 
