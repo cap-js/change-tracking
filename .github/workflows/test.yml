@@ -73,6 +73,7 @@ jobs:
           npm pkg set "overrides.@cap-js/db-service=^1.0.0"
           npm pkg set "overrides.@cap-js/postgres=^1.0.0"
           npm pkg set "overrides.@sap/cds-mtxs=^2.0.0"
+          npm pkg set "devDependencies.@cap-js/cds-types=^0.11"
           # Update workspace package dependencies
           cd tests/bookshop
           npm pkg set "dependencies.@cap-js/hana=^1.0.0"
