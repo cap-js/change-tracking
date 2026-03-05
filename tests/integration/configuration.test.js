@@ -46,7 +46,7 @@ describe('Configuration Options', () => {
 		const changelogCreated = afterChanges.filter((ele) => ele.modification === 'create');
 		const changelogDeleted = afterChanges.filter((ele) => ele.modification === 'delete');
 
-		const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'rootEntityKey', 'serviceEntityPath', 'valueDataType', 'objectID', 'rootObjectID', 'entityKey'];
+		const compareAttributes = ['keys', 'attribute', 'entity', 'serviceEntity', 'serviceEntityPath', 'valueDataType', 'objectID', 'entityKey'];
 
 		let commonItems = changelogCreated.filter((beforeItem) => {
 			return changelogDeleted.some((afterItem) => {

@@ -231,8 +231,8 @@ describe('Non-ID key support', () => {
 		expect(change).toHaveProperty('modification', 'create');
 		expect(change).toHaveProperty('entityKey', pageID);
 		expect(change).toHaveProperty('entity', 'sap.capire.incidents.PagesNotID');
-		expect(change).toHaveProperty('rootEntityKey', ID);
-		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
+		expect(change).toHaveProperty('parent_entityKey', ID);
+		expect(change).toHaveProperty('parent_entity', 'sap.capire.incidents.BooksNotID');
 	});
 
 	it('tracks updates on child entities with non-ID keys', async () => {
@@ -262,8 +262,8 @@ describe('Non-ID key support', () => {
 		expect(change).toHaveProperty('modification', 'update');
 		expect(change).toHaveProperty('entityKey', pageID);
 		expect(change).toHaveProperty('entity', 'sap.capire.incidents.PagesNotID');
-		expect(change).toHaveProperty('rootEntityKey', ID);
-		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
+		expect(change).toHaveProperty('parent_entityKey', ID);
+		expect(change).toHaveProperty('parent_entity', 'sap.capire.incidents.BooksNotID');
 	});
 
 	it('tracks deletion of child entities with non-ID keys', async () => {
@@ -289,39 +289,46 @@ describe('Non-ID key support', () => {
 		expect(change).toHaveProperty('valueChangedTo', null);
 		expect(change).toHaveProperty('entityKey', pageID);
 		expect(change).toHaveProperty('entity', 'sap.capire.incidents.PagesNotID');
-		expect(change).toHaveProperty('rootEntityKey', ID);
-		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.BooksNotID');
+		expect(change).toHaveProperty('parent_entityKey', ID);
+		expect(change).toHaveProperty('parent_entity', 'sap.capire.incidents.BooksNotID');
 	});
 
 	it('tracks association changes on composition children using deep update', async () => {
-		const {
-			data: { ID }
-		} = await POST(`odata/v4/processor/Orders`, {});
+		const { data: { ID } } = await POST(`odata/v4/processor/Orders`, {});
 		const innerID = cds.utils.uuid();
 		const { status } = await PATCH(`odata/v4/processor/Orders(${ID})`, {
 			orderProducts: [
 				{
 					ID: innerID,
-					country: {
-						code: 'DE'
-					}
+					country: { code: 'DE' }
 				}
 			]
 		});
 		expect(status).toEqual(200);
 
-		const {
-			data: { value: changes }
-		} = await GET(`odata/v4/processor/Orders(${ID})/changes`);
-		expect(changes.length).toEqual(1);
-		const change = changes.find((change) => change.attribute === 'country');
-		expect(change).toHaveProperty('attributeLabel', 'Country/Region');
-		expect(change).toHaveProperty('valueChangedFrom', null);
-		expect(change).toHaveProperty('valueChangedTo', 'DE');
-		expect(change).toHaveProperty('modification', 'create');
-		expect(change).toHaveProperty('entityKey', innerID);
-		expect(change).toHaveProperty('entity', 'sap.capire.incidents.OrderProducts');
-		expect(change).toHaveProperty('rootEntityKey', ID);
-		expect(change).toHaveProperty('rootEntity', 'sap.capire.incidents.Orders');
+		const { data: { value: changes } } = await GET(`odata/v4/processor/Orders(${ID})/changes`);
+		expect(changes.length).toEqual(2);
+		const countryChange = changes.find(c => c.attribute === 'country');
+		expect(countryChange).toMatchObject({
+			attributeLabel: 'Country/Region',
+			valueChangedFrom: null,
+			valueChangedTo: 'DE',
+			modification: 'create',
+			entityKey: innerID,
+			entity: 'sap.capire.incidents.OrderProducts',
+			parent_entity: 'sap.capire.incidents.Orders',
+			parent_entityKey: ID
+		})
+		
+		const orderProductsChange = changes.find(c => c.attribute === 'orderProducts');
+		expect(orderProductsChange).toMatchObject({
+			valueChangedFrom: null,
+			valueChangedTo: null,
+			modification: 'update',
+			entityKey: ID,
+			entity: 'sap.capire.incidents.Orders',
+			parent_ID: null
+		})
+
 	});
 });

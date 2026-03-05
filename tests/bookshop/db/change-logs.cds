@@ -22,6 +22,8 @@ annotate change_tracking.RootSample with @(changelog: [
   title
 ]) {
   title @changelog;
+  children @changelog;
+
 }
 
 annotate change_tracking.Level1Sample with @(changelog: [
@@ -30,6 +32,7 @@ annotate change_tracking.Level1Sample with @(changelog: [
   parent.ID
 ]) {
   title @changelog;
+  children @changelog;
 }
 
 annotate change_tracking.Level2Sample with @(changelog: [

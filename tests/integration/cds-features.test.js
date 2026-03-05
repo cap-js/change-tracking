@@ -74,8 +74,8 @@ describe('Special CDS Features', () => {
 
 		let changes = await SELECT.from(ChangeView).where({
 			entity: 'sap.change_tracking.RootSample',
-			attribute: 'title',
-			entityKey: rootID
+			entityKey: rootID,
+			attribute: 'title'
 		});
 		expect(changes.length).toEqual(1);
 		expect(changes[0].valueChangedFrom).toEqual(null);
@@ -83,29 +83,30 @@ describe('Special CDS Features', () => {
 		expect(changes[0].entityKey).toEqual(rootID);
 		expect(changes[0].rootEntityKey).toEqual(null);
 		expect(changes[0].objectID).toEqual(`${rootID}, RootSample title3`);
+		expect(changes[0].parent_ID).toBeNull();
 
 		changes = await SELECT.from(ChangeView).where({
 			entity: 'sap.change_tracking.Level1Sample',
-			attribute: 'title',
-			rootEntityKey: rootID
+			entityKey: lvl1ID,
+			attribute: 'title'
 		});
 		expect(changes.length).toEqual(1);
 		expect(changes[0].valueChangedFrom).toEqual(null);
 		expect(changes[0].valueChangedTo).toEqual('Level1Sample title3');
-		expect(changes[0].entityKey).toEqual(lvl1ID);
-		expect(changes[0].rootEntityKey).toEqual(rootID);
+		expect(changes[0].parent_entity).toEqual('sap.change_tracking.RootSample');
+		expect(changes[0].parent_entityKey).toEqual(rootID);
 		//expect(changes[0].objectID).toEqual(`${lvl1ID}, Level1Sample title3, ${rootID}`);
 
 		changes = await SELECT.from(ChangeView).where({
 			entity: 'sap.change_tracking.Level2Sample',
-			attribute: 'title',
-			entityKey: lvl2ID
+			entityKey: lvl2ID,
+			attribute: 'title'
 		});
 		expect(changes.length).toEqual(1);
 		expect(changes[0].valueChangedFrom).toEqual(null);
 		expect(changes[0].valueChangedTo).toEqual('Level2Sample title3');
-		expect(changes[0].entityKey).toEqual(lvl2ID);
-		expect(changes[0].rootEntityKey).toEqual(lvl1ID);
+		expect(changes[0].parent_entity).toEqual('sap.change_tracking.Level1Sample');
+		expect(changes[0].parent_entityKey).toEqual(lvl1ID);
 		//expect(changes[0].objectID).toEqual(`${lvl2ID}, Level2Sample title3, ${rootID}`);
 	});
 
@@ -195,11 +196,10 @@ describe('Special CDS Features', () => {
 
 		it('localizes change view entries correctly when queried without filter parameters', async () => {
 			const variantTesting = await cds.connect.to('VariantTesting');
+			const { ChangeView, TrackingComposition } = variantTesting.entities;
 			const ID = cds.utils.uuid();
-			await INSERT.into(variantTesting.entities.TrackingComposition).entries({
-				ID
-			});
-			await cds.delete(variantTesting.entities.ChangeView).where({ entityKey: ID });
+			await INSERT.into(TrackingComposition).entries({ ID });
+			await cds.delete(ChangeView).where({ entityKey: ID });
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/children`, {
 				ID: cds.utils.uuid(),
@@ -208,20 +208,20 @@ describe('Special CDS Features', () => {
 			});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-			const change = await SELECT.one
-				.from(variantTesting.entities.ChangeView)
+			const change = await SELECT.one.from(ChangeView)
 				.where({
 					entity: 'sap.change_tracking.TrackingComposition',
 					attribute: 'children',
 					entityKey: ID
-				})
-				.columns(['attribute', 'modification', 'entity', 'objectID', 'valueChangedTo']);
+				});
 
-			expect(change.attribute).toEqual('children');
-			expect(change.modification).toEqual('create');
-			expect(change.entity).toEqual('sap.change_tracking.TrackingComposition');
-			expect(change.objectID).toEqual('Book Store');
-			expect(change.valueChangedTo).toEqual('ABC');
+			expect(change).toMatchObject({
+				modification: 'update',
+				objectID: 'Book Store',
+				valueChangedFrom: null,
+				valueChangedTo: null,
+				parent_ID: null
+			})
 		});
 	});
 
@@ -271,7 +271,7 @@ describe('Special CDS Features', () => {
 	});
 
 	describe('Large string truncation', () => {
-		it.only('truncates strings larger than 5000 characters with ellipsis', async () => {
+		it('truncates strings larger than 5000 characters with ellipsis', async () => {
 			const testingSrv = await cds.connect.to('VariantTesting');
 			const recordID = cds.utils.uuid();
 

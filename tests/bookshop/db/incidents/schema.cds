@@ -41,7 +41,6 @@ entity Incidents : cuid, managed {
   datetime       : DateTime @title : 'datetime' @changelog;
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
-  @changelog
   conversation   : Composition of many {
     key ID    : UUID;
     timestamp : type of managed:createdAt;
@@ -103,6 +102,7 @@ entity BooksNotID {
   key NOT_ID : String;
       @changelog
       title  : String;
+      @changelog
       pages : Composition of many PagesNotID on pages.book = $self;
 }
 
@@ -117,6 +117,7 @@ entity PagesNotID {
 
 entity Orders : cuid {
   abc : String @changelog;
+  @changelog
   orderProducts : Composition of many OrderProducts on orderProducts.order = $self;
 }
 

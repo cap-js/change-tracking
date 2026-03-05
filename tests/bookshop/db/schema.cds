@@ -32,6 +32,7 @@ entity BookStores @(cds.autoexpose) : managed, cuid {
                       on books.bookStore = $self;
 
   @title : '{i18n>bookStore.registry}'
+  @changelog
   registry        : Composition of one BookStoreRegistry;
 }
 
@@ -125,11 +126,13 @@ entity Order : cuid {
   type       : Association to one OrderType;
   report     : Association to one Report;
   header     : Composition of one OrderHeader;
+  @changelog
   orderItems : Composition of many OrderItem
                  on orderItems.order = $self;
   netAmount  : Decimal(19, 2);
   isUsed     : Boolean;
   status     : String;
+  @changelog
   Items      : Composition of many {
     key ID   : UUID;
     @changelog
@@ -166,6 +169,7 @@ entity OrderHeader : cuid {
 entity OrderItem : cuid {
   order    : Association to one Order;
   customer : Association to one Customers;
+  @changelog
   notes    : Composition of many OrderItemNote
                on notes.orderItem = $self;
   quantity : Decimal(19, 2);
