@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Changed
 - Switch from event handler registration to native database triggers for change capture mechanism
 - Removed table entity `sap.changelog.ChangeLog` and flattened into `sap.changelog.Changes`
+- Display changes with a Tree Table
 - Modifications on `sap.changelog.Changes`
     - Removed `serviceEntityPath`, `keys` and foreign key `changeLog`
     - Renamed `entityID` to `objectID`
