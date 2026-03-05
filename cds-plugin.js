@@ -131,7 +131,7 @@ function writeLabelsCSV(entities, model) {
 	const header = 'ID;locale;text';
 	const rows = labels.map((row) => `${row.ID};${row.locale};${row.text}`);
 	const content = [header, ...rows].join('\n') + '\n';
-	const dir = 'db/data';
+	const dir = 'db/src/gen/data/';
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, { recursive: true });
 	}
@@ -429,7 +429,8 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 	if (triggers.length > 0) {
 		delete csn.definitions['sap.changelog.CHANGE_TRACKING_DUMMY']['@cds.persistence.skip'];
 		writeLabelsCSV(entities, runtimeCSN);
-		fs.writeFileSync(`db/data/sap.changelog-CHANGE_TRACKING_DUMMY.csv`, `X\n1`);
+		const dir = 'db/src/gen/data/';
+		fs.writeFileSync(`${dir}/sap.changelog-CHANGE_TRACKING_DUMMY.csv`, `X\n1`);
 		ensureUndeployJsonHasTriggerPattern();
 	}
 
