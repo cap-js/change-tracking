@@ -427,7 +427,7 @@ cds.compiler.to.hdi.migration = function (csn, options, beforeImage) {
 	const triggers = generateTriggersForEntities(runtimeCSN, hierarchy, entities, generateHANATriggers);
 
 	if (triggers.length > 0) {
-		delete csn.definitions["sap.changelog.CHANGE_TRACKING_DUMMY"]['@cds.persistence.skip'];
+		delete csn.definitions['sap.changelog.CHANGE_TRACKING_DUMMY']['@cds.persistence.skip'];
 		writeLabelsCSV(entities, runtimeCSN);
 		fs.writeFileSync(`db/data/sap.changelog-CHANGE_TRACKING_DUMMY.csv`, `X\n1`);
 		ensureUndeployJsonHasTriggerPattern();

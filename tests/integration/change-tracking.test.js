@@ -1407,7 +1407,7 @@ describe('change log generation', () => {
 					childrenExplicitOne: {
 						ID: childID,
 						title: 'Original Title',
-						price: 5.00
+						price: 5.0
 					}
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
@@ -1456,7 +1456,7 @@ describe('change log generation', () => {
 					childrenExplicitOne: {
 						ID: childID,
 						title: 'Title To Delete',
-						price: 12.50
+						price: 12.5
 					}
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
@@ -1504,8 +1504,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
 					ID: parentID,
 					childrenExplicitMany: [
-						{ ID: child1ID, title: 'Explicit Child 1', price: 10.00 },
-						{ ID: child2ID, title: 'Explicit Child 2', price: 20.00 }
+						{ ID: child1ID, title: 'Explicit Child 1', price: 10.0 },
+						{ ID: child2ID, title: 'Explicit Child 2', price: 20.0 }
 					]
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
@@ -1550,7 +1550,7 @@ describe('change log generation', () => {
 
 				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
 					ID: parentID,
-					childrenExplicitMany: [{ ID: childID, title: 'Original Title', price: 5.00 }]
+					childrenExplicitMany: [{ ID: childID, title: 'Original Title', price: 5.0 }]
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
@@ -1595,7 +1595,7 @@ describe('change log generation', () => {
 
 				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
 					ID: parentID,
-					childrenExplicitMany: [{ ID: childID, title: 'Title To Delete', price: 15.00 }]
+					childrenExplicitMany: [{ ID: childID, title: 'Title To Delete', price: 15.0 }]
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
