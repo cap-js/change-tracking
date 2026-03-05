@@ -27,11 +27,8 @@
 		"node": ">=20.0.0"
 	},
 	"devDependencies": {
-		"@cap-js/attachments": "^2",
 		"@cap-js/cds-test": "*",
-		"@cap-js/change-tracking": "file:.",
-		"@cap-js/sqlite": "^1 || ^2",
-		"express": "^4"
+		"@cap-js/cds-types": "^0.16.0"
 	},
 	"cds": {
 		"requires": {
