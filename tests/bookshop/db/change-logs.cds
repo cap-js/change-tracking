@@ -44,7 +44,29 @@ annotate change_tracking.Level2Sample with @(changelog: [
 }
 
 annotate change_tracking.TrackingComposition with {
-  children @changelog: [children.title];
+  children             @changelog: [children.title];
+  childrenAspectOne    @changelog;
+  childrenAspectMany   @changelog;
+  childrenExplicitOne  @changelog;
+  childrenExplicitMany @changelog;
+}
+
+annotate change_tracking.TrackingComposition.childrenAspectOne with {
+  aspect @changelog;
+}
+
+annotate change_tracking.TrackingComposition.childrenAspectMany with {
+  aspect @changelog;
+}
+
+annotate change_tracking.ExplicitCompositionOne with {
+  title @changelog;
+  price @changelog;
+}
+
+annotate change_tracking.ExplicitCompositionMany with {
+  title @changelog;
+  price @changelog;
 }
 
 annotate change_tracking.ComposedEntities with {

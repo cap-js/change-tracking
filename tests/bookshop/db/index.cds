@@ -5,16 +5,16 @@ namespace sap.change_tracking;
 @title: 'Different field types'
 entity DifferentFieldTypes {
   key ID        : UUID;
-      title     : String @changelog;
+      title     : String      @changelog;
       largeText : LargeString @changelog;
       dateTime  : DateTime;
       timestamp : Timestamp;
       number    : Decimal;
       bool      : Boolean;
-      image     : LargeBinary @changelog;  // Unsupported - should trigger warning
-      icon      : Binary @changelog;       // Unsupported - should trigger warning
-      dppField1 : String @PersonalData.IsPotentiallyPersonal;
-      dppField2 : String @PersonalData.IsPotentiallySensitive;
+      image     : LargeBinary @changelog; // Unsupported - should trigger warning
+      icon      : Binary      @changelog; // Unsupported - should trigger warning
+      dppField1 : String      @PersonalData.IsPotentiallyPersonal;
+      dppField2 : String      @PersonalData.IsPotentiallySensitive;
       children  : Composition of many DifferentFieldTypesChildren
                     on children.parent = $self;
 }
@@ -50,9 +50,38 @@ entity Level2Sample {
 // By intent no @changelog on the entity level
 @title: '{i18n>bookStore.objectTitle}'
 entity TrackingComposition {
+  key ID                   : UUID;
+      children             : Composition of many ComposedEntities
+                               on children.parent = $self;
+      childrenAspectOne    : Composition of one CompositionAspect;
+      childrenAspectMany   : Composition of many CompositionAspect;
+      childrenExplicitOne  : Composition of one ExplicitCompositionOne
+                               on childrenExplicitOne.parent = $self;
+      childrenExplicitMany : Composition of many ExplicitCompositionMany
+                               on childrenExplicitMany.parent = $self;
+}
+
+aspect CompositionAspect {
+  key ID     : UUID;
+      aspect : String;
+}
+
+entity ExplicitCompositionOne {
   key ID       : UUID;
-      children : Composition of many ComposedEntities
-                   on children.parent = $self;
+      parentID : UUID;
+      parent   : Association to one TrackingComposition
+                   on parent.ID = parentID;
+      title    : String;
+      price    : Decimal;
+}
+
+entity ExplicitCompositionMany {
+  key ID       : UUID;
+      parentID : UUID;
+      parent   : Association to one TrackingComposition
+                   on parent.ID = parentID;
+      title    : String;
+      price    : Decimal;
 }
 
 // By intent no @changelog on the entity level

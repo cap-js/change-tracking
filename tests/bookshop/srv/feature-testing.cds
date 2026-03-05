@@ -12,7 +12,9 @@ service VariantTesting {
   @odata.draft.enabled
   entity TrackingComposition as projection on my.TrackingComposition;
 
-  entity ComposedEntities as projection on my.ComposedEntities;
+  entity ComposedEntities        as projection on my.ComposedEntities;
+  entity ExplicitCompositionOne  as projection on my.ExplicitCompositionOne;
+  entity ExplicitCompositionMany as projection on my.ExplicitCompositionMany;
 
   entity ChangeView as projection on change.ChangeView;
 

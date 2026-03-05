@@ -1051,6 +1051,584 @@ describe('change log generation', () => {
 				});
 			});
 		});
+
+		describe('Composition of one (aspect)', () => {
+			it('logs changes on aspect child during creation via draft', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenAspectOne: {
+						ID: childID,
+						aspect: 'Aspect Value One'
+					}
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const compositeKey = `${parentID}||${childID}`;
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]}`;
+
+				// Parent composition entry
+				const parentChange = changes.find((c) => c.entityKey === parentID && c.attribute === 'childrenAspectOne');
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenAspectOne',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				// Aspect child change linked to parent
+				const childChange = changes.find((c) => c.entityKey === compositeKey);
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition.childrenAspectOne',
+					attribute: 'aspect',
+					modification: 'create',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: null,
+					valueChangedTo: 'Aspect Value One'
+				});
+			});
+
+			it('logs changes on aspect child during update via draft', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				// Create with initial value
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenAspectOne: {
+						ID: childID,
+						aspect: 'Original Aspect'
+					}
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+
+				// Edit draft and update aspect child
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+				await PATCH(`/odata/v4/variant-testing/TrackingComposition_childrenAspectOne(up__ID=${parentID},ID=${childID},IsActiveEntity=false)`, {
+					aspect: 'Updated Aspect'
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const compositeKey = `${parentID}||${childID}`;
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]} and transactionID != ${transactionID}`;
+
+				// Parent composition entry
+				const parentChange = changes.find((c) => c.entityKey === parentID);
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenAspectOne',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				// Aspect child change linked to parent
+				const childChange = changes.find((c) => c.entityKey === compositeKey);
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition.childrenAspectOne',
+					attribute: 'aspect',
+					modification: 'update',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Original Aspect',
+					valueChangedTo: 'Updated Aspect'
+				});
+			});
+
+			it('logs changes on aspect child during deletion via draft', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				// Create with initial value
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenAspectOne: {
+						ID: childID,
+						aspect: 'Aspect To Delete'
+					}
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+
+				// Edit draft and delete the aspect child
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+				await DELETE(`/odata/v4/variant-testing/TrackingComposition_childrenAspectOne(up__ID=${parentID},ID=${childID},IsActiveEntity=false)`);
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const compositeKey = `${parentID}||${childID}`;
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentID);
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenAspectOne',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const childChange = changes.find((c) => c.entityKey === compositeKey && c.modification === 'delete');
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition.childrenAspectOne',
+					attribute: 'aspect',
+					modification: 'delete',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Aspect To Delete',
+					valueChangedTo: null
+				});
+			});
+		});
+
+		describe('Composition of many (aspect)', () => {
+			it('logs each created aspect child as a separate change on the root entity', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const child1ID = cds.utils.uuid();
+				const child2ID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenAspectMany: [
+						{ ID: child1ID, aspect: 'Aspect Child 1' },
+						{ ID: child2ID, aspect: 'Aspect Child 2' }
+					]
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const compositeKey1 = `${parentID}||${child1ID}`;
+				const compositeKey2 = `${parentID}||${child2ID}`;
+
+				// Composition entry on the parent
+				const x = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey1, compositeKey2]}`;
+				const parentChanges = await SELECT.from(ChangeView).where({
+					entity: 'sap.change_tracking.TrackingComposition',
+					entityKey: parentID,
+					attribute: 'childrenAspectMany',
+					modification: 'update'
+				});
+				expect(parentChanges.length).toEqual(1);
+				expect(parentChanges[0].parent_ID).toEqual(null);
+
+				// Child changes linked to parent
+				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: parentChanges[0].ID });
+				expect(relatedChanges.length).toEqual(2);
+
+				const change1 = relatedChanges.find((c) => c.valueChangedTo === 'Aspect Child 1');
+				expect(change1).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition.childrenAspectMany',
+					entityKey: compositeKey1,
+					attribute: 'aspect',
+					modification: 'create',
+					valueChangedFrom: null,
+					valueChangedTo: 'Aspect Child 1'
+				});
+
+				const change2 = relatedChanges.find((c) => c.valueChangedTo === 'Aspect Child 2');
+				expect(change2).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition.childrenAspectMany',
+					entityKey: compositeKey2,
+					attribute: 'aspect',
+					modification: 'create',
+					valueChangedFrom: null,
+					valueChangedTo: 'Aspect Child 2'
+				});
+			});
+
+			it('links aspect child changes to the root entity when updating nested data', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenAspectMany: [{ ID: childID, aspect: 'Original Aspect' }]
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+
+				// Edit draft and update the aspect child
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+				await PATCH(`/odata/v4/variant-testing/TrackingComposition_childrenAspectMany(up__ID=${parentID},ID=${childID},IsActiveEntity=false)`, {
+					aspect: 'Updated Aspect'
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const compositeKey = `${parentID}||${childID}`;
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentID);
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenAspectMany',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const childChange = changes.find((c) => c.entityKey === compositeKey);
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition.childrenAspectMany',
+					attribute: 'aspect',
+					modification: 'update',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Original Aspect',
+					valueChangedTo: 'Updated Aspect'
+				});
+			});
+
+			it('logs deleted aspect child values as changes on the root entity', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenAspectMany: [{ ID: childID, aspect: 'Aspect To Delete' }]
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+
+				// Edit draft and delete the aspect child
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+				await DELETE(`/odata/v4/variant-testing/TrackingComposition_childrenAspectMany(up__ID=${parentID},ID=${childID},IsActiveEntity=false)`);
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const compositeKey = `${parentID}||${childID}`;
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentID);
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenAspectMany',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const childChange = changes.find((c) => c.entityKey === compositeKey && c.modification === 'delete');
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition.childrenAspectMany',
+					attribute: 'aspect',
+					modification: 'delete',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Aspect To Delete',
+					valueChangedTo: null
+				});
+			});
+		});
+
+		describe('Composition of one (explicit foreign key)', () => {
+			it('logs changes on explicit FK child during creation via draft', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenExplicitOne: {
+						ID: childID,
+						title: 'Explicit One Title',
+						price: 9.99
+					}
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, childID]}`;
+
+				// Parent composition entry
+				const parentChange = changes.find((c) => c.entityKey === parentID && c.attribute === 'childrenExplicitOne');
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenExplicitOne',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				// Explicit FK child changes linked to parent
+				const titleChange = changes.find((c) => c.entityKey === childID && c.attribute === 'title');
+				expect(titleChange).toMatchObject({
+					entity: 'sap.change_tracking.ExplicitCompositionOne',
+					attribute: 'title',
+					modification: 'create',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: null,
+					valueChangedTo: 'Explicit One Title'
+				});
+
+				const priceChange = changes.find((c) => c.entityKey === childID && c.attribute === 'price');
+				expect(priceChange).toMatchObject({
+					entity: 'sap.change_tracking.ExplicitCompositionOne',
+					attribute: 'price',
+					modification: 'create',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: null,
+					valueChangedTo: '9.99'
+				});
+			});
+
+			it('logs changes on explicit FK child during update via draft', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenExplicitOne: {
+						ID: childID,
+						title: 'Original Title',
+						price: 5.00
+					}
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+
+				// Edit draft and update explicit FK child
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+				await PATCH(`/odata/v4/variant-testing/ExplicitCompositionOne(ID=${childID},IsActiveEntity=false)`, {
+					title: 'Updated Title'
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, childID]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentID);
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenExplicitOne',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const childChange = changes.find((c) => c.entityKey === childID);
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.ExplicitCompositionOne',
+					attribute: 'title',
+					modification: 'update',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Original Title',
+					valueChangedTo: 'Updated Title'
+				});
+			});
+
+			it('logs changes on explicit FK child during deletion via draft', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenExplicitOne: {
+						ID: childID,
+						title: 'Title To Delete',
+						price: 12.50
+					}
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+
+				// Edit draft and delete the explicit FK child
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+				await DELETE(`/odata/v4/variant-testing/ExplicitCompositionOne(ID=${childID},IsActiveEntity=false)`);
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, childID]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentID);
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenExplicitOne',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const titleChange = changes.find((c) => c.entityKey === childID && c.attribute === 'title' && c.modification === 'delete');
+				expect(titleChange).toMatchObject({
+					entity: 'sap.change_tracking.ExplicitCompositionOne',
+					attribute: 'title',
+					modification: 'delete',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Title To Delete',
+					valueChangedTo: null
+				});
+			});
+		});
+
+		describe('Composition of many (explicit foreign key)', () => {
+			it('logs each created explicit FK child as a separate change on the root entity', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const child1ID = cds.utils.uuid();
+				const child2ID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenExplicitMany: [
+						{ ID: child1ID, title: 'Explicit Child 1', price: 10.00 },
+						{ ID: child2ID, title: 'Explicit Child 2', price: 20.00 }
+					]
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				// Composition entry on the parent
+				const parentChanges = await SELECT.from(ChangeView).where({
+					entity: 'sap.change_tracking.TrackingComposition',
+					entityKey: parentID,
+					attribute: 'childrenExplicitMany',
+					modification: 'update'
+				});
+				expect(parentChanges.length).toEqual(1);
+				expect(parentChanges[0].parent_ID).toEqual(null);
+
+				// Child changes linked to parent
+				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: parentChanges[0].ID });
+				expect(relatedChanges.length).toEqual(4); // 2 children x 2 fields (title + price)
+
+				const title1 = relatedChanges.find((c) => c.entityKey === child1ID && c.attribute === 'title');
+				expect(title1).toMatchObject({
+					entity: 'sap.change_tracking.ExplicitCompositionMany',
+					modification: 'create',
+					valueChangedFrom: null,
+					valueChangedTo: 'Explicit Child 1'
+				});
+
+				const title2 = relatedChanges.find((c) => c.entityKey === child2ID && c.attribute === 'title');
+				expect(title2).toMatchObject({
+					entity: 'sap.change_tracking.ExplicitCompositionMany',
+					modification: 'create',
+					valueChangedFrom: null,
+					valueChangedTo: 'Explicit Child 2'
+				});
+			});
+
+			it('links explicit FK child changes to the root entity when updating nested data', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenExplicitMany: [{ ID: childID, title: 'Original Title', price: 5.00 }]
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+
+				// Edit draft and update explicit FK child
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+				await PATCH(`/odata/v4/variant-testing/ExplicitCompositionMany(ID=${childID},IsActiveEntity=false)`, {
+					title: 'Updated Title'
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, childID]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentID);
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenExplicitMany',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const childChange = changes.find((c) => c.entityKey === childID);
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.ExplicitCompositionMany',
+					attribute: 'title',
+					modification: 'update',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Original Title',
+					valueChangedTo: 'Updated Title'
+				});
+			});
+
+			it('logs deleted explicit FK child values as changes on the root entity', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const parentID = cds.utils.uuid();
+				const childID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+					ID: parentID,
+					childrenExplicitMany: [{ ID: childID, title: 'Title To Delete', price: 15.00 }]
+				});
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+
+				// Edit draft and delete explicit FK child
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+				await DELETE(`/odata/v4/variant-testing/ExplicitCompositionMany(ID=${childID},IsActiveEntity=false)`);
+				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentID, childID]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentID);
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.TrackingComposition',
+					attribute: 'childrenExplicitMany',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const titleChange = changes.find((c) => c.entityKey === childID && c.attribute === 'title' && c.modification === 'delete');
+				expect(titleChange).toMatchObject({
+					entity: 'sap.change_tracking.ExplicitCompositionMany',
+					attribute: 'title',
+					modification: 'delete',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Title To Delete',
+					valueChangedTo: null
+				});
+			});
+		});
 	});
 
 	it('tracks zero values and false booleans correctly during create and delete', async () => {
