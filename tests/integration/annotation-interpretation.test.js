@@ -197,7 +197,7 @@ describe('@changelog annotation interpretation', () => {
 		expect(changes[0].entity).toEqual('sap.change_tracking.ComposedEntities');
 		expect(changes[0].objectID).toEqual('Book');
 
-		const {objectID: rootObjectID} = await SELECT.one.from(ChangeView).where({ID: changes[0].parent_ID}).columns('objectID');
+		const { objectID: rootObjectID } = await SELECT.one.from(ChangeView).where({ ID: changes[0].parent_ID }).columns('objectID');
 		expect(rootObjectID).toEqual('Book Store');
 	});
 
@@ -414,7 +414,7 @@ describe('@changelog annotation interpretation', () => {
 			expect(bookTypeChange.modification).toEqual('create');
 			expect(bookTypeChange.valueChangedFromLabel).toEqual(null);
 			expect(bookTypeChange.valueChangedToLabel).toEqual('Management, Management Books');
-			expect(bookTypeChange.parent_ID).not.toBeNull(); 
+			expect(bookTypeChange.parent_ID).not.toBeNull();
 			expect(bookTypeChange.parent_entity).toEqual('sap.capire.bookshop.BookStores');
 			expect(bookTypeChange.parent_entityKey).toEqual(bookStoreID);
 
@@ -441,7 +441,7 @@ describe('@changelog annotation interpretation', () => {
 			const bookTypeUpdateChange = bookTypeUpdateChanges[0];
 			expect(bookTypeUpdateChange.valueChangedFromLabel).toEqual('Management, Management Books');
 			expect(bookTypeUpdateChange.valueChangedToLabel).toEqual('Science, Science Books');
-			expect(bookTypeUpdateChange.parent_ID).not.toBeNull(); 
+			expect(bookTypeUpdateChange.parent_ID).not.toBeNull();
 			expect(bookTypeUpdateChange.parent_entity).toEqual('sap.capire.bookshop.BookStores');
 			expect(bookTypeUpdateChange.parent_entityKey).toEqual(bookStoreID);
 		});

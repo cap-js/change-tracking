@@ -208,12 +208,11 @@ describe('Special CDS Features', () => {
 			});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
-			const change = await SELECT.one.from(ChangeView)
-				.where({
-					entity: 'sap.change_tracking.TrackingComposition',
-					attribute: 'children',
-					entityKey: ID
-				});
+			const change = await SELECT.one.from(ChangeView).where({
+				entity: 'sap.change_tracking.TrackingComposition',
+				attribute: 'children',
+				entityKey: ID
+			});
 
 			expect(change).toMatchObject({
 				modification: 'update',
@@ -221,7 +220,7 @@ describe('Special CDS Features', () => {
 				valueChangedFrom: null,
 				valueChangedTo: null,
 				parent_ID: null
-			})
+			});
 		});
 	});
 

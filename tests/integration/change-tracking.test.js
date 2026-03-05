@@ -184,7 +184,6 @@ describe('change log generation', () => {
 	});
 
 	describe('composition tracking', () => {
-
 		it('does not link child entity changes to the root entity when composition field is not annotated', async () => {
 			const processorService = await cds.connect.to('ProcessorService');
 			const { ChangeView } = processorService.entities;
@@ -222,7 +221,7 @@ describe('change log generation', () => {
 			expect(changes.length).toEqual(4);
 
 			// Find the new Order.orderItems entry (different from the one created during initial POST)
-			const orderChange = changes.find(c => c.entityKey === orderID);
+			const orderChange = changes.find((c) => c.entityKey === orderID);
 			expect(orderChange).toMatchObject({
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'orderItems',
@@ -233,10 +232,10 @@ describe('change log generation', () => {
 				valueDataType: 'cds.Composition'
 			});
 
-			const orderItemChanges = changes.filter(c => c.entityKey === orderItemID);
+			const orderItemChanges = changes.filter((c) => c.entityKey === orderItemID);
 			expect(orderItemChanges.length).toEqual(2);
 
-			const orderItemChangeOrder = orderItemChanges.find(c => c.attribute === 'order');
+			const orderItemChangeOrder = orderItemChanges.find((c) => c.attribute === 'order');
 			expect(orderItemChangeOrder).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'order',
@@ -247,7 +246,7 @@ describe('change log generation', () => {
 				valueDataType: 'cds.Association'
 			});
 
-			const orderItemChangeNotes = orderItemChanges.find(c => c.attribute === 'notes');
+			const orderItemChangeNotes = orderItemChanges.find((c) => c.attribute === 'notes');
 			expect(orderItemChangeNotes).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'notes',
@@ -258,7 +257,7 @@ describe('change log generation', () => {
 				valueDataType: 'cds.Composition'
 			});
 
-			const orderItemNoteChange = changes.find(c => c.entityKey === orderItemNoteID);
+			const orderItemNoteChange = changes.find((c) => c.entityKey === orderItemNoteID);
 			expect(orderItemNoteChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItemNote',
 				attribute: 'content',
@@ -278,14 +277,14 @@ describe('change log generation', () => {
 			const orderItemNoteID = cds.utils.uuid();
 			await POST(`/odata/v4/admin/Order`, {
 				ID: orderID,
-				title: 'Test Order',  // Provide title to ensure Order has a 'create' changelog entry
+				title: 'Test Order', // Provide title to ensure Order has a 'create' changelog entry
 				orderItems: [{ ID: orderItemID }]
 			});
 
 			// Check changes before creating OrderItemNote
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID]}`;
-			expect(changesBefore.length).toEqual(3);  // +1 for Order.title 'create' entry
-			const orderChangeBefore = changesBefore.find(c => c.entityKey === orderID && c.attribute === 'orderItems');
+			expect(changesBefore.length).toEqual(3); // +1 for Order.title 'create' entry
+			const orderChangeBefore = changesBefore.find((c) => c.entityKey === orderID && c.attribute === 'orderItems');
 			expect(orderChangeBefore).toMatchObject({
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'orderItems',
@@ -295,7 +294,7 @@ describe('change log generation', () => {
 				parent_ID: null
 			});
 
-			const orderItemChangeBefore = changesBefore.find(c => c.entityKey === orderItemID);
+			const orderItemChangeBefore = changesBefore.find((c) => c.entityKey === orderItemID);
 			expect(orderItemChangeBefore).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'order',
@@ -311,10 +310,10 @@ describe('change log generation', () => {
 			});
 			// Should create new change for field orderItems on Order with a link to OrderItemNote change (three new changes in total)
 			const changes = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, orderItemNoteID]}`;
-			expect(changes.length).toEqual(6);  // +1 for Order.title 'create' entry
+			expect(changes.length).toEqual(6); // +1 for Order.title 'create' entry
 
 			// Find the new Order.orderItems entry (different from the one created during initial POST)
-			const newOrderChange = changes.find(c => c.entityKey === orderID && c.attribute === 'orderItems' && c.ID !== orderChangeBefore.ID);
+			const newOrderChange = changes.find((c) => c.entityKey === orderID && c.attribute === 'orderItems' && c.ID !== orderChangeBefore.ID);
 			expect(newOrderChange).toMatchObject({
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'orderItems',
@@ -326,7 +325,7 @@ describe('change log generation', () => {
 			});
 
 			// The OrderItem entry should be for the 'notes' composition field, linking to the Order.orderItems entry
-			const noteChange = changes.find(c => c.entityKey === orderItemID && c.ID !== orderItemChangeBefore.ID);
+			const noteChange = changes.find((c) => c.entityKey === orderItemID && c.ID !== orderItemChangeBefore.ID);
 			expect(noteChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'notes',
@@ -337,7 +336,7 @@ describe('change log generation', () => {
 				valueDataType: 'cds.Composition'
 			});
 
-			const orderItemNoteChange = changes.find(c => c.entityKey === orderItemNoteID);
+			const orderItemNoteChange = changes.find((c) => c.entityKey === orderItemNoteID);
 			expect(orderItemNoteChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItemNote',
 				attribute: 'content',
@@ -362,7 +361,7 @@ describe('change log generation', () => {
 			});
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, noteID]}`;
-			const transactionID = changesBefore.find(c => c.transactionID).transactionID;
+			const transactionID = changesBefore.find((c) => c.transactionID).transactionID;
 			await PATCH(`/odata/v4/admin/Order(ID=${orderID})/orderItems(ID=${orderItemID})/notes(ID=${noteID})`, {
 				content: 'new content'
 			});
@@ -370,7 +369,7 @@ describe('change log generation', () => {
 			const changes = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, noteID]} and transactionID != ${transactionID}`;
 			expect(changes.length).toEqual(3);
 
-			const orderChange = changes.find(c => c.entityKey === orderID);
+			const orderChange = changes.find((c) => c.entityKey === orderID);
 			expect(orderChange).toMatchObject({
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'orderItems',
@@ -379,7 +378,7 @@ describe('change log generation', () => {
 				valueDataType: 'cds.Composition'
 			});
 
-			const orderItemChange = changes.find(c => c.entityKey === orderItemID);
+			const orderItemChange = changes.find((c) => c.entityKey === orderItemID);
 			expect(orderItemChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'notes',
@@ -388,7 +387,7 @@ describe('change log generation', () => {
 				valueDataType: 'cds.Composition'
 			});
 
-			const orderItemNoteChange = changes.find(c => c.entityKey === noteID);
+			const orderItemNoteChange = changes.find((c) => c.entityKey === noteID);
 			expect(orderItemNoteChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItemNote',
 				attribute: 'content',
@@ -411,14 +410,14 @@ describe('change log generation', () => {
 			});
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, noteID]}`;
-			const transactionID = changesBefore.find(c => c.transactionID).transactionID;
+			const transactionID = changesBefore.find((c) => c.transactionID).transactionID;
 
 			await DELETE(`/odata/v4/admin/Order(ID=${orderID})/orderItems(ID=${orderItemID})/notes(ID=${noteID})`);
 
 			const changes = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, noteID]} and transactionID != ${transactionID}`;
 			expect(changes.length).toEqual(3);
 
-			const orderChange = changes.find(c => c.entityKey === orderID);
+			const orderChange = changes.find((c) => c.entityKey === orderID);
 			expect(orderChange).toMatchObject({
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'orderItems',
@@ -427,7 +426,7 @@ describe('change log generation', () => {
 				valueDataType: 'cds.Composition'
 			});
 
-			const orderItemChange = changes.find(c => c.entityKey === orderItemID);
+			const orderItemChange = changes.find((c) => c.entityKey === orderItemID);
 			expect(orderItemChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'notes',
@@ -436,7 +435,7 @@ describe('change log generation', () => {
 				valueDataType: 'cds.Composition'
 			});
 
-			const noteChange = changes.find(c => c.entityKey === noteID);
+			const noteChange = changes.find((c) => c.entityKey === noteID);
 			expect(noteChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItemNote',
 				attribute: 'content',
@@ -460,7 +459,7 @@ describe('change log generation', () => {
 			await POST(`/odata/v4/admin/Order`, {
 				ID: orderID,
 				report_ID: reportID,
-				title: 'Test Order'  // Provide title to ensure Order has a 'create' changelog entry
+				title: 'Test Order' // Provide title to ensure Order has a 'create' changelog entry
 			});
 
 			const { data: orderItem } = await POST(`/odata/v4/admin/Order(ID=${orderID})/orderItems`, {
@@ -470,10 +469,10 @@ describe('change log generation', () => {
 			});
 
 			const changes = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItem.ID]}`;
-			expect(changes.length).toEqual(4);  // +1 for Order.title 'create' entry
+			expect(changes.length).toEqual(4); // +1 for Order.title 'create' entry
 
 			// Order.orderItems composition entry should exist with parent_ID = null
-			const orderChange = changes.find(c => c.entityKey === orderID && c.attribute === 'orderItems');
+			const orderChange = changes.find((c) => c.entityKey === orderID && c.attribute === 'orderItems');
 			expect(orderChange).toMatchObject({
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'orderItems',
@@ -483,16 +482,16 @@ describe('change log generation', () => {
 			});
 
 			// OrderItem entry should link to Order.orderItems entry
-			const orderItemChange = changes.filter(c => c.entityKey === orderItem.ID);
+			const orderItemChange = changes.filter((c) => c.entityKey === orderItem.ID);
 			expect(orderItemChange.length).toEqual(2);
-			const quantityChange = orderItemChange.find(c => c.attribute === 'quantity');
+			const quantityChange = orderItemChange.find((c) => c.attribute === 'quantity');
 			expect(quantityChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				modification: 'create',
 				parent_ID: orderChange.ID
 			});
 
-			const orderItemOrderChange = orderItemChange.find(c => c.attribute === 'order');
+			const orderItemOrderChange = orderItemChange.find((c) => c.attribute === 'order');
 			expect(orderItemOrderChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				modification: 'create',
@@ -513,7 +512,7 @@ describe('change log generation', () => {
 			});
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, bookID]}`;
-			const transactionID = changesBefore.find(c => c.transactionID)?.transactionID;
+			const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
 
 			// Update the book title through deep update on existing data
 			await UPDATE(adminService.entities.BookStores)
@@ -526,7 +525,7 @@ describe('change log generation', () => {
 			expect(changes.length).toEqual(2);
 
 			// BookStores.books composition entry
-			const bookStoreChange = changes.find(c => c.entityKey === bookStoreID);
+			const bookStoreChange = changes.find((c) => c.entityKey === bookStoreID);
 			expect(bookStoreChange).toMatchObject({
 				entity: 'sap.capire.bookshop.BookStores',
 				attribute: 'books',
@@ -537,7 +536,7 @@ describe('change log generation', () => {
 			});
 
 			// Books.title field change linked to parent
-			const bookChange = changes.find(c => c.entityKey === bookID);
+			const bookChange = changes.find((c) => c.entityKey === bookID);
 			expect(bookChange).toMatchObject({
 				entity: 'sap.capire.bookshop.Books',
 				attribute: 'title',
@@ -568,7 +567,7 @@ describe('change log generation', () => {
 			});
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, compositeKey]}`;
-			const transactionID = changesBefore.find(c => c.transactionID)?.transactionID;
+			const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
 
 			await PATCH(`/odata/v4/admin/Order(ID=${orderID})/Items(ID=${orderItemID})`, {
 				quantity: 12
@@ -578,7 +577,7 @@ describe('change log generation', () => {
 			expect(changes.length).toEqual(2);
 
 			// Order composition entry (parent)
-			const orderChange = changes.find(c => c.entityKey === orderID);
+			const orderChange = changes.find((c) => c.entityKey === orderID);
 			expect(orderChange).toMatchObject({
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'Items',
@@ -588,7 +587,7 @@ describe('change log generation', () => {
 			});
 
 			// Inline item change linked to parent
-			const itemChange = changes.find(c => c.entityKey === compositeKey);
+			const itemChange = changes.find((c) => c.entityKey === compositeKey);
 			expect(itemChange).toMatchObject({
 				entity: 'sap.capire.bookshop.Order.Items',
 				attribute: 'quantity',
@@ -619,7 +618,7 @@ describe('change log generation', () => {
 			);
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, registryID]}`;
-			const transactionID = changesBefore.find(c => c.transactionID)?.transactionID;
+			const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
 
 			await UPDATE(BookStores).where({ ID: bookStoreID }).with({
 				registry: null,
@@ -630,7 +629,7 @@ describe('change log generation', () => {
 			expect(changes.length).toEqual(2);
 
 			// BookStores.registry composition entry (parent)
-			const bookStoreChange = changes.find(c => c.entityKey === bookStoreID);
+			const bookStoreChange = changes.find((c) => c.entityKey === bookStoreID);
 			expect(bookStoreChange).toMatchObject({
 				entity: 'sap.capire.bookshop.BookStores',
 				attribute: 'registry',
@@ -641,7 +640,7 @@ describe('change log generation', () => {
 			});
 
 			// Registry change linked to parent
-			const registryChange = changes.find(c => c.entityKey === registryID);
+			const registryChange = changes.find((c) => c.entityKey === registryID);
 			expect(registryChange).toMatchObject({
 				entity: 'sap.capire.bookshop.BookStoreRegistry',
 				attribute: 'validOn',
@@ -671,7 +670,7 @@ describe('change log generation', () => {
 				expect(changes.length).toEqual(2);
 
 				// Order.header composition entry (parent)
-				const orderChange = changes.find(c => c.entityKey === orderID);
+				const orderChange = changes.find((c) => c.entityKey === orderID);
 				expect(orderChange).toMatchObject({
 					entity: 'sap.capire.bookshop.Order',
 					attribute: 'header',
@@ -681,7 +680,7 @@ describe('change log generation', () => {
 				});
 
 				// OrderHeader change linked to parent
-				const headerChange = changes.find(c => c.entityKey === headerID);
+				const headerChange = changes.find((c) => c.entityKey === headerID);
 				expect(headerChange).toMatchObject({
 					entity: 'sap.capire.bookshop.OrderHeader',
 					attribute: 'status',
@@ -709,7 +708,7 @@ describe('change log generation', () => {
 				const headerID = order.header_ID;
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, headerID]}`;
-				const transactionID = changesBefore.find(c => c.transactionID)?.transactionID;
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
 
 				await DELETE(`/odata/v4/admin/Order(ID=${orderID})/header`);
 
@@ -717,7 +716,7 @@ describe('change log generation', () => {
 				expect(changes.length).toEqual(2);
 
 				// Order.header composition entry (parent)
-				const orderChange = changes.find(c => c.entityKey === orderID);
+				const orderChange = changes.find((c) => c.entityKey === orderID);
 				expect(orderChange).toMatchObject({
 					entity: 'sap.capire.bookshop.Order',
 					attribute: 'header',
@@ -727,7 +726,7 @@ describe('change log generation', () => {
 				});
 
 				// OrderHeader change linked to parent
-				const headerChange = changes.find(c => c.entityKey === headerID);
+				const headerChange = changes.find((c) => c.entityKey === headerID);
 				expect(headerChange).toMatchObject({
 					entity: 'sap.capire.bookshop.OrderHeader',
 					attribute: 'status',
@@ -762,7 +761,7 @@ describe('change log generation', () => {
 				const changes = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, registryID]}`;
 
 				// BookStores.registry composition entry (parent)
-				const registryChange = changes.find(c => c.attribute === 'registry');
+				const registryChange = changes.find((c) => c.attribute === 'registry');
 				expect(registryChange).toMatchObject({
 					entity: 'sap.capire.bookshop.BookStores',
 					attribute: 'registry',
@@ -773,7 +772,7 @@ describe('change log generation', () => {
 				});
 
 				// Registry change linked to parent
-				const validOnChange = changes.find(c => c.attribute === 'validOn');
+				const validOnChange = changes.find((c) => c.attribute === 'validOn');
 				expect(validOnChange).toMatchObject({
 					entity: 'sap.capire.bookshop.BookStoreRegistry',
 					attribute: 'validOn',
@@ -808,7 +807,7 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, registryID]}`;
-				const transactionID = changesBefore.find(c => c.transactionID)?.transactionID;
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
 
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
 				await PATCH(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)`, {
@@ -826,7 +825,7 @@ describe('change log generation', () => {
 				expect(changes.length).toEqual(2);
 
 				// BookStores.registry composition entry (parent)
-				const bookStoreChange = changes.find(c => c.entityKey === bookStoreID);
+				const bookStoreChange = changes.find((c) => c.entityKey === bookStoreID);
 				expect(bookStoreChange).toMatchObject({
 					entity: 'sap.capire.bookshop.BookStores',
 					attribute: 'registry',
@@ -837,7 +836,7 @@ describe('change log generation', () => {
 				});
 
 				// Registry change linked to parent
-				const registryChange = changes.find(c => c.entityKey === registryID);
+				const registryChange = changes.find((c) => c.entityKey === registryID);
 				expect(registryChange).toMatchObject({
 					entity: 'sap.capire.bookshop.BookStoreRegistry',
 					attribute: 'validOn',
@@ -871,7 +870,7 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, registryID]}`;
-				const transactionID = changesBefore.find(c => c.transactionID)?.transactionID;
+				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
 
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
 				await PATCH(`/odata/v4/admin/BookStoreRegistry(ID=${registryID},IsActiveEntity=false)`, {
@@ -883,7 +882,7 @@ describe('change log generation', () => {
 				expect(changes.length).toEqual(2);
 
 				// BookStores.registry composition entry (parent)
-				const bookStoreChange = changes.find(c => c.entityKey === bookStoreID);
+				const bookStoreChange = changes.find((c) => c.entityKey === bookStoreID);
 				expect(bookStoreChange).toMatchObject({
 					entity: 'sap.capire.bookshop.BookStores',
 					attribute: 'registry',
@@ -894,7 +893,7 @@ describe('change log generation', () => {
 				});
 
 				// Registry change linked to parent
-				const registryChange = changes.find(c => c.entityKey === registryID);
+				const registryChange = changes.find((c) => c.entityKey === registryID);
 				expect(registryChange).toMatchObject({
 					entity: 'sap.capire.bookshop.BookStoreRegistry',
 					attribute: 'validOn',
@@ -1032,7 +1031,7 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changes = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, bookID]}`;
-				const bookStoreChange = changes.find(c => c.entityKey === bookStoreID && c.modification === 'update');
+				const bookStoreChange = changes.find((c) => c.entityKey === bookStoreID && c.modification === 'update');
 				expect(bookStoreChange).toMatchObject({
 					entity: 'sap.capire.bookshop.BookStores',
 					attribute: 'books',
@@ -1042,7 +1041,7 @@ describe('change log generation', () => {
 					objectID: 'Shakespeare and Company'
 				});
 
-				const bookDeleteChange = changes.find(c => c.entityKey === bookID && c.modification === 'delete');
+				const bookDeleteChange = changes.find((c) => c.entityKey === bookID && c.modification === 'delete');
 				expect(bookDeleteChange).toMatchObject({
 					entity: 'sap.capire.bookshop.Books',
 					attribute: 'title',
@@ -1050,7 +1049,7 @@ describe('change log generation', () => {
 					valueChangedFrom: 'Book to Delete',
 					valueChangedTo: null,
 					parent_ID: bookStoreChange.ID
-				})
+				});
 			});
 		});
 	});

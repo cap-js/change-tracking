@@ -294,7 +294,9 @@ describe('Non-ID key support', () => {
 	});
 
 	it('tracks association changes on composition children using deep update', async () => {
-		const { data: { ID } } = await POST(`odata/v4/processor/Orders`, {});
+		const {
+			data: { ID }
+		} = await POST(`odata/v4/processor/Orders`, {});
 		const innerID = cds.utils.uuid();
 		const { status } = await PATCH(`odata/v4/processor/Orders(${ID})`, {
 			orderProducts: [
@@ -306,9 +308,11 @@ describe('Non-ID key support', () => {
 		});
 		expect(status).toEqual(200);
 
-		const { data: { value: changes } } = await GET(`odata/v4/processor/Orders(${ID})/changes`);
+		const {
+			data: { value: changes }
+		} = await GET(`odata/v4/processor/Orders(${ID})/changes`);
 		expect(changes.length).toEqual(2);
-		const countryChange = changes.find(c => c.attribute === 'country');
+		const countryChange = changes.find((c) => c.attribute === 'country');
 		expect(countryChange).toMatchObject({
 			attributeLabel: 'Country/Region',
 			valueChangedFrom: null,
@@ -318,9 +322,9 @@ describe('Non-ID key support', () => {
 			entity: 'sap.capire.incidents.OrderProducts',
 			parent_entity: 'sap.capire.incidents.Orders',
 			parent_entityKey: ID
-		})
-		
-		const orderProductsChange = changes.find(c => c.attribute === 'orderProducts');
+		});
+
+		const orderProductsChange = changes.find((c) => c.attribute === 'orderProducts');
 		expect(orderProductsChange).toMatchObject({
 			valueChangedFrom: null,
 			valueChangedTo: null,
@@ -328,7 +332,6 @@ describe('Non-ID key support', () => {
 			entityKey: ID,
 			entity: 'sap.capire.incidents.Orders',
 			parent_ID: null
-		})
-
+		});
 	});
 });
