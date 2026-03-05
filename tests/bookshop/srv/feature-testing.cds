@@ -16,6 +16,8 @@ service VariantTesting {
   entity ExplicitCompositionOne  as projection on my.ExplicitCompositionOne;
   entity ExplicitCompositionMany as projection on my.ExplicitCompositionMany;
 
+  entity CompositeKeyParent as projection on my.CompositeKeyParent;
+
   entity ChangeView as projection on change.ChangeView;
 
   @changelog: false

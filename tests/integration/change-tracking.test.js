@@ -1631,6 +1631,145 @@ describe('change log generation', () => {
 				});
 			});
 		});
+
+		describe('Composition of aspect with composite-key parent', () => {
+			it('tracks create on inline composition child when parent has composite keys', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const year = Math.floor(Math.random() * 9000) + 1000;
+				const code = cds.utils.uuid().slice(0, 8);
+				const itemID = cds.utils.uuid();
+
+				await POST(`/odata/v4/variant-testing/CompositeKeyParent`, {
+					year,
+					code,
+					title: 'Composite Parent',
+					items: [{ ID: itemID, value: 'Item One' }]
+				});
+
+				const parentKey = `${String(year).length},${year};${String(code).length},${code}`;
+				// Child key: up__year, up__code, ID — 3 composite key parts
+				const childKey = `${String(year).length},${year};${String(code).length},${code};${String(itemID).length},${itemID}`;
+
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentKey, childKey]}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentKey && c.attribute === 'items');
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.CompositeKeyParent',
+					attribute: 'items',
+					modification: 'create',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const childChange = changes.find((c) => c.entityKey === childKey && c.attribute === 'value');
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.CompositeKeyParent.items',
+					attribute: 'value',
+					modification: 'create',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: null,
+					valueChangedTo: 'Item One'
+				});
+			});
+
+			it('tracks update on inline composition child when parent has composite keys', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const year = Math.floor(Math.random() * 9000) + 1000;
+				const code = cds.utils.uuid().slice(0, 8);
+				const itemID = cds.utils.uuid();
+
+				// Create initial data
+				await POST(`/odata/v4/variant-testing/CompositeKeyParent`, {
+					year,
+					code,
+					title: 'Composite Parent',
+					items: [{ ID: itemID, value: 'Original' }]
+				});
+
+				const parentKey = `${String(year).length},${year};${String(code).length},${code}`;
+				const childKey = `${String(year).length},${year};${String(code).length},${code};${String(itemID).length},${itemID}`;
+
+				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[parentKey, childKey]}`;
+				const transactionID = changesBefore[0]?.transactionID;
+
+				await PATCH(`/odata/v4/variant-testing/CompositeKeyParent(year=${year},code='${code}')`, {
+					items: [{ ID: itemID, value: 'Updated' }]
+				});
+
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentKey, childKey]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentKey && c.attribute === 'items');
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.CompositeKeyParent',
+					attribute: 'items',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const childChange = changes.find((c) => c.entityKey === childKey && c.attribute === 'value');
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.CompositeKeyParent.items',
+					attribute: 'value',
+					modification: 'update',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'Original',
+					valueChangedTo: 'Updated'
+				});
+			});
+
+			it('tracks delete on inline composition child when parent has composite keys', async () => {
+				const variantTesting = await cds.connect.to('VariantTesting');
+				const { ChangeView } = variantTesting.entities;
+
+				const year = Math.floor(Math.random() * 9000) + 1000;
+				const code = cds.utils.uuid().slice(0, 8);
+				const itemID = cds.utils.uuid();
+
+				// Create initial data
+				await POST(`/odata/v4/variant-testing/CompositeKeyParent`, {
+					year,
+					code,
+					title: 'Composite Parent',
+					items: [{ ID: itemID, value: 'To Delete' }]
+				});
+
+				const parentKey = `${String(year).length},${year};${String(code).length},${code}`;
+				const childKey = `${String(year).length},${year};${String(code).length},${code};${String(itemID).length},${itemID}`;
+
+				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[parentKey, childKey]}`;
+				const transactionID = changesBefore[0]?.transactionID;
+
+				await PATCH(`/odata/v4/variant-testing/CompositeKeyParent(year=${year},code='${code}')`, {
+					items: []
+				});
+
+				const changes = await SELECT.from(ChangeView).where`entityKey in ${[parentKey, childKey]} and transactionID != ${transactionID}`;
+
+				const parentChange = changes.find((c) => c.entityKey === parentKey && c.attribute === 'items');
+				expect(parentChange).toMatchObject({
+					entity: 'sap.change_tracking.CompositeKeyParent',
+					attribute: 'items',
+					modification: 'update',
+					parent_ID: null,
+					valueDataType: 'cds.Composition'
+				});
+
+				const childChange = changes.find((c) => c.entityKey === childKey && c.attribute === 'value' && c.modification === 'delete');
+				expect(childChange).toMatchObject({
+					entity: 'sap.change_tracking.CompositeKeyParent.items',
+					attribute: 'value',
+					modification: 'delete',
+					parent_ID: parentChange.ID,
+					valueChangedFrom: 'To Delete',
+					valueChangedTo: null
+				});
+			});
+		});
 	});
 
 	it('tracks zero values and false booleans correctly during create and delete', async () => {

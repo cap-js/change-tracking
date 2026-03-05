@@ -93,3 +93,13 @@ entity ComposedEntities {
       title  : String;
       price  : Decimal;
 }
+
+entity CompositeKeyParent {
+  key year  : Integer;
+  key code  : String;
+      title : String;
+      items : Composition of many {
+        key ID    : UUID;
+            value : String;
+      };
+}

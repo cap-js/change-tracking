@@ -74,6 +74,15 @@ annotate change_tracking.ComposedEntities with {
   price @changelog;
 }
 
+annotate change_tracking.CompositeKeyParent with @(changelog: [title]) {
+  title @changelog;
+  items @changelog;
+}
+
+annotate change_tracking.CompositeKeyParent.items with {
+  value @changelog;
+}
+
 annotate bookshop.Books with {
   authorWithAssocObjectID @changelog: [
     authorWithAssocObjectID.name.firstName,
