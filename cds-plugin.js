@@ -213,7 +213,12 @@ function enhanceModel(m) {
 			if (!collectedEntities.has(dbEntityName)) collectedEntities.set(dbEntityName, []);
 			collectedEntities.get(dbEntityName).push(name);
 
-			if (!entity['@changelog.disable_assoc']) {
+			// Skip adding association to ChangeView if the entity has only association keys, as it cannot be independently identified and is likely an inline composition target
+			const entityKeys = Object.values(entity.elements).filter((e) => e.key);
+			const hasOnlyAssociationKeys = entityKeys.length > 0 && entityKeys.every((e) => e.type === 'cds.Association');
+			if (hasOnlyAssociationKeys) {
+				DEBUG?.(`Skipping changes association for ${name} - inline composition target with no independent key`);
+			} else if (!entity['@changelog.disable_assoc']) {
 				// Add association to ChangeView
 				const keys = entityKey4(entity);
 				if (!keys.length) continue; // skip if no key attribute is defined
