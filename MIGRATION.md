@@ -1,5 +1,9 @@
 # Migration Guide: Switch from v1 to v2
 
+> [!NOTE]
+>
+> A HANA migration table will be provided with the full release, as well as a procedure to convert existing changes into the hierarchy.
+
 The new version moves the tracking mechanism from event handlers to native database triggers (SQLite, PostgreSQL, HANA, H2). The `ChangeLog` entity was removed, everything lives in a flat `Changes` table now. Localization moved from runtime handlers to an `i18nKeys` lookup table with SQL `COALESCE`.
 
 ## Breaking Changes
