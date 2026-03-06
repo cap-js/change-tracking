@@ -1218,8 +1218,6 @@ describe('change log generation', () => {
 				const compositeKey1 = `${String(parentID).length},${parentID};${String(child1ID).length},${child1ID}`;
 				const compositeKey2 = `${String(parentID).length},${parentID};${String(child2ID).length},${child2ID}`;
 
-				// Composition entry on the parent
-				const x = await SELECT.from(ChangeView).where`entityKey in ${[parentID, compositeKey1, compositeKey2]}`;
 				const parentChanges = await SELECT.from(ChangeView).where({
 					entity: 'sap.change_tracking.TrackingComposition',
 					entityKey: parentID,
