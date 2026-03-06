@@ -130,7 +130,7 @@ describe('Special CDS Features', () => {
 			objectID: 'My test-record',
 			entity: 'sap.change_tracking.DifferentFieldTypes',
 			entityLabel: 'Different field types',
-			rootEntity: null,
+			parent_ID: null,
 			valueChangedFrom: null,
 			valueChangedTo: '1'
 		});

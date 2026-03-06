@@ -126,12 +126,8 @@ entity Changes : cuid {
   entity                : String(150)       @UI.Hidden; // target entity on db level
   entityKey             : String(5000)      @title: '{i18n>Changes.entityKey}'; // primary key of target entity
 
-  rootEntity            : String(5000)      @title: '{i18n>Changes.rootEntity}';
-  rootEntityKey         : String(5000)      @title: '{i18n>Changes.rootKey}';
-
   // Business meaningful object id
   objectID              : String(5000)      @title: '{i18n>Changes.objectID}';
-  rootObjectID          : String(5000)      @title: '{i18n>Changes.rootObjectID}';
 
   @title: '{i18n>Changes.modification}'
   modification          : String(6) enum {
