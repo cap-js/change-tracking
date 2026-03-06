@@ -262,8 +262,7 @@ describe('@changelog annotation interpretation', () => {
 		expect(authorUpdateChangeInDb.valueChangedToLabel).toEqual('Charlotte, Brontë');
 		expect(authorUpdateChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
 	});
-
-	// REVISIT: breaking change, see if someone complains
+	
 	it('records data type and resolves display values for composition fields annotated with @changelog', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const { ChangeView } = adminService.entities;
@@ -301,7 +300,7 @@ describe('@changelog annotation interpretation', () => {
 		expect(changesInDb.length).toEqual(1);
 		expect(changesInDb[0].valueChangedFromLabel).toEqual(null);
 		expect(changesInDb[0].valueChangedToLabel).toEqual('Japan, Honda, Ōsaka');
-		expect(changesInDb[0].valueDataType).toEqual('cds.Association'); // REVISIT: breaking change, should be cds.String, cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
+		expect(changesInDb[0].valueDataType).toEqual('cds.Association');
 	});
 
 	it('excludes fields annotated with @PersonalData from change tracking', async () => {
