@@ -262,7 +262,7 @@ describe('@changelog annotation interpretation', () => {
 		expect(authorUpdateChangeInDb.valueChangedToLabel).toEqual('Charlotte, Brontë');
 		expect(authorUpdateChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
 	});
-	
+
 	it('records data type and resolves display values for composition fields annotated with @changelog', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const { ChangeView } = adminService.entities;

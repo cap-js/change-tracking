@@ -19,24 +19,24 @@ The `sap.changelog.ChangeLog` entity no longer exists. Its fields (`entityKey`, 
 | `keys`              | Dropped                                          |
 | `entityID`          | Renamed to `objectID`                            |
 | `serviceEntity`     | Dropped (triggers don't track the service layer) |
-| `parentEntityID`    | Dropped (handled by tree table)                        |
-| `parentKey`         | Dropped                       |
+| `parentEntityID`    | Dropped (handled by tree table)                  |
+| `parentKey`         | Dropped                                          |
 | `serviceEntityPath` | Dropped                                          |
 | `changeLog` (FK)    | Dropped (no more parent entity)                  |
 
 **Moved/renamed columns on `Changes`:**
 
-| Column                    | Was                                                        |
-| ------------------------- | ---------------------------------------------------------- |
-| `entityKey`               | Moved from `ChangeLog.entityKey`                           |
-| `objectID`                | Renamed from `entityID`                                    |
-| `createdAt` / `createdBy` | Moved from `ChangeLog`                                     |
+| Column                    | Was                              |
+| ------------------------- | -------------------------------- |
+| `entityKey`               | Moved from `ChangeLog.entityKey` |
+| `objectID`                | Renamed from `entityID`          |
+| `createdAt` / `createdBy` | Moved from `ChangeLog`           |
 
 **New columns on `Changes`:**
 
 | Column                                          | Purpose                                  |
 | ----------------------------------------------- | ---------------------------------------- |
-| `parent` / `children` | Allow tree table      |
+| `parent` / `children`                           | Allow tree table                         |
 | `valueChangedFromLabel` / `valueChangedToLabel` | Localized labels for old/new values      |
 | `transactionID`                                 | Groups changes from the same transaction |
 
@@ -55,7 +55,6 @@ The `sap.changelog.ChangeLog` entity no longer exists. Its fields (`entityKey`, 
 
 If you have custom UI components or queries referencing the old column names, update them.
 
-
 ### Annotations
 
 `@changelog` syntax is unchanged. New behavior:
@@ -69,12 +68,12 @@ The `@changelog` annotation now only supports valid association paths.
 
 ### Column mapping
 
-| v1.x                     | v2.x                                                                      | Notes                                                   |
-| ------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `ChangeLog.entityKey`    | `Changes.entityKey`                                                       | Direct copy                                             |
-| `ChangeLog.createdAt`    | `Changes.createdAt`                                                       | Direct copy                                             |
-| `ChangeLog.createdBy`    | `Changes.createdBy`                                                       | Direct copy                                             |
-| `ChangeLog.entity`       | `Changes.entity`                                                          | Fallback via COALESCE                                   |
-| `Changes.entityID`       | `Changes.objectID`                                                        | Renamed                                                 |
-| New                      | `Changes.rootEntity`                                                      | Derived from `ChangeLog.entity` when `parentKey` is set |
-| New                      | `Changes.valueChangedFromLabel` / `valueChangedToLabel` / `transactionID` | NULL for migrated rows                                  |
+| v1.x                  | v2.x                                                                      | Notes                                                   |
+| --------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `ChangeLog.entityKey` | `Changes.entityKey`                                                       | Direct copy                                             |
+| `ChangeLog.createdAt` | `Changes.createdAt`                                                       | Direct copy                                             |
+| `ChangeLog.createdBy` | `Changes.createdBy`                                                       | Direct copy                                             |
+| `ChangeLog.entity`    | `Changes.entity`                                                          | Fallback via COALESCE                                   |
+| `Changes.entityID`    | `Changes.objectID`                                                        | Renamed                                                 |
+| New                   | `Changes.rootEntity`                                                      | Derived from `ChangeLog.entity` when `parentKey` is set |
+| New                   | `Changes.valueChangedFromLabel` / `valueChangedToLabel` / `transactionID` | NULL for migrated rows                                  |
