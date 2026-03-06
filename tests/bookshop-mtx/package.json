@@ -4,7 +4,7 @@
 		"@sap/cds-mtxs": "^3"
 	},
 	"devDependencies": {
-		"@cap-js/sqlite": "*"
+		"@cap-js/sqlite": "^1 || ^2"
 	},
 	"cds": {
 		"requires": {

@@ -20,14 +20,10 @@ namespace sap.capire.bookshop;
 @fiori.draft.enabled
 @title : '{i18n>bookStore.objectTitle}'
 entity BookStores @(cds.autoexpose) : managed, cuid {
-  @title : '{i18n>bookStore.name}'
-  name            : String;
-
-  @title : '{i18n>bookStore.location}'
-  location        : String;
-
+  name            : String @title : '{i18n>bookStore.name}';
+  location        : String @title : '{i18n>bookStore.location}';
   lifecycleStatus : LifecycleStatusCode;
-
+  
   @title : '{i18n>bookStore.city}'
   city            : Association to one City;
 
@@ -36,6 +32,7 @@ entity BookStores @(cds.autoexpose) : managed, cuid {
                       on books.bookStore = $self;
 
   @title : '{i18n>bookStore.registry}'
+  @changelog
   registry        : Composition of one BookStoreRegistry;
 }
 
@@ -125,17 +122,17 @@ entity Report : cuid {
 }
 
 entity Order : cuid {
-  @title     : '{i18n>title}'
-  @changelog
-  title      : String;
+  title      : String @title : '{i18n>title}' @changelog;
   type       : Association to one OrderType;
   report     : Association to one Report;
   header     : Composition of one OrderHeader;
+  @changelog
   orderItems : Composition of many OrderItem
                  on orderItems.order = $self;
   netAmount  : Decimal(19, 2);
   isUsed     : Boolean;
   status     : String;
+  @changelog
   Items      : Composition of many {
     key ID   : UUID;
     @changelog
@@ -172,6 +169,7 @@ entity OrderHeader : cuid {
 entity OrderItem : cuid {
   order    : Association to one Order;
   customer : Association to one Customers;
+  @changelog
   notes    : Composition of many OrderItemNote
                on notes.orderItem = $self;
   quantity : Decimal(19, 2);
@@ -211,7 +209,7 @@ entity SecondEntity : managed, cuid {
   children : Association to one Children;
 }
 
-@changelog : [one_ID]
+@changelog : [one.ID]
 entity Children : managed {
   @changelog
   key one : Association to one FirstEntity;

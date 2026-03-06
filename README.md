@@ -5,23 +5,7 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
 > [!IMPORTANT]
-> Following the CAP best practices, the new release now requires CDS8 or CDS9 as minimum versions. If you want to use the plugin with an older version of CAP (CDS7), you will need to manually update the peer dependency in `package.json`. Please be aware that there will be no support for this version of the plugin with a CDS version below 8!
-
-> [!IMPORTANT]
-> This release establishes support for multi-tenant deployments using MTX and extensibility.
-> 
-> To achieve this, the code was modified significantly. While we tested extensively, there still may be glitches or unexpected situations which we did not cover. So please **test this release extensively before applying it to productive** scenarios. Please also report any bugs or glitches, ideally by contributing a test-case for us to incorporate.
-> 
-> See the changelog for a full list of changes
-
-> [!Warning]
->
-> Please note that if your project is multi-tenant, then the CDS version must be higher than 8.6 and the mtx version higher than 2.5 for change-tracking to work.
-
-> [!Warning]
->
-> When using multi-tenancy with MTX, the generated facets and associations have to be created by the model provider of the MTX component. Therefore, the plugin also must be added to the `package.json` of the MTX sidecar. 
->Although we tested this scenario extensively, there still might be cases where the automatic generation will not work as expected. If this happends in your scenario, we suggest using the `@changelog.disable_assoc` ([see here](#disable-association-to-changes-generation)) for all tracked entities and to add the association and facet manually to the service entity.
+> With version 2.0 we completely refactored how changes are tracked. Previously the logic was completely on the application layer, which limited the types of queries trackable and came with major performance penalties in larger projects. With v2.0 the changes are now fully tracked on the database layer via database triggers. Furthermore with v2.0 the table definition for changes was cleaned up. This means any upgrade involves a schema change.
 
 
 ### Table of Contents
@@ -46,61 +30,37 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 
 ## Try it Locally
 
-In this guide, we use the [Incidents Management reference sample app](https://github.com/cap-js/incidents-app) as the base to add change tracking to.
-
-1. [Prerequisites](#1-prerequisites)
-2. [Setup](#2-setup)
-3. [Annotations](#3-annotations)
-4. [Testing](#4-testing)
-
-### 1. Prerequisites
-
-Clone the repository and apply the step-by-step instructions:
-
-```sh
-git clone https://github.com/cap-js/incidents-app
-cd incidents-app
-npm i
-```
-
-**Alternatively**, you can clone the incidents app including the prepared enhancements for change-tracking:
-
-```sh
-git clone https://github.com/cap-js/calesi --recursive
-cd calesi
-npm i
-```
-
-```sh
-cds w samples/change-tracking
-```
-
-### 2. Setup
-
 To enable change tracking, simply add this self-configuring plugin package to your project:
 
 ```sh
 npm add @cap-js/change-tracking
 ```
-If you use multi-tenancy, please add the plugin also to the MTX poroject(The mtx version must be higher than 2.5).
 
-### 3. Annotations
+> [!Warning]
+>
+> Please note that if your project is multi-tenant, then the CDS version must be higher than 8.6 and the mtx version higher than 2.5 for change-tracking to work.
+
+> [!Warning]
+>
+> When using multi-tenancy with MTX, the generated database triggers, facets and associations have to be created by the model provider of the MTX component. Therefore, the plugin also must be added to the `package.json` of the MTX sidecar. 
+
+### Annotations
 
 > [!WARNING]
 > Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) (annotated with `@PersonalData`) is not change tracked, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
 
-All we need to do is to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _srv/change-tracking.cds_:
+All you need to do is to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _db/change-tracking.cds_:
 
 ```cds
-using { ProcessorService } from './processor-service';
+using { sap.capire.Incidents, sap.capire.Conversations } from './schema.cds';
 
-annotate ProcessorService.Incidents {
+annotate Incidents {
   customer @changelog: [customer.name];
   title    @changelog;
   status   @changelog;
 }
 
-annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
+annotate Conversations with @changelog: [author, timestamp] {
   message  @changelog @Common.Label: 'Message';
 }
 ```
@@ -109,7 +69,7 @@ The minimal annotation we require for change tracking is `@changelog` on element
 
 Additional identifiers or labels can be added to obtain more *human-readable* change records as described below.
 
-### 4. Testing
+### Testing
 
 With the steps above, we have successfully set up change tracking for our reference application. Let's see that in action.
 
@@ -119,7 +79,7 @@ With the steps above, we have successfully set up change tracking for our refere
 cds watch
 ```
 
-2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.ChangeLog`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
+2. **Make a change** on your change-tracked elements. This change will automatically be persisted in the database table (`sap.changelog.Changes`) and made available in a pre-defined view, namely the [Change History view](#change-history-view) for your convenience.
 
 #### Change History View
 
@@ -354,7 +314,6 @@ This section describes modelling cases for further reference, from simple to com
 - [Don&#39;ts](#donts)
   - [Use Case 1: Don&#39;t trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
   - [Use Case 2: Don&#39;t trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
-  - [Use Case 3: Don&#39;t trace changes for CUD on DB entity](#use-case-3-dont-trace-changes-for-cud-on-db-entity)
 
 ### Specify Object ID
 
@@ -639,25 +598,23 @@ entity AggregatedBusinessTransactionData @(cds.autoexpose) : cuid {
 }
 ```
 
-The reason is that: When deploying to relational databases, Associations are mapped to foreign keys. Yet, when mapped to non-relational databases they're just references. More details could be found in [Prefer Managed Associations](https://cap.cloud.sap/docs/guides/domain-models#managed-associations). In the above sample, there is no column for FootprintInventory in the table AggregatedBusinessTransactionData, but there is a navigation property FootprintInventoryof in OData entity metadata.
-
-#### Use Case 3: Don't trace changes for CUD on DB entity
-
-```cds
-this.on("UpdateActivationStatus", async (req) =>
-    // PaymentAgreementsOutgoingDb is the DB entity
-    await UPDATE.entity(PaymentAgreementsOutgoingDb)
-        .where({ ID: paymentAgreement.ID })
-        .set({ ActivationStatus_code: ActivationCodes.ACTIVE });
-);
-```
-
-The reason is that: Application level services are by design the only place where business logic is enforced. This by extension means, that it also is the only point where e.g. change-tracking would be enabled. The underlying method used to do change tracking is `req.diff` which is responsible to read the necessary before-image from the database, and this method is not available on DB level.
+The reason is that: When deploying to relational databases, Associations are mapped to foreign keys. Yet, when mapped to non-relational databases they're just references. More details could be found in [Prefer Managed Associations](https://cap.cloud.sap/docs/guides/domain-models#managed-associations). In the above sample, there is no column for FootprintInventory in the table AggregatedBusinessTransactionData, but there is a navigation property FootprintInventory of in OData entity metadata.
 
 
 ## Contributing
 
 This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/cap-js/change-tracking/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
+
+### Testing changes locally
+
+In the `tests/bookshop` folder a full sample application is provided, against which you can test your changes:
+
+```sh
+git clone https://github.com/cap-js/change-tracking
+npm i
+cd tests/bookshop
+cds watch
+```
 
 ## Code of Conduct
 

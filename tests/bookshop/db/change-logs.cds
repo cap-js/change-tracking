@@ -22,6 +22,8 @@ annotate change_tracking.RootSample with @(changelog: [
   title
 ]) {
   title @changelog;
+  children @changelog;
+
 }
 
 annotate change_tracking.Level1Sample with @(changelog: [
@@ -30,6 +32,7 @@ annotate change_tracking.Level1Sample with @(changelog: [
   parent.ID
 ]) {
   title @changelog;
+  children @changelog;
 }
 
 annotate change_tracking.Level2Sample with @(changelog: [
@@ -41,12 +44,43 @@ annotate change_tracking.Level2Sample with @(changelog: [
 }
 
 annotate change_tracking.TrackingComposition with {
-  children @changelog: [children.title];
+  children             @changelog: [children.title];
+  childrenAspectOne    @changelog;
+  childrenAspectMany   @changelog;
+  childrenExplicitOne  @changelog;
+  childrenExplicitMany @changelog;
+}
+
+annotate change_tracking.TrackingComposition.childrenAspectOne with {
+  aspect @changelog;
+}
+
+annotate change_tracking.TrackingComposition.childrenAspectMany with {
+  aspect @changelog;
+}
+
+annotate change_tracking.ExplicitCompositionOne with {
+  title @changelog;
+  price @changelog;
+}
+
+annotate change_tracking.ExplicitCompositionMany with {
+  title @changelog;
+  price @changelog;
 }
 
 annotate change_tracking.ComposedEntities with {
   title @changelog;
   price @changelog;
+}
+
+annotate change_tracking.CompositeKeyParent with @(changelog: [title]) {
+  title @changelog;
+  items @changelog;
+}
+
+annotate change_tracking.CompositeKeyParent.items with {
+  value @changelog;
 }
 
 annotate bookshop.Books with {

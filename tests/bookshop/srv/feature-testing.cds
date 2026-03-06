@@ -12,11 +12,21 @@ service VariantTesting {
   @odata.draft.enabled
   entity TrackingComposition as projection on my.TrackingComposition;
 
-  entity ComposedEntities as projection on my.ComposedEntities;
+  entity ComposedEntities        as projection on my.ComposedEntities;
+  entity ExplicitCompositionOne  as projection on my.ExplicitCompositionOne;
+  entity ExplicitCompositionMany as projection on my.ExplicitCompositionMany;
+
+  entity CompositeKeyParent as projection on my.CompositeKeyParent;
 
   entity ChangeView as projection on change.ChangeView;
 
   @changelog: false
   entity NotTrackedDifferentFieldTypes as projection on my.DifferentFieldTypes;
+
+
+  entity SelectionView as select from my.DifferentFieldTypes;
+
+  entity ExtendedEvents as select from my.ExtendedEvents;
+  entity DataExtractionSummaryView as select from my.DataExtractionSummaryView;
 
 }

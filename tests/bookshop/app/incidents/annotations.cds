@@ -116,7 +116,14 @@ annotate service.Incidents with @(
             Value : customer.name,
         },
         TypeImageUrl : 'sap-icon://alert',
-    }
+    },
+    UI.Identification : [
+        {
+            $Type : 'UI.DataFieldForAction',
+            Action : 'ProcessorService.setToDone',
+            Label : 'Set to Done'
+        }
+    ]
 );
 annotate service.Incidents with @(
     UI.FieldGroup #i18nDetails : {

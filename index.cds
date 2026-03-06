@@ -1,107 +1,231 @@
-using { managed, cuid } from '@sap/cds/common';
+using {
+  managed,
+  cuid
+} from '@sap/cds/common';
+
 namespace sap.changelog;
 
 /**
  * Used in cds-plugin.js as template for tracked entities
  */
-@cds.persistence.skip entity aspect @(UI.Facets: [{
-  $Type : 'UI.ReferenceFacet',
-  ID    : 'ChangeHistoryFacet',
-  Label : '{i18n>ChangeHistory}',
-  Target: 'changes/@UI.PresentationVariant',
+@cds.persistence.skip
+entity aspect @(UI.Facets: [{
+  $Type            : 'UI.ReferenceFacet',
+  ID               : 'ChangeHistoryFacet',
+  Label            : '{i18n>ChangeHistory}',
+  Target           : 'changes/@UI.PresentationVariant',
   @UI.PartOfPreview: false
 }]) {
-  // Essentially: Association to many Changes on changes.changeLog.entityKey = ID;
-  changes : Association to many ChangeView on changes.entityKey = ID;
-  key ID  : String;
+      changes : Association to many ChangeView
+                  on  changes.entityKey     = ID
+                  and changes.entity        = 'ENTITY';
+  key ID      : String;
 }
 
 
 // This is a helper view to flatten the assoc path to the entityKey
+// Locale fallback: tries exact locale first (e.g., en_GB), then falls back to 'en'
+// REVISIT: When dropping CDS 8 support, use base locale extraction instead of hardcoded 'en' fallback:
+//   substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
+//   This would extract 'en' from 'en_GB', 'de' from 'de_DE', etc. (indexof was introduced in CDS 9)
 @readonly
+@cds.autoexpose
 view ChangeView as
-  select from Changes {
+  select from Changes as change {
+    key change.ID                                        @UI.Hidden,
     *,
-    entityID            as objectID, // no clue why we have to rename this?
-    parentEntityID      as parentObjectID, // no clue why we have to rename this?
-    changeLog.entityKey as entityKey, // flattening assoc path -> this is the main reason for having this helper view
-    changeLog.createdAt as createdAt,
-    changeLog.createdBy as createdBy,
-  }
-  excluding {
-    entityID,
-    parentEntityID,
+    COALESCE(
+      (
+        select text from i18nKeys
+        where
+              ID     = change.attribute
+          and locale = $user.locale
+      ), (
+        select text from i18nKeys
+        where
+              ID     = change.attribute
+          and locale = 'en'
+      ), change.attribute
+    ) as attributeLabel        : String(15) @title: '{i18n>Changes.attribute}',
+    COALESCE(
+      (
+        select text from i18nKeys
+        where
+              ID     = change.entity
+          and locale = $user.locale
+      ), (
+        select text from i18nKeys
+        where
+              ID     = change.entity
+          and locale = 'en'
+      ), change.entity
+    ) as entityLabel           : String(24) @title: '{i18n>Changes.entity}',
+    COALESCE(
+      (
+        select text from i18nKeys
+        where
+              ID     = change.modification
+          and locale = $user.locale
+      ), (
+        select text from i18nKeys
+        where
+              ID     = change.modification
+          and locale = 'en'
+      ), change.modification
+    ) as modificationLabel     : String(16) @title: '{i18n>Changes.modification}',
+    COALESCE(
+      (
+        select text from i18nKeys
+        where
+              ID     = change.objectID
+          and locale = $user.locale
+      ), (
+        select text from i18nKeys
+        where
+              ID     = change.objectID
+          and locale = 'en'
+      ), change.objectID
+    ) as objectID              : String(24) @title: '{i18n>Changes.objectID}',
+    COALESCE(
+      change.valueChangedFromLabel, change.valueChangedFrom
+    ) as valueChangedFromLabel : String(5000) @title: '{i18n>Changes.valueChangedFrom}',
+    COALESCE(
+      change.valueChangedToLabel, change.valueChangedTo
+    ) as valueChangedToLabel   : String(5000) @title: '{i18n>Changes.valueChangedTo}',
+    
+    // For the hierarchy
+    null as LimitedDescendantCount : Int16 @UI.Hidden,
+    null as DistanceFromRoot       : Int16 @UI.Hidden,
+    null as DrillState             : String @UI.Hidden,
+    null as LimitedRank            : Int16 @UI.Hidden,
   };
 
-/**
- * Top-level changes entity, e.g. UPDATE Incident by, at, ...
- */
-entity ChangeLog : managed, cuid {
-  serviceEntity : String(5000) @title: '{i18n>ChangeLog.serviceEntity}'; // definition name of target entity (on service level) - e.g. ProcessorsService.Incidents
-  entity        : String(5000) @title: '{i18n>ChangeLog.entity}'; // definition name of target entity (on db level) - e.g. sap.capire.incidents.Incidents
-  entityKey     : String       @title: '{i18n>ChangeLog.entityKey}'; // primary key of target entity, e.g. Incidents.ID
-  createdAt     : managed:createdAt @title : '{i18n>ChangeLog.createdAt}';
-  createdBy     : managed:createdBy @title : '{i18n>ChangeLog.createdBy}';
-  changes       : Composition of many Changes on changes.changeLog = $self;
+entity i18nKeys {
+  key ID     : String(5000);
+  key locale : String(100);
+      text   : String(5000);
 }
 
-/**
- * Attribute-level Changes with simple capturing of one-level
- * composition trees in parent... elements.
- */
-entity Changes {
+// Dummy table necessary for HANA triggers
+@cds.persistence.skip
+entity CHANGE_TRACKING_DUMMY {
+  key X : String(5);
+}
 
-  key ID                : UUID                     @UI.Hidden;
-      keys              : String(5000)             @title: '{i18n>Changes.keys}';
-      attribute         : String(5000)             @title: '{i18n>Changes.attribute}';
-      valueChangedFrom  : String(5000)             @title: '{i18n>Changes.valueChangedFrom}' @UI.MultiLineText;
-      valueChangedTo    : String(5000)             @title: '{i18n>Changes.valueChangedTo}' @UI.MultiLineText;
+entity Changes : cuid {
+  parent                : Association to one Changes;
+  children              : Composition of many Changes
+                            on children.parent = $self;
 
-      // Business meaningful object id
-      entityID          : String(5000)             @title: '{i18n>Changes.entityID}';
-      entity            : String(5000)             @title: '{i18n>Changes.entity}'; // similar to ChangeLog.entity, but could be nested entity in a composition tree
-      serviceEntity     : String(5000)             @title: '{i18n>Changes.serviceEntity}'; // similar to ChangeLog.serviceEntity, but could be nested entity in a composition tree
+  attribute             : String(127)       @title: '{i18n>Changes.attribute}';
+  valueChangedFrom      : String(5000)      @title: '{i18n>Changes.valueChangedFrom}'  @UI.MultiLineText;
+  valueChangedTo        : String(5000)      @title: '{i18n>Changes.valueChangedTo}'    @UI.MultiLineText;
+  valueChangedFromLabel : String(5000)      @title: '{i18n>Changes.valueChangedFrom}';
+  valueChangedToLabel   : String(5000)      @title: '{i18n>Changes.valueChangedTo}';
 
-      // Business meaningful parent object id
-      parentEntityID    : String(5000)             @title: '{i18n>Changes.parentEntityID}';
-      parentKey         : String                   @title: '{i18n>Changes.parentKey}';
-      serviceEntityPath : String(5000)             @title: '{i18n>Changes.serviceEntityPath}';
+  entity                : String(150)       @UI.Hidden; // target entity on db level
+  entityKey             : String(5000)      @title: '{i18n>Changes.entityKey}'; // primary key of target entity
 
-      @title: '{i18n>Changes.modification}'
-      modification      : String enum {
-        Create = 'create';
-        Update = 'update';
-        Delete = 'delete';
-      };
+  // Business meaningful object id
+  objectID              : String(5000)      @title: '{i18n>Changes.objectID}';
 
-      valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}';
-      changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}' @UI.Hidden;
+  @title: '{i18n>Changes.modification}'
+  modification          : String(6) enum {
+    Create = 'create';
+    Update = 'update';
+    Delete = 'delete';
+  };
+
+  valueDataType         : String(5000)      @title: '{i18n>Changes.valueDataType}'     @UI.Hidden;
+  createdAt             : managed:createdAt @title: '{i18n>Changes.createdAt}';
+  createdBy             : managed:createdBy @title: '{i18n>Changes.createdBy}';
+  transactionID         : Int64             @title: '{i18n>Changes.transactionID}';
 }
 
 annotate ChangeView with @(UI: {
-  PresentationVariant: {
+  PresentationVariant #ChangeHierarchy: {RecursiveHierarchyQualifier: 'ChangeHierarchy',
+  },
+  PresentationVariant                 : {
     Visualizations: ['@UI.LineItem'],
-    RequestAtLeast: [
-      parentKey,
-      serviceEntity,
-      serviceEntityPath,
-      valueDataType
-    ],
     SortOrder     : [{
       Property  : createdAt,
       Descending: true
     }],
   },
-  LineItem           : [
-    { Value: modification, @HTML5.CssDefaults: {width:'9%'} },
-    { Value: createdAt, @HTML5.CssDefaults: {width:'12%'} },
-    { Value: createdBy, @HTML5.CssDefaults: {width:'9%'} },
-    { Value: entity, @HTML5.CssDefaults: {width:'11%'} },
-    { Value: objectID, @HTML5.CssDefaults: {width:'14%'} },
-    { Value: attribute, @HTML5.CssDefaults: {width:'9%'} },
-    { Value: valueChangedTo, @HTML5.CssDefaults: {width:'11%'} },
-    { Value: valueChangedFrom, @HTML5.CssDefaults: {width:'11%'} },
-    { Value: parentObjectID, @HTML5.CssDefaults: {width:'14%'}, ![@UI.Hidden]: true }
+  HeaderInfo                          : {
+    $Type         : 'UI.HeaderInfoType',
+    TypeName      : '{i18n>ChangeHistory}',
+    TypeNamePlural: '{i18n>ChangeHistory}',
+  },
+  LineItem                            : [
+    {
+      Value             : modificationLabel,
+      @UI.Importance : #Low
+    },
+    {
+      Value             : entityLabel,
+      @UI.Importance : #Medium
+    },
+    {
+      Value             : objectID,
+      @UI.Importance : #Medium
+    },
+    {
+      Value             : attributeLabel,
+      @UI.Importance : #Medium
+    },
+    {
+      Value             : valueChangedToLabel,
+      @UI.Importance : #High
+    },
+    {
+      Value             : valueChangedFromLabel,
+      @UI.Importance : #High
+    },
+    {
+      Value             : createdAt,
+      @UI.Importance : #Low
+    },
+    {
+      Value             : createdBy,
+      @UI.Importance : #High
+    },
   ],
-  DeleteHidden       : true,
-});
+  DeleteHidden                        : true,
+}) {
+  valueChangedFrom @UI.Hidden;
+  valueChangedTo @UI.Hidden;
+  parent @UI.Hidden;
+  entityKey @UI.Hidden;
+  entity @UI.Hidden;
+  attribute @UI.Hidden;
+};
+
+annotate ChangeView with @(
+  Aggregation.RecursiveHierarchy #ChangeHierarchy        : {
+    ParentNavigationProperty: parent, // navigates to a node's parent
+    NodeProperty            : ID, // identifies a node, usually the key
+  },
+  Hierarchy.RecursiveHierarchyActions #ChangeHierarchy   : {ChangeSiblingForRootsSupported: false,
+  },
+  Hierarchy.RecursiveHierarchy #ChangeHierarchy          : {
+    LimitedDescendantCount: LimitedDescendantCount,
+    DistanceFromRoot      : DistanceFromRoot,
+    DrillState            : DrillState,
+    LimitedRank           : LimitedRank
+  },
+  // Disallow filtering on these properties from Fiori UIs
+  Capabilities.FilterRestrictions.NonFilterableProperties: [
+    'LimitedDescendantCount',
+    'DistanceFromRoot',
+    'DrillState',
+    'LimitedRank'
+  ],
+  // Disallow sorting on these properties from Fiori UIs
+  Capabilities.SortRestrictions.NonSortableProperties    : [
+    'LimitedDescendantCount',
+    'DistanceFromRoot',
+    'DrillState',
+    'LimitedRank'
+  ],
+);
