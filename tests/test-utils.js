@@ -39,9 +39,7 @@ async function _regenerateSQLiteTriggers(entityNames, allEntities, hierarchyMap)
 	const { generateSQLiteTrigger } = require('../lib/trigger/sqlite.js');
 
 	// Drop existing triggers
-	const pattern = entityNames
-		? entityNames.map((n) => `name LIKE '%${n.replace(/\./g, '_')}_ct_%'`).join(' OR ')
-		: `name LIKE '%_ct_%'`;
+	const pattern = entityNames ? entityNames.map((n) => `name LIKE '%${n.replace(/\./g, '_')}_ct_%'`).join(' OR ') : `name LIKE '%_ct_%'`;
 	const existing = await cds.db.run(`SELECT name FROM sqlite_master WHERE type='trigger' AND (${pattern})`);
 	await Promise.all(existing.map(({ name }) => cds.db.run(`DROP TRIGGER IF EXISTS "${name}"`)));
 
@@ -92,7 +90,7 @@ const _generators = {
 	sqlite: _regenerateSQLiteTriggers,
 	postgres: _regeneratePostgresTriggers,
 	h2: _regenerateH2Triggers,
-	hana: _regenerateHANATriggers,
+	hana: _regenerateHANATriggers
 };
 
 async function regenerateTriggers(entityNames) {
