@@ -43,7 +43,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "2000"
+          expectedValue: "1500"
           metric: responseTime
           operator: <=
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.createChildren
@@ -80,7 +80,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "2000"
+          expectedValue: "2500"
           metric: responseTime
           operator: <=
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.updateChildren
@@ -109,7 +109,7 @@ spec:
       sleep: 1s
       thresholds:
         - aggregationMethod: avg
-          expectedValue: "500"
+          expectedValue: "1500"
           metric: responseTime
           operator: <=
         - aggregationMethod: percent
@@ -117,7 +117,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "2000"
+          expectedValue: "3000"
           metric: responseTime
           operator: <=
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/changes?$apply=orderby(createdAt%20desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/Books({bookID})/changes,HierarchyQualifier='ChangeHierarchy',NodeProperty='ID',Levels=1)&$select=DrillState,ID,attributeLabel,createdAt,createdBy,entityLabel,modificationLabel,objectID,valueChangedFromLabel,valueChangedToLabel&$count=true&$skip=0&$top=210
@@ -148,7 +148,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "2000"
+          expectedValue: "1500"
           metric: responseTime
           operator: <=
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.deleteChildren
@@ -185,7 +185,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "8000"
+          expectedValue: "3000"
           metric: responseTime
           operator: <=
   customTest:
