@@ -40,10 +40,12 @@ Alternatively, a full sample application is provided in the `tests/bookshop` fol
 
 ```sh
 git clone https://github.com/cap-js/change-tracking
+cd change-tracking
 npm i
 cd tests/bookshop
 cds watch
 ```
+
 
 > [!Warning]
 >
