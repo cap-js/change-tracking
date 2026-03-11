@@ -17,8 +17,8 @@ entity aspect @(UI.Facets: [{
   @UI.PartOfPreview: false
 }]) {
       changes : Association to many ChangeView
-                  on  changes.entityKey     = ID
-                  and changes.entity        = 'ENTITY';
+                  on  changes.entityKey = ID
+                  and changes.entity    = 'ENTITY';
   key ID      : String;
 }
 
@@ -31,60 +31,60 @@ entity aspect @(UI.Facets: [{
 @readonly
 @cds.autoexpose
 view ChangeView as
-  select from Changes as change {
-    key change.ID                                        @UI.Hidden,
-    *,
-    COALESCE(
-      (
-        select text from i18nKeys
-        where
-              ID     = change.attribute
-          and locale = $user.locale
-      ), (
-        select text from i18nKeys
-        where
-              ID     = change.attribute
-          and locale = 'en'
-      ), change.attribute
-    ) as attributeLabel        : String(15) @title: '{i18n>Changes.attribute}',
-    COALESCE(
-      (
-        select text from i18nKeys
-        where
-              ID     = change.entity
-          and locale = $user.locale
-      ), (
-        select text from i18nKeys
-        where
-              ID     = change.entity
-          and locale = 'en'
-      ), change.entity
-    ) as entityLabel           : String(24) @title: '{i18n>Changes.entity}',
-    COALESCE(
-      (
-        select text from i18nKeys
-        where
-              ID     = change.modification
-          and locale = $user.locale
-      ), (
-        select text from i18nKeys
-        where
-              ID     = change.modification
-          and locale = 'en'
-      ), change.modification
-    ) as modificationLabel     : String(16) @title: '{i18n>Changes.modification}',
-    COALESCE(
-      change.valueChangedFromLabel, change.valueChangedFrom
-    ) as valueChangedFromLabel : String(5000) @title: '{i18n>Changes.valueChangedFrom}',
-    COALESCE(
-      change.valueChangedToLabel, change.valueChangedTo
-    ) as valueChangedToLabel   : String(5000) @title: '{i18n>Changes.valueChangedTo}',
-    
-    // For the hierarchy
-    null as LimitedDescendantCount : Int16 @UI.Hidden,
-    null as DistanceFromRoot       : Int16 @UI.Hidden,
-    null as DrillState             : String @UI.Hidden,
-    null as LimitedRank            : Int16 @UI.Hidden,
+  select from Changes as change
+  left outer join i18nKeys as attributeI18n
+    on   attributeI18n.ID     = change.attribute
+    and (
+         attributeI18n.locale = $user.locale
+      or attributeI18n.locale = 'en'
+    )
+  left outer join i18nKeys as entityI18n
+    on   entityI18n.ID     = change.entity
+    and (
+         entityI18n.locale = $user.locale
+      or entityI18n.locale = 'en'
+    )
+  left outer join i18nKeys as modificationI18n
+    on   modificationI18n.ID     = change.modification
+    and (
+         modificationI18n.locale = $user.locale
+      or modificationI18n.locale = 'en'
+    )
+  {
+    key change.ID                                     @UI.Hidden,
+        change.parent,
+        change.children,
+        change.attribute,
+        change.valueChangedFrom,
+        change.valueChangedTo,
+        change.entity,
+        change.entityKey,
+        change.objectID,
+        change.modification,
+        change.valueDataType,
+        change.createdAt,
+        change.createdBy,
+        change.transactionID,
+        COALESCE(
+          attributeI18n.text, change.attribute
+        )    as attributeLabel         : String(15)   @title: '{i18n>Changes.attribute}',
+        COALESCE(
+          entityI18n.text, change.entity
+        )    as entityLabel            : String(24)   @title: '{i18n>Changes.entity}',
+        COALESCE(
+          modificationI18n.text, change.modification
+        )    as modificationLabel      : String(16)   @title: '{i18n>Changes.modification}',
+        COALESCE(
+          change.valueChangedFromLabel, change.valueChangedFrom
+        )    as valueChangedFromLabel  : String(5000) @title: '{i18n>Changes.valueChangedFrom}',
+        COALESCE(
+          change.valueChangedToLabel, change.valueChangedTo
+        )    as valueChangedToLabel    : String(5000) @title: '{i18n>Changes.valueChangedTo}',
+        // For the hierarchy
+        null as LimitedDescendantCount : Int16        @UI.Hidden,
+        null as DistanceFromRoot       : Int16        @UI.Hidden,
+        null as DrillState             : String       @UI.Hidden,
+        null as LimitedRank            : Int16        @UI.Hidden,
   };
 
 entity i18nKeys {
@@ -146,46 +146,46 @@ annotate ChangeView with @(UI: {
   },
   LineItem                            : [
     {
-      Value             : modificationLabel,
-      @UI.Importance : #Low
+      Value         : modificationLabel,
+      @UI.Importance: #Low
     },
     {
-      Value             : entityLabel,
-      @UI.Importance : #Medium
+      Value         : entityLabel,
+      @UI.Importance: #Medium
     },
     {
-      Value             : objectID,
-      @UI.Importance : #Medium
+      Value         : objectID,
+      @UI.Importance: #Medium
     },
     {
-      Value             : attributeLabel,
-      @UI.Importance : #Medium
+      Value         : attributeLabel,
+      @UI.Importance: #Medium
     },
     {
-      Value             : valueChangedToLabel,
-      @UI.Importance : #High
+      Value         : valueChangedToLabel,
+      @UI.Importance: #High
     },
     {
-      Value             : valueChangedFromLabel,
-      @UI.Importance : #High
+      Value         : valueChangedFromLabel,
+      @UI.Importance: #High
     },
     {
-      Value             : createdAt,
-      @UI.Importance : #Low
+      Value         : createdAt,
+      @UI.Importance: #Low
     },
     {
-      Value             : createdBy,
-      @UI.Importance : #High
+      Value         : createdBy,
+      @UI.Importance: #High
     },
   ],
   DeleteHidden                        : true,
 }) {
   valueChangedFrom @UI.Hidden;
-  valueChangedTo @UI.Hidden;
-  parent @UI.Hidden;
-  entityKey @UI.Hidden;
-  entity @UI.Hidden;
-  attribute @UI.Hidden;
+  valueChangedTo   @UI.Hidden;
+  parent           @UI.Hidden;
+  entityKey        @UI.Hidden;
+  entity           @UI.Hidden;
+  attribute        @UI.Hidden;
 };
 
 annotate ChangeView with @(
