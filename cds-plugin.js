@@ -10,8 +10,8 @@ const { registerHDICompilerHook } = require('./lib/hana/register.js');
 cds.on('loaded', enhanceModel);
 cds.on('listening', registerSessionVariableHandlers);
 cds.once('served', async () => {
-    await deploySQLiteTriggers();
-    await deployPostgresLabels();
+	await deploySQLiteTriggers();
+	await deployPostgresLabels();
 });
 
 registerH2CompilerHook();
