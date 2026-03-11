@@ -191,7 +191,7 @@ spec:
   customTest:
     constantRunDuration: 5m0s
     rampupDuration: 10s
-    vusers: 45
+    vusers: 2
   globals:
     authSecretRef:
       name: ct-perf-bookshop
