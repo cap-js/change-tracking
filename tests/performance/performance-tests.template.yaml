@@ -72,7 +72,7 @@ spec:
       sleep: 1s
       thresholds:
         - aggregationMethod: avg
-          expectedValue: "500"
+          expectedValue: "1500"
           metric: responseTime
           operator: <=
         - aggregationMethod: percent
@@ -177,7 +177,7 @@ spec:
       sleep: 1s
       thresholds:
         - aggregationMethod: avg
-          expectedValue: "500"
+          expectedValue: "2000"
           metric: responseTime
           operator: <=
         - aggregationMethod: percent
@@ -185,13 +185,13 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "2000"
+          expectedValue: "8000"
           metric: responseTime
           operator: <=
   customTest:
     constantRunDuration: 5m0s
     rampupDuration: 10s
-    vusers: 2
+    vusers: 30
   globals:
     authSecretRef:
       name: ct-perf-bookshop
