@@ -8,6 +8,10 @@ on:
     branches: [main]
     types: [reopened, synchronize, opened]
 
+env:
+  PERF_CLUSTER_KUBECONF: ${{ secrets.PERF_CLUSTER_KUBECONF }}
+  PERF_TEST_RUN_NAME: ${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+
 jobs:
   requires-approval:
     runs-on: ubuntu-latest
@@ -118,7 +122,54 @@ jobs:
       - name: Deploy application
         shell: bash
         run: cd ./tests/performance/perf-bookshop && cds up
-# TODO: Install kubectl, create BYOS test-run, wait for test run, fetch results
-      - name: Run performance tests
+
+
+      # Install kubectl, add kubeconf, modify test config file, run test
+      - uses: azure/setup-kubectl@v4
+        id: install
+      - name: pull kubeconfig
+        run: |
+          mkdir kubeconf
+          echo "$PERF_CLUSTER_KUBECONF" > kubeconf/kubeconf.conf
+      - name: envsub kube.conf
+        run: |
+          cat kubeconf/kubeconf.conf | envsubst > populated_kube.conf
+        env:
+          PERF_SERVICE_USER_TOKEN: ${{ secrets.PERF_SERVICE_USER_TOKEN }}
+      - name: export KUBECONFIG path
+        run: echo "KUBECONFIG=populated_kube.conf" >> $GITHUB_ENV
+      
+      - name: Populate test configuration
+        run: |
+          cat ./tests/performance/performance-tests.template.yaml | envsubst > performance-tests.yaml
+        env:
+          PERF_ACCOUNT_NAME: ${{ secrets.PERF_ACCOUNT_NAME }}
+          PERF_HOST: ${{ secrets.PERF_HOST }}
+          PERF_HANA_SECRET: ${{ secrets.PERF_HANA_SECRET }}
+          PERF_RUNTIME_SECRET: ${{ secrets.PERF_RUNTIME_SECRET }}
+          PERF_HANA_SCHEMA: ${{ secrets.PERF_HANA_SCHEMA }}
+          PERF_TEST_RUN_NAME: $PERF_TEST_RUN_NAME
+      - name: Create performance test run
         shell: bash
-        run: kubectl
+        run: kubectl create -f ./performance-tests.yaml
+      - name: Wait for test to finish
+        shell: bash
+        run: |
+          for i in {1..7}; do
+            STATUS="$(kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq -r '.status.state // empty')"
+            echo "Current test status (attempt $i/7): ${STATUS:-<empty>}"
+
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "Performance tests succeeded."
+              kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
+              exit 0
+            fi
+
+            if [ "$i" -eq 7 ]; then
+              echo "❌ performance tests did not reach 'Succeeded' after 7 attempts."
+              kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
+              exit 1
+            fi
+
+            sleep 60
+          done

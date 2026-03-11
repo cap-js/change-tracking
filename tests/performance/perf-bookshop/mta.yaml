@@ -8,8 +8,12 @@ build-parameters:
   before-all:
     - builder: custom
       commands:
+        - npm unlink @cap-js/change-tracking
+        - npm pack ../../../
+        - sh -c 'TGZ_FILE="$(ls -1 | grep -E "^cap-js-change-tracking.*\.tgz$" | head -n 1)" && npm install "./${TGZ_FILE}"'
         - npm ci
-        - npx cds build --production
+        - npx -p @sap/cds-dk cds build --production
+        - sh -c 'cp "$(ls -1 | grep -E "^cap-js-change-tracking.*\.tgz$" | head -n 1)" ./gen/srv'
 modules:
   - name: perf-bookshop-srv
     type: nodejs

@@ -47,6 +47,10 @@ export default class AdminService extends cds.ApplicationService {
 			return { bookID: ID };
 		});
 
+		this.on('cleanUp', async () => {
+			await DELETE.from(Books).where('1 = 1');
+		});
+
 		return super.init();
 	}
 }

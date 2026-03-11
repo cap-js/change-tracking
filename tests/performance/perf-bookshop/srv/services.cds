@@ -17,4 +17,5 @@ service AdminService @(path: 'admin', impl: './admin.js') {
     };
 
     action setupMockData() returns {bookID: String};
+    action cleanUp();
 }
