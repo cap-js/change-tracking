@@ -18,7 +18,14 @@
 	"cds": {
 		"requires": {
 			"[production]": {
-				"auth": "xsuaa"
+				"auth": "xsuaa",
+				"db": {
+					"pool": {
+						"acquireTimeoutMillis": 5000,
+						"min": 0,
+						"max": 200
+					}
+				}
 			}
 		}
 	}
