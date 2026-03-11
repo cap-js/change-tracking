@@ -3,6 +3,65 @@ const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE } = cds.test(bookshop);
 
 describe('@changelog annotation interpretation', () => {
+	it('builds objectID from entity keys when explicit @changelog annotation is missing', async () => {
+		const variantSrv = await cds.connect.to('VariantTesting');
+		const { ChangeView } = variantSrv.entities;
+		const parentID = cds.utils.uuid();
+		const childID = cds.utils.uuid();
+
+		await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+			ID: parentID
+		});
+
+		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+
+		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/children`, {
+			ID: childID,
+			title: 'Original Title'
+		});
+
+		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+
+		await PATCH(`/odata/v4/variant-testing/ComposedEntities(ID=${childID},IsActiveEntity=false)`, {
+			title: 'New title'
+		});
+
+		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+		const changes = await SELECT.from(ChangeView).where({
+			modification: 'update',
+			attribute: 'title',
+			entityKey: childID
+		});
+		expect(changes.length).toEqual(1);
+
+		// if object type is localized, use the localized object type as object ID
+		expect(changes[0].entity).toEqual('sap.change_tracking.ComposedEntities');
+		expect(changes[0].entityLabel).toEqual('Book');
+		expect(changes[0].objectID).toEqual(childID);
+
+		const parentChanges = await SELECT.one.from(ChangeView).where({ ID: changes[0].parent_ID }).columns(['entityLabel', 'objectID']);
+		expect(parentChanges.entityLabel).toEqual('Book Store');
+		expect(parentChanges.objectID).toEqual(parentID);
+	});
+
+	it('builds objectID from entity keys when @changelog annotation is simply set to true', async () => {
+		const adminService = await cds.connect.to('AdminService');
+		const { ChangeView } = adminService.entities;
+
+		// Create new Order
+		const orderID = cds.utils.uuid();
+		await POST(`/odata/v4/admin/Order`, { ID: orderID, title: 'test order' });
+
+		const changes = await SELECT.from(ChangeView).where({
+			modification: 'create',
+			entityKey: orderID
+		});
+		expect(changes.length).toEqual(1);
+		expect(changes[0].objectID).toEqual(orderID);
+	});
 	it('builds objectID from entity fields and associated entity fields when multiple @changelog annotations are used', async () => {
 		const adminService = await cds.connect.to('AdminService');
 		const { ChangeView } = adminService.entities;
@@ -154,50 +213,6 @@ describe('@changelog annotation interpretation', () => {
 		expect(deleteChanges.length).toEqual(2);
 		//expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
 		//expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, new Level2Sample title, ${newRoot.ID}`);
-	});
-
-	it('uses localized entity label as objectID when no @changelog annotation is present', async () => {
-		const variantSrv = await cds.connect.to('VariantTesting');
-		const { ChangeView } = variantSrv.entities;
-		const bookStoreID = cds.utils.uuid();
-		const bookID = cds.utils.uuid();
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition`, {
-			ID: bookStoreID
-		});
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${bookStoreID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${bookStoreID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${bookStoreID},IsActiveEntity=false)/children`, {
-			ID: bookID,
-			title: 'Original Book Title'
-		});
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${bookStoreID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${bookStoreID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
-
-		await PATCH(`/odata/v4/variant-testing/ComposedEntities(ID=${bookID},IsActiveEntity=false)`, {
-			title: 'new title'
-		});
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${bookStoreID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
-
-		const changes = await variantSrv.run(
-			SELECT.from(ChangeView).where({
-				modification: 'update',
-				attribute: 'title',
-				entityKey: bookID
-			})
-		);
-		expect(changes.length).toEqual(1);
-
-		// if object type is localized, use the localized object type as object ID
-		expect(changes[0].entity).toEqual('sap.change_tracking.ComposedEntities');
-		expect(changes[0].objectID).toEqual('Book');
-
-		const { objectID: rootObjectID } = await SELECT.one.from(ChangeView).where({ ID: changes[0].parent_ID }).columns('objectID');
-		expect(rootObjectID).toEqual('Book Store');
 	});
 
 	it('records data type and resolves display values for association fields annotated with @changelog', async () => {

@@ -175,9 +175,12 @@ describe('Incidents Application Scenarios', () => {
 		} = await GET(`odata/v4/processor/MultiKeyScenario(GJAHR=${GJAHR},BUKRS='${BUKRS}',IsActiveEntity=true)/changes`);
 
 		const updateChange = changes.find((change) => change.attribute === 'foo1' && change.modification === 'update');
-		expect(updateChange).toHaveProperty('valueChangedFrom', 'Initial value');
-		expect(updateChange).toHaveProperty('valueChangedTo', 'Updated value');
-		expect(updateChange).toHaveProperty('entityKey', `4,2024;${BUKRS.length},${BUKRS}`);
+		expect(updateChange).toMatchObject({
+			valueChangedFrom: 'Initial value',
+			valueChangedTo: 'Updated value',
+			entityKey: `4,2024;${BUKRS.length},${BUKRS}`,
+			objectID: `4,2024;${BUKRS.length},${BUKRS}`
+		});
 	});
 });
 

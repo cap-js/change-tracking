@@ -1,0 +1,214 @@
+apiVersion: perfsizer.sapcloud.io/v1alpha2
+kind: TestRun
+metadata:
+  annotations:
+    testrun.perfsizer.sapcloud.io/createdBy: ci-cd-bot
+  creationTimestamp: 2026-03-11T12:48:32Z
+  finalizers:
+    - testrun.perfsizer.sapcloud.io/finalizer
+  generation: 1
+  labels:
+    testrun.perfsizer.sapcloud.io/dashboard-target: prometheus
+    testrun.perfsizer.sapcloud.io/hana: "true"
+    testrun.perfsizer.sapcloud.io/type: UserBased
+  name: ${PERF_TEST_RUN_NAME}
+  namespace: ${PERF_ACCOUNT_NAME}
+  resourceVersion: "1614627993"
+  uid: 9491994c-8b4d-49b1-925c-51fb723c5c66
+spec:
+  apps:
+    - api: ${PERF_HOST}/odata/v4/admin/Books
+      appName:
+        - perf-bookshop-srv
+      assertion:
+        successStatusCode: "201"
+      name: newentity
+      requestData:
+        headersConfigMapKeyRef:
+          key: header.json
+          name: ct-new-entity-headers
+        payloadConfigMapKeyRef:
+          key: raw.json
+          name: ct-new-entity
+        type: static
+      requestMethod: POST
+      sleep: 1s
+      thresholds:
+        - aggregationMethod: avg
+          expectedValue: "500"
+          metric: responseTime
+          operator: <=
+        - aggregationMethod: percent
+          expectedValue: "0.1"
+          metric: errors
+          operator: <=
+        - aggregationMethod: p(99)
+          expectedValue: "1500"
+          metric: responseTime
+          operator: <=
+    - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.createChildren
+      appName:
+        - perf-bookshop-srv
+      assertion:
+        successStatusCode: "204"
+      dependsOn: newentity
+      name: createchildren
+      requestData:
+        headersConfigMapKeyRef:
+          key: header.json
+          name: ct-new-entity-headers
+        payloadConfigMapKeyRef:
+          key: raw.json
+          name: ct-empty-body
+        replaceFields:
+          - findKey: "{bookID}"
+            replaceIn:
+              - api
+            valueFrom:
+              responseBody:
+                jsonPath: ID
+        type: dynamic
+      requestMethod: POST
+      sleep: 1s
+      thresholds:
+        - aggregationMethod: avg
+          expectedValue: "1500"
+          metric: responseTime
+          operator: <=
+        - aggregationMethod: percent
+          expectedValue: "0.1"
+          metric: errors
+          operator: <=
+        - aggregationMethod: p(99)
+          expectedValue: "2500"
+          metric: responseTime
+          operator: <=
+    - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.updateChildren
+      appName:
+        - perf-bookshop-srv
+      assertion:
+        successStatusCode: "204"
+      dependsOn: newentity
+      name: updatechildren
+      requestData:
+        headersConfigMapKeyRef:
+          key: header.json
+          name: ct-new-entity-headers
+        payloadConfigMapKeyRef:
+          key: raw.json
+          name: ct-empty-body
+        replaceFields:
+          - findKey: "{bookID}"
+            replaceIn:
+              - api
+            valueFrom:
+              responseBody:
+                jsonPath: ID
+        type: dynamic
+      requestMethod: POST
+      sleep: 1s
+      thresholds:
+        - aggregationMethod: avg
+          expectedValue: "1500"
+          metric: responseTime
+          operator: <=
+        - aggregationMethod: percent
+          expectedValue: "0.1"
+          metric: errors
+          operator: <=
+        - aggregationMethod: p(99)
+          expectedValue: "3000"
+          metric: responseTime
+          operator: <=
+    - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/changes?$apply=orderby(createdAt%20desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/Books({bookID})/changes,HierarchyQualifier='ChangeHierarchy',NodeProperty='ID',Levels=1)&$select=DrillState,ID,attributeLabel,createdAt,createdBy,entityLabel,modificationLabel,objectID,valueChangedFromLabel,valueChangedToLabel&$count=true&$skip=0&$top=210
+      appName:
+        - perf-bookshop-srv
+      assertion:
+        successStatusCode: "200"
+      dependsOn: newentity
+      name: getchanges
+      requestData:
+        replaceFields:
+          - findKey: "{bookID}"
+            replaceIn:
+              - api
+            valueFrom:
+              responseBody:
+                jsonPath: ID
+        type: dynamic
+      requestMethod: GET
+      sleep: 1s
+      thresholds:
+        - aggregationMethod: avg
+          expectedValue: "500"
+          metric: responseTime
+          operator: <=
+        - aggregationMethod: percent
+          expectedValue: "0.1"
+          metric: errors
+          operator: <=
+        - aggregationMethod: p(99)
+          expectedValue: "1500"
+          metric: responseTime
+          operator: <=
+    - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.deleteChildren
+      appName:
+        - perf-bookshop-srv
+      assertion:
+        successStatusCode: "204"
+      dependsOn: newentity
+      name: deletechildren
+      requestData:
+        headersConfigMapKeyRef:
+          key: header.json
+          name: ct-new-entity-headers
+        payloadConfigMapKeyRef:
+          key: raw.json
+          name: ct-empty-body
+        replaceFields:
+          - findKey: "{bookID}"
+            replaceIn:
+              - api
+            valueFrom:
+              responseBody:
+                jsonPath: ID
+        type: dynamic
+      requestMethod: POST
+      sleep: 1s
+      thresholds:
+        - aggregationMethod: avg
+          expectedValue: "2000"
+          metric: responseTime
+          operator: <=
+        - aggregationMethod: percent
+          expectedValue: "0.1"
+          metric: errors
+          operator: <=
+        - aggregationMethod: p(99)
+          expectedValue: "3000"
+          metric: responseTime
+          operator: <=
+  customTest:
+    constantRunDuration: 5m0s
+    rampupDuration: 10s
+    vusers: 45
+  globals:
+    authSecretRef:
+      name: ct-perf-bookshop
+  plugins:
+    hana:
+      expensiveStatementTrace:
+        enable: true
+        threshold:
+          cpuTimeMillisecond: 1
+          durationMillisecond: 1
+          memoryMegabyte: 1
+      hanaSecretRef:
+        name: ${PERF_HANA_SECRET}
+      schemaName:
+        - ${PERF_HANA_SCHEMA}
+  runtime:
+    secretRef:
+      name: ${PERF_RUNTIME_SECRET}
+    type: cf
+  serviceAccountName: ${PERF_ACCOUNT_NAME}

@@ -140,7 +140,7 @@ describe('Special CDS Features', () => {
 		it.skip('logs warning when entity is not found in the model during localization', async () => {
 			const { Changes } = cds.entities('sap.changelog');
 			const VolumnsSrv = await cds.connect.to('VolumnsService');
-			const { Volumes, ChangeView } = VolumnsSrv.entities;
+			const { Volumes } = VolumnsSrv.entities;
 
 			const volumeID = cds.utils.uuid();
 			await INSERT.into(Volumes).entries([
@@ -151,8 +151,7 @@ describe('Special CDS Features', () => {
 					book_ID: '9d703c23-54a8-4eff-81c1-cdce6b8376b1'
 				}
 			]);
-
-			await cds.delete(ChangeView).where({ entityKey: volumeID });
+			await cds.delete(cds.model.definitions['sap.changelog.Changes']).where({ entityKey: volumeID });
 			await VolumnsSrv.run(
 				UPDATE.entity(Volumes).where({ ID: volumeID }).set({
 					title: 'new title'
@@ -199,7 +198,7 @@ describe('Special CDS Features', () => {
 			const { ChangeView, TrackingComposition } = variantTesting.entities;
 			const ID = cds.utils.uuid();
 			await INSERT.into(TrackingComposition).entries({ ID });
-			await cds.delete(ChangeView).where({ entityKey: ID });
+			await cds.delete(cds.model.definitions['sap.changelog.Changes']).where({ entityKey: ID });
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/children`, {
 				ID: cds.utils.uuid(),
@@ -216,7 +215,8 @@ describe('Special CDS Features', () => {
 
 			expect(change).toMatchObject({
 				modification: 'update',
-				objectID: 'Book Store',
+				objectID: ID,
+				entityLabel: 'Book Store',
 				valueChangedFrom: null,
 				valueChangedTo: null,
 				parent_ID: null

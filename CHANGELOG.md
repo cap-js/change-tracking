@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.0.0 - TBD
+## Version 2.0.0-beta.3 - tbd
 
 ### Added
 
@@ -12,7 +12,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 
-## Version 2.0.0-beta - 27.02.26
+## Version 2.0.0-beta.2 - 11.03.26
+
+### Fixed
+- Fixed a server crash when resolving table names
+- Support entity level `@changelog` annotation where no explicit elements for the object ID are defined
+- Trigger generation works again for MTX scenarios
+
+### Changed
+- Improved performance when quering changes
+
+
+## Version 2.0.0-beta.1 - 06.03.26
 
 ### Added
 - Trigger generation for SQLite, HANA, Postgres and H2 to perform change tracking on a database level

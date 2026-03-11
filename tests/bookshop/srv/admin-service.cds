@@ -5,26 +5,27 @@ service AdminService {
   @odata.draft.enabled
   entity BookStores @(cds.autoexpose) as projection on my.BookStores;
 
-  entity ChangeView as projection on change.ChangeView;
+  entity ChangeView                   as projection on change.ChangeView;
 
   entity Authors                      as projection on my.Authors;
   entity Report                       as projection on my.Report;
   entity Order                        as projection on my.Order;
   entity Order.Items                  as projection on my.Order.Items;
   entity OrderItem                    as projection on my.OrderItem;
+  entity OrderType                    as projection on my.OrderType;
 
-  entity OrderItemWithLongerName as projection on my.OrderItemWithLongerName;
-  entity AuthorsWithLongerChangelog as projection on my.AuthorsWithLongerChangelog;
+  entity OrderItemWithLongerName      as projection on my.OrderItemWithLongerName;
+  entity AuthorsWithLongerChangelog   as projection on my.AuthorsWithLongerChangelog;
 
   entity OrderItemNote                as projection on my.OrderItemNote
     actions {
-      @Common.SideEffects             : {TargetEntities: [in]}
+      @Common.SideEffects: {TargetEntities: [in]}
       action activate(ID: String);
     };
 
   entity Volumes                      as projection on my.Volumes
     actions {
-      @Common.SideEffects             : {TargetEntities: [in]}
+      @Common.SideEffects: {TargetEntities: [in]}
       action activate();
     };
 
@@ -66,7 +67,7 @@ annotate AdminService.Books with @changelog: [
   ];
 };
 
-annotate AdminService.Order with {
+annotate AdminService.Order with @changelog {
   header @changelog;
 }
 
@@ -81,7 +82,7 @@ annotate AdminService.OrderItemNote with {
 
 annotate AdminService.Customers with {
   name    @changelog;
-  city    @changelog: false;  // Explicitly skip tracking for this element
+  city    @changelog: false; // Explicitly skip tracking for this element
   country @changelog;
   age     @changelog;
 }
