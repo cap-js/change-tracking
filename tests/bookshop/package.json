@@ -42,6 +42,15 @@
 					}
 				}
 			},
+			"[production]": {
+				"db": {
+					"pool": {
+						"acquireTimeoutMillis": 5000,
+						"min": 0,
+						"max": 200
+					}
+				}
+			},
 			"attachments": {
 				"kind": "db",
 				"scan": false
