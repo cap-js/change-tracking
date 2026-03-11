@@ -152,7 +152,7 @@ jobs:
 
       - name: Populate test configuration
         run: |
-          cat ./tests/performance/performance-tests.template.yaml | envsubst > performance-tests.yaml
+          cat ./tests/performance/performance-tests.template.yaml | envsubst '$PERF_ACCOUNT_NAME $PERF_HOST $PERF_HANA_SECRET $PERF_RUNTIME_SECRET $PERF_HANA_SCHEMA $PERF_TEST_RUN_NAME' > performance-tests.yaml
         env:
           PERF_ACCOUNT_NAME: ${{ secrets.PERF_ACCOUNT_NAME }}
           PERF_HOST: ${{ secrets.PERF_HOST }}

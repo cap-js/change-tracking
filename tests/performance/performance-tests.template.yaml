@@ -11,13 +11,13 @@ metadata:
     testrun.perfsizer.sapcloud.io/dashboard-target: prometheus
     testrun.perfsizer.sapcloud.io/hana: "true"
     testrun.perfsizer.sapcloud.io/type: UserBased
-  name: $PERF_TEST_RUN_NAME
-  namespace: $PERF_ACCOUNT_NAME
+  name: ${PERF_TEST_RUN_NAME}
+  namespace: ${PERF_ACCOUNT_NAME}
   resourceVersion: "1614627993"
   uid: 9491994c-8b4d-49b1-925c-51fb723c5c66
 spec:
   apps:
-    - api: $PERF_HOST/odata/v4/admin/Books
+    - api: ${PERF_HOST}/odata/v4/admin/Books
       appName:
         - perf-bookshop-srv
       assertion:
@@ -46,7 +46,7 @@ spec:
           expectedValue: "2000"
           metric: responseTime
           operator: <=
-    - api: $PERF_HOST/odata/v4/admin/Books({bookID})/AdminService.createChildren
+    - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.createChildren
       appName:
         - perf-bookshop-srv
       assertion:
@@ -83,7 +83,7 @@ spec:
           expectedValue: "2000"
           metric: responseTime
           operator: <=
-    - api: $PERF_HOST/odata/v4/admin/Books({bookID})/AdminService.updateChildren
+    - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.updateChildren
       appName:
         - perf-bookshop-srv
       assertion:
@@ -120,7 +120,7 @@ spec:
           expectedValue: "2000"
           metric: responseTime
           operator: <=
-    - api: $PERF_HOST/odata/v4/admin/Books({bookID})/changes?$GET_CHANGES_URL
+    - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/changes?$apply=orderby(createdAt%20desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/Books({bookID})/changes,HierarchyQualifier='ChangeHierarchy',NodeProperty='ID',Levels=1)&$select=DrillState,ID,attributeLabel,createdAt,createdBy,entityLabel,modificationLabel,objectID,valueChangedFromLabel,valueChangedToLabel&$count=true&$skip=0&$top=210
       appName:
         - perf-bookshop-srv
       assertion:
@@ -151,7 +151,7 @@ spec:
           expectedValue: "2000"
           metric: responseTime
           operator: <=
-    - api: $PERF_HOST/odata/v4/admin/Books({bookID})/AdminService.deleteChildren
+    - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.deleteChildren
       appName:
         - perf-bookshop-srv
       assertion:
@@ -204,11 +204,11 @@ spec:
           durationMillisecond: 1
           memoryMegabyte: 1
       hanaSecretRef:
-        name: $PERF_HANA_SECRET
+        name: ${PERF_HANA_SECRET}
       schemaName:
-        - $PERF_HANA_SCHEMA
+        - ${PERF_HANA_SCHEMA}
   runtime:
     secretRef:
-      name: $PERF_RUNTIME_SECRET
+      name: ${PERF_RUNTIME_SECRET}
     type: cf
-  serviceAccountName: $PERF_ACCOUNT_NAME
+  serviceAccountName: ${PERF_ACCOUNT_NAME}
