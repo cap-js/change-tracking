@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 
-## Version 2.0.0-beta - 27.02.26
+## Version 2.0.0-beta.1 - 27.02.26
 
 ### Added
 - Trigger generation for SQLite, HANA, Postgres and H2 to perform change tracking on a database level
