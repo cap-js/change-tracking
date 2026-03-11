@@ -21,7 +21,7 @@ export default class AdminService extends cds.ApplicationService {
 		});
 
 		this.on('updateChildren', async (req) => {
-			const book = await SELECT.one.from(req.subject).columns((book) => book`.*`, book.children('*'));
+			const book = await SELECT.one.from(req.subject).columns((b) => {b`.*`, b.children('*')});
 			const children = [];
 			for (const child of book.children) {
 				children.push(
