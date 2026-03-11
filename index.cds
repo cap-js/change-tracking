@@ -52,7 +52,7 @@ view ChangeView as
     )
   {
     key change.ID                                     @UI.Hidden,
-        change.parent,
+        change.parent: redirected to ChangeView,
         change.children: redirected to ChangeView,
         change.attribute,
         change.valueChangedFrom,
