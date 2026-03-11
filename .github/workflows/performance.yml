@@ -40,7 +40,7 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version}}
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node-version }}#
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies and Cloud Foundry CLI (v8.9.0)
         shell: bash
@@ -52,6 +52,11 @@ jobs:
           sudo mv cf /usr/local/bin/
           sudo mv cf8 /usr/local/bin/
           cf --version
+          cf install-plugin multiapps -f
+
+      - name: Install MTA Build Tool
+        shell: bash
+        run: npm i -g mbt
 
       - name: Authenticate with Cloud Foundry
         shell: bash
