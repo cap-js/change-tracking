@@ -21,9 +21,9 @@ export default class AdminService extends cds.ApplicationService {
 		});
 
 		this.on('updateChildren', async (req) => {
-			const book = await SELECT.one.from(req.subject).columns((b) => {b`.*`, b.children('*')});
+			const book = await SELECT.one.from(req.subject).columns((b) => {b`.*`, b.chapters('*')});
 			const children = [];
-			for (const child of book.children) {
+			for (const child of book.chapters) {
 				children.push(
 					UPDATE.entity(req.target.isDraft ? srvChapters.drafts : Chapters)
 						.where({ ID: child.ID })
