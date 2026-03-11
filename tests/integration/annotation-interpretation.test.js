@@ -3,7 +3,6 @@ const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE } = cds.test(bookshop);
 
 describe('@changelog annotation interpretation', () => {
-
 	it('builds objectID from entity keys when explicit @changelog annotation is missing', async () => {
 		const variantSrv = await cds.connect.to('VariantTesting');
 		const { ChangeView } = variantSrv.entities;
@@ -52,7 +51,7 @@ describe('@changelog annotation interpretation', () => {
 		const adminService = await cds.connect.to('AdminService');
 		const { ChangeView } = adminService.entities;
 
-		// Create new Order 
+		// Create new Order
 		const orderID = cds.utils.uuid();
 		await POST(`/odata/v4/admin/Order`, { ID: orderID, title: 'test order' });
 

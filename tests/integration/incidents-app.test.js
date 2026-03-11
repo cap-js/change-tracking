@@ -179,7 +179,7 @@ describe('Incidents Application Scenarios', () => {
 			valueChangedFrom: 'Initial value',
 			valueChangedTo: 'Updated value',
 			entityKey: `4,2024;${BUKRS.length},${BUKRS}`,
-			objectID: `4,2024;${BUKRS.length},${BUKRS}`,
+			objectID: `4,2024;${BUKRS.length},${BUKRS}`
 		});
 	});
 });
