@@ -155,6 +155,7 @@ jobs:
           PERF_RUNTIME_SECRET: ${{ secrets.PERF_RUNTIME_SECRET }}
           PERF_HANA_SCHEMA: ${{ secrets.PERF_HANA_SCHEMA }}
           PERF_TEST_RUN_NAME: $PERF_TEST_RUN_NAME
+          GET_CHANGES_URL: $apply=orderby(createdAt%20desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/Books({bookID})/changes,HierarchyQualifier='ChangeHierarchy',NodeProperty='ID',Levels=1)&$select=DrillState,ID,attributeLabel,createdAt,createdBy,entityLabel,modificationLabel,objectID,valueChangedFromLabel,valueChangedToLabel&$count=true&$skip=0&$top=210
       - name: Create performance test run
         shell: bash
         run: kubectl create -f ./performance-tests.yaml
