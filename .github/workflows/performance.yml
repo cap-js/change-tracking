@@ -30,6 +30,15 @@ jobs:
         node-version: [22.x]
         cds-version: [latest, 8]
     steps:
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Use Node.js ${{ matrix.node-version}}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}#
+
       - name: Install dependencies and Cloud Foundry CLI (v8.9.0)
         shell: bash
         run: |
@@ -44,7 +53,6 @@ jobs:
       - name: Authenticate with Cloud Foundry
         shell: bash
         run: |
-          echo "::debug::CF_API=${{ secrets['CF_API'] }}"
           for i in {1..3}; do
             cf login -a ${{ secrets['CF_API'] }} -u ${{ secrets['CF_USERNAME'] }} -p ${{ secrets['CF_PASSWORD'] }} -o ${{ secrets['CF_ORG'] }} -s ${{ secrets['CF_SPACE'] }} && break
             echo "cf login failed, retrying ($i/3)..."
@@ -55,13 +63,6 @@ jobs:
             fi
           done
 
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Use Node.js ${{ matrix.node-version}}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
       - name: Set CDS version-specific dependencies
         shell: bash
         run: |

@@ -20,7 +20,7 @@ export async function setup() {
 export default function (data) {
     const res = http.post(`${__ENV.HOST}/odata/v4/admin/setupMockData`, {}, {
         headers: {
-            'Authorization': `Bearer ${passwordAuthResp.access_token}`,
+            'Authorization': `Bearer ${data.auth.access_token}`,
             'Content-Type': "application/json"
         },
         tags: tags

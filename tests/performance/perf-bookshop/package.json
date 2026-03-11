@@ -2,7 +2,7 @@
   "name": "perf-bookshop",
   "version": "1.0.0",
   "dependencies": {
-    "@cap-js/change-tracking": "file:cap-js-change-tracking-2.0.0-beta.1.tgz",
+    "@cap-js/change-tracking": "file:../../../",
     "@cap-js/hana": "^2",
     "@sap/cds": "^9",
     "@sap/xssec": "^4"
