@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Support entity level `@changelog` annotation where no explicit elements for the object ID are defined
 - Trigger generation works again for MTX scenarios
 
+### Changed
+- Improved performance when quering changes
+
 
 ## Version 2.0.0-beta.1 - 06.03.26
 
