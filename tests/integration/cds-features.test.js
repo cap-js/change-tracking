@@ -216,7 +216,8 @@ describe('Special CDS Features', () => {
 
 			expect(change).toMatchObject({
 				modification: 'update',
-				objectID: 'Book Store',
+				objectID: ID,
+				entityLabel: 'Book Store',
 				valueChangedFrom: null,
 				valueChangedTo: null,
 				parent_ID: null

@@ -74,19 +74,6 @@ view ChangeView as
       ), change.modification
     ) as modificationLabel     : String(16) @title: '{i18n>Changes.modification}',
     COALESCE(
-      (
-        select text from i18nKeys
-        where
-              ID     = change.objectID
-          and locale = $user.locale
-      ), (
-        select text from i18nKeys
-        where
-              ID     = change.objectID
-          and locale = 'en'
-      ), change.objectID
-    ) as objectID              : String(24) @title: '{i18n>Changes.objectID}',
-    COALESCE(
       change.valueChangedFromLabel, change.valueChangedFrom
     ) as valueChangedFromLabel : String(5000) @title: '{i18n>Changes.valueChangedFrom}',
     COALESCE(
