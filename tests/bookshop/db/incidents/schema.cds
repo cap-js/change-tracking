@@ -41,6 +41,7 @@ entity Incidents : cuid, managed {
   datetime       : DateTime @title : 'datetime' @changelog;
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
+  @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
     timestamp : type of managed:createdAt;

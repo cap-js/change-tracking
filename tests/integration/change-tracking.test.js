@@ -146,7 +146,7 @@ describe('change log generation', () => {
 			await INSERT.into(DifferentFieldTypes).entries(data);
 
 			const changes = await SELECT.from(ChangeView).where`entityKey in ${[e1ID, e2ID, e3ID]}`;
-			expect(changes.length).toEqual(6);
+			expect(changes.length).toEqual(9);
 			expect(changes.some((c) => c.modification !== 'create')).toEqual(false);
 			expect(changes.some((c) => c.entity !== 'sap.change_tracking.DifferentFieldTypes')).toEqual(false);
 
@@ -183,7 +183,7 @@ describe('change log generation', () => {
 	});
 
 	describe('composition tracking', () => {
-		it('does not link child entity changes to the root entity when composition field is not annotated', async () => {
+		it('does not link child entity changes to the root entity when composition field is annotated with @changelog false', async () => {
 			const processorService = await cds.connect.to('ProcessorService');
 			const { ChangeView } = processorService.entities;
 
@@ -204,6 +204,50 @@ describe('change log generation', () => {
 			expect(changes.valueChangedFrom).toEqual(null);
 			expect(changes.valueChangedTo).toEqual('test message');
 			expect(changes.parent_ID).toEqual(null);
+		});
+
+		it('automatically links child entity changes to the root entity for auto-tracked compositions', async () => {
+			const processorService = await cds.connect.to('ProcessorService');
+			const { ChangeView } = processorService.entities;
+
+			const incidentsID = cds.utils.uuid();
+			const taskID = cds.utils.uuid();
+			await POST(`/odata/v4/processor/Incidents`, {
+				ID: incidentsID,
+				tasks: [{ ID: taskID, title: 'Fix bug', description: 'Fix the login bug' }]
+			});
+			await POST(`/odata/v4/processor/Incidents(ID=${incidentsID}, IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+			const parentChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.incidents.Incidents',
+				entityKey: incidentsID,
+				attribute: 'tasks',
+				valueDataType: 'cds.Composition'
+			});
+			expect(parentChanges.length).toEqual(1);
+			expect(parentChanges[0].parent_ID).toEqual(null);
+
+			// Child changes should be linked to the parent composition entry
+			const childChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.incidents.IncidentTasks',
+				entityKey: taskID,
+				parent_ID: parentChanges[0].ID
+			});
+			expect(childChanges.length).toEqual(2); // title + description
+
+			const titleChange = childChanges.find((c) => c.attribute === 'title');
+			expect(titleChange).toMatchObject({
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: 'Fix bug'
+			});
+
+			const descChange = childChanges.find((c) => c.attribute === 'description');
+			expect(descChange).toMatchObject({
+				modification: 'create',
+				valueChangedFrom: null,
+				valueChangedTo: 'Fix the login bug'
+			});
 		});
 
 		// Limitation because deep queries are not run in sequential order

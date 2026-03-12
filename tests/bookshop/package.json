@@ -46,10 +46,11 @@
 				"kind": "db",
 				"scan": false
 			},
-			"change-tracking": {
-				"considerLocalizedValues": true,
-				"preserveDeletes": false
-			}
+		"change-tracking": {
+			"considerLocalizedValues": true,
+			"preserveDeletes": false,
+			"maxDisplayHierarchyDepth": 3
+		}
 		},
 		"features": {
 			"serve_on_root": true,
