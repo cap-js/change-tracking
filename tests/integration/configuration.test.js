@@ -281,7 +281,7 @@ describe('Configuration Options', () => {
 		const level1ID = cds.utils.uuid();
 		const level2ID = cds.utils.uuid();
 
-		// Deep insert not possible because of limitation 
+		// Deep insert not possible because of limitation
 		await POST(`/odata/v4/variant-testing/RootSample`, {
 			ID: rootID,
 			title: 'Root for depth test',
@@ -310,7 +310,6 @@ describe('Configuration Options', () => {
 
 		cds.env.requires['change-tracking'].maxDisplayHierarchyDepth = originalDepth;
 		await regenerateTriggers(variantEntities);
-
 
 		expect(rootChanges.length).toEqual(1);
 		expect(rootChanges[0]).toMatchObject({
@@ -344,7 +343,6 @@ describe('Configuration Options', () => {
 			parent_entityKey: level1ID,
 			parent_parent_entity: null, // should not have parent_parent_entity since maxDisplayHierarchyDepth is 1
 			parent_parent_entityKey: null
-
 		});
 	});
 
