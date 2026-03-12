@@ -248,13 +248,11 @@ annotate ChangeView with @(cds.search: {
   valueChangedFromLabel,
   valueChangedToLabel,
   createdBy,
-  transactionID
 }) {
   entityLabel       @Search.ranking: HIGH;
   attributeLabel    @Search.ranking: HIGH;
   objectID          @Search.ranking: HIGH;
 
   entityKey         @Search.ranking: LOW;
-  transactionID     @Search.ranking: LOW;
   modificationLabel @Search.ranking: LOW;
 };
