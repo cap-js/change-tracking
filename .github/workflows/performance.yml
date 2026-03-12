@@ -165,9 +165,10 @@ jobs:
         run: |
           for i in {1..10}; do
             STATUS="$(kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq -r '.status.state // empty')"
+            THRESHOLD_STATUS="$(kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq -r '.status.phases[0].status // empty')"
             echo "Current test status (attempt $i/10): ${STATUS:-<empty>}"
 
-            if [ "$STATUS" = "Succeeded" ]; then
+            if [ "$STATUS" = "Succeeded" ] && [ "$THRESHOLD_STATUS" = "Completed" ]; then
               echo "Performance tests succeeded."
               kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
               exit 0
