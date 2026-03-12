@@ -48,7 +48,6 @@
 			},
 			"change-tracking": {
 				"preserveDeletes": false,
-				"maxDisplayHierarchyDepth": 3
 			}
 		},
 		"features": {
