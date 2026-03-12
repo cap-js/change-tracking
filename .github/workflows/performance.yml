@@ -88,15 +88,11 @@ jobs:
             npm pkg set "overrides.@sap/cds-mtxs=^2"
             npm pkg set "devDependencies.@cap-js/cds-types=^0.11"
             # Update workspace package dependencies to CDS 8 compatible versions
-            cd tests/bookshop
+            cd ./tests/performance/perf-bookshop
+            npm pkg set "dependencies.@sap/cds=^8.9.8"
             npm pkg set "dependencies.@cap-js/hana=^1"
             npm pkg set "dependencies.@cap-js/postgres=^1"
             npm pkg set "devDependencies.@cap-js/sqlite=^1"
-            cd ../..
-            cd tests/bookshop-mtx
-            npm pkg set "dependencies.@sap/cds-mtxs=^2"
-            npm pkg set "devDependencies.@cap-js/sqlite=^1"
-            cd ../..
           fi
 
       - name: Install global CDS
@@ -169,9 +165,10 @@ jobs:
         run: |
           for i in {1..10}; do
             STATUS="$(kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq -r '.status.state // empty')"
+            THRESHOLD_STATUS="$(kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq -r '.status.phases[0].status // empty')"
             echo "Current test status (attempt $i/10): ${STATUS:-<empty>}"
 
-            if [ "$STATUS" = "Succeeded" ]; then
+            if [ "$STATUS" = "Succeeded" ] && [ "$THRESHOLD_STATUS" = "Completed" ]; then
               echo "Performance tests succeeded."
               kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
               exit 0
