@@ -47,7 +47,7 @@
 				"scan": false
 			},
 			"change-tracking": {
-				"preserveDeletes": false,
+				"preserveDeletes": false
 			}
 		},
 		"features": {
