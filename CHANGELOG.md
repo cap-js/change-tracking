@@ -51,6 +51,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Localization is performed on database level and therefore the table `sap.changelog.i18nKeys` that stores localized labels was added
 - Expose localized label fields on `sap.changelog.ChangeView`
 
+### Removed
+- Removed configuration option `considerLocalizedValues`
+
 ## Version 1.1.4 - 03.12.25
 
 ### Fixed
