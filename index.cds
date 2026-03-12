@@ -33,23 +33,38 @@ entity aspect @(UI.Facets: [{
 view ChangeView as
   select from Changes as change
   left outer join i18nKeys as attributeI18n
-    on   attributeI18n.ID     = change.attribute
-    and (
-         attributeI18n.locale = $user.locale
-      or attributeI18n.locale = 'en'
-    )
+    on  attributeI18n.ID     = change.attribute
+    and attributeI18n.locale = $user.locale
   left outer join i18nKeys as entityI18n
-    on   entityI18n.ID     = change.entity
-    and (
-         entityI18n.locale = $user.locale
-      or entityI18n.locale = 'en'
-    )
+    on  entityI18n.ID     = change.entity
+    and entityI18n.locale = $user.locale
   left outer join i18nKeys as modificationI18n
-    on   modificationI18n.ID     = change.modification
-    and (
-         modificationI18n.locale = $user.locale
-      or modificationI18n.locale = 'en'
+    on  modificationI18n.ID     = change.modification
+    and modificationI18n.locale = $user.locale
+  left outer join i18nKeys as fallbackAttributeI18n
+    on  not                          exists(
+      select distinct locale from i18nKeys
+      where
+        locale = $user.locale
     )
+    and fallbackAttributeI18n.locale = 'en'
+    and fallbackAttributeI18n.ID     = change.attribute
+  left outer join i18nKeys as fallbackEntityI18n
+    on  not                       exists(
+      select distinct locale from i18nKeys
+      where
+        locale = $user.locale
+    )
+    and fallbackEntityI18n.locale = 'en'
+    and fallbackEntityI18n.ID     = change.entity
+  left outer join i18nKeys as fallbackModificationI18n
+    on  not                             exists(
+      select distinct locale from i18nKeys
+      where
+        locale = $user.locale
+    )
+    and fallbackModificationI18n.locale = 'en'
+    and fallbackModificationI18n.ID     = change.modification
   {
     key change.ID                                     @UI.Hidden,
         change.parent                  : redirected to ChangeView,
@@ -66,13 +81,13 @@ view ChangeView as
         change.createdBy,
         change.transactionID,
         COALESCE(
-          attributeI18n.text, change.attribute
+          attributeI18n.text, fallbackAttributeI18n.text, change.attribute
         )    as attributeLabel         : String(15)   @title: '{i18n>Changes.attribute}',
         COALESCE(
-          entityI18n.text, change.entity
+          entityI18n.text, fallbackEntityI18n.text, change.entity
         )    as entityLabel            : String(24)   @title: '{i18n>Changes.entity}',
         COALESCE(
-          modificationI18n.text, change.modification
+          modificationI18n.text, fallbackModificationI18n.text, change.modification
         )    as modificationLabel      : String(16)   @title: '{i18n>Changes.modification}',
         COALESCE(
           change.valueChangedFromLabel, change.valueChangedFrom
