@@ -41,7 +41,7 @@ describe('Configuration Options', () => {
 		await DELETE(`/odata/v4/variant-testing/RootSample(ID=${newRoot.ID})`);
 
 		const afterChanges = await SELECT.from(variantSrv.entities.ChangeView).where(`entityKey IN ('${newRoot.ID}', '${newRoot.children[0].ID}', '${newRoot.children[0].children[0].ID}')`);
-		expect(afterChanges.length).toEqual(6);
+		expect(afterChanges.length).toEqual(10);
 
 		const changelogCreated = afterChanges.filter((ele) => ele.modification === 'create');
 		const changelogDeleted = afterChanges.filter((ele) => ele.modification === 'delete');
@@ -265,6 +265,86 @@ describe('Configuration Options', () => {
 			const dateChange = changes.find((c) => c.attribute === 'date');
 			expect(dateChange).toBeTruthy();
 			expect(dateChange.valueChangedTo).toEqual('2025-03-10');
+		});
+	});
+
+	(isHana ? it.skip : it)('maxDisplayHierarchyDepth controls auto-discovery of composition targets', async () => {
+		const originalDepth = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth;
+
+		cds.env.requires['change-tracking'].maxDisplayHierarchyDepth = 1;
+		await regenerateTriggers(variantEntities);
+
+		const variantSrv = await cds.connect.to('VariantTesting');
+		const { ChangeView } = variantSrv.entities;
+
+		const rootID = cds.utils.uuid();
+		const level1ID = cds.utils.uuid();
+		const level2ID = cds.utils.uuid();
+
+		// Deep insert not possible because of limitation 
+		await POST(`/odata/v4/variant-testing/RootSample`, {
+			ID: rootID,
+			title: 'Root for depth test',
+			children: [
+				{
+					ID: level1ID,
+					title: 'Level1 for depth test'
+				}
+			]
+		});
+
+		await PATCH(`/odata/v4/variant-testing/Level1Sample(ID=${level1ID})`, {
+			children: [
+				{
+					ID: level2ID,
+					title: 'Level2 for depth test'
+				}
+			]
+		});
+
+		const rootChanges = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.RootSample',
+			entityKey: rootID,
+			attribute: 'title'
+		});
+
+		cds.env.requires['change-tracking'].maxDisplayHierarchyDepth = originalDepth;
+		await regenerateTriggers(variantEntities);
+
+
+		expect(rootChanges.length).toEqual(1);
+		expect(rootChanges[0]).toMatchObject({
+			modification: 'create',
+			valueChangedTo: 'Root for depth test'
+		});
+
+		const level1Changes = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level1Sample',
+			entityKey: level1ID,
+			attribute: 'title'
+		});
+		expect(level1Changes.length).toEqual(1);
+		expect(level1Changes[0]).toMatchObject({
+			modification: 'create',
+			valueChangedTo: 'Level1 for depth test',
+			parent_entity: 'sap.change_tracking.RootSample',
+			parent_entityKey: rootID
+		});
+
+		const level2Changes = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level2Sample',
+			entityKey: level2ID,
+			attribute: 'title'
+		});
+		expect(level2Changes.length).toEqual(1);
+		expect(level2Changes[0]).toMatchObject({
+			modification: 'create',
+			valueChangedTo: 'Level2 for depth test',
+			parent_entity: 'sap.change_tracking.Level1Sample',
+			parent_entityKey: level1ID,
+			parent_parent_entity: null, // should not have parent_parent_entity since maxDisplayHierarchyDepth is 1
+			parent_parent_entityKey: null
+
 		});
 	});
 
