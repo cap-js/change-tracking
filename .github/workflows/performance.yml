@@ -23,7 +23,7 @@ jobs:
   perf-tests:
     runs-on: ubuntu-latest
     needs: requires-approval
-    # if: always() && github.event.label.name == 'performance' && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
+    if: always() && github.event.label.name == 'performance' && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
     concurrency:
       group: performance-tests
     name: Performance tests for ${{ matrix.node-version }} and CAP ${{ matrix.cds-version }}
