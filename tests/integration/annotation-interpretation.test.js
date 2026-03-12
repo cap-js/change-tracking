@@ -141,6 +141,35 @@ describe('@changelog annotation interpretation', () => {
 		expect(changes[0].objectID).toEqual('new placeOfBirth, Emily, Brontë, Haworth, Yorkshire, 1848-12-19, 1818-07-30');
 	});
 
+	it('builds objectID from non-null fields when some @changelog objectID fields are null', async () => {
+		const adminService = await cds.connect.to('AdminService');
+		const { ChangeView } = adminService.entities;
+
+		// Create author with some objectID fields left NULL (dateOfDeath, placeOfDeath)
+		const authorID = cds.utils.uuid();
+		await INSERT.into('sap.capire.bookshop.AuthorsWithLongerChangelog').entries({
+			ID: authorID,
+			name_firstName: 'Emily',
+			name_lastName: 'Brontë',
+			placeOfBirth: 'Thornton',
+			dateOfBirth: '1818-07-30'
+			// dateOfDeath and placeOfDeath intentionally omitted (NULL)
+		});
+
+		await PATCH(`/odata/v4/admin/AuthorsWithLongerChangelog(ID=${authorID})`, {
+			placeOfBirth: 'updated placeOfBirth'
+		});
+
+		const changes = await adminService.run(
+			SELECT.from(ChangeView).where({
+				modification: 'update',
+				entityKey: authorID
+			})
+		);
+		expect(changes.length).toEqual(1);
+		expect(changes[0].objectID).toEqual('updated placeOfBirth, Emily, Brontë, <empty>, <empty>, 1818-07-30');
+	});
+
 	// REVISIT: db-services only puts the root query of a deep query first
 	it('resolves objectID through chained associations to parent entities', async () => {
 		const variantSrv = await cds.connect.to('VariantTesting');

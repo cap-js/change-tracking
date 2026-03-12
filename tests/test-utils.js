@@ -12,10 +12,20 @@ function _resolveEntities(entityNames, allEntities, hierarchyMap) {
 	return entities.flatMap(({ dbEntityName, mergedAnnotations }) => {
 		const entity = model.definitions[dbEntityName];
 		if (!entity) return [];
-		const rootEntityName = hierarchyMap.get(dbEntityName);
+		const hierarchyInfo = hierarchyMap.get(dbEntityName);
+		const rootEntityName = hierarchyInfo?.parent ?? null;
 		const rootEntity = rootEntityName ? model.definitions[rootEntityName] : null;
 		const rootMergedAnnotations = rootEntityName ? allEntities.find((d) => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
-		return [{ entity, rootEntity, mergedAnnotations, rootMergedAnnotations }];
+
+		// Get grandparent info for deep linking
+		const grandParentEntityName = hierarchyInfo?.grandParent ?? null;
+		const grandParentContext = {
+			grandParentEntity: grandParentEntityName ? model.definitions[grandParentEntityName] : null,
+			grandParentMergedAnnotations: grandParentEntityName ? allEntities.find((d) => d.dbEntityName === grandParentEntityName)?.mergedAnnotations : null,
+			grandParentCompositionField: hierarchyInfo?.grandParentCompositionField ?? null
+		};
+
+		return [{ entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext }];
 	});
 }
 
@@ -29,8 +39,8 @@ async function _regenerateSQLiteTriggers(entityNames, allEntities, hierarchyMap)
 	await Promise.all(existing.map(({ name }) => cds.db.run(`DROP TRIGGER IF EXISTS "${name}"`)));
 
 	// Generate and execute new triggers
-	const triggers = _resolveEntities(entityNames, allEntities, hierarchyMap).flatMap(({ entity, rootEntity, mergedAnnotations, rootMergedAnnotations }) => {
-		const result = generateSQLiteTrigger(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
+	const triggers = _resolveEntities(entityNames, allEntities, hierarchyMap).flatMap(({ entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext }) => {
+		const result = generateSQLiteTrigger(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext);
 		return result ? [].concat(result) : [];
 	});
 
@@ -41,8 +51,8 @@ async function _regeneratePostgresTriggers(entityNames, allEntities, hierarchyMa
 	const model = cds.context?.model ?? cds.model;
 	const { generatePostgresTriggers } = require('../lib/postgres/triggers.js');
 
-	const triggers = _resolveEntities(entityNames, allEntities, hierarchyMap).flatMap(({ entity, rootEntity, mergedAnnotations, rootMergedAnnotations }) =>
-		generatePostgresTriggers(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations)
+	const triggers = _resolveEntities(entityNames, allEntities, hierarchyMap).flatMap(({ entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext }) =>
+		generatePostgresTriggers(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext)
 	);
 
 	await Promise.all(triggers.map((t) => cds.db.run(t)));
@@ -52,11 +62,11 @@ async function _regenerateH2Triggers(entityNames, allEntities, hierarchyMap) {
 	const model = cds.context?.model ?? cds.model;
 	const { generateH2Trigger } = require('../lib/h2/triggers.js');
 
-	for (const { entity, rootEntity, mergedAnnotations, rootMergedAnnotations } of _resolveEntities(entityNames, allEntities, hierarchyMap)) {
+	for (const { entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext } of _resolveEntities(entityNames, allEntities, hierarchyMap)) {
 		const tableName = entity.name.replace(/\./g, '_').toUpperCase();
 		await cds.db.run(`DROP TRIGGER IF EXISTS "${tableName}_CT_TRIGGER"`);
 
-		const triggerSQL = generateH2Trigger(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
+		const triggerSQL = generateH2Trigger(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext);
 		if (triggerSQL) await cds.db.run(triggerSQL);
 	}
 }
@@ -66,8 +76,8 @@ async function _regenerateHANATriggers(entityNames, allEntities, hierarchyMap) {
 	const { generateHANATriggers } = require('../lib/hana/hdi.js');
 	require('../lib/utils/change-tracking.js');
 
-	for (const { entity, rootEntity, mergedAnnotations, rootMergedAnnotations } of _resolveEntities(entityNames, allEntities, hierarchyMap)) {
-		const triggers = generateHANATriggers(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations);
+	for (const { entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext } of _resolveEntities(entityNames, allEntities, hierarchyMap)) {
+		const triggers = generateHANATriggers(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext);
 		for (const trigger of triggers) {
 			await cds.db.run(`CREATE OR REPLACE ${trigger.sql}`);
 		}
