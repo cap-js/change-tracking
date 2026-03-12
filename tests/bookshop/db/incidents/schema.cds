@@ -15,7 +15,7 @@ entity Customers : managed {
   email          : EMailAddress @changelog;
   phone          : PhoneNumber  @changelog;
   creditCardNo   : String(16) @assert.format: '^[1-9]\d{15}$';
-  addresses      : Composition of many Addresses on addresses.customer = $self;
+  address      : Composition of one Addresses on address.customer = $self;
   incidents      : Association to many Incidents on incidents.customer = $self;
 }
 
