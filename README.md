@@ -194,7 +194,7 @@ using from '@cap-js/change-tracking';
 
 annotate sap.changelog.ChangeView with @(
   UI.LineItem : [
-    { Value: modification },
+    { Value: modificationLabel },
     { Value: createdAt },
     { Value: createdBy },
     { Value: entityLabel },
