@@ -45,13 +45,17 @@ describe('Special CDS Features', () => {
 	});
 
 	it('default values are tracked', async () => {
-		const {data: {ID}} = await POST(`/odata/v4/processor/Incidents`, {
-			title: "ABC"
+		const {
+			data: { ID }
+		} = await POST(`/odata/v4/processor/Incidents`, {
+			title: 'ABC'
 		});
 		await POST(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
-		const {data: {value: changes}} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes`);
-		
-		const change = changes.find(c => c.attribute === 'status')
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes`);
+
+		const change = changes.find((c) => c.attribute === 'status');
 
 		expect(change).toMatchObject({
 			modification: 'create',
@@ -64,21 +68,27 @@ describe('Special CDS Features', () => {
 	});
 
 	it('search works on labels', async () => {
-		const {data: {ID}} = await POST(`/odata/v4/processor/Incidents`, {
-			title: "ABC"
+		const {
+			data: { ID }
+		} = await POST(`/odata/v4/processor/Incidents`, {
+			title: 'ABC'
 		});
 		await POST(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
-		const {data: {value: changes}} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes?$search=Support%20Incidents`);
-		
-		let change = changes.find(c => c.attribute === 'status')
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes?$search=Support%20Incidents`);
+
+		let change = changes.find((c) => c.attribute === 'status');
 
 		expect(change).toMatchObject({
-			entityLabel: 'Support Incidents',
+			entityLabel: 'Support Incidents'
 		});
 
-		const {data: {value: changes2}} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes?$search=Status`);
-		
-		change = changes2.find(c => c.attribute === 'status')
+		const {
+			data: { value: changes2 }
+		} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes?$search=Status`);
+
+		change = changes2.find((c) => c.attribute === 'status');
 
 		expect(change).toMatchObject({
 			attributeLabel: 'Status'
