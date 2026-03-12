@@ -47,7 +47,6 @@
 				"scan": false
 			},
 		"change-tracking": {
-			"considerLocalizedValues": true,
 			"preserveDeletes": false,
 			"maxDisplayHierarchyDepth": 3
 		}
