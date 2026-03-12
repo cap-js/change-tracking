@@ -42,13 +42,28 @@ view ChangeView as
     on  modificationI18n.ID     = change.modification
     and modificationI18n.locale = $user.locale
   left outer join i18nKeys as fallbackAttributeI18n
-    on  fallbackAttributeI18n.locale = 'en'
+    on  not                          exists(
+      select distinct locale from i18nKeys
+      where
+        locale = $user.locale
+    )
+    and fallbackAttributeI18n.locale = 'en'
     and fallbackAttributeI18n.ID     = change.attribute
   left outer join i18nKeys as fallbackEntityI18n
-    on  fallbackEntityI18n.locale = 'en'
+    on  not                       exists(
+      select distinct locale from i18nKeys
+      where
+        locale = $user.locale
+    )
+    and fallbackEntityI18n.locale = 'en'
     and fallbackEntityI18n.ID     = change.entity
   left outer join i18nKeys as fallbackModificationI18n
-    on  fallbackModificationI18n.locale = 'en'
+    on  not                             exists(
+      select distinct locale from i18nKeys
+      where
+        locale = $user.locale
+    )
+    and fallbackModificationI18n.locale = 'en'
     and fallbackModificationI18n.ID     = change.modification
   {
     key change.ID                                     @UI.Hidden,
