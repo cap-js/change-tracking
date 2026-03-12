@@ -2,11 +2,10 @@ const cds = require('@sap/cds');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
+const { axios, POST, PATCH, DELETE, GET } = cds.test(bookshop);
+axios.defaults.auth = { username: 'alice' };
 
 describe('Special CDS Features', () => {
-	let log = cds.test.log();
-
 	it.skip('formats DateTime and Timestamp values from JavaScript Date objects correctly', async () => {
 		cds.env.requires['change-tracking'].preserveDeletes = true;
 		const testingSRV = await cds.connect.to('VariantTesting');
@@ -43,6 +42,57 @@ describe('Special CDS Features', () => {
 			})
 		);
 		cds.env.requires['change-tracking'].preserveDeletes = false;
+	});
+
+	it('default values are tracked', async () => {
+		const {
+			data: { ID }
+		} = await POST(`/odata/v4/processor/Incidents`, {
+			title: 'ABC'
+		});
+		await POST(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes`);
+
+		const change = changes.find((c) => c.attribute === 'status');
+
+		expect(change).toMatchObject({
+			modification: 'create',
+			entityLabel: 'Support Incidents',
+			valueChangedFrom: null,
+			valueChangedTo: 'N',
+			valueChangedToLabel: 'New',
+			parent_ID: null
+		});
+	});
+
+	it('search works on labels', async () => {
+		const {
+			data: { ID }
+		} = await POST(`/odata/v4/processor/Incidents`, {
+			title: 'ABC'
+		});
+		await POST(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes?$search=Support%20Incidents`);
+
+		let change = changes.find((c) => c.attribute === 'status');
+
+		expect(change).toMatchObject({
+			entityLabel: 'Support Incidents'
+		});
+
+		const {
+			data: { value: changes2 }
+		} = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes?$search=Status`);
+
+		change = changes2.find((c) => c.attribute === 'status');
+
+		expect(change).toMatchObject({
+			attributeLabel: 'Status'
+		});
 	});
 
 	// REVISIT: behaviour in deep operations
@@ -137,68 +187,11 @@ describe('Special CDS Features', () => {
 	});
 
 	describe('localization', () => {
-		it.skip('logs warning when entity is not found in the model during localization', async () => {
-			const { Changes } = cds.entities('sap.changelog');
-			const VolumnsSrv = await cds.connect.to('VolumnsService');
-			const { Volumes } = VolumnsSrv.entities;
-
-			const volumeID = cds.utils.uuid();
-			await INSERT.into(Volumes).entries([
-				{
-					ID: volumeID,
-					title: 'Wuthering Heights I',
-					sequence: '1',
-					book_ID: '9d703c23-54a8-4eff-81c1-cdce6b8376b1'
-				}
-			]);
-			await cds.delete(cds.model.definitions['sap.changelog.Changes']).where({ entityKey: volumeID });
-			await VolumnsSrv.run(
-				UPDATE.entity(Volumes).where({ ID: volumeID }).set({
-					title: 'new title'
-				})
-			);
-			const {
-				data: { value: changes }
-			} = await GET(`/odata/v4/volumns/Volumes(ID=${volumeID})/changes`);
-			expect(changes.length).toEqual(1);
-			await UPDATE(Changes).where({ ID: changes[0].ID }).set({ serviceEntity: 'Volumes' });
-			const {
-				data: { value: changes2 }
-			} = await GET(`/odata/v4/volumns/Volumes(ID=${volumeID})/changes`);
-			expect(changes2.length).toEqual(1);
-			expect(changes2[0].serviceEntity).toEqual('Volumes');
-			expect(log.output.length).toBeGreaterThan(0);
-			expect(log.output).toMatch(/Cannot localize the attribute/);
-		});
-
-		it.skip('logs warning when attribute is not found in the model during localization', async () => {
-			const { Changes } = cds.entities('sap.changelog');
-			const { Volumes } = cds.entities('VolumnsService');
-			const volumeID = cds.utils.uuid();
-			await INSERT.into(Volumes).entries([{ ID: volumeID, title: 'Wuthering Heights I', sequence: '1', book_ID: '9d703c23-54a8-4eff-81c1-cdce6b8376b1' }]);
-			const VolumnsSrv = await cds.connect.to('VolumnsService');
-			await cds.delete(VolumnsSrv.entities.ChangeView).where({ entityKey: volumeID });
-			await VolumnsSrv.run(UPDATE.entity(Volumes).where({ ID: volumeID }).set({ title: 'new title' }));
-			const {
-				data: { value: changes }
-			} = await GET(`/odata/v4/volumns/Volumes(ID=${volumeID})/changes`);
-			expect(changes.length).toEqual(1);
-			await UPDATE(Changes).where({ ID: changes[0].ID }).set({ attribute: 'abc' });
-			const {
-				data: { value: changes2 }
-			} = await GET(`/odata/v4/volumns/Volumes(ID=${volumeID})/changes`);
-			expect(changes2.length).toEqual(1);
-			expect(changes2[0].attribute).toEqual('abc');
-			expect(log.output.length).toBeGreaterThan(0);
-			expect(log.output).toMatch(/Cannot localize the attribute/);
-		});
-
 		it('localizes change view entries correctly when queried without filter parameters', async () => {
 			const variantTesting = await cds.connect.to('VariantTesting');
 			const { ChangeView, TrackingComposition } = variantTesting.entities;
 			const ID = cds.utils.uuid();
 			await INSERT.into(TrackingComposition).entries({ ID });
-			await cds.delete(cds.model.definitions['sap.changelog.Changes']).where({ entityKey: ID });
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/children`, {
 				ID: cds.utils.uuid(),
