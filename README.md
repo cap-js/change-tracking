@@ -29,11 +29,22 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 
 ## Try it Locally
 
-To enable change tracking, simply add this self-configuring plugin package to your project:
+To enable change tracking, simply add this self-configuring plugin package to your project and add the `@changelog` annotation to your data model, as explained in the [Detailed Explanation](#detailed-explanation).
 
 ```sh
 npm add @cap-js/change-tracking
 ```
+
+Alternatively, a full sample application is provided in the `tests/bookshop` folder, against which you can test your changes:
+
+```sh
+git clone https://github.com/cap-js/change-tracking
+cd change-tracking
+npm i
+cd tests/bookshop
+cds watch
+```
+
 
 > [!Warning]
 >
@@ -447,17 +458,6 @@ The reason is that: When deploying to relational databases, Associations are map
 ## Contributing
 
 This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/cap-js/change-tracking/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
-
-### Testing changes locally
-
-In the `tests/bookshop` folder a full sample application is provided, against which you can test your changes:
-
-```sh
-git clone https://github.com/cap-js/change-tracking
-npm i
-cd tests/bookshop
-cds watch
-```
 
 ## Code of Conduct
 
