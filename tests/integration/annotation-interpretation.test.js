@@ -167,12 +167,7 @@ describe('@changelog annotation interpretation', () => {
 			})
 		);
 		expect(changes.length).toEqual(1);
-		// objectID should contain the non-null fields, NOT fall back to the entity key
-		expect(changes[0].objectID).not.toEqual(authorID);
-		expect(changes[0].objectID).toContain('Emily');
-		expect(changes[0].objectID).toContain('Brontë');
-		expect(changes[0].objectID).toContain('updated placeOfBirth');
-		expect(changes[0].objectID).toContain('1818-07-30');
+		expect(changes[0].objectID).toEqual('updated placeOfBirth, Emily, Brontë, <empty>, <empty>, 1818-07-30');
 	});
 
 	// REVISIT: db-services only puts the root query of a deep query first
