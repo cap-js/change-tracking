@@ -21,7 +21,6 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
   - [Disable UI Facet generation](#disable-ui-facet-generation)
   - [Disable Association to Changes Generation](#disable-association-to-changes-generation)
 - [Examples](#examples)
-  - [Specify Object ID](#specify-object-id)
   - [Tracing Changes](#tracing-changes)
   - [Don&#39;ts](#donts)
 - [Contributing](#contributing)
@@ -215,7 +214,7 @@ annotate sap.changelog.aspect @(UI.Facets: [{
 }]);
 ```
 
-The system now uses the SAP Fiori elements default setting `@UI.PartOfPreview: true`, such that the table will always shown when navigating to that respective Object page.
+The system now uses the SAP Fiori elements default setting `@UI.PartOfPreview: true`, such that the table will always be shown when navigating to that respective Object page.
 
 ### Disable UI Facet generation
 
@@ -400,7 +399,7 @@ entity Incidents : cuid, managed {
 
 entity Customers : cuid, managed {
   ...
-  addresses : Association to Addresses;
+  address : Composition of one Addresses;
   ...
 }
 ```
@@ -409,7 +408,7 @@ Add the following `@changelog` annotations in `db/change-tracking.cds`
 
 ```cds
 annotate Incidents with @changelog: [title] {
-  customer @changelog: [customer.addresses.city, customer.addresses.streetAddress];
+  customer @changelog: [customer.address.city, customer.address.streetAddress];
 }
 ```
 
