@@ -52,8 +52,8 @@ view ChangeView as
     )
   {
     key change.ID                                     @UI.Hidden,
-        change.parent: redirected to ChangeView,
-        change.children: redirected to ChangeView,
+        change.parent                  : redirected to ChangeView,
+        change.children                : redirected to ChangeView,
         change.attribute,
         change.valueChangedFrom,
         change.valueChangedTo,
@@ -76,10 +76,10 @@ view ChangeView as
         )    as modificationLabel      : String(16)   @title: '{i18n>Changes.modification}',
         COALESCE(
           change.valueChangedFromLabel, change.valueChangedFrom
-        )    as valueChangedFromLabel  : String(5000) @title: '{i18n>Changes.valueChangedFrom}',
+        )    as valueChangedFromLabel  : String(5000) @(title: '{i18n>Changes.valueChangedFrom}', UI.MultiLineText),
         COALESCE(
           change.valueChangedToLabel, change.valueChangedTo
-        )    as valueChangedToLabel    : String(5000) @title: '{i18n>Changes.valueChangedTo}',
+        )    as valueChangedToLabel    : String(5000) @(title: '{i18n>Changes.valueChangedTo}', UI.MultiLineText),
         // For the hierarchy
         null as LimitedDescendantCount : Int16        @UI.Hidden,
         null as DistanceFromRoot       : Int16        @UI.Hidden,
@@ -216,3 +216,30 @@ annotate ChangeView with @(
     'LimitedRank'
   ],
 );
+
+// Annotations for searching
+annotate ChangeView with @(cds.search: {
+  valueChangedFrom: false,
+  valueChangedTo  : false,
+  entity          : false,
+  attribute       : false,
+  modification    : false,
+  valueDataType   : false,
+  modificationLabel,
+  entityLabel,
+  entityKey,
+  objectID,
+  attributeLabel,
+  valueChangedFromLabel,
+  valueChangedToLabel,
+  createdBy,
+  transactionID
+}) {
+  entityLabel       @Search.ranking: HIGH;
+  attributeLabel    @Search.ranking: HIGH;
+  objectID          @Search.ranking: HIGH;
+
+  entityKey         @Search.ranking: LOW;
+  transactionID     @Search.ranking: LOW;
+  modificationLabel @Search.ranking: LOW;
+};
