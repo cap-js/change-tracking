@@ -1,6 +1,6 @@
 # Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)
 
-a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) for automatic capturing, storing, and viewing of the change records of modeled entities
+a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) for automatic capturing, storing, and viewing of change records for modelled entities.
 
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
@@ -19,7 +19,7 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
   - [Altered Table View](#altered-table-view)
   - [Disable Lazy Loading](#disable-lazy-loading)
   - [Disable UI Facet generation](#disable-ui-facet-generation)
-    - [Disable Association to Changes Generation](#disable-association-to-changes-generation)
+  - [Disable Association to Changes Generation](#disable-association-to-changes-generation)
 - [Examples](#examples)
   - [Specify Object ID](#specify-object-id)
   - [Tracing Changes](#tracing-changes)
@@ -83,10 +83,6 @@ cds watch
 
 #### Change History View
 
-> [!IMPORTANT]
-> To ensure proper lazy loading of the Change History table, please use **SAPUI5 version 1.120.0** or higher.`<br>`
-> If you wish to *disable* this feature, please see the customization section on how to [disable lazy loading](#disable-lazy-loading).
-
 <img width="1300" alt="change-history" src="_assets/changes.png">
 
 If you have a Fiori Element application, the CDS plugin automatically provides and generates a view `sap.changelog.ChangeView`, the facet of which is automatically added to the Fiori Object Page of your change-tracked entities/elements. In the UI, this corresponds to the *Change History* table which serves to help you to view and search the stored change records of your modeled entities.
@@ -95,7 +91,7 @@ If you have a Fiori Element application, the CDS plugin automatically provides a
 
 ### Human-readable Types and Fields
 
-By default the implementation looks up *Object Type* names or *Field* names from respective  `@title` or  `@Common.Label` annotations, and applies i18n lookups. If no such annotations are given, the technical names of the respective CDS definitions are displayed.
+By default the implementation looks up *Object Type* names or *Field* names from respective  `@title` or  `@Common.Label` annotations and uses the technical name as a fall back.
 
 For example, without the `@title` annotation, changes to conversation entries would show up with the technical entity name:
 
@@ -104,7 +100,7 @@ For example, without the `@title` annotation, changes to conversation entries wo
 With an annotation, and possible i18n translations like so:
 
 ```cds
-annotate Conversations with @title: 'Conversations';
+annotate Incidents.conversations with @title: '{i18n>CONVERSATION}';
 ```
 
 We get a human-readable display for *Object Type*:
@@ -115,21 +111,39 @@ We get a human-readable display for *Object Type*:
 
 The changelog annotations for *Object ID* are defined at entity level.
 
-These are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
-
-For example, having a `@changelog` annotation without any additional identifiers, changes to conversation entries would show up as simple entity IDs:
+Having a `@changelog` annotation without any additional identifiers, changes to conversation entries show up as simple entity IDs:
 
 <img width="1300" alt="change-history-id" src="_assets/changes-id-wbox.png">
 
-However, this is not advisable as we cannot easily distinguish between changes. It is more appropriate to annotate as follows:
+However, this is not advisable, with an explicit object ID increasing readability as follows:
 
 ```cds
-annotate ProcessorService.Conversations with @changelog: [author, timestamp] {
+annotate Incidents.conversation with @changelog: [author, timestamp];
 ```
 
 <img width="1300" alt="change-history-id-hr" src="_assets/changes-id-hr-wbox.png">
 
-Expanding the changelog annotation by additional identifiers `[author, timestamp]`, we can now better identify the `message` change events by their respective author and timestamp.
+The annotation accepts a list of paths, meaning the following examples are all possible as well:
+
+```cds
+type CustomType : String;
+
+extend Customers with elements {
+  note: CustomType
+}
+
+annotate Incidents with @changelog: [
+  title, customer.note, urgency.name
+];
+```
+
+```cds
+annotate Incidents with @changelog: [
+  customer.address.city, customer.address.streetAddress, status.criticality
+] {
+  title    @changelog;
+}
+```
 
 ### Human-readable Values
 
@@ -153,27 +167,33 @@ customer @changelog: [customer.name];
 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
 
+### Tracing any kind of change
+
+Change tracking is implemented with Database triggers and supports HANA Cloud, SQLite, Postgres and H2.
+
+Leveraging database triggers means any change will be tracked no matter how it is represented in the service. Thus tracking changes made via unions, or via views with joins will still work.
+
 ## Advanced Options
 
 ### Altered table view
 
-The *Change History* view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 5 columns in equal spacing, we would extend `srv/change-tracking.cds` as follows:
+The *Change History* view can be easily adapted and configured to your own needs by simply changing or extending it. For example, let's assume we only want to show the first 5 columns in equal spacing, we would extend `db/change-tracking.cds` as follows:
 
 ```cds
 using from '@cap-js/change-tracking';
 
 annotate sap.changelog.ChangeView with @(
   UI.LineItem : [
-    { Value: modification, @HTML5.CssDefaults: { width:'20%' }},
-    { Value: createdAt,    @HTML5.CssDefaults: { width:'20%' }},
-    { Value: createdBy,    @HTML5.CssDefaults: { width:'20%' }},
-    { Value: entity,       @HTML5.CssDefaults: { width:'20%' }},
-    { Value: objectID,     @HTML5.CssDefaults: { width:'20%' }}
+    { Value: modification },
+    { Value: createdAt },
+    { Value: createdBy },
+    { Value: entityLabel },
+    { Value: objectID }
   ]
 );
 ```
 
-In the UI, the *Change History* table now contains 5 equally-spaced columns with the desired properties:
+In the UI, the *Change History* table now contains only the five columns with the desired properties:
 
 <img width="1300" alt="change-history-custom" src="_assets/changes-custom.png">
 
@@ -181,7 +201,7 @@ For more information and examples on adding Fiori Annotations, see [Adding SAP F
 
 ### Disable lazy loading
 
-To disable the lazy loading feature of the *Change History* table, you can add the following annotation to your `srv/change-tracking.cds`:
+To disable the lazy loading feature of the *Change History* table, you can add the following annotation to your `db/change-tracking.cds`:
 
 ```cds
 using from '@cap-js/change-tracking';
@@ -191,11 +211,11 @@ annotate sap.changelog.aspect @(UI.Facets: [{
   ID    : 'ChangeHistoryFacet',
   Label : '{i18n>ChangeHistory}',
   Target: 'changes/@UI.PresentationVariant',
-  ![@UI.PartOfPreview]
+  @UI.PartOfPreview
 }]);
 ```
 
-The system now uses the SAPUI5 default setting `![@UI.PartOfPreview]: true`, such that the table will always shown when navigating to that respective Object page.
+The system now uses the SAP Fiori elements default setting `@UI.PartOfPreview: true`, such that the table will always shown when navigating to that respective Object page.
 
 ### Disable UI Facet generation
 
@@ -220,10 +240,10 @@ entity SalesOrders {
 
 ### Disable Association to Changes Generation
 
-For some scenarios, e.g. when doing `UNION` and the `@changelog` annotion is still propageted, the automatic addition of the association to `changes` does not make sense. You can use `@changelog.disable_assoc`for this to be disabled on entity level.
+For some scenarios, e.g. when doing `UNION` and the `@changelog` annotation is still propagated, the automatic addition of the association to `changes` does not make sense. You can use `@changelog.disable_assoc`for this to be disabled on entity level.
 
 > [!IMPORTANT]
-> This will also supress the addition of the UI facet, since the change-view is not available as target entity anymore.
+> This will also suppress the addition of the UI facet, since the change-view is no longer available as the target entity.
 
 ### Select types of changes to track
 
@@ -249,25 +269,39 @@ By default, deleting a record will also automatically delete all associated chan
 You can turn this behavior off globally by adding the following switch to the `package.json` of your project
 
 ```json
-...
 "cds": {
   "requires": {
-    ...
     "change-tracking": {
       "preserveDeletes": true
     }
-   ...
   }
 }
-...
 ```
+
 > [!IMPORTANT]
 > Preserving the change logs of deleted data can have a significant impact on the size of the change logging table, since now such data also survives automated data retention runs. 
 > You must implement an own **data retention strategy** for the change logging table in order to manage the size and performance of your database.
 
+### Adjust the depth of the entity hierarchy tracking
+
+By default, the depth of the changes hierarchy for any entity is 3. This means, its changes as well as the changes of its compositions and the compositions of its compositions are shown on the UI.
+
+```json
+"cds": {
+  "requires": {
+    "change-tracking": {
+      "maxDisplayHierarchyDepth": 3
+    }
+  }
+}
+```
+
+> [!IMPORTANT]
+> The depth of the hierarchy has a performance impact, so be careful with increasing it!
+
 ### Tracking localized values
 
-If you are using a model like 
+Localized properties, like `descr` in the example, are respected and the localized value during change log creation is used for the label.
 
 ```cds
 entity Incidents : cuid, managed {
@@ -281,128 +315,19 @@ entity Status {
 }
 ```
 
-you can save the localized values into the change log instead of the default values, by setting `considerLocalizedValues`:
-
-```json
-...
-"cds": {
-  "requires": {
-    "change-tracking": {
-      "considerLocalizedValues": true
-    }
-  }
-}
-...
-```
-
 Please be aware this means the localized value is then stored and shown in the change log, e.g. if a user speaking another language accesses the change log later, they will still see the value in the language used by the user who caused the change log.
 
 ## Examples
 
 This section describes modelling cases for further reference, from simple to complex, including the following:
 
-- [Specify Object ID](#specify-object-id)
-  - [Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID](#use-case-1-annotate-single-fieldmultiple-fields-of-associated-tables-as-the-object-id)
-  - [Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID](#use-case-2-annotate-single-fieldmultiple-fields-of-project-customized-types-as-the-object-id)
-  - [Use Case 3: Annotate chained associated entities from the current entity as the Object ID](#use-case-3-annotate-chained-associated-entities-from-the-current-entity-as-the-object-id)
 - [Tracing Changes](#tracing-changes)
   - [Use Case 1: Trace the changes of child nodes from the current entity and display the meaningful data from child nodes (composition relation)](#use-case-1-trace-the-changes-of-child-nodes-from-the-current-entity-and-display-the-meaningful-data-from-child-nodes-composition-relation)
   - [Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-2-trace-the-changes-of-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
-  - [Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data](#use-case-3-trace-the-changes-of-fields-defined-by-project-customized-types-and-display-the-meaningful-data)
-  - [Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-4-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
-  - [Use Case 5: Trace the changes of union entity and display the meaningful data](#use-case-5-trace-the-changes-of-union-entity-and-display-the-meaningful-data)
+  - [Use Case 3: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)](#use-case-3-trace-the-changes-of-chained-associated-entities-from-the-current-entity-and-display-the-meaningful-data-from-associated-entities-association-relation)
 - [Don&#39;ts](#donts)
   - [Use Case 1: Don&#39;t trace changes for field(s) with `Association to many`](#use-case-1-dont-trace-changes-for-fields-with-association-to-many)
   - [Use Case 2: Don&#39;t trace changes for field(s) with *Unmanaged Association*](#use-case-2-dont-trace-changes-for-fields-with-unmanaged-association)
-
-### Specify Object ID
-
-Use cases for Object ID annotation
-
-#### Use Case 1: Annotate single field/multiple fields of associated table(s) as the Object ID
-
-Modelling in `db/schema.cds`
-
-```cds
-entity Incidents : cuid, managed {
-  ...
-  customer       : Association to Customers;
-  title          : String @title: 'Title';
-  urgency        : Association to Urgency default 'M';
-  status         : Association to Status default 'N';
-  ...
-}
-```
-
-Add the following `@changelog` annotations in `srv/change-tracking.cds`
-
-```cds
-annotate ProcessorService.Incidents with @changelog: [customer.name, urgency.code, status.criticality] {
-  title    @changelog;
-}
-```
-
-![AssociationID](_assets/AssociationID.png)
-
-#### Use Case 2: Annotate single field/multiple fields of project customized types as the Object ID
-
-Modelling in `db/schema.cds`
-
-```cds
-entity Incidents : cuid, managed {
-  ...
-  customer       : Association to Customers;
-  title          : String @title: 'Title';
-  ...
-}
-
-entity Customers : cuid, managed {
-  ...
-  email          : EMailAddress;  // customized type
-  phone          : PhoneNumber;   // customized type
-  ...
-}
-```
-
-Add the following `@changelog` annotations in `srv/change-tracking.cds`
-
-```cds
-annotate ProcessorService.Incidents with @changelog: [customer.email, customer.phone] {
-  title    @changelog;
-}
-```
-
-![CustomTypeID](_assets/CustomTypeID.png)
-
-#### Use Case 3: Annotate chained associated entities from the current entity as the Object ID
-
-Modelling in `db/schema.cds`
-
-```cds
-entity Incidents : cuid, managed {
-  ...
-  customer       : Association to Customers;
-  ...
-}
-
-entity Customers : cuid, managed {
-  ...
-  addresses : Association to Addresses;
-  ...
-}
-```
-
-Add the following `@changelog` annotations in `srv/change-tracking.cds`
-
-```cds
-annotate ProcessorService.Incidents with @changelog: [customer.addresses.city, customer.addresses.postCode] {
-  title    @changelog;
-}
-```
-
-![ChainedAssociationID](_assets/ChainedAssociationID.png)
-
-> Change-tracking supports annotating chained associated entities from the current entity as object ID of current entity in case the entity in consumer applications is a pure relation table. However, the usage of chained associated entities is not recommended due to performance cost.
 
 ### Tracing Changes
 
@@ -426,15 +351,13 @@ aspect Conversation: managed, cuid {
 }
 ```
 
-Add the following `@changelog` annotations in `srv/change-tracking.cds`
+Add the following `@changelog` annotations in `db/change-tracking.cds`
 
 ```cds
-annotate ProcessorService.Incidents with @changelog: [title] {
+annotate Incidents with @changelog: [title] {
   conversation @changelog: [conversation.message];
 }
 ```
-
-![CompositionChange](_assets/CompositionChange.png)
 
 #### Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)
 
@@ -455,42 +378,15 @@ entity Customers : cuid, managed {
 }
 ```
 
-Add the following `@changelog` annotations in `srv/change-tracking.cds`
+Add the following `@changelog` annotations in `db/change-tracking.cds`
 
 ```cds
-annotate ProcessorService.Incidents with @changelog: [title] {
+annotate Incidents with @changelog: [title] {
   customer @changelog: [customer.email];
 }
 ```
 
-![AssociationChange](_assets/AssociationChange.png)
-
-#### Use Case 3: Trace the changes of fields defined by project customized types and display the meaningful data
-
-Modelling in `db/schema.cds`
-
-```cds
-type StatusType : Association to Status;
-
-entity Incidents : cuid, managed {
-  ...
-  title          : String @title: 'Title';
-  status         : StatusType default 'N';
-  ...
-}
-```
-
-Add the following `@changelog` annotations in `srv/change-tracking.cds`
-
-```cds
-annotate ProcessorService.Incidents with @changelog: [title] {
-  status   @changelog: [status.code];
-}
-```
-
-![CustomTypeChange](_assets/CustomTypeChange.png)
-
-#### Use Case 4: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)
+#### Use Case 3: Trace the changes of chained associated entities from the current entity and display the meaningful data from associated entities (association relation)
 
 Modelling in `db/schema.cds`
 
@@ -509,67 +405,15 @@ entity Customers : cuid, managed {
 }
 ```
 
-Add the following `@changelog` annotations in `srv/change-tracking.cds`
+Add the following `@changelog` annotations in `db/change-tracking.cds`
 
 ```cds
-annotate ProcessorService.Incidents with @changelog: [title] {
+annotate Incidents with @changelog: [title] {
   customer @changelog: [customer.addresses.city, customer.addresses.streetAddress];
 }
 ```
 
-![ChainedAssociationChange](_assets/ChainedAssociationChange.png)
-
 > Change-tracking supports analyzing chained associated entities from the current entity in case the entity in consumer applications is a pure relation table. However, the usage of chained associated entities is not recommended due to performance cost.
-
-#### Use Case 5: Trace the changes of union entity and display the meaningful data
-
-`Payable.cds`:
-
-```cds
-entity Payables : cuid {
-    displayId    : String;
-    @changelog
-    name         : String;
-    cryptoAmount : Decimal;
-    fiatAmount   : Decimal;
-};
-```
-
-`Payment.cds`:
-
-```cds
-entity Payments : cuid {
-    displayId : String; //readable ID
-    @changelog
-    name      : String;
-};
-```
-
-Union entity in `BusinessTransaction.cds`:
-
-```cds
-entity BusinessTransactions          as(
-    select from payments.Payments{
-        key ID,
-            displayId,
-            name,
-            changes  : Association to many ChangeView
-                on changes.objectID = ID AND changes.entity = 'payments.Payments'
-    }
-)
-union all
-(
-    select from payables.Payables {
-        key ID,
-            displayId,
-            name,
-            changes  : Association to many ChangeView
-               on changes.objectID = ID AND changes.entity = 'payables.Payables'
-    }
-);
-```
-
-![UnionChange.png](_assets/UnionChange.png)
 
 ### Don'ts
 
