@@ -9,6 +9,9 @@ entity DifferentFieldTypes {
       title     : String      @changelog;
       largeText : LargeString @changelog;
       dateTime  : DateTime;
+      dateTimeWTZ  : DateTime @changelog @Common.Timezone : 'Europe/Berlin';
+      dateTimeWDTZ  : DateTime @changelog @Common.Timezone : timeZone;
+      timeZone: String default 'Europe/Berlin' @Common.IsTimezone;
       timestamp : Timestamp;
       number    : Decimal;
       bool      : Boolean;

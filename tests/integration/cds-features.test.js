@@ -5,43 +5,154 @@ const bookshop = path.resolve(__dirname, './../bookshop');
 const { axios, POST, PATCH, DELETE, GET } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice' };
 
-describe('Special CDS Features', () => {
-	it.skip('formats DateTime and Timestamp values from JavaScript Date objects correctly', async () => {
-		cds.env.requires['change-tracking'].preserveDeletes = true;
-		const testingSRV = await cds.connect.to('VariantTesting');
-		const rootEntityData = {
-			ID: cds.utils.uuid(),
-			dateTime: new Date('2024-10-16T08:53:48Z'),
-			timestamp: new Date('2024-10-23T08:53:54.000Z')
-		};
-		await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries(rootEntityData);
-		let changes = await testingSRV.run(
-			SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+describe('CDS Features', () => {
+	describe('@Common.Timezone handling', () => {
+		let testingSRV;
+		beforeEach(async () => {
+			testingSRV = await cds.connect.to('VariantTesting');
+		});
+		it('timezone field is null in case of no timezone', async () => {
+			const rootEntityData = {
+				ID: cds.utils.uuid(),
+				dateTime: new Date('2024-10-16T08:53:48Z')
+			};
+			await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries(rootEntityData);
+			let changes = await SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
 				entity: 'sap.change_tracking.DifferentFieldTypes',
 				entityKey: rootEntityData.ID,
 				attribute: 'dateTime'
-			})
-		);
-		expect(changes.length).toEqual(1);
-		let change = changes[0];
-		expect(change.attribute).toEqual('dateTime');
-		expect(change.modification).toEqual('create');
-		expect(change.valueChangedFrom).toEqual(null);
-		/**
-		 * REVISIT: With DB Triggers it should be solved
-		 */
-		expect(change.valueChangedTo).toEqual(
-			new Date('2024-10-16T08:53:48Z').toLocaleDateString('en', {
-				day: 'numeric',
-				month: 'short',
-				year: 'numeric',
-				hour: '2-digit',
-				minute: '2-digit',
-				second: '2-digit',
-				hour12: true
-			})
-		);
-		cds.env.requires['change-tracking'].preserveDeletes = false;
+			});
+			expect(changes.length).toEqual(1);
+			let change = changes[0];
+			expect(change.valueTimeZone).toEqual(null);
+		});
+
+		it('timezone field has timezone for static annotation value', async () => {
+			const rootEntityData = {
+				ID: cds.utils.uuid(),
+				dateTimeWTZ: new Date('2024-10-16T08:53:48Z')
+			};
+			await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries(rootEntityData);
+			let changes = await SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: rootEntityData.ID,
+				attribute: 'dateTimeWTZ'
+			});
+			expect(changes.length).toEqual(1);
+			let change = changes[0];
+			expect(change.valueTimeZone).toEqual('Europe/Berlin');
+		});
+
+		it('timezone field has timezone for dynamic annotation value', async () => {
+			const rootEntityData = {
+				ID: cds.utils.uuid(),
+				dateTimeWDTZ: new Date('2024-10-16T08:53:48Z')
+			};
+			await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries(rootEntityData);
+			let changes = await SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: rootEntityData.ID,
+				attribute: 'dateTimeWDTZ'
+			});
+			expect(changes.length).toEqual(1);
+			let change = changes[0];
+			expect(change.valueTimeZone).toEqual('Europe/Berlin');
+
+			await UPDATE.entity(testingSRV.entities.DifferentFieldTypes).where({ ID: rootEntityData.ID }).set({ timeZone: 'Europe/Amsterdam' });
+			changes = await SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: rootEntityData.ID,
+				attribute: 'dateTimeWDTZ'
+			});
+			expect(changes.length).toEqual(1);
+			change = changes[0];
+			expect(change.valueTimeZone).toEqual('Europe/Amsterdam');
+		});
+
+		it('timezone field has timezone for dynamic annotation value and entity has multi key', async () => {
+			const { MultiKeyScenario } = cds.entities('sap.capire.incidents');
+			const { MultiKeyScenario: srvMultiKeyScenario } = cds.entities('ProcessorService');
+			const multiKeyData = {
+				GJAHR: 2024,
+				BUKRS: 'TEST_' + Math.round(Math.random() * 10000000).toString(),
+				datetime: new Date('2024-10-16T08:53:48Z')
+			};
+			await INSERT.into(MultiKeyScenario).entries(multiKeyData);
+			let changes = await SELECT.from({ ref: [{ id: srvMultiKeyScenario.name, where: [{ ref: ['GJAHR'] }, '=', { val: multiKeyData.GJAHR }, 'and', { ref: ['BUKRS'] }, '=', { val: multiKeyData.BUKRS }] }, 'changes'] }).where({
+				entity: 'sap.capire.incidents.MultiKeyScenario',
+				entityKey: `4,2024;${multiKeyData.BUKRS.length},${multiKeyData.BUKRS}`,
+				attribute: 'datetime'
+			});
+			expect(changes.length).toEqual(1);
+			let change = changes[0];
+			expect(change.valueTimeZone).toEqual('Europe/Amsterdam');
+		});
+	});
+
+	describe('tracking dates', () => {
+		it('tracked datetime change is exposed in custom field', async () => {
+			const { Incidents } = cds.entities('sap.capire.incidents');
+			const { Incidents: srvIncidents } = cds.entities('ProcessorService');
+			const incident = {
+				ID: cds.utils.uuid(),
+				datetime: new Date('2024-10-16T08:53:48Z')
+			};
+			await INSERT.into(Incidents).entries(incident);
+			let change = await SELECT.one.from({ ref: [{ id: srvIncidents.name, where: [{ ref: ['ID'] }, '=', { val: incident.ID }] }, 'changes'] }).where({
+				entity: 'sap.capire.incidents.Incidents',
+				entityKey: incident.ID,
+				attribute: 'datetime'
+			});
+			expect(change.valueChangedToLabelDateTime).toEqual('2024-10-16T08:53:48Z');
+		});
+
+		it('tracked date change is exposed in custom field', async () => {
+			const { Incidents } = cds.entities('sap.capire.incidents');
+			const { Incidents: srvIncidents } = cds.entities('ProcessorService');
+			const incident = {
+				ID: cds.utils.uuid(),
+				date: '2024-10-16'
+			};
+			await INSERT.into(Incidents).entries(incident);
+			let change = await SELECT.one.from({ ref: [{ id: srvIncidents.name, where: [{ ref: ['ID'] }, '=', { val: incident.ID }] }, 'changes'] }).where({
+				entity: 'sap.capire.incidents.Incidents',
+				entityKey: incident.ID,
+				attribute: 'date'
+			});
+			expect(change.valueChangedToLabelDate).toEqual('2024-10-16');
+		});
+
+		it('tracked timestamp change is exposed in custom field', async () => {
+			const { Incidents } = cds.entities('sap.capire.incidents');
+			const { Incidents: srvIncidents } = cds.entities('ProcessorService');
+			const incident = {
+				ID: cds.utils.uuid(),
+				timestamp: new Date('2024-10-16T08:53:48Z')
+			};
+			await INSERT.into(Incidents).entries(incident);
+			let change = await SELECT.one.from({ ref: [{ id: srvIncidents.name, where: [{ ref: ['ID'] }, '=', { val: incident.ID }] }, 'changes'] }).where({
+				entity: 'sap.capire.incidents.Incidents',
+				entityKey: incident.ID,
+				attribute: 'timestamp'
+			});
+			expect(change.valueChangedToLabelTimestamp).toEqual('2024-10-16T08:53:48.000Z');
+		});
+
+		it('tracked time change is exposed in custom field', async () => {
+			const { Incidents } = cds.entities('sap.capire.incidents');
+			const { Incidents: srvIncidents } = cds.entities('ProcessorService');
+			const incident = {
+				ID: cds.utils.uuid(),
+				time: '08:53:48'
+			};
+			await INSERT.into(Incidents).entries(incident);
+			let change = await SELECT.one.from({ ref: [{ id: srvIncidents.name, where: [{ ref: ['ID'] }, '=', { val: incident.ID }] }, 'changes'] }).where({
+				entity: 'sap.capire.incidents.Incidents',
+				entityKey: incident.ID,
+				attribute: 'time'
+			});
+			expect(change.valueChangedToLabelTime).toEqual('08:53:48');
+		});
 	});
 
 	it('default values are tracked', async () => {

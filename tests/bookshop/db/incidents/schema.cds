@@ -94,6 +94,8 @@ entity MultiKeyScenario {
   key GJAHR: Integer;
   key BUKRS: String(40);
       foo1: String @changelog;
+      datetime : DateTime @changelog @Common.Timezone : timezone;
+      timezone: String default 'Europe/Amsterdam' @Common.IsTimezone;
 }
 
 @Capabilities : { NavigationRestrictions : {
