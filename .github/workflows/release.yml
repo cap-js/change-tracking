@@ -23,17 +23,19 @@ jobs:
         npm i
         npm run lint
         npm run test
-    - name: get version
-      id: package-version
-      uses: martinbeentjes/npm-get-version-action@v1.2.3
+    - name: Get Version
+      id: get-version
+      run: |
+        echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
     - name: parse changelog
       id: parse-changelog
       uses: schwma/parse-changelog-action@v1.0.0
       with:
-        version: '${{ steps.package-version.outputs.current-version }}'
+        version: '${{ steps.get-version.outputs.version }}'
+        title-regex: '^##\s+\[\d.*$'
     - name: create a GitHub release
       uses: ncipollo/release-action@v1.20.0
       with:
-        tag: 'v${{ steps.package-version.outputs.current-version }}'
+        tag: 'v${{ steps.get-version.outputs.version }}'
         body: '${{ steps.parse-changelog.outputs.body }}'
     - run: npm publish --access public --provenance
