@@ -56,6 +56,18 @@ annotate service.Incidents with @(
             {
                 Value : timestamp,
             },
+            {
+                Value : datetimeWTimeZone,
+            },
+            {
+                Value: datetimeWDynamicTimeZone
+            },
+            {
+                Value : timezone,
+            },
+            {
+                Value : decimalProp,
+            },
         ],
     },
     UI.Facets : [

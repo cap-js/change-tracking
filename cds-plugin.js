@@ -1,6 +1,6 @@
 const cds = require('@sap/cds');
 
-const { enhanceModel } = require('./lib/model-enhancer.js');
+const { enhanceModel } = require('./lib/csn-enhancements');
 const { registerSessionVariableHandlers } = require('./lib/skipHandlers.js');
 const { deploySQLiteTriggers } = require('./lib/sqlite/register.js');
 const { registerPostgresCompilerHook, deployPostgresLabels } = require('./lib/postgres/register.js');

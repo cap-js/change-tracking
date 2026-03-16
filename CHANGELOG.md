@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Added
 
+- Tracked Date, DateTime, Time and Timestamp properties are now correctly formatted again.
+- If a tracked property is annotated with `@Common.Timezone` the changelog now considers the Timezone as well.
+
 ### Fixed
 
 ### Changed

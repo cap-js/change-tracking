@@ -39,8 +39,12 @@ entity Incidents : cuid, managed {
   status         : Association to Status default 'N' @changelog : [status.descr] @title : 'Status';
   date           : Date @title : 'date' @changelog;
   datetime       : DateTime @title : 'datetime' @changelog;
+  datetimeWTimeZone : DateTime @title : 'datetime with TimeZone' @changelog @Common : { Timezone : 'Asia/Riyadh' };
+  datetimeWDynamicTimeZone : DateTime @title : 'datetime with dynamic TimeZone' @changelog @Common : { Timezone : timezone };
+  timezone : String default 'Asia/Riyadh' @Common.IsTimezone;
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
+  decimalProp : Decimal @title : 'Decimal prop' @changelog;
   @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
