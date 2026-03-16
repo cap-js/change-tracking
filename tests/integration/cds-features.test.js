@@ -104,7 +104,7 @@ describe('CDS Features', () => {
 				attribute: 'datetime'
 			});
 			// Z is missing in PG, thus match is needed
-			expect(change.valueChangedToLabelDateTime).toMatch(/2024-10-16T08:53:48Z/);
+			expect(change.valueChangedToLabelDateTime).toMatch(/2024-10-16T08:53:48/);
 		});
 
 		it('tracked date change is exposed in custom field', async () => {
