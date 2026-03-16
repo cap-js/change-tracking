@@ -141,7 +141,7 @@ view ChangeView as
         )      as valueChangedToLabelTimestamp     : Timestamp    @(title: '{i18n>Changes.valueChangedTo}',
                                                      ),
         COALESCE(
-          change.valueChangedFromLabel, change.valueChangedTo
+          change.valueChangedToLabel, change.valueChangedTo
         )      as valueChangedToLabelDecimal       : Decimal      @(title: '{i18n>Changes.valueChangedTo}',
                                                      ),
         null as valueTimeZone                    : String       @(
