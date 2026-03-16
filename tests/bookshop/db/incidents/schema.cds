@@ -39,8 +39,12 @@ entity Incidents : cuid, managed {
   status         : Association to Status default 'N' @changelog : [status.descr] @title : 'Status';
   date           : Date @title : 'date' @changelog;
   datetime       : DateTime @title : 'datetime' @changelog;
+  datetimeWTimeZone : DateTime @title : 'datetime with TimeZone' @changelog @Common : { Timezone : 'Asia/Riyadh' };
+  datetimeWDynamicTimeZone : DateTime @title : 'datetime with dynamic TimeZone' @changelog @Common : { Timezone : timezone };
+  timezone : String default 'Asia/Riyadh' @Common.IsTimezone;
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
+  decimalProp : Decimal @title : 'Decimal prop' @changelog;
   @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
@@ -90,6 +94,8 @@ entity MultiKeyScenario {
   key GJAHR: Integer;
   key BUKRS: String(40);
       foo1: String @changelog;
+      datetime : DateTime @changelog @Common.Timezone : timezone;
+      timezone: String default 'Europe/Amsterdam' @Common.IsTimezone;
 }
 
 @Capabilities : { NavigationRestrictions : {

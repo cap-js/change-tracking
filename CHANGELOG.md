@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.0.0-beta.4 - tbd
+## Version 2.0.0-beta.5 - tbd
 
 ### Added
 
@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 
+## Version 2.0.0-beta.4 - 16.03.26
+
+### Added
+
+- Tracked Date, DateTime, Time and Timestamp properties are now correctly formatted again.
+- If a tracked property is annotated with `@Common.Timezone` the changelog now considers the Timezone as well.
 
 ## Version 2.0.0-beta.3 - 13.03.26
 

@@ -114,42 +114,6 @@ describe('Incidents Application Scenarios', () => {
 		expect(attachmentResponse.data).toBeTruthy();
 	});
 
-	//REVISIT: Ideally use OData dynamic types so UI does the formatting and not the backend
-	it.skip('localizes date and time values based on user locale', async () => {
-		const incidentID = await newIncident();
-		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
-
-		await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate?sap-locale=de`, {});
-
-		const {
-			data: { value: changes }
-		} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes?sap-locale=en`);
-		const dbChanges = await SELECT.from('sap.changelog.ChangeView').where({
-			attribute: { in: ['date', 'time', 'datetime', 'timestamp'] },
-			modification: 'update',
-			entityKey: incidentID
-		});
-		const dateChange = changes.find((change) => change.attribute === 'date');
-		const dateDBChange = dbChanges.find((change) => change.attribute === 'date');
-		expect(dateChange.valueChangedFrom).not.toEqual(dateDBChange.valueChangedFrom);
-		expect(dateChange.valueChangedTo).not.toEqual(dateDBChange.valueChangedTo);
-
-		const timeChange = changes.find((change) => change.attribute === 'time');
-		const timeDBChange = dbChanges.find((change) => change.attribute === 'time');
-		expect(timeChange.valueChangedFrom).not.toEqual(timeDBChange.valueChangedFrom);
-		expect(timeChange.valueChangedTo).not.toEqual(timeDBChange.valueChangedTo);
-
-		const dateTimeChange = changes.find((change) => change.attribute === 'datetime');
-		const dateTimeDBChange = dbChanges.find((change) => change.attribute === 'datetime');
-		expect(dateTimeChange.valueChangedFrom).not.toEqual(dateTimeDBChange.valueChangedFrom);
-		expect(dateTimeChange.valueChangedTo).not.toEqual(dateTimeDBChange.valueChangedTo);
-
-		const timestampChange = changes.find((change) => change.attribute === 'timestamp');
-		const timestampDBChange = dbChanges.find((change) => change.attribute === 'timestamp');
-		expect(timestampChange.valueChangedFrom).not.toEqual(timestampDBChange.valueChangedFrom);
-		expect(timestampChange.valueChangedTo).not.toEqual(timestampDBChange.valueChangedTo);
-	});
-
 	it('supports entities with composite keys (multi-key entities)', async () => {
 		const GJAHR = 2024;
 		const BUKRS = 'TEST_' + Math.round(Math.random() * 10000000).toString();
