@@ -103,7 +103,8 @@ describe('CDS Features', () => {
 				entityKey: incident.ID,
 				attribute: 'datetime'
 			});
-			expect(change.valueChangedToLabelDateTime).toEqual('2024-10-16T08:53:48Z');
+			// Z is missing in PG, thus match is needed
+			expect(change.valueChangedToLabelDateTime).toMatch(/2024-10-16T08:53:48Z/);
 		});
 
 		it('tracked date change is exposed in custom field', async () => {
@@ -135,7 +136,8 @@ describe('CDS Features', () => {
 				entityKey: incident.ID,
 				attribute: 'timestamp'
 			});
-			expect(change.valueChangedToLabelTimestamp).toEqual('2024-10-16T08:53:48.000Z');
+			// Z and micro seconds are missing in PG, thus match is needed
+			expect(change.valueChangedToLabelTimestamp).toMatch(/2024-10-16T08:53:48/);
 		});
 
 		it('tracked time change is exposed in custom field', async () => {
