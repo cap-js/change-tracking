@@ -42,9 +42,9 @@ view ChangeView as
     on  modificationI18n.ID     = change.modification
     and modificationI18n.locale = $user.locale
   {
-    key change.ID                                                 @UI.Hidden,
-        change.parent                              : redirected to ChangeView,
-        change.children                            : redirected to ChangeView,
+    key change.ID                                               @UI.Hidden,
+        change.parent                            : redirected to ChangeView,
+        change.children                          : redirected to ChangeView,
         change.attribute,
         change.valueChangedFrom,
         change.valueChangedTo,
@@ -63,7 +63,7 @@ view ChangeView as
                   ID     = change.attribute
               and locale = 'en'
           ), change.attribute
-        )      as attributeLabel                   : String(15)   @title: '{i18n>Changes.attribute}',
+        )    as attributeLabel                   : String(15)   @title: '{i18n>Changes.attribute}',
         COALESCE(
           entityI18n.text, (
             select text from i18nKeys
@@ -71,7 +71,7 @@ view ChangeView as
                   ID     = change.entity
               and locale = 'en'
           ), change.entity
-        )      as entityLabel                      : String(24)   @title: '{i18n>Changes.entity}',
+        )    as entityLabel                      : String(24)   @title: '{i18n>Changes.entity}',
         COALESCE(
           modificationI18n.text, (
             select text from i18nKeys
@@ -79,80 +79,152 @@ view ChangeView as
                   ID     = change.modification
               and locale = 'en'
           ), change.modification
-        )      as modificationLabel                : String(16)   @title: '{i18n>Changes.modification}',
+        )    as modificationLabel                : String(16)   @title: '{i18n>Changes.modification}',
         COALESCE(
           change.valueChangedFromLabel, change.valueChangedFrom
-        )      as valueChangedFromLabel            : String(5000) @(
-                                                       title: '{i18n>Changes.valueChangedFrom}',
-                                                       UI.MultiLineText
-                                                     ),
-        COALESCE(
-          change.valueChangedFromLabel, change.valueChangedFrom
-        )      as valueChangedFromLabelDateTime    : DateTime     @(title: '{i18n>Changes.valueChangedFrom}',
-                                                     ),
-        COALESCE(
-          change.valueChangedFromLabel, change.valueChangedFrom
-        )      as valueChangedFromLabelDateTimeWTZ : DateTime     @(
-                                                       title          : '{i18n>Changes.valueChangedFrom}',
-                                                       Common.Timezone: valueTimeZone
-                                                     ),
-        COALESCE(
-          change.valueChangedFromLabel, change.valueChangedFrom
-        )      as valueChangedFromLabelTime        : Time         @(title: '{i18n>Changes.valueChangedFrom}',
-                                                     ),
-        COALESCE(
-          change.valueChangedFromLabel, change.valueChangedFrom
-        )      as valueChangedFromLabelDate        : Date         @(title: '{i18n>Changes.valueChangedFrom}',
-                                                     ),
-        COALESCE(
-          change.valueChangedFromLabel, change.valueChangedFrom
-        )      as valueChangedFromLabelTimestamp   : Timestamp    @(title: '{i18n>Changes.valueChangedFrom}',
-                                                     ),
-        COALESCE(
-          change.valueChangedFromLabel, change.valueChangedFrom
-        )      as valueChangedFromLabelDecimal     : Decimal      @(title: '{i18n>Changes.valueChangedFrom}',
-                                                     ),
+        )    as valueChangedFromLabel            : String(5000) @(
+                                                     title: '{i18n>Changes.valueChangedFrom}',
+                                                     UI.MultiLineText
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.DateTime'
+                 then COALESCE(
+                        change.valueChangedFromLabel, change.valueChangedFrom
+                      )
+            else null
+          end
+        )    as valueChangedFromLabelDateTime    : DateTime     @(title: '{i18n>Changes.valueChangedFrom}',
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.DateTime' or valueDataType = 'cds.Timestamp'
+                 then COALESCE(
+                        change.valueChangedFromLabel, change.valueChangedFrom
+                      )
+            else null
+          end
+        )    as valueChangedFromLabelDateTimeWTZ : DateTime     @(
+                                                     title          : '{i18n>Changes.valueChangedFrom}',
+                                                     Common.Timezone: valueTimeZone
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.Time'
+                 then COALESCE(
+                        change.valueChangedFromLabel, change.valueChangedFrom
+                      )
+            else null
+          end
+        )    as valueChangedFromLabelTime        : Time         @(title: '{i18n>Changes.valueChangedFrom}',
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.Date'
+                 then COALESCE(
+                        change.valueChangedFromLabel, change.valueChangedFrom
+                      )
+            else null
+          end
+        )    as valueChangedFromLabelDate        : Date         @(title: '{i18n>Changes.valueChangedFrom}',
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.Timestamp'
+                 then COALESCE(
+                        change.valueChangedFromLabel, change.valueChangedFrom
+                      )
+            else null
+          end
+        )    as valueChangedFromLabelTimestamp   : Timestamp    @(title: '{i18n>Changes.valueChangedFrom}',
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.Decimal'
+                 then COALESCE(
+                        change.valueChangedFromLabel, change.valueChangedFrom
+                      )
+            else null
+          end
+        )    as valueChangedFromLabelDecimal     : Decimal      @(title: '{i18n>Changes.valueChangedFrom}',
+                                                   ),
         COALESCE(
           change.valueChangedToLabel, change.valueChangedTo
-        )      as valueChangedToLabel              : String(5000) @(
-                                                       title: '{i18n>Changes.valueChangedTo}',
-                                                       UI.MultiLineText
-                                                     ),
-        COALESCE(
-          change.valueChangedToLabel, change.valueChangedTo
-        )      as valueChangedToLabelDateTime      : DateTime     @(title: '{i18n>Changes.valueChangedTo}',
-                                                     ),
-        COALESCE(
-          change.valueChangedFromLabel, change.valueChangedTo
-        )      as valueChangedToLabelDateTimeWTZ   : DateTime     @(
-                                                       title          : '{i18n>Changes.valueChangedTo}',
-                                                       Common.Timezone: valueTimeZone
-                                                     ),
-        COALESCE(
-          change.valueChangedToLabel, change.valueChangedTo
-        )      as valueChangedToLabelTime          : Time         @(title: '{i18n>Changes.valueChangedTo}',
-                                                     ),
-        COALESCE(
-          change.valueChangedToLabel, change.valueChangedTo
-        )      as valueChangedToLabelDate          : Date         @(title: '{i18n>Changes.valueChangedTo}',
-                                                     ),
-        COALESCE(
-          change.valueChangedToLabel, change.valueChangedTo
-        )      as valueChangedToLabelTimestamp     : Timestamp    @(title: '{i18n>Changes.valueChangedTo}',
-                                                     ),
-        COALESCE(
-          change.valueChangedToLabel, change.valueChangedTo
-        )      as valueChangedToLabelDecimal       : Decimal      @(title: '{i18n>Changes.valueChangedTo}',
-                                                     ),
+        )    as valueChangedToLabel              : String(5000) @(
+                                                     title: '{i18n>Changes.valueChangedTo}',
+                                                     UI.MultiLineText
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.DateTime'
+                 then COALESCE(
+                        change.valueChangedToLabel, change.valueChangedTo
+                      )
+            else null
+          end
+        )    as valueChangedToLabelDateTime      : DateTime     @(title: '{i18n>Changes.valueChangedTo}',
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.DateTime' or valueDataType = 'cds.Timestamp'
+                 then COALESCE(
+                        change.valueChangedFromLabel, change.valueChangedTo
+                      )
+            else null
+          end
+        )    as valueChangedToLabelDateTimeWTZ   : DateTime     @(
+                                                     title          : '{i18n>Changes.valueChangedTo}',
+                                                     Common.Timezone: valueTimeZone
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.Time'
+                 then COALESCE(
+                        change.valueChangedToLabel, change.valueChangedTo
+                      )
+            else null
+          end
+        )    as valueChangedToLabelTime          : Time         @(title: '{i18n>Changes.valueChangedTo}',
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.Date'
+                 then COALESCE(
+                        change.valueChangedToLabel, change.valueChangedTo
+                      )
+            else null
+          end
+        )    as valueChangedToLabelDate          : Date         @(title: '{i18n>Changes.valueChangedTo}',
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.Timestamp'
+                 then COALESCE(
+                        change.valueChangedToLabel, change.valueChangedTo
+                      )
+            else null
+          end
+        )    as valueChangedToLabelTimestamp     : Timestamp    @(title: '{i18n>Changes.valueChangedTo}',
+                                                   ),
+        (
+          case
+            when valueDataType = 'cds.Decimal'
+                 then COALESCE(
+                        change.valueChangedToLabel, change.valueChangedTo
+                      )
+            else null
+          end
+        )    as valueChangedToLabelDecimal       : Decimal      @(title: '{i18n>Changes.valueChangedTo}',
+                                                   ),
         null as valueTimeZone                    : String       @(
-                                                       UI.Hidden,
-                                                       Common.IsTimezone
-                                                     ),
+                                                     UI.Hidden,
+                                                     Common.IsTimezone
+                                                   ),
         // For the hierarchy
-        null   as LimitedDescendantCount           : Int16        @UI.Hidden,
-        null   as DistanceFromRoot                 : Int16        @UI.Hidden,
-        null   as DrillState                       : String       @UI.Hidden,
-        null   as LimitedRank                      : Int16        @UI.Hidden,
+        null as LimitedDescendantCount           : Int16        @UI.Hidden,
+        null as DistanceFromRoot                 : Int16        @UI.Hidden,
+        null as DrillState                       : String       @UI.Hidden,
+        null as LimitedRank                      : Int16        @UI.Hidden,
   };
 
 entity i18nKeys {
