@@ -91,7 +91,7 @@ view ChangeView as
         )      as valueChangedFromLabelDateTime    : DateTime     @(title: '{i18n>Changes.valueChangedFrom}',
                                                      ),
         COALESCE(
-          change.valueChangedFromLabel, change.valueChangedTo
+          change.valueChangedFromLabel, change.valueChangedFrom
         )      as valueChangedFromLabelDateTimeWTZ : DateTime     @(
                                                        title          : '{i18n>Changes.valueChangedFrom}',
                                                        Common.Timezone: valueTimeZone
