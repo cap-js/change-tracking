@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ## Version 2.0.0-beta.5 - tbd
 
 ### Added
+- Support dynamic localized label lookup, meaning if for example a property is change tracked and its change tracking label (@changelog : [<association>.<localized_prop>]) points to one localized property from its code list entity, the label is dynamically fetched when the change is read based on the users locale.
 
 ### Fixed
 

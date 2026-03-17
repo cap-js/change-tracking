@@ -5,9 +5,11 @@ using { sap.capire.incidents as my } from '../db/schema';
  */
  @path: 'processor'
 service ProcessorService {
+  @cds.redirection.target
   entity Incidents as projection on my.Incidents actions {
     action setToDone() returns Incidents;
   };
+
   entity Customers @readonly as projection on my.Customers;
   
   @odata.draft.enabled
@@ -24,6 +26,15 @@ service ProcessorService {
 service IncidentsAdminService {
   entity Customers as projection on my.Customers;
   entity Incidents as projection on my.Incidents;
+}
+
+service LocalizationService {
+  entity Incidents as projection on my.Incidents {
+    *,
+    status as renamedStatus
+  } excluding {status};
+
+  entity DynamicLocalizationScenarios as projection on my.DynamicLocalizationScenarios;
 }
 
 annotate ProcessorService.Incidents with @odata.draft.enabled; 
