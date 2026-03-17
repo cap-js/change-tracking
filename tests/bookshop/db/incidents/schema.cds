@@ -137,3 +137,18 @@ entity OrderProducts : cuid {
   country : Country @changelog : [country.name];
   price: Decimal @changelog;
 }
+
+entity DynamicLocalizationScenarios : cuid {
+  status1 : Association to one Status default 'N' @changelog : [status1.descr, status1.code]; // Multiple fields -> not possible
+  status2 : Association to one Status default 'N' @changelog : [status1.descr]; //Not own path -> not possible
+  status3 : Association to one VHWithMultiKey @changelog : [status3.name]; //Target has multiple keys -> not possible
+
+  status4 : String @changelog : [status4Nav.descr]; //Unmanaged association -> possible;
+  status4Nav: Association to one Status on status4Nav.code = status4;
+}
+
+entity VHWithMultiKey : CodeList {
+  key code    : String;
+  key code2 : String;
+  name: localized String;
+}
