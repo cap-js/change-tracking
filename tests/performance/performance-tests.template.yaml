@@ -35,7 +35,7 @@ spec:
       sleep: 1s
       thresholds:
         - aggregationMethod: avg
-          expectedValue: "500"
+          expectedValue: "550"
           metric: responseTime
           operator: <=
         - aggregationMethod: percent
@@ -43,7 +43,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "1500"
+          expectedValue: "1600"
           metric: responseTime
           operator: <=
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.createChildren

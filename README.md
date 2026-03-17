@@ -201,6 +201,20 @@ Change tracking is implemented with Database triggers and supports HANA Cloud, S
 
 Leveraging database triggers means any change will be tracked no matter how it is represented in the service. Thus tracking changes made via unions, or via views with joins will still work.
 
+#### Tracking datetime fields with a fixed time zone
+
+The plugin supports tracking datetime field changes when the field has a time zone annotated.
+
+```cds
+extend Incidents with elements {
+  closedAt : DateTime @changelog @Common.Timezone : 'Europe/Berlin';
+  openedAt : DateTime @changelog @Common.Timezone : openedTimeZone;
+  openedTimeZone : String @Common.IsTimezone;
+}
+```
+
+In both cases the plugin will show the annotated time zone for change values in changes for the two fields. In the second case the time zone is dynamically fetched and modifications to the time zone field will also reflect in the change records for that field.
+
 ## Advanced Options
 
 ### Altered table view
