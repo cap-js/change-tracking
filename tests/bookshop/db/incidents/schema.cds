@@ -37,6 +37,7 @@ entity Incidents : cuid, managed {
   title          : String @title: 'Title';
   urgency        : Association to Urgency default 'M';
   status         : Association to Status default 'N' @changelog : [status.descr] @title : 'Status';
+  status2        : Association to Status default 'N' @changelog : [status.descr, ID] @title : 'Status';
   date           : Date @title : 'date' @changelog;
   datetime       : DateTime @title : 'datetime' @changelog;
   datetimeWTimeZone : DateTime @title : 'datetime with TimeZone' @changelog @Common : { Timezone : 'Asia/Riyadh' };
