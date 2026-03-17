@@ -177,6 +177,24 @@ customer @changelog: [customer.name];
 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
 
+#### Localized values
+If a human-readable value is annotated for the changelog, it will be localized.
+
+```cds
+extend Incidents with elements {
+  status: Association to one Status @changelog: [status.descr];
+}
+
+entity Status {
+  key code: String(1);
+      descr: localized String(20);
+}
+```
+
+By default the value label stored for the change is localized in the language of the user who caused the change. Meaning if a German speaking user changes the status, the human-readable value would be by default in German.
+
+In cases, like above, where the human-readable value only consists of one field, targets a localized property and goes along the (un-)managed association, a dynamic human-readable value is used, meaning if an English-speaking user looks at the changes, the value label will be shown in English, for a French-speaking user in French and so on.
+
 ### Tracing any kind of change
 
 Change tracking is implemented with Database triggers and supports HANA Cloud, SQLite, Postgres and H2.
