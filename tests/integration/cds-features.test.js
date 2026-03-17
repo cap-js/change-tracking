@@ -619,7 +619,7 @@ describe('CDS Features', () => {
 			});
 		});
 
-		it('ValueFrom and ValueTo labels fallback to default label is locale is unknown', async () => {
+		it('ValueFrom and ValueTo labels fallback to default label is locale if unknown', async () => {
 			const incidentID = await newIncident();
 			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
