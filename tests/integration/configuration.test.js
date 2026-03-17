@@ -119,6 +119,61 @@ describe('Configuration Options', () => {
 		expect(changes.length).toEqual(1);
 	});
 
+	(isHana ? it.skip : it)('skips create logging for composition children during deep insert when disableCreateTracking is enabled', async () => {
+		cds.env.requires['change-tracking'].disableCreateTracking = true;
+		await regenerateTriggers(variantEntities);
+		const variantSrv = await cds.connect.to('VariantTesting');
+		const { ChangeView } = variantSrv.entities;
+
+		const rootID = cds.utils.uuid();
+		const level1ID = cds.utils.uuid();
+		const level2ID = cds.utils.uuid();
+
+		await POST(`/odata/v4/variant-testing/RootSample`, {
+			ID: rootID,
+			title: 'Root for disable-create test',
+			children: [
+				{
+					ID: level1ID,
+					title: 'Level1 for disable-create test',
+					children: [
+						{
+							ID: level2ID,
+							title: 'Level2 for disable-create test'
+						}
+					]
+				}
+			]
+		});
+
+		// No create changes should exist for root entity
+		const rootChanges = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.RootSample',
+			entityKey: rootID,
+			modification: 'create'
+		});
+		expect(rootChanges.length).toEqual(0);
+
+		// No create changes should exist for level1 child entity
+		const level1Changes = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level1Sample',
+			entityKey: level1ID,
+			modification: 'create'
+		});
+		expect(level1Changes.length).toEqual(0);
+
+		// No create changes should exist for level2 grandchild entity
+		const level2Changes = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level2Sample',
+			entityKey: level2ID,
+			modification: 'create'
+		});
+		expect(level2Changes.length).toEqual(0);
+
+		cds.env.requires['change-tracking'].disableCreateTracking = false;
+		await regenerateTriggers(variantEntities);
+	});
+
 	(isHana ? it.skip : it)('skips delete logging when disableDeleteTracking is enabled', async () => {
 		cds.env.requires['change-tracking'].disableDeleteTracking = true;
 		await regenerateTriggers('sap.change_tracking.Level2Sample');
