@@ -8,5 +8,6 @@
 	"src/gen/**/*.csv",
 	"src/gen/**/*.hdbtabledata",
 	"src/gen/data/*.csv",
-	"src/gen/data/*.hdbtabledata"
+	"src/gen/data/*.hdbtabledata",
+	"src/gen/**/sap.changelog.Changes.hdbtable"
 ]
