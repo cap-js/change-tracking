@@ -293,7 +293,7 @@ describe('@changelog annotation interpretation', () => {
 
 		// valueDataType field only appears in db table Changes
 		// there are no localization features for table Changes
-		const authorUpdateChangesInDb = await SELECT.from(adminService.entities.ChangeView).where({
+		const authorUpdateChangesInDb = await SELECT.from(ChangeView).where({
 			entity: 'sap.capire.bookshop.Books',
 			entityKey: bookID,
 			attribute: 'author',
@@ -348,16 +348,16 @@ describe('@changelog annotation interpretation', () => {
 	});
 
 	it('excludes fields annotated with @PersonalData from change tracking', async () => {
-		const adminService = await cds.connect.to('AdminService');
 		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView, DifferentFieldTypes } = testingSRV.entities;
 		const ID = cds.utils.uuid();
-		await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries({
+		await INSERT.into(DifferentFieldTypes).entries({
 			ID,
 			dppField1: 'John Doe',
 			dppField2: 'John Doe'
 		});
 
-		const changes = await SELECT.from(adminService.entities.ChangeView).where({
+		const changes = await SELECT.from(ChangeView).where({
 			entity: 'sap.change_tracking.DifferentFieldTypes',
 			entityKey: ID,
 			attribute: { in: ['dppField1', 'dppField2'] }
@@ -369,6 +369,7 @@ describe('@changelog annotation interpretation', () => {
 	describe('Code lists resolution', () => {
 		it('displays human-readable code list name when single attribute is annotated with @changelog', async () => {
 			const adminService = await cds.connect.to('AdminService');
+			const { ChangeView } = adminService.entities;
 
 			// Create new BookStore with lifecycle status
 			const bookStoreID = cds.utils.uuid();
@@ -381,7 +382,7 @@ describe('@changelog annotation interpretation', () => {
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 			const lifecycleStatusChanges = await adminService.run(
-				SELECT.from(adminService.entities.ChangeView).where({
+				SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.BookStores',
 					attribute: 'lifecycleStatus',
 					entityKey: bookStoreID
@@ -405,7 +406,7 @@ describe('@changelog annotation interpretation', () => {
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 			const lifecycleStatusUpdateChanges = await adminService.run(
-				SELECT.from(adminService.entities.ChangeView).where({
+				SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.BookStores',
 					attribute: 'lifecycleStatus',
 					modification: 'update',
@@ -420,7 +421,7 @@ describe('@changelog annotation interpretation', () => {
 			expect(lifecycleStatusUpdateChange.valueChangedToLabel).toEqual('Closed');
 		});
 
-		it('displays combined code list values when multiple attributes are annotated with @changelog', async () => {
+		it('displays resolved code list values and direct attributes when attributes are annotated with @changelog', async () => {
 			const adminService = await cds.connect.to('AdminService');
 			const { ChangeView } = adminService.entities;
 
@@ -486,6 +487,49 @@ describe('@changelog annotation interpretation', () => {
 			expect(bookTypeUpdateChange.parent_ID).not.toBeNull();
 			expect(bookTypeUpdateChange.parent_entity).toEqual('sap.capire.bookshop.BookStores');
 			expect(bookTypeUpdateChange.parent_entityKey).toEqual(bookStoreID);
+		});
+
+		it('displays combined code list values when multiple attributes are annotated with @changelog', async () => {
+			const adminService = await cds.connect.to('AdminService');
+			const { ChangeView } = adminService.entities;
+
+			// Create test data: City with Country, then BookStore referencing the City
+			const cityID = cds.utils.uuid();
+			const countryID = cds.utils.uuid();
+			const bookStoreID = cds.utils.uuid();
+
+			await INSERT.into('sap.capire.bookshop.Country').entries({
+				ID: countryID,
+				countryName_name: 'Test Country',
+				countryName_code: 'TC'
+			});
+
+			await INSERT.into('sap.capire.bookshop.City').entries({
+				ID: cityID,
+				name: 'Test City',
+				country_ID: countryID
+			});
+
+			await POST(`/odata/v4/admin/BookStores`, {
+				ID: bookStoreID,
+				name: 'Test BookStore',
+				location: 'Test Location',
+				city_ID: cityID
+			});
+
+			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+			const cityChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.BookStores',
+				entityKey: bookStoreID,
+				attribute: 'city'
+			});
+			expect(cityChanges.length).toEqual(1);
+			expect(cityChanges[0]).toMatchObject({
+				modification: 'create',
+				valueChangedFromLabel: null,
+				valueChangedToLabel: 'Test Location, Test City, TC'
+			});
 		});
 	});
 });
