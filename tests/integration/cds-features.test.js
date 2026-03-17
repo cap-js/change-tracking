@@ -484,4 +484,196 @@ describe('CDS Features', () => {
 			expect(changes[0].valueChangedTo).toEqual(null);
 		});
 	});
+
+	describe('Dynamic localization', () => {
+		async function newIncident() {
+			const res = await POST(`odata/v4/processor/Incidents`, {
+				customer_ID: '1004161',
+				title: 'Strange noise when switching off Inverter',
+				urgency_code: 'M',
+				status_code: 'N'
+			});
+			await POST(`odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+			return res.data.ID;
+		}
+
+		it('ValueFrom and ValueTo labels are localized', async () => {
+			const incidentID = await newIncident();
+			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+
+			await PATCH(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)`, {
+				status_code: 'R'
+			});
+
+			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+				headers: { 'Accept-Language': 'de' }
+			});
+			const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChange).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'Neu',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Gelöst'
+			});
+
+			const {
+				data: { value: changesEN }
+			} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+				headers: { 'Accept-Language': 'en' }
+			});
+			const statusChangeEN = changesEN.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChangeEN).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'New',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Resolved'
+			});
+		});
+
+		it('ValueFrom and ValueTo labels are localized if property and entity got renamed in service', async () => {
+			const {
+				data: { ID: incidentID }
+			} = await POST(`odata/v4/localization/Incidents`, {
+				customer_ID: '1004161',
+				title: 'Strange noise when switching off Inverter',
+				urgency_code: 'M',
+				renamedStatus_code: 'N'
+			});
+
+			await PATCH(`odata/v4/localization/Incidents(ID=${incidentID})`, {
+				renamedStatus_code: 'R'
+			});
+
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`, {
+				headers: { 'Accept-Language': 'de' }
+			});
+			const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChange).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'Neu',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Gelöst'
+			});
+
+			const {
+				data: { value: changesEN }
+			} = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`, {
+				headers: { 'Accept-Language': 'en' }
+			});
+			const statusChangeEN = changesEN.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChangeEN).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'New',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Resolved'
+			});
+		});
+
+		it('ValueFrom and ValueTo labels are localized if the label path uses an unmanaged association where the field is the foreign key.', async () => {
+			const {
+				data: { ID: incidentID }
+			} = await POST(`odata/v4/localization/DynamicLocalizationScenarios`, {
+				status4: 'N'
+			});
+
+			await PATCH(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})`, {
+				status4: 'R'
+			});
+
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})/changes`, {
+				headers: { 'Accept-Language': 'de' }
+			});
+			const statusChange = changes.find((change) => change.attribute === 'status4' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChange).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'Neu',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Gelöst'
+			});
+
+			const {
+				data: { value: changesEN }
+			} = await GET(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})/changes`, {
+				headers: { 'Accept-Language': 'en' }
+			});
+			const statusChangeEN = changesEN.find((change) => change.attribute === 'status4' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChangeEN).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'New',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Resolved'
+			});
+		});
+
+		it('ValueFrom and ValueTo labels fallback to default label is locale if unknown', async () => {
+			const incidentID = await newIncident();
+			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+
+			await PATCH(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)?sap-locale=de`, {
+				status_code: 'R'
+			});
+
+			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate?sap-locale=de`, {});
+
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+				headers: { 'Accept-Language': 'en_GB' }
+			});
+			const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChange).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'Neu',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Gelöst'
+			});
+		});
+
+		it('ValueFrom and ValueTo labels are not localized if changelog has multiple labels', async () => {
+			const { ChangeView, DynamicLocalizationScenarios } = cds.entities('LocalizationService');
+
+			expect(DynamicLocalizationScenarios.elements.status1['@changelog'].length).toEqual(2);
+			const valueChangedFromLabel = ChangeView.query.SELECT.columns.find((c) => c.as === 'valueChangedFromLabel');
+			expect(valueChangedFromLabel.xpr.some((r) => r.val === 'status1')).toEqual(false);
+			const valueChangedToLabel = ChangeView.query.SELECT.columns.find((c) => c.as === 'valueChangedToLabel');
+			expect(valueChangedToLabel.xpr.some((r) => r.val === 'status1')).toEqual(false);
+		});
+
+		it('ValueFrom and ValueTo labels are not localized if changelog label uses another association path', async () => {
+			const { ChangeView, DynamicLocalizationScenarios } = cds.entities('LocalizationService');
+
+			expect(DynamicLocalizationScenarios.elements.status1['@changelog'][0]['=']).toEqual('status1.descr');
+			const valueChangedFromLabel = ChangeView.query.SELECT.columns.find((c) => c.as === 'valueChangedFromLabel');
+			expect(valueChangedFromLabel.xpr.some((r) => r.val === 'status2')).toEqual(false);
+			const valueChangedToLabel = ChangeView.query.SELECT.columns.find((c) => c.as === 'valueChangedToLabel');
+			expect(valueChangedToLabel.xpr.some((r) => r.val === 'status2')).toEqual(false);
+		});
+
+		it('ValueFrom and ValueTo labels are not localized if changelog label association path has multiple keys', async () => {
+			const { ChangeView, DynamicLocalizationScenarios } = cds.entities('LocalizationService');
+
+			expect(DynamicLocalizationScenarios.elements.status3['@changelog'][0]['=']).toEqual('status3.name');
+			expect(DynamicLocalizationScenarios.elements.status3_code).toBeTruthy();
+			expect(DynamicLocalizationScenarios.elements.status3_code2).toBeTruthy();
+			const valueChangedFromLabel = ChangeView.query.SELECT.columns.find((c) => c.as === 'valueChangedFromLabel');
+			expect(valueChangedFromLabel.xpr.some((r) => r.val === 'status3')).toEqual(false);
+			const valueChangedToLabel = ChangeView.query.SELECT.columns.find((c) => c.as === 'valueChangedToLabel');
+			expect(valueChangedToLabel.xpr.some((r) => r.val === 'status3')).toEqual(false);
+		});
+	});
 });
