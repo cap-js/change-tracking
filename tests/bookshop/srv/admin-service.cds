@@ -42,6 +42,7 @@ annotate AdminService.BookStores with @changelog: [name] {
   books           @changelog                    : [books.title];
   lifecycleStatus @changelog                    : [lifecycleStatus.name];
   city            @changelog                    : [
+    location,
     city.name,
     city.country.countryName.code
   ]
