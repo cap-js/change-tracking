@@ -519,13 +519,13 @@ describe('@changelog annotation interpretation', () => {
 
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
-			const bookTypeChanges = await SELECT.from(ChangeView).where({
+			const cityChanges = await SELECT.from(ChangeView).where({
 				entity: 'sap.capire.bookshop.BookStores',
 				entityKey: bookStoreID,
 				attribute: 'city'
 			});
-			expect(bookTypeChanges.length).toEqual(1);
-			expect(bookTypeChanges[0]).toMatchObject({
+			expect(cityChanges.length).toEqual(1);
+			expect(cityChanges[0]).toMatchObject({
 				modification: 'create',
 				valueChangedFromLabel: null,
 				valueChangedToLabel: 'Test Location, Test City, TC'
