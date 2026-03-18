@@ -127,16 +127,23 @@ Now you are ready to deploy your application again to HANA with either `cds depl
 
 ### Create Hierarchy Mapping 
 
-The new version of change-tracking allows to track children changes on parents and therefore we provide a procedure that allows to create the necessary backlinks. Simply call the following procedure.
+The new version of change-tracking tracks composition children changes on parents. To create the necessary backlink entries for existing change data, generate a HANA stored procedure by running:
 
-```sql
-
+```bash
+npx changelog-restore-backlinks /path/to/your/project
 ```
 
+This compiles your CDS model, detects all composition relationships, and writes a `SAP_CHANGELOG_RESTORE_BACKLINKS.hdbprocedure` file into `db/src/` of your project. Deploy it together with your application, then call:
 
 ```sql
-CALL "sap_changelog_Changes_v1_migrate"();
+CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();
 ```
+
+The procedure is idempotent — it only creates parent entries where they don't already exist and only updates child entries that don't yet have a `parent_ID`. You can safely call it multiple times.
+
+After running the procedure you can remove the `.hdbprocedure` file from `db/src/` again.
+
+> **Note:** The script is also useful for v2 users who want to regenerate backlinks (e.g., after data recovery or if backlinks were lost due to issues).
 
 ### Cleanup 
 After sucessful migration, you can adjust your undeploy.json and add the migration table again, so that you can use `.hdbtable`.

@@ -10,7 +10,11 @@
 	"author": "SAP SE (https://www.sap.com)",
 	"license": "Apache-2.0",
 	"main": "cds-plugin.js",
+	"bin": {
+		"changelog-restore-backlinks": "bin/restore-backlinks.js"
+	},
 	"files": [
+		"bin",
 		"lib",
 		"_i18n",
 		"index.cds",
