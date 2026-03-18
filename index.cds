@@ -76,6 +76,8 @@ entity Changes {
 
       valueDataType     : String(5000)             @title: '{i18n>Changes.valueDataType}';
       changeLog         : Association to ChangeLog @title: '{i18n>ChangeLog.ID}' @UI.Hidden;
+      createdAt         : managed:createdAt @title : '{i18n>ChangeLog.createdAt}';
+      createdBy         : managed:createdBy @title : '{i18n>ChangeLog.createdBy}';
 }
 
 annotate ChangeView with @(UI: {
