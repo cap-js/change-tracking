@@ -15,22 +15,21 @@ Because the migration involves copying data **from `ChangeLog` into `Changes`** 
 
 ## Step-by-Step Guide
 
+### Step 1: Deploy Intermediate Schema
 
-## Step 1: Deploy Intermediate Schema
-
-Make sure that you are using the version `1.2.0` of the change-tracking plugin. You can check with: 
+Make sure you are using version `1.2.0` of the change-tracking plugin. You can check with:
 
 ```bash
-
+npm ls @cap-js/change-tracking
 ```
 
-After that, you can deploy your database to HANA with either `cds deploy -2 hana` or deploy the entire application with `cds up`.
+Then deploy your database to HANA with either `cds deploy -2 hana` or deploy the entire application with `cds up`.
 
-This step is necessary since two new columns were added to the `Changes` table that are necessary for the migration.
+This step is necessary because two new columns are added to the `Changes` table that are required for the migration.
 
-## Step 2: Update the Changes Table
+### Step 2: Update the Changes Table
 
-Run the following merge command to copy the values for the columns `createdAt` and `createdBy` from the table `sap.changelog.ChangeLog` to `sap.changelog.Changes`.
+Run the following merge command to copy `createdAt` and `createdBy` from `sap.changelog.ChangeLog` to `sap.changelog.Changes`:
 
 ```sql
 MERGE INTO SAP_CHANGELOG_CHANGES AS c 
@@ -41,7 +40,7 @@ MERGE INTO SAP_CHANGELOG_CHANGES AS c
 	    c.createdBy = cl.createdBy;
 ```
 
-## Step 3: Deploy new schema with Migration Table
+### Step 3: Deploy New Schema with Migration Table
 
 Update the change-tracking dependency to version 2 in your `package.json`:
 
@@ -110,7 +109,7 @@ UPDATE sap_changelog_Changes SET modification = modification_tmp;
 
 ALTER TABLE sap_changelog_Changes DROP (attribute_tmp, entity_tmp, modification_tmp);
 
---- Drop the columns which are not needed anymore
+-- Drop columns that are no longer needed
 ALTER TABLE sap_changelog_Changes DROP (serviceEntity, parentEntityID, parentKey, serviceEntityPath, changeLog_ID);
 ```
 
@@ -123,24 +122,21 @@ Also, add both tables `Changes` and `ChangeLog` to your `undeploy.json`:
 ]
 ```
 
-Now you are ready to deploy your application again to HANA with either `cds deploy -2 hana` or `cds up`.
+Now deploy your application again to HANA with either `cds deploy -2 hana` or `cds up`.
 
-## Step 4: Cleanup
+### Step 4: Cleanup
 
-After migarting the table, you need to remove the tables `Changes`and `ChangeLog` from the undeploy.json again. In addtion, remove the migration previously added `sap.changelog.Changes.hdbmigrationtable` under `db/src/` and add the migration table to the undeploy.json:
+After migrating the tables, update your `undeploy.json`: remove the `.hdbtable` entries for `Changes` and `ChangeLog`, and add the migration table instead. Also remove the `sap.changelog.Changes.hdbmigrationtable` file from `db/src/`.
 
 ```json
 [
   "src/gen/**/sap.changelog.Changes.hdbmigrationtable"
 ]
-
-// oder "src/sap.changelog.Changes.hdbmigrationtable" ??
-
-This is very important to remove the previosuly added .hdbtable from the undeploy.json because otherwise the table is undeployt again and all your data is gone. 
-
 ```
 
-### Create Hierarchy Mapping 
+> **Important:** You must remove the `.hdbtable` entries from `undeploy.json`. If they remain, the table will be undeployed and all your data will be lost.
+
+### Step 5: Create Hierarchy Mapping
 
 The new version of change-tracking tracks composition children changes on parents. To create the necessary backlink entries for existing change data, generate a HANA stored procedure by running:
 
@@ -156,8 +152,6 @@ CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();
 
 The procedure is idempotent — it only creates parent entries where they don't already exist and only updates child entries that don't yet have a `parent_ID`. You can safely call it multiple times.
 
-After running the procedure you can remove the `.hdbprocedure` file from `db/src/` again.
+After running the procedure, remove the `.hdbprocedure` file from `db/src/` and add it to `undeploy.json` to ensure it is cleaned up on the next deployment.
 
-> **Note:** The script is also useful for v2 users who want to regenerate backlinks (e.g., after data recovery or if backlinks were lost due to issues).
-
-You can then also add the procedure to the undeloy.json to make sure it is removed again.
+> **Note:** This script is also useful for v2 users who want to regenerate backlinks.
