@@ -1,35 +1,31 @@
 # Migration Guide: Change Tracking Plugin v1 to v2
 
-This guide explains how to migrate from v1 to v2 of the change tracking plugin.
+This guide explains how to migrate existing data from `@cap-js/change-tracking` v1 to v2.
 
 ## Overview
 
-In v1, change tracking data was split across two tables:
+In version 1, change tracking data was split across two tables and tracked on the application layer:
 
 - **`sap_changelog_ChangeLog`** — one row per change event (who changed what, when)
 - **`sap_changelog_Changes`** — one row per changed attribute (the actual field-level diffs)
 
-In v2, the `ChangeLog` table is removed entirely. All data is stored directly on the `Changes` table. Several columns were also renamed, resized, or removed.
-
-Because the migration involves copying data **from** `ChangeLog` **into** `Changes` (a cross-table operation), it cannot be done with an `.hdbmigrationtable` alone. The following guide explains the process step by step.
+In v2, the `ChangeLog` table is removed and the schema of `Changes` is adjusted to store all data directly within it.
 
 ## Step-by-Step Guide
 
-### Step 1: Deploy Intermediate Schema
+### Step 1: Use the latest v1 version of the plugin
 
-Make sure you are using version `1.2.0` of the change-tracking plugin. You can check with:
+Make sure you are using version `1.2.0` of the `@cap-js/change-tracking` plugin and that this version is deployed to your database. You can check the version with:
 
 ```bash
 npm ls @cap-js/change-tracking
 ```
 
-Then deploy your database to HANA with either `cds deploy -2 hana` or deploy the entire application with `cds up`.
+This step is necessary because version `1.2.0` includes two new columns in `Changes` which are required for the migration.
 
-This step is necessary because two new columns are added to the `Changes` table that are required for the migration.
+### Step 2: Copy data from the Changelog table to the Changes table
 
-### Step 2: Update the Changes Table
-
-Run the following merge command to copy `createdAt` and `createdBy` from `sap.changelog.ChangeLog` to `sap.changelog.Changes`:
+Run the following SQL command to copy `createdAt` and `createdBy` from `sap.changelog.ChangeLog` to `sap.changelog.Changes` for existing data:
 
 ```sql
 MERGE INTO SAP_CHANGELOG_CHANGES AS c
@@ -40,15 +36,17 @@ MERGE INTO SAP_CHANGELOG_CHANGES AS c
 	    c.createdBy = cl.createdBy;
 ```
 
-### Step 3: Deploy New Schema with Migration Table
+### Step 3: Update to version 2
 
-Update the change-tracking dependency to version 2 in your `package.json`:
+Update the `@cap-js/change-tracking` dependency to version 2.
 
 ```bash
 npm i @cap-js/change-tracking@2
 ```
 
-In addition, add the `sap.changelog.Changes.hdbmigrationtable` under `db/src/`:
+### Step 4: Add the migration table
+
+Add the `sap.changelog.Changes.hdbmigrationtable` under `db/src/`:
 
 ```sql
 == version=2
@@ -113,35 +111,49 @@ ALTER TABLE sap_changelog_Changes DROP (attribute_tmp, entity_tmp, modification_
 ALTER TABLE sap_changelog_Changes DROP (serviceEntity, parentEntityID, parentKey, serviceEntityPath, changeLog_ID);
 ```
 
-Also, add both tables `Changes` and `ChangeLog` to your `undeploy.json`:
+### Step 5: Add undeploy.json configuration
+
+Add both old tables `Changes` and `ChangeLog` to your `undeploy.json`:
 
 ```json
-["src/gen/**/sap.changelog.Changes.hdbtable", "src/gen/**/sap.changelog.ChangeLog.hdbtable"]
+[
+  ...,
+  "src/gen/**/sap.changelog.Changes.hdbtable",
+  "src/gen/**/sap.changelog.ChangeLog.hdbtable"
+]
 ```
 
-Now deploy your application again to HANA with either `cds deploy -2 hana` or `cds up`.
+### Step 6: Deploy your application with version 2
 
-### Step 4: Cleanup
+Use `cds deploy -2 hana` or `cds up` to deploy the new schema.
+
+### Step 7: Cleanup
 
 After migrating the tables, update your `undeploy.json`: remove the `.hdbtable` entries for `Changes` and `ChangeLog`, and add the migration table instead. Also remove the `sap.changelog.Changes.hdbmigrationtable` file from `db/src/`.
 
 ```json
-["src/gen/**/sap.changelog.Changes.hdbmigrationtable"]
+[
+  ...,
+  "src/gen/**/sap.changelog.Changes.hdbmigrationtable"
+]
 ```
 
-> **Important:** You must remove the `.hdbtable` entries from `undeploy.json`. If they remain, the table will be undeployed and all your data will be lost.
+> [!IMPORTANT]
+> You must remove the `.hdbtable` entries from `undeploy.json`. If they remain, the table will be undeployed and all your data will be lost.
 
-### Step 5: Create Hierarchy Mapping
+### Step 8: Generate missing hierarchy information
 
-The new version of change-tracking tracks composition children changes on parents. The `SAP_CHANGELOG_RESTORE_BACKLINKS.hdbprocedure` is automatically generated and deployed with your HANA deployment. After deploying, call:
+The new version of `@cap-js/change-tracking` tracks composition children changes in a different way. Previously the change on a child would be assigned to the parent. With version 2 the change is assigned to the child, the actual entity on which the change was made, and another change record is created in the parent that the child had a change. Furthermore hierarchy information via a `parent` association is present in changes, to expand the change record in the parent and see the actual changes on the child.
+
+Call the `SAP_CHANGELOG_RESTORE_BACKLINKS` procedure to automatically generate missing parent change records for changes assigned to child entities.
 
 ```sql
 CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();
 ```
 
-The procedure is idempotent — it only creates parent entries where they don't already exist and only updates child entries that don't yet have a `parent_ID`. You can safely call it multiple times.
+The procedure is idempotent — it only creates parent change records where they don't already exist and only updates child change records that don't yet have a `parent_ID`. You can safely call it multiple times.
 
-The generation of the procedure can be disable by setting the `disableRestoreBacklinks` feature flag in your `package.json`:
+The generation of the procedure can be disabled by setting the `disableRestoreBacklinks` feature flag:
 
 ```json
 "cds": {
