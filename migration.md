@@ -32,7 +32,7 @@ This step is necessary because two new columns are added to the `Changes` table 
 Run the following merge command to copy `createdAt` and `createdBy` from `sap.changelog.ChangeLog` to `sap.changelog.Changes`:
 
 ```sql
-MERGE INTO SAP_CHANGELOG_CHANGES AS c 
+MERGE INTO SAP_CHANGELOG_CHANGES AS c
   USING SAP_CHANGELOG_CHANGELOG AS cl
 	ON c.changeLog_ID = cl.ID
 	WHEN MATCHED THEN UPDATE SET
@@ -80,8 +80,8 @@ ALTER TABLE sap_changelog_Changes ADD (parent_ID NVARCHAR(36), valueChangedFromL
 RENAME COLUMN sap_changelog_Changes.keys TO entityKey;
 UPDATE SAP_CHANGELOG_CHANGES
 SET entityKey =
-    CASE 
-        WHEN LOCATE(entityKey, '=') > 0 THEN 
+    CASE
+        WHEN LOCATE(entityKey, '=') > 0 THEN
               TRIM(SUBSTRING(entityKey, LOCATE(entityKey, '=') + 1))
         ELSE
             NULL
@@ -116,10 +116,7 @@ ALTER TABLE sap_changelog_Changes DROP (serviceEntity, parentEntityID, parentKey
 Also, add both tables `Changes` and `ChangeLog` to your `undeploy.json`:
 
 ```json
-[
-  "src/gen/**/sap.changelog.Changes.hdbtable",
-  "src/gen/**/sap.changelog.ChangeLog.hdbtable"
-]
+["src/gen/**/sap.changelog.Changes.hdbtable", "src/gen/**/sap.changelog.ChangeLog.hdbtable"]
 ```
 
 Now deploy your application again to HANA with either `cds deploy -2 hana` or `cds up`.
@@ -129,9 +126,7 @@ Now deploy your application again to HANA with either `cds deploy -2 hana` or `c
 After migrating the tables, update your `undeploy.json`: remove the `.hdbtable` entries for `Changes` and `ChangeLog`, and add the migration table instead. Also remove the `sap.changelog.Changes.hdbmigrationtable` file from `db/src/`.
 
 ```json
-[
-  "src/gen/**/sap.changelog.Changes.hdbmigrationtable"
-]
+["src/gen/**/sap.changelog.Changes.hdbmigrationtable"]
 ```
 
 > **Important:** You must remove the `.hdbtable` entries from `undeploy.json`. If they remain, the table will be undeployed and all your data will be lost.
