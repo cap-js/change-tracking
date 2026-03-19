@@ -239,7 +239,6 @@ entity CHANGE_TRACKING_DUMMY {
   key X : String(5);
 }
 
-@cds.persistence.journal
 entity Changes : cuid {
   parent                : Association to one Changes;
   children              : Composition of many Changes

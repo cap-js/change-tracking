@@ -18,7 +18,7 @@ Because the migration involves copying data **from `ChangeLog` into `Changes`** 
 
 ## Step 1: Deploy Intermediate Schema
 
-Make sure that you are using the version `1.3.0` of the change-tracking plugin. You can check with: 
+Make sure that you are using the version `1.2.0` of the change-tracking plugin. You can check with: 
 
 ```bash
 
@@ -119,11 +119,26 @@ Also, add both tables `Changes` and `ChangeLog` to your `undeploy.json`:
 ```json
 [
   "src/gen/**/sap.changelog.Changes.hdbtable",
-  "src/gen/**/sap.changelog.ChangeLog.hdbtable",
+  "src/gen/**/sap.changelog.ChangeLog.hdbtable"
 ]
 ```
 
 Now you are ready to deploy your application again to HANA with either `cds deploy -2 hana` or `cds up`.
+
+## Step 4: Cleanup
+
+After migarting the table, you need to remove the tables `Changes`and `ChangeLog` from the undeploy.json again. In addtion, remove the migration previously added `sap.changelog.Changes.hdbmigrationtable` under `db/src/` and add the migration table to the undeploy.json:
+
+```json
+[
+  "src/gen/**/sap.changelog.Changes.hdbmigrationtable"
+]
+
+// oder "src/sap.changelog.Changes.hdbmigrationtable" ??
+
+This is very important to remove the previosuly added .hdbtable from the undeploy.json because otherwise the table is undeployt again and all your data is gone. 
+
+```
 
 ### Create Hierarchy Mapping 
 
@@ -145,5 +160,4 @@ After running the procedure you can remove the `.hdbprocedure` file from `db/src
 
 > **Note:** The script is also useful for v2 users who want to regenerate backlinks (e.g., after data recovery or if backlinks were lost due to issues).
 
-### Cleanup 
-After sucessful migration, you can adjust your undeploy.json and add the migration table again, so that you can use `.hdbtable`.
+You can then also add the procedure to the undeloy.json to make sure it is removed again.
