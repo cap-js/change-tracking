@@ -45,7 +45,8 @@
 			"change-tracking": {
 				"model": "@cap-js/change-tracking",
 				"maxDisplayHierarchyDepth": 3,
-				"preserveDeletes": false
+				"preserveDeletes": false,
+				"procedureForRestoringBacklinks": true
 			}
 		}
 	},
