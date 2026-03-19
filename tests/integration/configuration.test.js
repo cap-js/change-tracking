@@ -3,7 +3,7 @@ const path = require('path');
 const { regenerateTriggers } = require('../test-utils.js');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, DELETE, PATCH, GET, axios } = cds.test(bookshop);
+const { POST, PATCH, GET, axios } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice', password: 'admin' };
 
 const isHana = cds.env.requires?.db?.kind === 'hana';
@@ -425,6 +425,95 @@ describe('Configuration Options', () => {
 	});
 });
 
+describe('Restore Backlinks Procedure', () => {
+	it('restores backlinks for composition relationships', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { RootSample, ChangeView } = testingSRV.entities;
+
+		const rootID = cds.utils.uuid();
+		const lvl1ID = cds.utils.uuid();
+		const lvl2ID = cds.utils.uuid();
+
+		const sampleData = {
+			ID: rootID,
+			title: 'RootSample title3',
+			children: [
+				{
+					ID: lvl1ID,
+					title: 'Level1Sample title3',
+					children: [
+						{
+							ID: lvl2ID,
+							title: 'Level2Sample title3'
+						}
+					]
+				}
+			]
+		};
+		await INSERT.into(RootSample).entries(sampleData);
+
+		// Capture the original state: 5 records (3 title + 2 composition)
+		const originalChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
+		expect(originalChanges.length).toEqual(5);
+
+		const originalCompositionChanges = originalChanges.filter((c) => c.attribute === 'children');
+		const compositionIDs = originalCompositionChanges.map((c) => c.ID);
+		expect(originalCompositionChanges.length).toEqual(2);
+
+		// Save original composition records as templates for later comparison
+		const originalRootChildren = originalChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children');
+		const originalLvl1Children = originalChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'children');
+
+		// Break parent_ID links first to prevent cascade delete, then delete composition entries
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: compositionIDs });
+		await DELETE.from('sap.changelog.Changes').where({ ID: compositionIDs });
+
+		// Verify only 3 title records remain, all with broken backlinks
+		const afterChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
+		expect(afterChanges.length).toEqual(3);
+		expect(afterChanges.every((c) => c.attribute === 'title')).toBeTruthy();
+		expect(afterChanges.every((c) => c.parent_ID === null)).toBeTruthy();
+
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		// should have 5 records again (2 composition records recreated)
+		const restoredChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
+		expect(restoredChanges.length).toEqual(5);
+
+		const restoredRootChildren = restoredChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children');
+		expect(restoredRootChildren).toBeTruthy();
+		expect(restoredRootChildren).toMatchObject({
+			entityKey: originalRootChildren.entityKey,
+			valueDataType: originalRootChildren.valueDataType,
+			objectID: originalRootChildren.objectID,
+			modification: originalRootChildren.modification,
+			parent_ID: null
+		});
+
+		// Verify restored Level1Sample/children composition record matches original
+		const restoredLvl1Children = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'children');
+		expect(restoredLvl1Children).toBeTruthy();
+		expect(restoredLvl1Children).toMatchObject({
+			entityKey: originalLvl1Children.entityKey,
+			attribute: 'children',
+			valueDataType: originalLvl1Children.valueDataType,
+			objectID: originalLvl1Children.objectID,
+			modification: originalLvl1Children.modification,
+			parent_ID: restoredRootChildren.ID
+		});
+
+		// Verify title records now have parent_ID references restored
+		const restoredLvl1Title = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title');
+		expect(restoredLvl1Title.parent_ID).toEqual(restoredRootChildren.ID);
+
+		const restoredLvl2Title = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample' && c.attribute === 'title');
+		expect(restoredLvl2Title.parent_ID).toEqual(restoredLvl1Children.ID);
+
+		// Root title should remain without parent
+		const restoredRootTitle = restoredChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'title');
+		expect(restoredRootTitle.parent_ID).toBeNull();
+	});
+});
 describe('MTX Build', () => {
 	it('adds changes association only during runtime compilation, not during xtended CSN build', async () => {
 		const csn = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'xtended' });
