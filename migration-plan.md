@@ -1,6 +1,6 @@
 # Migration Guide: Change Tracking Plugin v1 to v2
 
-This guide explains how to migrate from v1 to v2 of the change tracking plugin. The migration requires **two sequential deployments** because data must be copied between tables in between.
+This guide explains how to migrate from v1 to v2 of the change tracking plugin.
 
 ## Overview
 
@@ -9,9 +9,9 @@ In v1, change tracking data was split across two tables:
 - **`sap_changelog_ChangeLog`** — one row per change event (who changed what, when)
 - **`sap_changelog_Changes`** — one row per changed attribute (the actual field-level diffs)
 
-In v2, the `ChangeLog` table is removed entirely. All data — including `createdAt`, `createdBy`, and `entityKey` — is stored directly on the `Changes` table. Several columns were also renamed, resized, or removed.
+In v2, the `ChangeLog` table is removed entirely. All data is stored directly on the `Changes` table. Several columns were also renamed, resized, or removed.
 
-Because the migration involves copying data **from `ChangeLog` into `Changes`** (a cross-table operation), it cannot be done with an `.hdbmigrationtable` alone. A stored procedure is required in between two deployments.
+Because the migration involves copying data **from** `ChangeLog` **into** `Changes` (a cross-table operation), it cannot be done with an `.hdbmigrationtable` alone. The following guide explains the process step by step.
 
 ## Step-by-Step Guide
 
@@ -138,13 +138,7 @@ After migrating the tables, update your `undeploy.json`: remove the `.hdbtable` 
 
 ### Step 5: Create Hierarchy Mapping
 
-The new version of change-tracking tracks composition children changes on parents. To create the necessary backlink entries for existing change data, generate a HANA stored procedure by running:
-
-```bash
-npx changelog-restore-backlinks /path/to/your/project
-```
-
-This compiles your CDS model, detects all composition relationships, and writes a `SAP_CHANGELOG_RESTORE_BACKLINKS.hdbprocedure` file into `db/src/` of your project. Deploy it together with your application, then call:
+The new version of change-tracking tracks composition children changes on parents. The `SAP_CHANGELOG_RESTORE_BACKLINKS.hdbprocedure` is automatically generated and deployed with your HANA deployment. After deploying, call:
 
 ```sql
 CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();
@@ -152,6 +146,16 @@ CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();
 
 The procedure is idempotent — it only creates parent entries where they don't already exist and only updates child entries that don't yet have a `parent_ID`. You can safely call it multiple times.
 
-After running the procedure, remove the `.hdbprocedure` file from `db/src/` and add it to `undeploy.json` to ensure it is cleaned up on the next deployment.
+The generation of the procedure can be disable by setting the `disableRestoreBacklinks` feature flag in your `package.json`:
 
-> **Note:** This script is also useful for v2 users who want to regenerate backlinks.
+```json
+"cds": {
+  "requires": {
+    "change-tracking": {
+      "disableRestoreBacklinks": true
+    }
+  }
+}
+```
+
+> **Note:** The procedure is also useful for v2 users who want to regenerate backlinks.
