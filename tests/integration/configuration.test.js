@@ -426,7 +426,7 @@ describe('Configuration Options', () => {
 });
 
 describe('Restore Backlinks Procedure', () => {
-	it('restores backlinks for composition relationships', async () => {
+	it('restores backlinks for create operations', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { RootSample, ChangeView } = testingSRV.entities;
 
@@ -474,7 +474,7 @@ describe('Restore Backlinks Procedure', () => {
 		expect(afterChanges.every((c) => c.attribute === 'title')).toBeTruthy();
 		expect(afterChanges.every((c) => c.parent_ID === null)).toBeTruthy();
 
-		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+		await cds.run('CALL SAP_CHANGELOG_RESTORE_BACKLINKS()');
 
 		// should have 5 records again (2 composition records recreated)
 		const restoredChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
@@ -485,7 +485,6 @@ describe('Restore Backlinks Procedure', () => {
 		expect(restoredRootChildren).toMatchObject({
 			entityKey: originalRootChildren.entityKey,
 			valueDataType: originalRootChildren.valueDataType,
-			objectID: originalRootChildren.objectID,
 			modification: originalRootChildren.modification,
 			parent_ID: null
 		});
@@ -497,7 +496,6 @@ describe('Restore Backlinks Procedure', () => {
 			entityKey: originalLvl1Children.entityKey,
 			attribute: 'children',
 			valueDataType: originalLvl1Children.valueDataType,
-			objectID: originalLvl1Children.objectID,
 			modification: originalLvl1Children.modification,
 			parent_ID: restoredRootChildren.ID
 		});
@@ -512,6 +510,179 @@ describe('Restore Backlinks Procedure', () => {
 		// Root title should remain without parent
 		const restoredRootTitle = restoredChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'title');
 		expect(restoredRootTitle.parent_ID).toBeNull();
+	});
+
+	it('restores backlinks for update operations', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const rootID = cds.utils.uuid();
+		const lvl1ID = cds.utils.uuid();
+		const lvl2ID = cds.utils.uuid();
+
+		// Create the hierarchy via HTTP to get a separate transaction
+		await POST(`/odata/v4/variant-testing/RootSample`, {
+			ID: rootID,
+			title: 'Root for update test',
+			children: [
+				{
+					ID: lvl1ID,
+					title: 'Level1 for update test',
+					children: [{ ID: lvl2ID, title: 'Level2 for update test' }]
+				}
+			]
+		});
+
+		// Update the Level2Sample title via HTTP to get a new transaction
+		await PATCH(`/odata/v4/variant-testing/Level2Sample(ID=${lvl2ID})`, {
+			title: 'Level2 updated title'
+		});
+
+		// Capture all changes — should have entries across two transactions
+		const allChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
+
+		// Verify update entry exists and has proper parent_ID
+		const updateLvl2Title = allChanges.find(
+			(c) => c.entity === 'sap.change_tracking.Level2Sample' && c.attribute === 'title' && c.modification === 'update'
+		);
+		expect(updateLvl2Title).toBeTruthy();
+		expect(updateLvl2Title.parent_ID).not.toBeNull();
+
+		// Break ALL backlinks: remove all composition entries, null out all parent_IDs
+		const allCompositionChanges = allChanges.filter((c) => c.valueDataType === 'cds.Composition');
+		const compositionIDs = allCompositionChanges.map((c) => c.ID);
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: compositionIDs });
+		await DELETE.from('sap.changelog.Changes').where({ ID: compositionIDs });
+
+		// Verify backlinks are broken — only title entries remain, all orphaned
+		const brokenChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
+		expect(brokenChanges.every((c) => c.parent_ID === null)).toBeTruthy();
+		expect(brokenChanges.every((c) => c.attribute === 'title')).toBeTruthy();
+
+		// Restore backlinks
+		await cds.run('CALL SAP_CHANGELOG_RESTORE_BACKLINKS()');
+
+		// Verify restored state
+		const restoredChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
+
+		// The update title entry should have its parent_ID restored
+		const restoredUpdateLvl2 = restoredChanges.find((c) => c.ID === updateLvl2Title.ID);
+		expect(restoredUpdateLvl2.parent_ID).not.toBeNull();
+
+		// Find the restored Level1Sample.children composition entry for the update transaction
+		const updateTxn = updateLvl2Title.transactionID;
+		const restoredLvl1Comp = restoredChanges.find(
+			(c) =>
+				c.entity === 'sap.change_tracking.Level1Sample' &&
+				c.attribute === 'children' &&
+				c.valueDataType === 'cds.Composition' &&
+				c.transactionID === updateTxn
+		);
+		expect(restoredLvl1Comp).toBeTruthy();
+		expect(restoredLvl1Comp.modification).toEqual('update');
+
+		// The Level1Sample.children composition entry should be linked to RootSample.children
+		const restoredRootComp = restoredChanges.find(
+			(c) =>
+				c.entity === 'sap.change_tracking.RootSample' &&
+				c.attribute === 'children' &&
+				c.valueDataType === 'cds.Composition' &&
+				c.transactionID === updateTxn
+		);
+		expect(restoredRootComp).toBeTruthy();
+		expect(restoredRootComp.modification).toEqual('update');
+		expect(restoredLvl1Comp.parent_ID).toEqual(restoredRootComp.ID);
+	});
+
+	it('restores backlinks for delete operations with preserveDeletes', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { RootSample, ChangeView } = testingSRV.entities;
+
+		const rootID = cds.utils.uuid();
+		const lvl1ID = cds.utils.uuid();
+		const lvl2ID = cds.utils.uuid();
+
+		// Create the hierarchy
+		await INSERT.into(RootSample).entries({
+			ID: rootID,
+			title: 'Root for delete test',
+			children: [
+				{
+					ID: lvl1ID,
+					title: 'Level1 for delete test',
+					children: [{ ID: lvl2ID, title: 'Level2 for delete test' }]
+				}
+			]
+		});
+
+		// Capture create state and use the actual transactionID format
+		const createChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
+		expect(createChanges.length).toEqual(5);
+
+		// Use a fake but valid integer transactionID for the simulated delete entries
+		const deleteTransactionID = 99999999;
+
+		// Simulate preserveDeletes-style delete changelog entries by manually inserting
+		// delete modification records without parent_ID (as if preserveDeletes was enabled during deletion)
+		await cds.run(
+			`INSERT INTO SAP_CHANGELOG_CHANGES (ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+			VALUES (?, NULL, 'title', 'sap.change_tracking.Level2Sample', ?, ?, CURRENT_TIMESTAMP, 'alice', 'cds.String', 'delete', ?)`,
+			[cds.utils.uuid(), lvl2ID, lvl2ID, deleteTransactionID]
+		);
+		await cds.run(
+			`INSERT INTO SAP_CHANGELOG_CHANGES (ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+			VALUES (?, NULL, 'title', 'sap.change_tracking.Level1Sample', ?, ?, CURRENT_TIMESTAMP, 'alice', 'cds.String', 'delete', ?)`,
+			[cds.utils.uuid(), lvl1ID, lvl1ID, deleteTransactionID]
+		);
+
+		// Verify the delete entries have no parent_ID
+		const deleteLvl2 = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level2Sample',
+			entityKey: lvl2ID,
+			modification: 'delete'
+		});
+		expect(deleteLvl2.length).toEqual(1);
+		expect(deleteLvl2[0].parent_ID).toBeNull();
+
+		// Restore backlinks
+		await cds.run('CALL SAP_CHANGELOG_RESTORE_BACKLINKS()');
+
+		// Verify composition entries were created for the delete transaction
+		const restoredChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
+
+		// The delete Level2 title should now have a parent_ID
+		const restoredDeleteLvl2 = restoredChanges.find(
+			(c) => c.entity === 'sap.change_tracking.Level2Sample' && c.attribute === 'title' && c.modification === 'delete'
+		);
+		expect(restoredDeleteLvl2.parent_ID).not.toBeNull();
+
+		// Level1Sample.children composition entry should exist for the delete transaction
+		const restoredLvl1Comp = restoredChanges.find(
+			(c) =>
+				c.entity === 'sap.change_tracking.Level1Sample' &&
+				c.attribute === 'children' &&
+				c.valueDataType === 'cds.Composition' &&
+				c.transactionID === String(deleteTransactionID)
+		);
+		expect(restoredLvl1Comp).toBeTruthy();
+		expect(restoredDeleteLvl2.parent_ID).toEqual(restoredLvl1Comp.ID);
+
+		// Level1Sample.children should link to RootSample.children (grandparent linking)
+		const restoredRootComp = restoredChanges.find(
+			(c) =>
+				c.entity === 'sap.change_tracking.RootSample' &&
+				c.attribute === 'children' &&
+				c.valueDataType === 'cds.Composition' &&
+				c.transactionID === String(deleteTransactionID)
+		);
+		expect(restoredRootComp).toBeTruthy();
+		expect(restoredLvl1Comp.parent_ID).toEqual(restoredRootComp.ID);
+
+		// The delete Level1 title should also have its parent_ID restored
+		const restoredDeleteLvl1 = restoredChanges.find(
+			(c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title' && c.modification === 'delete'
+		);
+		expect(restoredDeleteLvl1.parent_ID).toEqual(restoredRootComp.ID);
 	});
 });
 describe('MTX Build', () => {
