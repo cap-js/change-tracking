@@ -89,9 +89,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.DateTime'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedFromLabel, change.valueChangedFrom
-                      )
+                      ) as DateTime)
             else null
           end
         )    as valueChangedFromLabelDateTime    : DateTime     @(title: '{i18n>Changes.valueChangedFrom}',
@@ -99,9 +99,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.DateTime' or valueDataType = 'cds.Timestamp'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedFromLabel, change.valueChangedFrom
-                      )
+                      ) as DateTime)
             else null
           end
         )    as valueChangedFromLabelDateTimeWTZ : DateTime     @(
@@ -111,9 +111,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.Time'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedFromLabel, change.valueChangedFrom
-                      )
+                      ) as Time)
             else null
           end
         )    as valueChangedFromLabelTime        : Time         @(title: '{i18n>Changes.valueChangedFrom}',
@@ -121,9 +121,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.Date'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedFromLabel, change.valueChangedFrom
-                      )
+                      ) as Date)
             else null
           end
         )    as valueChangedFromLabelDate        : Date         @(title: '{i18n>Changes.valueChangedFrom}',
@@ -131,9 +131,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.Timestamp'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedFromLabel, change.valueChangedFrom
-                      )
+                      ) as Timestamp)
             else null
           end
         )    as valueChangedFromLabelTimestamp   : Timestamp    @(title: '{i18n>Changes.valueChangedFrom}',
@@ -141,9 +141,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.Decimal'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedFromLabel, change.valueChangedFrom
-                      )
+                      ) as Decimal)
             else null
           end
         )    as valueChangedFromLabelDecimal     : Decimal      @(title: '{i18n>Changes.valueChangedFrom}',
@@ -157,9 +157,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.DateTime'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedToLabel, change.valueChangedTo
-                      )
+                      ) as DateTime)
             else null
           end
         )    as valueChangedToLabelDateTime      : DateTime     @(title: '{i18n>Changes.valueChangedTo}',
@@ -167,9 +167,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.DateTime' or valueDataType = 'cds.Timestamp'
-                 then COALESCE(
-                        change.valueChangedFromLabel, change.valueChangedTo
-                      )
+                 then cast(COALESCE(
+                        change.valueChangedToLabel, change.valueChangedTo
+                      ) as DateTime)
             else null
           end
         )    as valueChangedToLabelDateTimeWTZ   : DateTime     @(
@@ -179,9 +179,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.Time'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedToLabel, change.valueChangedTo
-                      )
+                      ) as Time)
             else null
           end
         )    as valueChangedToLabelTime          : Time         @(title: '{i18n>Changes.valueChangedTo}',
@@ -189,9 +189,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.Date'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedToLabel, change.valueChangedTo
-                      )
+                      ) as Date)
             else null
           end
         )    as valueChangedToLabelDate          : Date         @(title: '{i18n>Changes.valueChangedTo}',
@@ -199,9 +199,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.Timestamp'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedToLabel, change.valueChangedTo
-                      )
+                      ) as Timestamp)
             else null
           end
         )    as valueChangedToLabelTimestamp     : Timestamp    @(title: '{i18n>Changes.valueChangedTo}',
@@ -209,9 +209,9 @@ view ChangeView as
         (
           case
             when valueDataType = 'cds.Decimal'
-                 then COALESCE(
+                 then cast(COALESCE(
                         change.valueChangedToLabel, change.valueChangedTo
-                      )
+                      ) as Decimal)
             else null
           end
         )    as valueChangedToLabelDecimal       : Decimal      @(title: '{i18n>Changes.valueChangedTo}',

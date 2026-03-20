@@ -86,6 +86,7 @@ jobs:
             npm pkg set "overrides.@cap-js/db-service=^1"
             npm pkg set "overrides.@cap-js/postgres=^1"
             npm pkg set "overrides.@sap/cds-mtxs=^2"
+            npm pkg set "overrides.@sap/cds-dk=^8"
             npm pkg set "devDependencies.@cap-js/cds-types=^0.11"
             # Update workspace package dependencies to CDS 8 compatible versions
             cd ./tests/performance/perf-bookshop
