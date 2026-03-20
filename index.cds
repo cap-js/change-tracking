@@ -168,7 +168,7 @@ view ChangeView as
           case
             when valueDataType = 'cds.DateTime' or valueDataType = 'cds.Timestamp'
                  then cast(COALESCE(
-                        change.valueChangedFromLabel, change.valueChangedTo
+                        change.valueChangedToLabel, change.valueChangedTo
                       ) as DateTime)
             else null
           end
