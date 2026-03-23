@@ -123,6 +123,8 @@ Add both old tables `Changes` and `ChangeLog` to your `undeploy.json`:
 ]
 ```
 
+REVISIT: We nned to annotate Changes with either `@cds.persistence.journal` or add migration table to `undeploy.json`
+
 ### Step 6: Deploy your application with version 2
 
 Use `cds deploy -2 hana` or `cds up` to deploy the new schema.
@@ -134,7 +136,7 @@ After migrating the tables, update your `undeploy.json`: remove the `.hdbtable` 
 ```json
 [
   ...,
-  "src/gen/**/sap.changelog.Changes.hdbmigrationtable"
+  "src/sap.changelog.Changes.hdbmigrationtable",
 ]
 ```
 
