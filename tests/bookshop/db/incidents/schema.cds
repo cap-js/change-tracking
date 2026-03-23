@@ -37,20 +37,23 @@ entity Incidents : cuid, managed {
   title          : String @title: 'Title';
   urgency        : Association to Urgency default 'M';
   status         : Association to Status default 'N' @changelog : [status.descr] @title : 'Status';
-  date           : Date @title : 'date' ;
-  datetime       : DateTime @title : 'datetime' ;
-  datetimeWTimeZone : DateTime @title : 'datetime with TimeZone'  @Common : { Timezone : 'Asia/Riyadh' };
-  datetimeWDynamicTimeZone : DateTime @title : 'datetime with dynamic TimeZone'  @Common : { Timezone : timezone };
+  date           : Date @title : 'date' @changelog;
+  datetime       : DateTime @title : 'datetime' @changelog;
+  datetimeWTimeZone : DateTime @title : 'datetime with TimeZone' @changelog @Common : { Timezone : 'Asia/Riyadh' };
+  datetimeWDynamicTimeZone : DateTime @title : 'datetime with dynamic TimeZone' @changelog @Common : { Timezone : timezone };
   timezone : String default 'Asia/Riyadh' @Common.IsTimezone;
-  time           : Time @title : 'time' ;
-  timestamp      : Timestamp @title : 'timestamp' ;
-  decimalProp : Decimal @title : 'Decimal prop' ;
+  time           : Time @title : 'time' @changelog;
+  timestamp      : Timestamp @title : 'timestamp' @changelog;
+  decimalProp : Decimal @title : 'Decimal prop' @changelog;
   @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
     timestamp : type of managed:createdAt;
     author    : type of managed:createdBy;
     message   : String @changelog;
+    // descr     : Composition of one {
+    //   text : String @changelog;
+    // };
   };
   tasks : Composition of many IncidentTasks on tasks.incident = $self;
   task : Composition of one IncidentTasks on task.incident = $self and task.title = 'ANC';

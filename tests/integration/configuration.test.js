@@ -3,7 +3,7 @@ const path = require('path');
 const { regenerateTriggers } = require('../test-utils.js');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, PATCH, GET, axios } = cds.test(bookshop);
+const { POST, PATCH, DELETE, GET, axios } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice', password: 'admin' };
 
 const isHana = cds.env.requires?.db?.kind === 'hana';
@@ -426,7 +426,7 @@ describe('Configuration Options', () => {
 });
 
 describe('Restore Backlinks Procedure', () => {
-	it('restores backlinks for create operations', async () => {
+	(isHana ? it : it.skip)('restores backlinks for create operations', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { RootSample, ChangeView } = testingSRV.entities;
 
@@ -466,7 +466,7 @@ describe('Restore Backlinks Procedure', () => {
 
 		// Break parent_ID links first to prevent cascade delete, then delete composition entries
 		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: compositionIDs });
-		await DELETE.from('sap.changelog.Changes').where({ ID: compositionIDs });
+		await cds.delete('sap.changelog.Changes').where({ ID: compositionIDs });
 
 		// Verify only 3 title records remain, all with broken backlinks
 		const afterChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
@@ -474,7 +474,7 @@ describe('Restore Backlinks Procedure', () => {
 		expect(afterChanges.every((c) => c.attribute === 'title')).toBeTruthy();
 		expect(afterChanges.every((c) => c.parent_ID === null)).toBeTruthy();
 
-		await cds.run('CALL SAP_CHANGELOG_RESTORE_BACKLINKS()');
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
 
 		// should have 5 records again (2 composition records recreated)
 		const restoredChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
@@ -512,7 +512,7 @@ describe('Restore Backlinks Procedure', () => {
 		expect(restoredRootTitle.parent_ID).toBeNull();
 	});
 
-	it('restores backlinks for update operations', async () => {
+	(isHana ? it : it.skip)('restores backlinks for update operations', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { ChangeView } = testingSRV.entities;
 
@@ -552,7 +552,7 @@ describe('Restore Backlinks Procedure', () => {
 		const allCompositionChanges = allChanges.filter((c) => c.valueDataType === 'cds.Composition');
 		const compositionIDs = allCompositionChanges.map((c) => c.ID);
 		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: compositionIDs });
-		await DELETE.from('sap.changelog.Changes').where({ ID: compositionIDs });
+		await cds.delete('sap.changelog.Changes').where({ ID: compositionIDs });
 
 		// Verify backlinks are broken — only title entries remain, all orphaned
 		const brokenChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
@@ -560,7 +560,7 @@ describe('Restore Backlinks Procedure', () => {
 		expect(brokenChanges.every((c) => c.attribute === 'title')).toBeTruthy();
 
 		// Restore backlinks
-		await cds.run('CALL SAP_CHANGELOG_RESTORE_BACKLINKS()');
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
 
 		// Verify restored state
 		const restoredChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
@@ -594,7 +594,7 @@ describe('Restore Backlinks Procedure', () => {
 		expect(restoredLvl1Comp.parent_ID).toEqual(restoredRootComp.ID);
 	});
 
-	it('restores backlinks for delete operations with preserveDeletes', async () => {
+	(isHana ? it : it.skip)('restores backlinks for delete operations with preserveDeletes', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { RootSample, ChangeView } = testingSRV.entities;
 
@@ -645,7 +645,7 @@ describe('Restore Backlinks Procedure', () => {
 		expect(deleteLvl2[0].parent_ID).toBeNull();
 
 		// Restore backlinks
-		await cds.run('CALL SAP_CHANGELOG_RESTORE_BACKLINKS()');
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
 
 		// Verify composition entries were created for the delete transaction
 		const restoredChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
