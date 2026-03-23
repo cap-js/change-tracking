@@ -542,9 +542,7 @@ describe('Restore Backlinks Procedure', () => {
 		const allChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
 
 		// Verify update entry exists and has proper parent_ID
-		const updateLvl2Title = allChanges.find(
-			(c) => c.entity === 'sap.change_tracking.Level2Sample' && c.attribute === 'title' && c.modification === 'update'
-		);
+		const updateLvl2Title = allChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample' && c.attribute === 'title' && c.modification === 'update');
 		expect(updateLvl2Title).toBeTruthy();
 		expect(updateLvl2Title.parent_ID).not.toBeNull();
 
@@ -571,24 +569,12 @@ describe('Restore Backlinks Procedure', () => {
 
 		// Find the restored Level1Sample.children composition entry for the update transaction
 		const updateTxn = updateLvl2Title.transactionID;
-		const restoredLvl1Comp = restoredChanges.find(
-			(c) =>
-				c.entity === 'sap.change_tracking.Level1Sample' &&
-				c.attribute === 'children' &&
-				c.valueDataType === 'cds.Composition' &&
-				c.transactionID === updateTxn
-		);
+		const restoredLvl1Comp = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'children' && c.valueDataType === 'cds.Composition' && c.transactionID === updateTxn);
 		expect(restoredLvl1Comp).toBeTruthy();
 		expect(restoredLvl1Comp.modification).toEqual('update');
 
 		// The Level1Sample.children composition entry should be linked to RootSample.children
-		const restoredRootComp = restoredChanges.find(
-			(c) =>
-				c.entity === 'sap.change_tracking.RootSample' &&
-				c.attribute === 'children' &&
-				c.valueDataType === 'cds.Composition' &&
-				c.transactionID === updateTxn
-		);
+		const restoredRootComp = restoredChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children' && c.valueDataType === 'cds.Composition' && c.transactionID === updateTxn);
 		expect(restoredRootComp).toBeTruthy();
 		expect(restoredRootComp.modification).toEqual('update');
 		expect(restoredLvl1Comp.parent_ID).toEqual(restoredRootComp.ID);
@@ -651,37 +637,21 @@ describe('Restore Backlinks Procedure', () => {
 		const restoredChanges = await SELECT.from(ChangeView).where({ entityKey: [rootID, lvl1ID, lvl2ID] });
 
 		// The delete Level2 title should now have a parent_ID
-		const restoredDeleteLvl2 = restoredChanges.find(
-			(c) => c.entity === 'sap.change_tracking.Level2Sample' && c.attribute === 'title' && c.modification === 'delete'
-		);
+		const restoredDeleteLvl2 = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample' && c.attribute === 'title' && c.modification === 'delete');
 		expect(restoredDeleteLvl2.parent_ID).not.toBeNull();
 
 		// Level1Sample.children composition entry should exist for the delete transaction
-		const restoredLvl1Comp = restoredChanges.find(
-			(c) =>
-				c.entity === 'sap.change_tracking.Level1Sample' &&
-				c.attribute === 'children' &&
-				c.valueDataType === 'cds.Composition' &&
-				c.transactionID === String(deleteTransactionID)
-		);
+		const restoredLvl1Comp = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'children' && c.valueDataType === 'cds.Composition' && c.transactionID === String(deleteTransactionID));
 		expect(restoredLvl1Comp).toBeTruthy();
 		expect(restoredDeleteLvl2.parent_ID).toEqual(restoredLvl1Comp.ID);
 
 		// Level1Sample.children should link to RootSample.children (grandparent linking)
-		const restoredRootComp = restoredChanges.find(
-			(c) =>
-				c.entity === 'sap.change_tracking.RootSample' &&
-				c.attribute === 'children' &&
-				c.valueDataType === 'cds.Composition' &&
-				c.transactionID === String(deleteTransactionID)
-		);
+		const restoredRootComp = restoredChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children' && c.valueDataType === 'cds.Composition' && c.transactionID === String(deleteTransactionID));
 		expect(restoredRootComp).toBeTruthy();
 		expect(restoredLvl1Comp.parent_ID).toEqual(restoredRootComp.ID);
 
 		// The delete Level1 title should also have its parent_ID restored
-		const restoredDeleteLvl1 = restoredChanges.find(
-			(c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title' && c.modification === 'delete'
-		);
+		const restoredDeleteLvl1 = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title' && c.modification === 'delete');
 		expect(restoredDeleteLvl1.parent_ID).toEqual(restoredRootComp.ID);
 	});
 });
