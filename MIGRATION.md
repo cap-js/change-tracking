@@ -44,71 +44,18 @@ Update the `@cap-js/change-tracking` dependency to version 2.
 npm i @cap-js/change-tracking@2
 ```
 
-### Step 4: Add the migration table
+### Step 4: Enable the migration table
 
-Add the `sap.changelog.Changes.hdbmigrationtable` under `db/src/`:
+Enable the `addMigrationTable` configuration to automatically generate the `sap.changelog.Changes.hdbmigrationtable` artifact under `gen/src/` during the build.
 
-```sql
-== version=2
-COLUMN TABLE sap_changelog_Changes (
-  ID NVARCHAR(36) NOT NULL,
-  parent_ID NVARCHAR(36),
-  attribute NVARCHAR(127),
-  valueChangedFrom NVARCHAR(5000),
-  valueChangedTo NVARCHAR(5000),
-  valueChangedFromLabel NVARCHAR(5000),
-  valueChangedToLabel NVARCHAR(5000),
-  entity NVARCHAR(150),
-  entityKey NVARCHAR(5000),
-  objectID NVARCHAR(5000),
-  modification NVARCHAR(6),
-  valueDataType NVARCHAR(5000),
-  createdAt TIMESTAMP,
-  createdBy NVARCHAR(255),
-  transactionID BIGINT,
-  PRIMARY KEY(ID)
-)
-
-== migration=2
-RENAME COLUMN sap_changelog_Changes.entityID TO objectID;
-
-ALTER TABLE sap_changelog_Changes ADD (parent_ID NVARCHAR(36), valueChangedFromLabel NVARCHAR(5000), valueChangedToLabel NVARCHAR(5000), transactionID BIGINT);
-
--- Adjust entityKey structure
-RENAME COLUMN sap_changelog_Changes.keys TO entityKey;
-UPDATE SAP_CHANGELOG_CHANGES
-SET entityKey =
-    CASE
-        WHEN LOCATE(entityKey, '=') > 0 THEN
-              TRIM(SUBSTRING(entityKey, LOCATE(entityKey, '=') + 1))
-        ELSE
-            NULL
-    END;
-
--- Copy changelog_ID into transactionID
-UPDATE SAP_CHANGELOG_CHANGES SET transactionID = CAST(SECONDS_BETWEEN(createdAt, TO_TIMESTAMP('1970-01-01 00:00:00')) * -1000 AS BIGINT);
-
--- Column migration for attribute, entity and modification
-ALTER TABLE sap_changelog_Changes ADD (attribute_tmp NVARCHAR(127), entity_tmp NVARCHAR(150), modification_tmp NVARCHAR(6));
-
--- Copy data into temp columns
-UPDATE sap_changelog_Changes SET attribute_tmp = attribute;
-UPDATE sap_changelog_Changes SET entity_tmp = entity;
-UPDATE sap_changelog_Changes SET modification_tmp = modification;
-
-ALTER TABLE sap_changelog_Changes DROP (attribute, entity, modification);
-
-ALTER TABLE sap_changelog_Changes ADD (attribute NVARCHAR(127), entity NVARCHAR(150), modification NVARCHAR(6));
-
--- Restore data from temp columns
-UPDATE sap_changelog_Changes SET attribute = attribute_tmp;
-UPDATE sap_changelog_Changes SET entity = entity_tmp;
-UPDATE sap_changelog_Changes SET modification = modification_tmp;
-
-ALTER TABLE sap_changelog_Changes DROP (attribute_tmp, entity_tmp, modification_tmp);
-
--- Drop columns that are no longer needed
-ALTER TABLE sap_changelog_Changes DROP (serviceEntity, parentEntityID, parentKey, serviceEntityPath, changeLog_ID);
+```json
+"cds": {
+  "requires": {
+    "change-tracking": {
+      "addMigrationTable": true
+    }
+  }
+}
 ```
 
 ### Step 5: Add undeploy.json configuration
@@ -131,12 +78,24 @@ Use `cds deploy -2 hana` or `cds up` to deploy the new schema.
 
 ### Step 7: Cleanup
 
-After migrating the tables, update your `undeploy.json`: remove the `.hdbtable` entries for `Changes` and `ChangeLog`, and add the migration table instead. Also remove the `sap.changelog.Changes.hdbmigrationtable` file from `db/src/`.
+After successfully deploying and migrating, remove the `addMigrationTable` configuration from your `package.json`:
+
+```json
+"cds": {
+  "requires": {
+    "change-tracking": {
+      "addMigrationTable": true  // <-- remove this line
+    }
+  }
+}
+```
+
+Also, Remove the `.hdbtable` entries in the `db/undeploy.json` and replace them with the migration table entry:
 
 ```json
 [
   ...,
-  "src/sap.changelog.Changes.hdbmigrationtable",
+  "src/gen/sap.changelog.Changes.hdbmigrationtable"
 ]
 ```
 
