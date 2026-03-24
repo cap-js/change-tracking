@@ -6,7 +6,7 @@ namespace sap.capire.incidents;
  * Customers using products sold by our company.
  * Customers can create support Incidents.
  */
-@changelog : [name]
+@changelog : [(firstName || ' ' || lastName)]
 entity Customers : managed {
   key ID         : String;
   firstName      : String @changelog;
@@ -30,7 +30,7 @@ entity Addresses : cuid, managed {
 /**
  * Incidents created by Customers.
  */
-@changelog : [customer.name]
+@changelog : [(customer.firstName || ' ' || customer.lastName)]
 @title : 'Support Incidents'
 entity Incidents : cuid, managed {
   customer       : Association to Customers @changelog : [customer.name];
@@ -44,7 +44,7 @@ entity Incidents : cuid, managed {
   timezone : String default 'Asia/Riyadh' @Common.IsTimezone;
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
-  decimalProp : Decimal @title : 'Decimal prop' @changelog;
+  decimalProp : Decimal @title : 'Decimal prop' @changelog: [(decimalProp * 2)];
   @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
@@ -150,4 +150,17 @@ entity VHWithMultiKey : CodeList {
   key code    : String;
   key code2 : String;
   name: localized String;
+}
+
+
+/**
+ * Test entity for expression-based @changelog annotations.
+ * Uses CDS expressions (parenthesized) instead of simple paths.
+ */
+@changelog : [(firstName || ' ' || lastName)]
+entity ExpressionScenarios : cuid {
+  firstName : String @changelog;
+  lastName  : String @changelog;
+  price     : Decimal @changelog: [(price < 100 ? 'Budget' : 'Premium')];
+  status    : Association to Status default 'N' @changelog : [(status.code || ': ' || status.descr)];
 }

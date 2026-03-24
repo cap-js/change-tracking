@@ -35,6 +35,8 @@ service LocalizationService {
   } excluding {status};
 
   entity DynamicLocalizationScenarios as projection on my.DynamicLocalizationScenarios;
+  @odata.draft.enabled
+  entity ExpressionScenarios as projection on my.ExpressionScenarios;
 }
 
 annotate ProcessorService.Incidents with @odata.draft.enabled; 

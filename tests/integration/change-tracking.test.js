@@ -1934,3 +1934,143 @@ describe('change log generation', () => {
 		expect(changes[0].parent_entity).toEqual('sap.change_tracking.Level1Sample');
 	});
 });
+
+describe('Expression-based @changelog annotations', () => {
+	it('uses expression for objectID when entity has @changelog : [(firstName || lastName)]', async () => {
+		const {
+			data: { ID }
+		} = await POST(`/odata/v4/localization/ExpressionScenarios`, {
+			firstName: 'John',
+			lastName: 'Doe',
+			status_code: 'N'
+		});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
+
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=true)/changes`);
+
+		// All create entries should have the expression-based objectID
+		const firstNameChange = changes.find((c) => c.attribute === 'firstName' && c.modification === 'create');
+		expect(firstNameChange).toBeTruthy();
+		expect(firstNameChange.objectID).toEqual('John Doe');
+	});
+
+	it('uses expression for label when element has @changelog : [(status.code || status.descr)]', async () => {
+		const {
+			data: { ID }
+		} = await POST(`/odata/v4/localization/ExpressionScenarios`, {
+			firstName: 'Jane',
+			lastName: 'Smith',
+			status_code: 'N'
+		});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
+
+		// Update status to trigger a change
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=true)/LocalizationService.draftEdit`, {});
+		await PATCH(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)`, {
+			status_code: 'R'
+		});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
+
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=true)/changes`);
+
+		const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
+		expect(statusChange).toBeTruthy();
+		// The expression (status.code || ': ' || status.descr) should produce "N: New" and "R: Resolved"
+		expect(statusChange.valueChangedFrom).toEqual('N');
+		expect(statusChange.valueChangedTo).toEqual('R');
+		expect(statusChange.valueChangedFromLabel).toEqual('N: New');
+		expect(statusChange.valueChangedToLabel).toEqual('R: Resolved');
+		expect(statusChange.objectID).toEqual('Jane Smith');
+	});
+
+	it('resolves expression-based objectID using customer name on Incidents', async () => {
+		// Incidents entity uses @changelog: [(customer.firstName || ' ' || customer.lastName)]
+		const res = await POST(`/odata/v4/processor/Incidents`, {
+			customer_ID: '1004161',
+			title: 'Network outage in building 7',
+			urgency_code: 'M',
+			status_code: 'N'
+		});
+		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+		await PATCH(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)`, {
+			status_code: 'A'
+		});
+		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=true)/changes`);
+
+		const statusUpdate = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
+		expect(statusUpdate).toBeTruthy();
+		// objectID should be the customer's full name from the expression
+		expect(statusUpdate.objectID).toBeTruthy();
+		expect(statusUpdate.objectID).not.toEqual(res.data.ID);
+	});
+
+	it('uses arithmetic expression as label for non-association elements (decimalProp * 2)', async () => {
+		// decimalProp uses @changelog: [(decimalProp * 2)]
+		const res = await POST(`/odata/v4/processor/Incidents`, {
+			customer_ID: '1004161',
+			title: 'Printer maintenance request',
+			urgency_code: 'M',
+			status_code: 'N',
+			decimalProp: 50
+		});
+		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+		await PATCH(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)`, {
+			decimalProp: 250
+		});
+		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=true)/changes`);
+
+		const decimalChange = changes.find((c) => c.attribute === 'decimalProp' && c.modification === 'update');
+		expect(decimalChange).toBeTruthy();
+		expect(decimalChange.valueChangedFrom).toEqual('50');
+		expect(decimalChange.valueChangedTo).toEqual('250');
+		// (decimalProp * 2): old=50 -> '100', new=250 -> '500'
+		expect(decimalChange.valueChangedFromLabel).toEqual('100');
+		expect(decimalChange.valueChangedToLabel).toEqual('500');
+	});
+
+	it('classifies price values using ternary expression label on ExpressionScenarios', async () => {
+		// price uses @changelog: [(price < 100 ? 'Budget' : 'Premium')]
+		const {
+			data: { ID }
+		} = await POST(`/odata/v4/localization/ExpressionScenarios`, {
+			firstName: 'Alice',
+			lastName: 'Johnson',
+			status_code: 'N',
+			price: 49.99
+		});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
+
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=true)/LocalizationService.draftEdit`, {});
+		await PATCH(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)`, {
+			price: 149.99
+		});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
+
+		const {
+			data: { value: changes }
+		} = await GET(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=true)/changes`);
+
+		const priceChange = changes.find((c) => c.attribute === 'price' && c.modification === 'update');
+		expect(priceChange).toBeTruthy();
+		// (price < 100 ? 'Budget' : 'Premium'): old=49.99 -> 'Budget', new=149.99 -> 'Premium'
+		expect(priceChange.valueChangedFromLabel).toEqual('Budget');
+		expect(priceChange.valueChangedToLabel).toEqual('Premium');
+		expect(priceChange.objectID).toEqual('Alice Johnson');
+	});
+});
