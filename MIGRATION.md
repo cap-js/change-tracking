@@ -9,7 +9,7 @@ In version 1, change tracking data was split across two tables and tracked on th
 - **`sap_changelog_ChangeLog`** — one row per change event (who changed what, when)
 - **`sap_changelog_Changes`** — one row per changed attribute (the actual field-level diffs)
 
-In v2, the `ChangeLog` table is removed and the schema of `Changes` is adjusted to store all data directly within it.
+In v2, the `ChangeLog` table is removed and the schema of `Changes` is adjusted to store all data directly within it and allow tracking changes on the database layer.
 
 ## Step-by-Step Guide
 
