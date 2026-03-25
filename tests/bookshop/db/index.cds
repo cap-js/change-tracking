@@ -21,6 +21,7 @@ entity DifferentFieldTypes {
       dppField2 : String      @PersonalData.IsPotentiallySensitive;
       children  : Composition of many DifferentFieldTypesChildren
                     on children.parent = $self;
+      nonExistent : Association to one NonExistentTable @changelog: [nonExistent.name]; // Unsupported - should trigger warning
 }
 
 entity DifferentFieldTypesChildren {
@@ -105,4 +106,10 @@ entity CompositeKeyParent {
         key ID    : UUID;
             value : String;
       };
+}
+
+@cds.persistence.skip
+entity NonExistentTable {
+  key ID : UUID;
+      name : String;
 }
