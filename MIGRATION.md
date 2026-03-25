@@ -95,7 +95,7 @@ Remove the `.hdbtable` entries in the `db/undeploy.json` and replace them with t
 ```json
 [
   ...,
-  "src/gen/sap.changelog.Changes.hdbmigrationtable"
+  "src/sap.changelog.Changes.hdbmigrationtable"
 ]
 ```
 
