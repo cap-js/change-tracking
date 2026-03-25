@@ -247,6 +247,24 @@ function addGenericHandlers() {
 				srv.after('READ', srv.entities.ChangeView, _afterReadChangeView);
 			}
 		}
+
+		// Add migration handlers for MTX scenario
+		const profiles = cds.env.profiles ?? [cds.env.profile]
+		const isHana = cds.env.requires?.db?.kind === 'hana';
+		if (profiles.includes("mtx-sidecar") && isHana) {
+			const { 'cds.xt.DeploymentService': ds } = cds.services
+			ds.after('deploy', async (_, req) => {
+				const { tenant } = req.data
+
+				const MERGE_SQL = `MERGE INTO SAP_CHANGELOG_CHANGES AS c USING SAP_CHANGELOG_CHANGELOG AS cl ON c.changeLog_ID = cl.ID
++				WHEN MATCHED THEN UPDATE SET c.createdAt = cl.createdAt, c.createdBy = cl.createdBy`;
+
+				await cds.tx({ tenant }, async (tx) => {
+					await tx.run(MERGE_SQL);
+				})
+				DEBUG(`Migration: copied createdAt/createdBy from ChangeLog to Changes for tenant: ${tenant}`)
+			})
+		}
 	}
 }
 

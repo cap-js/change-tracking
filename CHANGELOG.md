@@ -4,11 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 1.2.0 - 19.03.26
+## Version 1.2.0 - 25.03.26
 
 ### Added
-- Added `createdAt`  and `createdBy` columns to Changes table for v2 migration
-
+- Added `createdAt` and `createdBy` columns to Changes table for v2 migration
+- Merge `createdAt` and `createdBy` columns from ChangeLog to Changes in multitenancy scenario 
 
 ## Version 1.1.4 - 03.12.25
 
