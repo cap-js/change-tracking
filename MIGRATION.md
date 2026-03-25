@@ -70,7 +70,7 @@ Add both old tables `Changes` and `ChangeLog` to your `undeploy.json`:
 ]
 ```
 
-REVISIT: We nned to annotate Changes with either `@cds.persistence.journal` or add migration table to `undeploy.json`
+REVISIT: We need to annotate Changes with either `@cds.persistence.journal` or add migration table to `undeploy.json`
 
 ### Step 6: Deploy your application with version 2
 
@@ -90,7 +90,7 @@ After successfully deploying and migrating, remove the `addMigrationTable` confi
 }
 ```
 
-Also, Remove the `.hdbtable` entries in the `db/undeploy.json` and replace them with the migration table entry:
+Remove the `.hdbtable` entries in the `db/undeploy.json` and replace them with the migration table entry:
 
 ```json
 [
@@ -98,6 +98,8 @@ Also, Remove the `.hdbtable` entries in the `db/undeploy.json` and replace them 
   "src/gen/sap.changelog.Changes.hdbmigrationtable"
 ]
 ```
+
+And remove the `sap.changelog.Changes.hdbmigrationtable` migration table from the `db/src` folder.
 
 > [!IMPORTANT]
 > You must remove the `.hdbtable` entries from `undeploy.json`. If they remain, the table will be undeployed and all your data will be lost.
