@@ -374,7 +374,7 @@ describe('CDS Features', () => {
 			// Vector type test is skipped as it requires HANA-specific setup
 		});
 
-		it.only('excludes associations that target an entity with @cds.persistence.skip annotation', async () => {
+		it('excludes associations that target an entity with @cds.persistence.skip annotation', async () => {
 			const testingSRV = await cds.connect.to('VariantTesting');
 			const { DifferentFieldTypes, ChangeView } = testingSRV.entities;
 
