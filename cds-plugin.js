@@ -18,4 +18,4 @@ registerH2CompilerHook();
 registerPostgresCompilerHook();
 registerHDICompilerHook();
 
-cds.add?.register?.('change-tracking-migration', require('./lib/add'));
+cds.add?.register?.('change-tracking-migration', require('./lib/addMigrationTable.js'));

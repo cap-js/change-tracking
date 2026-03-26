@@ -59,6 +59,7 @@ cds add change-tracking-migration
 ```
 
 This will:
+
 - Create `db/src/sap.changelog.Changes.hdbmigrationtable` with the v1 → v2 migration SQL
 - Add the old `.hdbtable` entries for `Changes` and `ChangeLog` to `db/undeploy.json`
 
