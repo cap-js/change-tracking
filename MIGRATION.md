@@ -2,6 +2,9 @@
 
 This guide explains how to migrate existing data from `@cap-js/change-tracking` v1 to v2.
 
+> [!NOTE]
+> This migration guide only applies for migrating from `@cap-js/change-tracking` v1 to v2. A separate migration guide for migrating from the Java change-tracking plugin to v2 will follow.
+
 ## Overview
 
 In version 1, change tracking data was split across two tables and tracked on the application layer:
