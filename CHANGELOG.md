@@ -26,7 +26,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Cast single entity keys to `cds.String` to prevent type conversion errors
 - Dynamic localization now verifies `.texts` entity existence before attempting localized lookup
 
-### Changed
 
 ## Version 2.0.0-beta.5 - 17.03.26
 
