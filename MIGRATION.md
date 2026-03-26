@@ -18,13 +18,13 @@ In v2, the `ChangeLog` table is removed and the schema of `Changes` is adjusted 
 
 ### Step 1: Use the latest v1 version of the plugin
 
-Make sure you are using version `1.2.0` of the `@cap-js/change-tracking` plugin and that this version is deployed to your database. You can check the version with:
+Make sure you are using version `1.2.1` of the `@cap-js/change-tracking` plugin and that this version is deployed to your database. You can check the version with:
 
 ```bash
 npm ls @cap-js/change-tracking
 ```
 
-This step is necessary because version `1.2.0` includes two new columns in `Changes` which are required for the migration.
+This step is necessary because version `1.2.1` includes two new columns in `Changes` which are required for the migration.
 
 ### Step 2: Copy data from the Changelog table to the Changes table
 
