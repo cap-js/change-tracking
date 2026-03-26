@@ -17,3 +17,5 @@ cds.once('served', async () => {
 registerH2CompilerHook();
 registerPostgresCompilerHook();
 registerHDICompilerHook();
+
+cds.add?.register?.('change-tracking-migration', require('./lib/add'));
