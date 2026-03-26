@@ -4,11 +4,27 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.0.0-beta.6 - tbd
+## Version 2.0.0-beta.7 - tbd
 
 ### Added
 
 ### Fixed
+
+### Changed
+
+## Version 2.0.0-beta.6 - 26.03.26
+
+### Added
+- Provide detailed plan for v1 to v2 HANA migration
+- Generation of `.hdbmigrationtable` and updating `undeploy.json` via `cds add change-tracking-migration`
+- HANA procedure `SAP_CHANGELOG_RESTORE_BACKLINKS` to restore parent-child hierarchy for composition changes
+
+### Fixed
+- Explicit type casts for Date, DateTime, Time, Timestamp and Decimal fields in `ChangeView` to avoid conversion errors
+- Lazy load database adapters to prevent crashes when optional dependencies are not installed
+- Skip changelogs referencing association targets annotated with `@cds.persistence.skip`
+- Cast single entity keys to `cds.String` to prevent type conversion errors
+- Dynamic localization now verifies `.texts` entity existence before attempting localized lookup
 
 ### Changed
 
