@@ -1,79 +1,111 @@
-# Migration Guide: Switch from v1 to v2
+# Migration Guide: Change Tracking Plugin v1 to v2
+
+This guide explains how to migrate existing data from `@cap-js/change-tracking` v1 to v2.
 
 > [!NOTE]
->
-> A HANA migration table will be provided with the full release, as well as a procedure to convert existing changes into the hierarchy.
+> This migration guide only applies for migrating from `@cap-js/change-tracking` v1 to v2. A separate migration guide for migrating from the Java change-tracking plugin to v2 will follow.
 
-The new version moves the tracking mechanism from event handlers to native database triggers (SQLite, PostgreSQL, HANA, H2). The `ChangeLog` entity was removed, everything lives in a flat `Changes` table now. Localization moved from runtime handlers to an `i18nKeys` lookup table with SQL `COALESCE`.
+## Overview
 
-## Breaking Changes
+In version 1, change tracking data was split across two tables and tracked on the application layer:
 
-### Schema
+- **`sap_changelog_ChangeLog`** — one row per change event (who changed what, when)
+- **`sap_changelog_Changes`** — one row per changed attribute (the actual field-level diffs)
 
-The `sap.changelog.ChangeLog` entity no longer exists. Its fields (`entityKey`, `createdAt`, `createdBy`) moved directly into `Changes`.
+In v2, the `ChangeLog` table is removed and the schema of `Changes` is adjusted to store all data directly within it and allow tracking changes on the database layer.
 
-**Removed columns on `Changes`:**
+## Step-by-Step Guide
 
-| Column              | What happened                                    |
-| ------------------- | ------------------------------------------------ |
-| `keys`              | Dropped                                          |
-| `entityID`          | Renamed to `objectID`                            |
-| `serviceEntity`     | Dropped (triggers don't track the service layer) |
-| `parentEntityID`    | Dropped (handled by tree table)                  |
-| `parentKey`         | Dropped                                          |
-| `serviceEntityPath` | Dropped                                          |
-| `changeLog` (FK)    | Dropped (no more parent entity)                  |
+### Step 1: Use the latest v1 version of the plugin
 
-**Moved/renamed columns on `Changes`:**
+Make sure you are using version `1.2.1` of the `@cap-js/change-tracking` plugin and that this version is deployed to your database. You can check the version with:
 
-| Column                    | Was                              |
-| ------------------------- | -------------------------------- |
-| `entityKey`               | Moved from `ChangeLog.entityKey` |
-| `objectID`                | Renamed from `entityID`          |
-| `createdAt` / `createdBy` | Moved from `ChangeLog`           |
+```bash
+npm ls @cap-js/change-tracking
+```
 
-**New columns on `Changes`:**
+This step is necessary because version `1.2.1` includes two new columns in `Changes` which are required for the migration.
 
-| Column                                          | Purpose                                  |
-| ----------------------------------------------- | ---------------------------------------- |
-| `parent` / `children`                           | Allow tree table                         |
-| `valueChangedFromLabel` / `valueChangedToLabel` | Localized labels for old/new values      |
-| `transactionID`                                 | Groups changes from the same transaction |
+### Step 2: Copy data from the Changelog table to the Changes table
 
-**New entities:**
+Run the following SQL command to copy `createdAt` and `createdBy` from `sap.changelog.ChangeLog` to `sap.changelog.Changes` for existing data:
 
-- `sap.changelog.i18nKeys` -- stores localized labels for attributes, entities, and modification types
+```sql
+MERGE INTO SAP_CHANGELOG_CHANGES AS c
+  USING SAP_CHANGELOG_CHANGELOG AS cl
+	ON c.changeLog_ID = cl.ID
+	WHEN MATCHED THEN UPDATE SET
+	    c.createdAt = cl.createdAt,
+	    c.createdBy = cl.createdBy;
+```
 
-### ChangeView columns
+> [!INFO]
+> This manual step is only necessary for single-tenant applications. For multi-tenant applications, it is done automatically.
 
-| Old                | New                                               |
-| ------------------ | ------------------------------------------------- |
-| `entity`           | `entityLabel` (localized via `i18nKeys`)          |
-| `attribute`        | `attributeLabel` (localized via `i18nKeys`)       |
-| `valueChangedFrom` | `valueChangedFromLabel` (falls back to raw value) |
-| `valueChangedTo`   | `valueChangedToLabel` (falls back to raw value)   |
+### Step 3: Update to version 2
 
-If you have custom UI components or queries referencing the old column names, update them.
+Update the `@cap-js/change-tracking` dependency to version 2.
 
-### Annotations
+```bash
+npm i @cap-js/change-tracking@2
+```
 
-`@changelog` syntax is unchanged. New behavior:
+### Step 4: Generate the migration table
 
-- `@changelog: false` on a service entity sets a session variable to skip that entity
-- `@changelog: false` on an element skips that field
+Run the following command to generate the `sap.changelog.Changes.hdbmigrationtable` artifact under `db/src/` and update `db/undeploy.json`:
 
-The `@changelog` annotation now only supports valid association paths.
+```bash
+cds add change-tracking-migration
+```
 
-## Data migration
+This will:
 
-### Column mapping
+- Create `db/src/sap.changelog.Changes.hdbmigrationtable` with the v1 → v2 migration SQL
+- Add the old `.hdbtable` entries for `Changes` and `ChangeLog` to `db/undeploy.json`
 
-| v1.x                  | v2.x                                                                      | Notes                                                   |
-| --------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `ChangeLog.entityKey` | `Changes.entityKey`                                                       | Direct copy                                             |
-| `ChangeLog.createdAt` | `Changes.createdAt`                                                       | Direct copy                                             |
-| `ChangeLog.createdBy` | `Changes.createdBy`                                                       | Direct copy                                             |
-| `ChangeLog.entity`    | `Changes.entity`                                                          | Fallback via COALESCE                                   |
-| `Changes.entityID`    | `Changes.objectID`                                                        | Renamed                                                 |
-| New                   | `Changes.rootEntity`                                                      | Derived from `ChangeLog.entity` when `parentKey` is set |
-| New                   | `Changes.valueChangedFromLabel` / `valueChangedToLabel` / `transactionID` | NULL for migrated rows                                  |
+### Step 5: Deploy your application with version 2
+
+Use `cds deploy -2 hana` or `cds up` to deploy the new schema.
+
+### Step 6: Cleanup
+
+Remove the `.hdbtable` entries in `db/undeploy.json` and replace them with the migration table entry:
+
+```json
+[
+  ...,
+  "src/sap.changelog.Changes.hdbmigrationtable"
+]
+```
+
+And remove the `sap.changelog.Changes.hdbmigrationtable` migration table from the `db/src` folder.
+
+> [!IMPORTANT]
+> You must remove the `.hdbtable` entries from `undeploy.json`. If they remain, the table will be undeployed and all your data will be lost.
+
+### Step 7: Generate missing hierarchy information
+
+The new version of `@cap-js/change-tracking` tracks composition children changes in a different way. Previously the change on a child would be assigned to the parent. With version 2 the change is assigned to the child, the actual entity on which the change was made, and another change record is created in the parent that the child had a change. Furthermore hierarchy information via a `parent` association is present in changes, to expand the change record in the parent and see the actual changes on the child.
+
+Call the `SAP_CHANGELOG_RESTORE_BACKLINKS` procedure to automatically generate missing parent change records for changes assigned to child entities.
+
+```sql
+CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();
+```
+
+The procedure is idempotent — it only creates parent change records where they don't already exist and only updates child change records that don't yet have a `parent_ID`. You can safely call it multiple times.
+
+The procedure is generated by default. It can be disabled by setting `procedureForRestoringBacklinks` to `false`:
+
+```json
+"cds": {
+  "requires": {
+    "change-tracking": {
+      "procedureForRestoringBacklinks": false
+    }
+  }
+}
+```
+
+> [!INFO]
+> The procedure is also useful for v2 users who want to regenerate backlinks.

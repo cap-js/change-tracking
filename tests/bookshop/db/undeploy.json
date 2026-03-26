@@ -7,6 +7,7 @@
 	"src/gen/**/*.hdbtrigger",
 	"src/gen/**/*.csv",
 	"src/gen/**/*.hdbtabledata",
+	"src/gen/**/*.hdbprocedure",
 	"src/gen/data/*.csv",
 	"src/gen/data/*.hdbtabledata"
 ]
