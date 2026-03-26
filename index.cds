@@ -49,7 +49,6 @@ entity ChangeLog : managed, cuid {
  * Attribute-level Changes with simple capturing of one-level
  * composition trees in parent... elements.
  */
-@cds.persistence.journal
 entity Changes {
 
   key ID                : UUID                     @UI.Hidden;

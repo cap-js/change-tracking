@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 1.2.1 - 26.03.26
+
+### Fixed
+- Removed `@cds.persistence.journal` annotation from Changes entity that caused deployment errors
+
 ## Version 1.2.0 - 25.03.26
 
 ### Added
