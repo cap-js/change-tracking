@@ -373,6 +373,35 @@ describe('CDS Features', () => {
 		it.skip('excludes Vector fields from change tracking (requires HANA)', async () => {
 			// Vector type test is skipped as it requires HANA-specific setup
 		});
+
+		it('excludes associations that target an entity with @cds.persistence.skip annotation', async () => {
+			const testingSRV = await cds.connect.to('VariantTesting');
+			const { DifferentFieldTypes, ChangeView } = testingSRV.entities;
+
+			const testID = cds.utils.uuid();
+			await INSERT.into(DifferentFieldTypes).entries({
+				ID: testID,
+				title: 'Test with skipped association',
+				nonExistentName_ID: cds.utils.uuid()
+			});
+
+			// Verify that title change was tracked (supported type)
+			const titleChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: testID,
+				attribute: 'title'
+			});
+			expect(titleChanges.length).toEqual(1);
+			expect(titleChanges[0].valueChangedTo).toEqual('Test with skipped association');
+
+			// Verify that no change log entries exist for nonExistentName (association to @cds.persistence.skip entity)
+			const nonExistentNameChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: testID,
+				attribute: 'nonExistentName'
+			});
+			expect(nonExistentNameChanges.length).toEqual(0);
+		});
 	});
 
 	describe('Large string truncation', () => {
