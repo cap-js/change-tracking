@@ -15,6 +15,7 @@
 		"_i18n",
 		"index.cds",
 		"CHANGELOG.md",
+		"MIGRATION.md",
 		"README.md"
 	],
 	"scripts": {
