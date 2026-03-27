@@ -47,7 +47,7 @@ MERGE INTO SAP_CHANGELOG_CHANGES AS c
 Update the `@cap-js/change-tracking` dependency to version 2.
 
 ```bash
-npm i @cap-js/change-tracking@2
+npm i @cap-js/change-tracking@2.0.0-beta.6
 ```
 
 ### Step 4: Generate the migration table
