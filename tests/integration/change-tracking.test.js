@@ -2073,33 +2073,4 @@ describe('Expression-based @changelog annotations', () => {
 		expect(priceChange.valueChangedToLabel).toEqual('Premium');
 		expect(priceChange.objectID).toEqual('Alice Johnson');
 	});
-
-	it('supports mixed path and expression annotations on the same element', async () => {
-		const {
-			data: { ID }
-		} = await POST(`/odata/v4/localization/ExpressionScenarios`, {
-			firstName: 'Mixed',
-			lastName: 'Test',
-			mixedStatus_code: 'N'
-		});
-		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
-
-		// Update mixedStatus to trigger a change
-		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=true)/LocalizationService.draftEdit`, {});
-		await PATCH(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)`, {
-			mixedStatus_code: 'R'
-		});
-		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
-
-		const {
-			data: { value: changes }
-		} = await GET(`/odata/v4/localization/ExpressionScenarios(ID=${ID},IsActiveEntity=true)/changes`);
-
-		const mixedChange = changes.find((c) => c.attribute === 'mixedStatus' && c.modification === 'update');
-		expect(mixedChange).toBeTruthy();
-		// The label should combine the path result (descr) and expression result (code || '-' || descr)
-		// For status 'N' -> "New, N-New", for status 'R' -> "Resolved, R-Resolved"
-		expect(mixedChange.valueChangedFromLabel).toEqual('New, N-New');
-		expect(mixedChange.valueChangedToLabel).toEqual('Resolved, R-Resolved');
-	});
 });

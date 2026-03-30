@@ -160,6 +160,4 @@ entity ExpressionScenarios : cuid {
   lastName  : String @changelog;
   price     : Decimal @changelog: [(price < 100 ? 'Budget' : 'Premium')];
   status    : Association to Status default 'N' @changelog : [(status.code || ': ' || status.descr)];
-  // Mixed annotation: combines a plain path with an expression
-  mixedStatus : Association to Status default 'N' @changelog : [mixedStatus.descr, (mixedStatus.code || '-' || mixedStatus.descr)];
 }

@@ -192,15 +192,6 @@ annotate Incidents {
 
 When `status` changes from `N` (New) to `R` (Resolved), the label would show `"N: New"` and `"R: Resolved"` instead of raw key values. For `price`, a ternary expression classifies the value into a human-readable category.
 
-Expressions and plain paths can also be mixed in the same annotation:
-
-```cds
-annotate Incidents {
-  status @changelog: [status.descr, (status.code || ': ' || status.descr)];
-}
-```
-
-This produces a combined label like `"Resolved, R: Resolved"` — the plain path result and the expression result are concatenated with a comma separator.
 
 #### Localized values
 If a human-readable value is annotated for the changelog, it will be localized.
