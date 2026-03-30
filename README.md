@@ -15,6 +15,8 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
   - [Human-readable Types and Fields](#human-readable-types-and-fields)
   - [Human-readable IDs](#human-readable-ids)
   - [Human-readable Values](#human-readable-values)
+    - [Expression-based labels](#expression-based-labels)
+    - [Localized values](#localized-values)
 - [Advanced Options](#advanced-options)
   - [Altered Table View](#altered-table-view)
   - [Disable Lazy Loading](#disable-lazy-loading)
@@ -176,6 +178,29 @@ customer @changelog: [customer.name];
 ```
 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
+
+#### Expression-based labels
+
+In addition to plain paths, the `@changelog` annotation supports CDS expressions for computing human-readable labels. Expressions must be wrapped in parentheses `()` to distinguish them from paths:
+
+```cds
+annotate Incidents {
+  status @changelog: [(status.code || ': ' || status.descr)];
+  price  @changelog: [(price < 100 ? 'Budget' : 'Premium')];
+}
+```
+
+When `status` changes from `N` (New) to `R` (Resolved), the label would show `"N: New"` and `"R: Resolved"` instead of raw key values. For `price`, a ternary expression classifies the value into a human-readable category.
+
+Expressions and plain paths can also be mixed in the same annotation:
+
+```cds
+annotate Incidents {
+  status @changelog: [status.descr, (status.code || ': ' || status.descr)];
+}
+```
+
+This produces a combined label like `"Resolved, R: Resolved"` — the plain path result and the expression result are concatenated with a comma separator.
 
 #### Localized values
 If a human-readable value is annotated for the changelog, it will be localized.
