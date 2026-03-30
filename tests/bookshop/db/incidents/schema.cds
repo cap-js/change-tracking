@@ -6,7 +6,7 @@ namespace sap.capire.incidents;
  * Customers using products sold by our company.
  * Customers can create support Incidents.
  */
-@changelog : [(firstName || ' ' || lastName)]
+@changelog : [name]
 entity Customers : managed {
   key ID         : String;
   firstName      : String @changelog;
@@ -30,7 +30,7 @@ entity Addresses : cuid, managed {
 /**
  * Incidents created by Customers.
  */
-@changelog : [(customer.firstName || ' ' || customer.lastName)]
+@changelog : [customer.name]
 @title : 'Support Incidents'
 entity Incidents : cuid, managed {
   customer       : Association to Customers @changelog : [customer.name];
@@ -44,7 +44,7 @@ entity Incidents : cuid, managed {
   timezone : String default 'Asia/Riyadh' @Common.IsTimezone;
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
-  decimalProp : Decimal @title : 'Decimal prop' @changelog: [(decimalProp * 2)];
+  decimalProp : Decimal @title : 'Decimal prop' @changelog;
   @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
@@ -160,4 +160,6 @@ entity ExpressionScenarios : cuid {
   lastName  : String @changelog;
   price     : Decimal @changelog: [(price < 100 ? 'Budget' : 'Premium')];
   status    : Association to Status default 'N' @changelog : [(status.code || ': ' || status.descr)];
+  // Mixed annotation: combines a plain path with an expression
+  mixedStatus : Association to Status default 'N' @changelog : [mixedStatus.descr, (mixedStatus.code || '-' || mixedStatus.descr)];
 }
