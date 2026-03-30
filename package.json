@@ -1,6 +1,6 @@
 {
 	"name": "@cap-js/change-tracking",
-	"version": "2.0.0-beta.5",
+	"version": "2.0.0-beta.6",
 	"publishConfig": {
 		"access": "public",
 		"tag": "beta"
@@ -15,6 +15,7 @@
 		"_i18n",
 		"index.cds",
 		"CHANGELOG.md",
+		"MIGRATION.md",
 		"README.md"
 	],
 	"scripts": {

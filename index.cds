@@ -42,20 +42,14 @@ view ChangeView as
     on  modificationI18n.ID     = change.modification
     and modificationI18n.locale = $user.locale
   {
-    key change.ID                                                    @UI.Hidden,
-        change.parent                                 : redirected to ChangeView,
-        change.children                               : redirected to ChangeView,
-        change.attribute,
-        change.valueChangedFrom,
-        change.valueChangedTo,
-        change.entity,
-        change.entityKey,
-        change.objectID,
-        change.modification,
-        change.valueDataType,
-        change.createdAt,
-        change.createdBy,
-        change.transactionID,
+    key change.ID                                               @UI.Hidden,
+        change.parent                            : redirected to ChangeView,
+        change.children                          : redirected to ChangeView,
+        // Needed to make the * possible
+        attributeI18n.locale @UI.Hidden,
+        attributeI18n.text @UI.Hidden,
+        // * is important to allow for application extensions of Changes
+        *,
         COALESCE(
           attributeI18n.text, (
             select text from i18nKeys

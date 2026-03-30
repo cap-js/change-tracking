@@ -425,8 +425,8 @@ describe('Configuration Options', () => {
 	});
 });
 
-describe('Restore Backlinks Procedure', () => {
-	(isHana ? it : it.skip)('restores backlinks for create operations', async () => {
+(isHana ? describe : describe.skip)('Restore Backlinks HANA Procedure', () => {
+	it('restores backlinks for create operations', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { RootSample, ChangeView } = testingSRV.entities;
 
@@ -512,7 +512,7 @@ describe('Restore Backlinks Procedure', () => {
 		expect(restoredRootTitle.parent_ID).toBeNull();
 	});
 
-	(isHana ? it : it.skip)('restores backlinks for update operations', async () => {
+	it('restores backlinks for update operations', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { ChangeView } = testingSRV.entities;
 
@@ -580,7 +580,7 @@ describe('Restore Backlinks Procedure', () => {
 		expect(restoredLvl1Comp.parent_ID).toEqual(restoredRootComp.ID);
 	});
 
-	(isHana ? it : it.skip)('restores backlinks for delete operations with preserveDeletes', async () => {
+	it('restores backlinks for delete operations with preserveDeletes', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { RootSample, ChangeView } = testingSRV.entities;
 
