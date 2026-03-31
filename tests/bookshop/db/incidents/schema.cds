@@ -155,10 +155,10 @@ entity VHWithMultiKey : CodeList {
  * Test entity for expression-based @changelog annotations.
  * Uses CDS expressions (parenthesized) instead of simple paths.
  */
-@changelog : [(firstName || ' ' || lastName)]
+@changelog : (firstName || ' ' || lastName)
 entity ExpressionScenarios : cuid {
   firstName : String @changelog;
   lastName  : String @changelog;
-  price     : Decimal @changelog: [(price < 100 ? 'Budget' : 'Premium')];
-  status    : Association to Status default 'N' @changelog : [(status.code || ': ' || status.descr)];
+  price     : Decimal @changelog: (price < 100 ? 'Budget' : 'Premium');
+  status    : Association to Status default 'N' @changelog : (status.code || ': ' || status.descr);
 }

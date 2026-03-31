@@ -18,6 +18,7 @@ service ProcessorService {
   entity BooksNotID as projection on my.BooksNotID;
 
   entity Orders as projection on my.Orders;
+  entity ExpressionScenarios as projection on my.ExpressionScenarios;
 }
 
 /**

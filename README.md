@@ -185,8 +185,8 @@ In addition to plain paths, the `@changelog` annotation supports CDS expressions
 
 ```cds
 annotate Incidents {
-  status @changelog: [(status.code || ': ' || status.descr)];
-  price  @changelog: [(price < 100 ? 'Budget' : 'Premium')];
+  status @changelog: (status.code || ': ' || status.descr);
+  price  @changelog: (price < 100 ? 'Budget' : 'Premium');
 }
 ```
 
