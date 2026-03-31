@@ -18,6 +18,7 @@ service ProcessorService {
   entity BooksNotID as projection on my.BooksNotID;
 
   entity Orders as projection on my.Orders;
+  entity ExpressionScenarios as projection on my.ExpressionScenarios;
 }
 
 /**
@@ -35,6 +36,8 @@ service LocalizationService {
   } excluding {status};
 
   entity DynamicLocalizationScenarios as projection on my.DynamicLocalizationScenarios;
+  @odata.draft.enabled
+  entity ExpressionScenarios as projection on my.ExpressionScenarios;
 }
 
 annotate ProcessorService.Incidents with @odata.draft.enabled; 

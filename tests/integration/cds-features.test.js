@@ -746,6 +746,45 @@ describe('CDS Features', () => {
 			expect(valueChangedToLabel.xpr.some((r) => r.val === 'status1')).toEqual(false);
 		});
 
+		it('ValueFrom and ValueTo labels are localized if changelog is an expression', async () => {
+			const incidentID = await newIncident();
+			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+
+			await PATCH(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)`, {
+				statusExpr_code: 'R'
+			});
+
+			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+				headers: { 'Accept-Language': 'de' }
+			});
+			const statusChange = changes.find((change) => change.attribute === 'statusExpr' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChange).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'Neu',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Gelöst'
+			});
+
+			const {
+				data: { value: changesEN }
+			} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+				headers: { 'Accept-Language': 'en' }
+			});
+			const statusChangeEN = changesEN.find((change) => change.attribute === 'statusExpr' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChangeEN).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'New',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Resolved'
+			});
+		});
+
 		it('ValueFrom and ValueTo labels are not localized if changelog label uses another association path', async () => {
 			const { ChangeView, DynamicLocalizationScenarios } = cds.entities('LocalizationService');
 
