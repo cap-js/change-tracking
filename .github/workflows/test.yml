@@ -8,6 +8,9 @@ on:
     branches: [main]
     types: [reopened, synchronize, opened]
 
+permissions:
+  contents: read
+
 jobs:
   requires-approval:
     runs-on: ubuntu-latest
