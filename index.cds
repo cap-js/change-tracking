@@ -132,16 +132,6 @@ view ChangeView as
           end
         )    as valueChangedFromLabelTimestamp   : Timestamp    @(title: '{i18n>Changes.valueChangedFrom}',
                                                    ),
-        (
-          case
-            when valueDataType = 'cds.Decimal'
-                 then cast(COALESCE(
-                        change.valueChangedFromLabel, change.valueChangedFrom
-                      ) as Decimal)
-            else null
-          end
-        )    as valueChangedFromLabelDecimal     : Decimal      @(title: '{i18n>Changes.valueChangedFrom}',
-                                                   ),
         COALESCE(
           change.valueChangedToLabel, change.valueChangedTo
         )    as valueChangedToLabel              : String(5000) @(
@@ -199,16 +189,6 @@ view ChangeView as
             else null
           end
         )    as valueChangedToLabelTimestamp     : Timestamp    @(title: '{i18n>Changes.valueChangedTo}',
-                                                   ),
-        (
-          case
-            when valueDataType = 'cds.Decimal'
-                 then cast(COALESCE(
-                        change.valueChangedToLabel, change.valueChangedTo
-                      ) as Decimal)
-            else null
-          end
-        )    as valueChangedToLabelDecimal       : Decimal      @(title: '{i18n>Changes.valueChangedTo}',
                                                    ),
         null as valueTimeZone                    : String       @(
                                                      UI.Hidden,
@@ -322,8 +302,7 @@ annotate ChangeView with @(UI: {
     Data : [
       {
         Value     : valueChangedFromLabel,
-        @UI.Hidden: ($self.valueDataType = 'cds.Decimal'
-        or           $self.valueDataType = 'cds.DateTime'
+        @UI.Hidden: ($self.valueDataType = 'cds.DateTime'
         or           $self.valueDataType = 'cds.Date'
         or           $self.valueDataType = 'cds.Time'
         or           $self.valueDataType = 'cds.Timestamp')
@@ -349,10 +328,6 @@ annotate ChangeView with @(UI: {
       {
         Value     : valueChangedFromLabelTimestamp,
         @UI.Hidden: ($self.valueDataType != 'cds.Timestamp')
-      },
-      {
-        Value     : valueChangedFromLabelDecimal,
-        @UI.Hidden: ($self.valueDataType != 'cds.Decimal')
       }
     ]
   },
@@ -361,8 +336,7 @@ annotate ChangeView with @(UI: {
     Data : [
       {
         Value     : valueChangedToLabel,
-        @UI.Hidden: ($self.valueDataType = 'cds.Decimal'
-        or           $self.valueDataType = 'cds.DateTime'
+        @UI.Hidden: ($self.valueDataType = 'cds.DateTime'
         or           $self.valueDataType = 'cds.Date'
         or           $self.valueDataType = 'cds.Time'
         or           $self.valueDataType = 'cds.Timestamp')
@@ -388,10 +362,6 @@ annotate ChangeView with @(UI: {
       {
         Value     : valueChangedToLabelTimestamp,
         @UI.Hidden: ($self.valueDataType != 'cds.Timestamp')
-      },
-      {
-        Value     : valueChangedToLabelDecimal,
-        @UI.Hidden: ($self.valueDataType != 'cds.Decimal')
       }
     ]
   }
@@ -402,14 +372,12 @@ annotate ChangeView with @(UI: {
   valueChangedFromLabelDateTimeWTZ  @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.DateTime');
   valueChangedFromLabelTime         @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Time');
   valueChangedFromLabelTimestamp    @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Timestamp');
-  valueChangedFromLabelDecimal      @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Decimal');
   valueChangedTo                    @UI.Hidden;
   valueChangedToLabelDate           @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Date');
   valueChangedToLabelDateTime       @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.DateTime');
   valueChangedToLabelDateTimeWTZ    @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.DateTime');
   valueChangedToLabelTime           @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Time');
   valueChangedToLabelTimestamp      @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Timestamp');
-  valueChangedToLabelDecimal        @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Decimal');
   parent                            @UI.Hidden;
   entityKey                         @UI.Hidden;
   entity                            @UI.Hidden;
@@ -440,13 +408,11 @@ annotate ChangeView with @(
     valueChangedFromLabelDateTimeWTZ,
     valueChangedFromLabelTime,
     valueChangedFromLabelTimestamp,
-    valueChangedFromLabelDecimal,
     valueChangedToLabelDate,
     valueChangedToLabelDateTime,
     valueChangedToLabelDateTimeWTZ,
     valueChangedToLabelTime,
     valueChangedToLabelTimestamp,
-    valueChangedToLabelDecimal,
     valueTimeZone
   ],
   // Disallow sorting on these properties from Fiori UIs
@@ -460,13 +426,11 @@ annotate ChangeView with @(
     valueChangedFromLabelDateTimeWTZ,
     valueChangedFromLabelTime,
     valueChangedFromLabelTimestamp,
-    valueChangedFromLabelDecimal,
     valueChangedToLabelDate,
     valueChangedToLabelDateTime,
     valueChangedToLabelDateTimeWTZ,
     valueChangedToLabelTime,
     valueChangedToLabelTimestamp,
-    valueChangedToLabelDecimal,
     valueTimeZone
   ],
 );

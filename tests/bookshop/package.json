@@ -53,7 +53,8 @@
 		},
 		"features": {
 			"serve_on_root": true,
-			"locale_fallback": true
+			"locale_fallback": true,
+			"ieee754compatible": true
 		}
 	}
 }
