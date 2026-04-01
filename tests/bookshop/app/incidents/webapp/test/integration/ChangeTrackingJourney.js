@@ -223,15 +223,41 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
       );
 
       opaTest(
-        "#C5: Change History shows create entries",
+        "#C5: Change History shows create entries with correct values",
         function (Given, When, Then) {
           When.onTheDetailPage.iGoToSection("Change History");
 
           // Section is already expanded (state persists from Module A)
 
-          Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
-          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
-            modification: "Create",
+          // Verify the status create entry at row level
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
+            field: "Status",
+            changeType: "Create",
+            newValue: "In Process",
+          });
+
+          // Verify the conversation parent row exists
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
+            field: "conversation",
+            changeType: "Create",
+          });
+
+          // Expand the conversation tree row to reveal child entries
+          When.onTheDetailPage.iExpandChangeHistoryRow(
+            "conversation",
+            "Create"
+          );
+
+          // Verify the two message child rows
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
+            field: "message",
+            changeType: "Create",
+            newValue: "Initial investigation started",
+          });
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
+            field: "message",
+            changeType: "Create",
+            newValue: "Customer contacted",
           });
         }
       );
@@ -282,12 +308,32 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
           // Section is already expanded (state persists)
           When.onTheDetailPage.iGoToSection("Change History");
 
-          // Should now have create entries + update + delete entries
-          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
-            modification: "Update",
+          // Verify the conversation parent row for update
+          // (contains both update + delete children)
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
+            field: "conversation",
+            changeType: "Update",
           });
-          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
-            modification: "Delete",
+
+          // Expand the conversation update tree row
+          When.onTheDetailPage.iExpandChangeHistoryRow(
+            "conversation",
+            "Update"
+          );
+
+          // Verify the message update child row
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
+            field: "message",
+            changeType: "Update",
+            newValue: "Investigation completed",
+            oldValue: "Initial investigation started",
+          });
+
+          // Verify the message delete child row
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
+            field: "message",
+            changeType: "Delete",
+            oldValue: "Customer contacted",
           });
         }
       );

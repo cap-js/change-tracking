@@ -86,6 +86,41 @@ sap.ui.define(
           });
         },
 
+        /**
+         * Expands a Change History tree row by clicking its tree icon.
+         * Finds a sap.ui.table.Row whose DOM text contains the given
+         * field text and optionally a change type text.
+         * @param {string} sFieldText - Text in the "Field" column (e.g. "conversation")
+         * @param {string} [sChangeType] - Optional change type (e.g. "Create", "Update")
+         */
+        iExpandChangeHistoryRow: function (sFieldText, sChangeType) {
+          return this.waitFor({
+            controlType: "sap.ui.table.Row",
+            matchers: function (oRow) {
+              var oDomRef = oRow.getDomRef();
+              if (!oDomRef) {
+                return false;
+              }
+              var sText = oDomRef.innerText;
+              if (sText.indexOf(sFieldText) === -1) {
+                return false;
+              }
+              if (sChangeType && sText.indexOf(sChangeType) === -1) {
+                return false;
+              }
+              return true;
+            },
+            actions: new Press({ idSuffix: "treeicon" }),
+            errorMessage:
+              "Could not expand Change History row with '" +
+              sFieldText +
+              "'" +
+              (sChangeType
+                ? " and change type '" + sChangeType + "'"
+                : ""),
+          });
+        },
+
         // ──────────────────────────────────────────────────────────
         // Incident field editing
         // ──────────────────────────────────────────────────────────
@@ -480,6 +515,45 @@ sap.ui.define(
             })
             .description(
               "Change History contains: " + JSON.stringify(oExpected)
+            )
+            .execute();
+        },
+
+        /**
+         * Asserts that a specific row exists in the Change History
+         * tree table where ALL expected values appear in the same
+         * row's DOM text. More precise than iSeeChangeHistoryEntryWith
+         * which checks the entire table.
+         * @param {object} oExpected - Key-value pairs that must all
+         *   appear in a single row (e.g. { field: "Status",
+         *   changeType: "Create", newValue: "In Process" })
+         */
+        iSeeChangeHistoryRow: function (oExpected) {
+          var aExpectedValues = Object.keys(oExpected).map(function (k) {
+            return oExpected[k];
+          });
+
+          return OpaBuilder.create(this)
+            .hasType("sap.ui.table.Row")
+            .has(function (oRow) {
+              var oDomRef = oRow.getDomRef();
+              if (!oDomRef) {
+                return false;
+              }
+              var sText = oDomRef.innerText;
+              return aExpectedValues.every(function (sVal) {
+                return sText.indexOf(sVal) > -1;
+              });
+            })
+            .check(function () {
+              QUnit.assert.ok(
+                true,
+                "Found Change History row: " + JSON.stringify(oExpected)
+              );
+              return true;
+            })
+            .description(
+              "Change History has row: " + JSON.stringify(oExpected)
             )
             .execute();
         },
