@@ -81,6 +81,9 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
           When.onTheDetailPage.onHeader().iExecuteAction("Edit");
           Then.onTheDetailPage.iSeeObjectPageInEditMode();
 
+          // Verify Change History is NOT visible in draft/edit mode
+          Then.onTheDetailPage.iDontSeeChangeHistorySection();
+
           When.onTheDetailPage.iOpenStatusValueHelp();
           When.onTheDetailPage.iSelectStatus("Resolved");
 

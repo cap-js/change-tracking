@@ -381,6 +381,35 @@ sap.ui.define(
         },
 
         /**
+         * Asserts that the "Change History" section is NOT visible
+         * on the Object Page. Used to verify the section is hidden
+         * in draft/edit mode (@UI.Hidden: not $draft.IsActiveEntity).
+         * Polls until no visible "Change History" section is found.
+         */
+        iDontSeeChangeHistorySection: function () {
+          return this.waitFor({
+            controlType: "sap.uxap.ObjectPageSection",
+            check: function (aSections) {
+              var bChangeHistoryVisible = aSections.some(function (oSection) {
+                return (
+                  oSection.getTitle() === "Change History" &&
+                  oSection.getVisible()
+                );
+              });
+              return !bChangeHistoryVisible;
+            },
+            success: function () {
+              QUnit.assert.ok(
+                true,
+                "Change History section is not visible in edit mode"
+              );
+            },
+            errorMessage:
+              "Change History section should not be visible in edit mode",
+          });
+        },
+
+        /**
          * Asserts that the Change History table has the expected columns.
          * Polls until the table is fully initialized after lazy-load.
          * @param {string[]} aExpectedColumns - Expected column header texts
