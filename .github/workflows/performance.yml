@@ -94,10 +94,12 @@ jobs:
             # Update workspace package dependencies to CDS 8 compatible versions
             cd ./tests/performance/perf-bookshop
             npm pkg set "dependencies.@sap/cds=^8.9.8"
-            npm pkg set "dependencies.@sap/cds-dk=^8.9.16"
+            npm pkg set "devDependencies.@sap/cds-dk=^8.9.16"
             npm pkg set "dependencies.@cap-js/hana=^1"
             npm pkg set "dependencies.@cap-js/postgres=^1"
             npm pkg set "devDependencies.@cap-js/sqlite=^1"
+            # CDS v8 does not auto-infer db kind from @cap-js/hana plugin, set explicitly
+            npm pkg set "cds.requires.db.kind=hana"
           fi
 
       - name: Install global CDS
