@@ -99,9 +99,11 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
           When.onTheDetailPage.iGoToSection("Change History");
 
           Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
-          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
-            modification: "Update",
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
+            changeType: "Update",
             newValue: "Resolved",
+            objectID: "Sunny Sunshine",
+            objectType: "Support Incidents",
           });
         }
       );
@@ -140,8 +142,9 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
           When.onTheDetailPage.iGoToSection("Change History");
 
           Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
-          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
+          Then.onTheDetailPage.iSeeChangeHistoryRow({
             objectID: "Stormy Weathers",
+            objectType: "Support Incidents",
           });
         }
       );
@@ -234,12 +237,16 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
             field: "Status",
             changeType: "Create",
             newValue: "In Process",
+            objectID: "Sunny Sunshine",
+            objectType: "Support Incidents",
           });
 
           // Verify the conversation parent row exists
           Then.onTheDetailPage.iSeeChangeHistoryRow({
             field: "conversation",
             changeType: "Create",
+            objectID: "Sunny Sunshine",
+            objectType: "Support Incidents",
           });
 
           // Expand the conversation tree row to reveal child entries
@@ -313,6 +320,8 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
           Then.onTheDetailPage.iSeeChangeHistoryRow({
             field: "conversation",
             changeType: "Update",
+            objectID: "Sunny Sunshine",
+            objectType: "Support Incidents",
           });
 
           // Expand the conversation update tree row
