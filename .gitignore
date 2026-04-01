@@ -7,3 +7,4 @@ gen/
 # added by cds
 .cdsrc-private.json
 .env
+.secrets
