@@ -4,8 +4,6 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
 
   var Journey = {
     start: function () {
-      QUnit.module("Change Tracking OPA Tests");
-
       opaTest("#000: Start the app", function (Given) {
         Given.iStartMyApp();
       });
@@ -21,6 +19,7 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
     // the update changelog entry.
     // ================================================================
     testEmptyAndUpdate: function () {
+      QUnit.module("Module A: Empty Change History + Update");
       opaTest(
         "#A1: List Report page loads correctly",
         function (Given, When, Then) {
@@ -128,6 +127,7 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
     // data from the CSV. Verifies the entries are displayed correctly.
     // ================================================================
     testPreSeededData: function () {
+      QUnit.module("Module B: Pre-seeded Change History");
       opaTest(
         "#B1: Navigate to 'No current on a sunny day'",
         function (Given, When, Then) {
@@ -171,6 +171,7 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
     // delete changelog entries.
     // ================================================================
     testCreateUpdateDelete: function () {
+      QUnit.module("Module C+D: Create / Update / Delete Lifecycle");
       // ── C: Create new Incident with conversations ──────────────
 
       opaTest(

@@ -389,6 +389,7 @@ sap.ui.define(
         iDontSeeChangeHistorySection: function () {
           return this.waitFor({
             controlType: "sap.uxap.ObjectPageSection",
+            timeout: 15,
             check: function (aSections) {
               var bChangeHistoryVisible = aSections.some(function (oSection) {
                 return (
