@@ -13,22 +13,24 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
       return Journey;
     },
 
-    /**
-     * Tests using pre-seeded CSV data to verify structural aspects
-     * of the Change History section (visibility, columns, entries).
-     */
-    testPreSeededData: function () {
+    // ================================================================
+    // Module A: Empty Change History + Update
+    // Opens "Solar panel broken" which has NO pre-seeded changelog
+    // data. Verifies the section is present but empty, tests the
+    // expand/collapse toggle, then updates the status and verifies
+    // the update changelog entry.
+    // ================================================================
+    testEmptyAndUpdate: function () {
       opaTest(
-        "#1: List Report page loads correctly",
+        "#A1: List Report page loads correctly",
         function (Given, When, Then) {
           Then.onTheMainPage.iSeeThisPage();
         }
       );
 
       opaTest(
-        "#2: Navigate to Incident with pre-seeded change history",
+        "#A2: Navigate to 'Solar panel broken'",
         function (Given, When, Then) {
-          // Navigate to "Solar panel broken" which has pre-seeded Changes data
           When.onTheMainPage
             .onTable()
             .iPressRow({ Title: "Solar panel broken" });
@@ -37,25 +39,18 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
       );
 
       opaTest(
-        "#3: Change History section is visible on the Object Page",
+        "#A3: Change History section exists on the Object Page",
         function (Given, When, Then) {
-          // The change-tracking plugin injects a "Change History" section
-          // via the ChangeHistoryFacet on all @changelog-annotated entities
           Then.onTheDetailPage.iSeeChangeHistorySection();
         }
       );
 
       opaTest(
-        "#4: Change History section has the expected columns",
+        "#A4: Change History section is empty and has correct columns",
         function (Given, When, Then) {
-          // Navigate to the Change History section to load its data
-          // (it uses @UI.PartOfPreview: false, so data loads on demand)
           When.onTheDetailPage.iGoToSection("Change History");
-
-          // Expand the collapsed subsection by clicking "Show More"
           When.onTheDetailPage.iPressSeeMore();
 
-          // Verify all expected columns are present
           Then.onTheDetailPage.iSeeChangeHistoryColumns([
             "Change Type",
             "Object Type",
@@ -66,76 +61,29 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
             "Changed at",
             "Changed by",
           ]);
+
+          Then.onTheDetailPage.iSeeEmptyChangeHistory();
         }
       );
 
       opaTest(
-        "#5: Change History displays pre-seeded entries",
+        "#A5: Change History can be collapsed and re-expanded",
         function (Given, When, Then) {
-          // Verify that pre-seeded changelog data is visible in the table
-          Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
-
-          // Verify specific content from our pre-seeded CSV data
-          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
-            objectID: "Sunny Sunshine",
-          });
-        }
-      );
-
-      opaTest(
-        "#5b: Change History section can be collapsed and re-expanded",
-        function (Given, When, Then) {
-          // Collapse the section by clicking "Show Less"
           When.onTheDetailPage.iPressSeeLess();
-
-          // Re-expand by clicking "Show More"
           When.onTheDetailPage.iPressSeeMore();
-
-          // Verify the data is still visible after re-expanding
-          Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
+          Then.onTheDetailPage.iSeeEmptyChangeHistory();
         }
       );
 
       opaTest(
-        "#6: Navigate back to List Report",
+        "#A6: Update status to 'Resolved'",
         function (Given, When, Then) {
-          When.iNavigateBack();
-          Then.onTheMainPage.iSeeThisPage();
-        }
-      );
-
-      return Journey;
-    },
-
-    /**
-     * Tests that create changelog entries during the test by editing
-     * an entity through the draft flow, then verifying the new entries
-     * appear in the Change History section.
-     */
-    testEditAndVerify: function () {
-      opaTest(
-        "#7: Navigate to a different Incident to edit it",
-        function (Given, When, Then) {
-          // Use "No current on a sunny day" which has no pre-seeded changes
-          When.onTheMainPage
-            .onTable()
-            .iPressRow({ Title: "No current on a sunny day" });
-          Then.onTheDetailPage.iSeeThisPage();
-        }
-      );
-
-      opaTest(
-        "#8: Edit the Incident status via draft flow",
-        function (Given, When, Then) {
-          // Enter edit mode (creates a draft)
           When.onTheDetailPage.onHeader().iExecuteAction("Edit");
           Then.onTheDetailPage.iSeeObjectPageInEditMode();
 
-          // Change the status from "New" to "In Process" (tracked by @changelog)
           When.onTheDetailPage.iOpenStatusValueHelp();
-          When.onTheDetailPage.iSelectStatus("In Process");
+          When.onTheDetailPage.iSelectStatus("Resolved");
 
-          // Wait for draft to be saved, then activate
           Then.onTheDetailPage.onFooter().iCheckDraftStateSaved();
           When.onTheDetailPage.iPressSave();
           Then.onTheDetailPage
@@ -145,26 +93,207 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
       );
 
       opaTest(
-        "#9: Verify new change entry appears in Change History after edit",
+        "#A7: Change History shows update entry with 'Resolved'",
         function (Given, When, Then) {
-          // Navigate to Change History section (scroll anchor bar)
+          // Section is already expanded (state persists through edit/save)
           When.onTheDetailPage.iGoToSection("Change History");
 
-          // Section is already expanded (state persists from earlier tests)
-          // so we can directly assert table content
-
-          // The status change should have created a changelog entry
           Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
-
-          // Verify the entry shows the new status description
           Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
-            newValue: "In Process",
+            modification: "Update",
+            newValue: "Resolved",
           });
         }
       );
 
       opaTest(
-        "#10: Navigate back to List Report",
+        "#A8: Navigate back to List Report",
+        function (Given, When, Then) {
+          When.iNavigateBack();
+          Then.onTheMainPage.iSeeThisPage();
+        }
+      );
+
+      return Journey;
+    },
+
+    // ================================================================
+    // Module B: Pre-seeded Change History
+    // Opens "No current on a sunny day" which has pre-seeded changelog
+    // data from the CSV. Verifies the entries are displayed correctly.
+    // ================================================================
+    testPreSeededData: function () {
+      opaTest(
+        "#B1: Navigate to 'No current on a sunny day'",
+        function (Given, When, Then) {
+          When.onTheMainPage
+            .onTable()
+            .iPressRow({ Title: "No current on a sunny day" });
+          Then.onTheDetailPage.iSeeThisPage();
+        }
+      );
+
+      opaTest(
+        "#B2: Change History shows pre-seeded entries",
+        function (Given, When, Then) {
+          // Section expand state persists from Module A
+          When.onTheDetailPage.iGoToSection("Change History");
+
+          Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
+          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
+            objectID: "Stormy Weathers",
+          });
+        }
+      );
+
+      opaTest(
+        "#B3: Navigate back to List Report",
+        function (Given, When, Then) {
+          When.iNavigateBack();
+          Then.onTheMainPage.iSeeThisPage();
+        }
+      );
+
+      return Journey;
+    },
+
+    // ================================================================
+    // Module C+D: Full create / update / delete lifecycle
+    // Creates a new Incident with title, customer, status, and two
+    // conversation entries. Verifies create changelog. Then updates
+    // one conversation and deletes the other. Verifies update and
+    // delete changelog entries.
+    // ================================================================
+    testCreateUpdateDelete: function () {
+      // ── C: Create new Incident with conversations ──────────────
+
+      opaTest(
+        "#C1: Create a new Incident from the List Report",
+        function (Given, When, Then) {
+          When.onTheMainPage.onTable().iExecuteCreate();
+          Then.onTheDetailPage.iSeeObjectPageInEditMode();
+        }
+      );
+
+      opaTest(
+        "#C2: Fill incident fields (title, customer, status)",
+        function (Given, When, Then) {
+          // Set title
+          When.onTheDetailPage.iEnterTitle("OPA Test Incident");
+
+          // Set customer via value help dialog
+          When.onTheDetailPage.iOpenCustomerValueHelp();
+          When.onTheDetailPage.iSelectCustomer("Sunny Sunshine");
+
+          // Set status to "In Process"
+          When.onTheDetailPage.iOpenStatusValueHelp();
+          When.onTheDetailPage.iSelectStatus("In Process");
+        }
+      );
+
+      opaTest(
+        "#C3: Add two conversation entries",
+        function (Given, When, Then) {
+          // Scroll to the Conversation section to make the table visible
+          When.onTheDetailPage.iGoToSection("Conversation");
+
+          // Add first conversation
+          When.onTheDetailPage.iPressConversationCreate();
+          When.onTheDetailPage.iEnterConversationMessage(
+            "Initial investigation started"
+          );
+
+          // Add second conversation
+          When.onTheDetailPage.iPressConversationCreate();
+          When.onTheDetailPage.iEnterConversationMessage(
+            "Customer contacted"
+          );
+        }
+      );
+
+      opaTest(
+        "#C4: Save the new Incident",
+        function (Given, When, Then) {
+          Then.onTheDetailPage.onFooter().iCheckDraftStateSaved();
+          When.onTheDetailPage.iPressSave();
+          Then.onTheDetailPage
+            .iSeeThisPage()
+            .and.iSeeObjectPageInDisplayMode();
+        }
+      );
+
+      opaTest(
+        "#C5: Change History shows create entries",
+        function (Given, When, Then) {
+          When.onTheDetailPage.iGoToSection("Change History");
+
+          // Section is already expanded (state persists from Module A)
+
+          Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
+          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
+            modification: "Create",
+          });
+        }
+      );
+
+      // ── D: Update one conversation, delete the other ───────────
+
+      opaTest(
+        "#D1: Edit the Incident",
+        function (Given, When, Then) {
+          When.onTheDetailPage.onHeader().iExecuteAction("Edit");
+          Then.onTheDetailPage.iSeeObjectPageInEditMode();
+        }
+      );
+
+      opaTest(
+        "#D2: Update first conversation and delete second",
+        function (Given, When, Then) {
+          // Navigate to the Conversation section
+          When.onTheDetailPage.iGoToSection("Conversation");
+
+          // Update the first conversation message
+          When.onTheDetailPage.iUpdateConversationMessage(
+            "Initial investigation started",
+            "Investigation completed"
+          );
+
+          // Select and delete the second conversation
+          When.onTheDetailPage.iSelectConversationRow("Customer contacted");
+          When.onTheDetailPage.iPressConversationDelete();
+          When.onTheDetailPage.iConfirmDelete();
+        }
+      );
+
+      opaTest(
+        "#D3: Save after update and delete",
+        function (Given, When, Then) {
+          Then.onTheDetailPage.onFooter().iCheckDraftStateSaved();
+          When.onTheDetailPage.iPressSave();
+          Then.onTheDetailPage
+            .iSeeThisPage()
+            .and.iSeeObjectPageInDisplayMode();
+        }
+      );
+
+      opaTest(
+        "#D4: Change History shows update and delete entries",
+        function (Given, When, Then) {
+          // Section is already expanded (state persists)
+          When.onTheDetailPage.iGoToSection("Change History");
+
+          // Should now have create entries + update + delete entries
+          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
+            modification: "Update",
+          });
+          Then.onTheDetailPage.iSeeChangeHistoryEntryWith({
+            modification: "Delete",
+          });
+        }
+      );
+
+      opaTest(
+        "#D5: Navigate back to List Report",
         function (Given, When, Then) {
           When.iNavigateBack();
           Then.onTheMainPage.iSeeThisPage();
@@ -184,7 +313,11 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
   };
 
   Journey.run = function () {
-    Journey.start().testPreSeededData().testEditAndVerify().end();
+    Journey.start()
+      .testEmptyAndUpdate()
+      .testPreSeededData()
+      .testCreateUpdateDelete()
+      .end();
   };
 
   return Journey;

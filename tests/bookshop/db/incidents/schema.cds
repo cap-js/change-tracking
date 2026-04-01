@@ -46,7 +46,6 @@ entity Incidents : cuid, managed {
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
   decimalProp : Decimal(15,4) @title : 'Decimal prop' @changelog;
-  @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
     timestamp : type of managed:createdAt;
