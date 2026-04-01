@@ -100,53 +100,23 @@ describe('change log generation', () => {
 				{
 					ID: e1ID,
 					bool: false,
-					number: 0,
-					children: [
-						{
-							ID: cds.utils.uuid(),
-							double: 10
-						},
-						{
-							ID: cds.utils.uuid(),
-							double: 12
-						}
-					]
+					number: 0
 				},
 				{
 					ID: e2ID,
 					bool: true,
-					number: 10,
-					children: [
-						{
-							ID: cds.utils.uuid(),
-							double: 10
-						},
-						{
-							ID: cds.utils.uuid(),
-							double: 12
-						}
-					]
+					number: 10
 				},
 				{
 					ID: e3ID,
 					bool: false,
-					number: 20,
-					children: [
-						{
-							ID: cds.utils.uuid(),
-							double: 10
-						},
-						{
-							ID: cds.utils.uuid(),
-							double: 12
-						}
-					]
+					number: 20
 				}
 			];
 			await INSERT.into(DifferentFieldTypes).entries(data);
 
 			const changes = await SELECT.from(ChangeView).where`entityKey in ${[e1ID, e2ID, e3ID]}`;
-			expect(changes.length).toEqual(9);
+			expect(changes.length).toEqual(6);
 			expect(changes.some((c) => c.modification !== 'create')).toEqual(false);
 			expect(changes.some((c) => c.entity !== 'sap.change_tracking.DifferentFieldTypes')).toEqual(false);
 
@@ -184,25 +154,23 @@ describe('change log generation', () => {
 
 	describe('composition tracking', () => {
 		it('does not link child entity changes to the root entity when composition field is annotated with @changelog false', async () => {
-			const processorService = await cds.connect.to('ProcessorService');
-			const { ChangeView } = processorService.entities;
+			const variantService = await cds.connect.to('VariantTesting');
+			const { ChangeView } = variantService.entities;
 
-			const incidentsID = cds.utils.uuid();
-			const conversationID = cds.utils.uuid();
-			await POST(`/odata/v4/processor/Incidents`, {
-				ID: incidentsID,
-				conversation: [{ ID: conversationID, message: 'test message' }]
+			const parentID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
+			await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
+				ID: parentID,
+				title: 'Parent record',
+				children: [{ ID: childID, double: 3.14 }]
 			});
-			await POST(`/odata/v4/processor/Incidents(ID=${incidentsID}, IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
-			const compositeKey = `${String(incidentsID).length},${incidentsID};${String(conversationID).length},${conversationID}`;
-
-			const changes = await SELECT.one.from(ChangeView).where({ entityKey: compositeKey });
-			expect(changes.entity).toEqual('sap.capire.incidents.Incidents.conversation');
-			expect(changes.attribute).toEqual('message');
+			const changes = await SELECT.one.from(ChangeView).where({ entityKey: childID, attribute: 'double' });
+			expect(changes.entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
+			expect(changes.attribute).toEqual('double');
 			expect(changes.modification).toEqual('create');
 			expect(changes.valueChangedFrom).toEqual(null);
-			expect(changes.valueChangedTo).toEqual('test message');
+			expect(changes.valueChangedTo).toEqual('3.14');
 			expect(changes.parent_ID).toEqual(null);
 		});
 
