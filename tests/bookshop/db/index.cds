@@ -14,6 +14,7 @@ entity DifferentFieldTypes {
       timeZone: String default 'Europe/Berlin' @Common.IsTimezone;
       timestamp : Timestamp;
       number    : Decimal;
+      numberWithScale : Decimal(11, 4);
       bool      : Boolean;
       image     : LargeBinary @changelog; // Unsupported - should trigger warning
       icon      : Binary      @changelog; // Unsupported - should trigger warning

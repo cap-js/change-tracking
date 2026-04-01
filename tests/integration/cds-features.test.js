@@ -157,6 +157,69 @@ describe('CDS Features', () => {
 		});
 	});
 
+	describe('tracking decimals', () => {
+		it('tracked decimal change with scale stores value with correct precision', async () => {
+			const { DifferentFieldTypes } = cds.entities('sap.change_tracking');
+			const { DifferentFieldTypes: srvDifferentFieldTypes } = cds.entities('VariantTesting');
+			const data = {
+				ID: cds.utils.uuid(),
+				numberWithScale: 0
+			};
+			await INSERT.into(DifferentFieldTypes).entries(data);
+			let change = await SELECT.one.from({ ref: [{ id: srvDifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: data.ID,
+				attribute: 'numberWithScale'
+			});
+
+			// Value is stored as string with correct scale padding (Decimal(11,4) -> 4 decimal places)
+			expect(change.valueChangedTo).toEqual('0.0000');
+			expect(change.valueDataType).toEqual('cds.Decimal');
+		});
+
+		it('tracked decimal change without scale stores value as-is', async () => {
+			const { DifferentFieldTypes } = cds.entities('sap.change_tracking');
+			const { DifferentFieldTypes: srvDifferentFieldTypes } = cds.entities('VariantTesting');
+			const data = {
+				ID: cds.utils.uuid(),
+				number: 42.5
+			};
+			await INSERT.into(DifferentFieldTypes).entries(data);
+			let change = await SELECT.one.from({ ref: [{ id: srvDifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: data.ID,
+				attribute: 'number'
+			});
+
+			// Without explicit scale, value is stored without padding
+			expect(change.valueChangedTo).toEqual('42.5');
+			expect(change.valueDataType).toEqual('cds.Decimal');
+		});
+
+		it('tracked decimal change from null preserves null in valueChangedFrom', async () => {
+			const { DifferentFieldTypes } = cds.entities('sap.change_tracking');
+			const { DifferentFieldTypes: srvDifferentFieldTypes } = cds.entities('VariantTesting');
+
+			// Create without numberWithScale (null)
+			const data = { ID: cds.utils.uuid(), title: 'null decimal test' };
+			await INSERT.into(DifferentFieldTypes).entries(data);
+
+			// Update to set the decimal value
+			await UPDATE.entity(DifferentFieldTypes).where({ ID: data.ID }).set({ numberWithScale: 9.99 });
+
+			let change = await SELECT.one.from({ ref: [{ id: srvDifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: data.ID,
+				attribute: 'numberWithScale',
+				modification: 'update'
+			});
+
+			// NULL should remain null, not become '0.0000'
+			expect(change.valueChangedFrom).toEqual(null);
+			expect(change.valueChangedTo).toEqual('9.9900');
+		});
+	});
+
 	it('default values are tracked', async () => {
 		const {
 			data: { ID }
