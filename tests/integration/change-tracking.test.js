@@ -955,7 +955,7 @@ describe('change log generation', () => {
 		});
 
 		describe('Composition of many', () => {
-			it.only('logs each created child as a separate change on the root entity', async () => {
+			it('logs each created child as a separate change on the root entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -2015,33 +2015,32 @@ describe('Expression-based @changelog annotations', () => {
 	});
 
 	it('uses arithmetic expression as label for non-association elements (decimalProp * 2)', async () => {
-		// decimalProp uses @changelog: [(decimalProp * 2)]
-		const res = await POST(`/odata/v4/processor/Incidents`, {
-			customer_ID: '1004161',
-			title: 'Printer maintenance request',
-			urgency_code: 'M',
+		// decimalProp uses @changelog: (decimalProp * 2)
+		const res = await POST(`/odata/v4/localization/ExpressionScenarios`, {
+			firstName: 'Bob',
+			lastName: 'Builder',
 			status_code: 'N',
 			decimalProp: 50
 		});
-		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
 
-		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
-		await PATCH(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)`, {
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=true)/LocalizationService.draftEdit`, {});
+		await PATCH(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=false)`, {
 			decimalProp: 250
 		});
-		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
 
 		const {
 			data: { value: changes }
-		} = await GET(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=true)/changes`);
+		} = await GET(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=true)/changes`);
 
 		const decimalChange = changes.find((c) => c.attribute === 'decimalProp' && c.modification === 'update');
 		expect(decimalChange).toBeTruthy();
-		expect(decimalChange.valueChangedFrom).toEqual('50');
-		expect(decimalChange.valueChangedTo).toEqual('250');
+		expect(decimalChange.valueChangedFrom).toEqual('50.0000');
+		expect(decimalChange.valueChangedTo).toEqual('250.0000');
 		// (decimalProp * 2): old=50 -> '100', new=250 -> '500'
-		expect(decimalChange.valueChangedFromLabel).toEqual('100');
-		expect(decimalChange.valueChangedToLabel).toEqual('500');
+		expect(decimalChange.valueChangedFromLabel).toEqual('100.0000');
+		expect(decimalChange.valueChangedToLabel).toEqual('500.0000');
 	});
 
 	it('classifies price values using ternary expression label on ExpressionScenarios', async () => {
