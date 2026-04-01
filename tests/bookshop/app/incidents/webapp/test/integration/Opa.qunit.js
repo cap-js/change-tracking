@@ -3,14 +3,22 @@ sap.ui.require(
     "sap/fe/test/JourneyRunner",
     "ns/incidents/test/integration/pages/IncidentListReport",
     "ns/incidents/test/integration/pages/IncidentObjectPage",
-    "ns/incidents/test/integration/ChangeTrackingJourney",
+    "ns/incidents/test/integration/EmptyChangeHistoryJourney",
+    "ns/incidents/test/integration/PreSeededChangeHistoryJourney",
+    "ns/incidents/test/integration/ChangeLifecycleJourney",
   ],
-  function (JourneyRunner, IncidentListReport, IncidentObjectPage, Journey) {
+  function (
+    JourneyRunner,
+    IncidentListReport,
+    IncidentObjectPage,
+    EmptyChangeHistoryJourney,
+    PreSeededChangeHistoryJourney,
+    ChangeLifecycleJourney
+  ) {
     "use strict";
 
     const runner = new JourneyRunner({
-      launchUrl:
-        sap.ui.require.toUrl("ns/incidents") + "/index.html",
+      launchUrl: sap.ui.require.toUrl("ns/incidents") + "/index.html",
       launchParameters: {
         "sap-language": "EN",
       },
@@ -26,7 +34,9 @@ sap.ui.require(
           onTheDetailPage: IncidentObjectPage,
         },
       },
-      Journey.run
+      EmptyChangeHistoryJourney.run,
+      PreSeededChangeHistoryJourney.run,
+      ChangeLifecycleJourney.run
     );
   }
 );
