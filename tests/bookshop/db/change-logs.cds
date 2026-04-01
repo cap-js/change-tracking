@@ -5,6 +5,7 @@ annotate change_tracking.DifferentFieldTypes with @(changelog: [title]) {
   dateTime  @changelog;
   timestamp @changelog;
   number    @changelog;
+  numberWithScale @changelog;
   bool      @changelog;
   dppField1 @changelog;
   dppField2 @changelog;
