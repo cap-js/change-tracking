@@ -77,20 +77,22 @@ sap.ui.define(
         /**
          * Selects a status from the open value help dropdown by its
          * description text (e.g. "New", "In Process", "Resolved").
-         * Uses searchOpenDialogs to find the text inside the popover.
+         * Clicks the parent FieldWrapper control (not the inner Text)
+         * to properly trigger the selection and close the dropdown.
          *
          * @param {string} sStatusText - The status description to select
          */
         iSelectStatus: function (sStatusText) {
           return this.waitFor({
-            controlType: "sap.m.Text",
+            controlType: "sap.fe.macros.controls.FieldWrapper",
             searchOpenDialogs: true,
-            matchers: function (oText) {
-              return oText.getText() === sStatusText;
+            matchers: function (oWrapper) {
+              var oDomRef = oWrapper.getDomRef();
+              return oDomRef && oDomRef.innerText.indexOf(sStatusText) > -1;
             },
             actions: new Press(),
             errorMessage:
-              "Could not find status '" + sStatusText + "' in value help",
+              "Could not select status '" + sStatusText + "' in value help",
           });
         },
 
