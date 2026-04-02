@@ -1,6 +1,6 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE } = cds.test(bookshop);
+const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
 
 describe('@changelog annotation interpretation', () => {
 	it('builds objectID from entity keys when explicit @changelog annotation is missing', async () => {
@@ -530,6 +530,57 @@ describe('@changelog annotation interpretation', () => {
 				valueChangedFromLabel: null,
 				valueChangedToLabel: 'Test Location, Test City, TC'
 			});
+		});
+	});
+
+	describe('service projections with element renames', () => {
+		it('does not conflict when a service renames an element but @changelog annotations are inherited unchanged', async () => {
+			const {
+				data: { ID: incidentID }
+			} = await POST(`odata/v4/localization/Incidents`, {
+				customer_ID: '1004161',
+				title: 'Rename tolerance test',
+				urgency_code: 'M',
+				renamedStatus_code: 'N'
+			});
+
+			// Update status via the renamed element
+			await PATCH(`odata/v4/localization/Incidents(ID=${incidentID})`, {
+				renamedStatus_code: 'R'
+			});
+
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`);
+
+			const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
+			expect(statusChange).toBeDefined();
+			expect(statusChange.valueChangedFrom).toEqual('N');
+			expect(statusChange.valueChangedTo).toEqual('R');
+		});
+
+		it('resolves entity-level expression @changelog correctly despite element rename in service projection', async () => {
+			const {
+				data: { ID: incidentID }
+			} = await POST(`odata/v4/localization/Incidents`, {
+				customer_ID: '1004161',
+				title: 'Entity-level expression test',
+				urgency_code: 'M',
+				renamedStatus_code: 'N'
+			});
+
+			await PATCH(`odata/v4/localization/Incidents(ID=${incidentID})`, {
+				renamedStatus_code: 'A'
+			});
+
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`);
+
+			// The objectID should be resolved from the entity-level @changelog expression
+			const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
+			expect(statusChange).toBeDefined();
+			expect(statusChange.objectID).toEqual('Stormy Weathers: Assigned');
 		});
 	});
 });
