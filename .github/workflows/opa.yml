@@ -42,3 +42,9 @@ jobs:
       - run: npm i
       - name: Run OPA tests
         run: cd tests/bookshop && npm run test:opa
+      - name: Upload OPA test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: opa-test-report-${{ matrix.cds-version }}
+          path: tests/bookshop/report/
