@@ -35,6 +35,10 @@ sap.ui.define(["sap/ui/test/opaQunit"], function (opaTest) {
           When.onTheDetailPage.iOpenCustomerValueHelp();
           When.onTheDetailPage.iSelectCustomer("Sunny Sunshine");
 
+          // Wait for the customer value help dialog to fully close and the PATCH request to complete before opening the next value help 
+          // Avoids cross-origin "Script error." from UI5 CDN
+          Then.onTheDetailPage.onFooter().iCheckDraftStateSaved();
+
           // Set status to "In Process"
           When.onTheDetailPage.iOpenStatusValueHelp();
           When.onTheDetailPage.iSelectStatus("In Process");

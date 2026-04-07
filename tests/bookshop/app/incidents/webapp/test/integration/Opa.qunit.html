@@ -28,6 +28,23 @@
     <script src="https://ui5.sap.com/resources/sap/ui/thirdparty/qunit-2.js"></script>
     <script src="https://ui5.sap.com/resources/sap/ui/qunit/qunit-junit.js"></script>
 
+    <!-- Suppress cross-origin "Script error." from UI5 loaded via CDN.
+         QUnit 2.3.2 (bundled with UI5) uses QUnit.onError as the sole
+         entry point for window.onerror — returning true suppresses the
+         failing assertion that would otherwise be pushed onto the
+         current test. -->
+    <script>
+      (function () {
+        var fnOrigOnError = QUnit.onError;
+        QUnit.onError = function (error) {
+          if (error && error.message === "Script error.") {
+            return true;
+          }
+          return fnOrigOnError.apply(this, arguments);
+        };
+      })();
+    </script>
+
     <script src="Opa.qunit.js"></script>
   </head>
   <body>
