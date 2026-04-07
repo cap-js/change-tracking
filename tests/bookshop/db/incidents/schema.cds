@@ -30,13 +30,14 @@ entity Addresses : cuid, managed {
 /**
  * Incidents created by Customers.
  */
-@changelog : [customer.name]
+@changelog : (customer.name || ': ' || status.descr)
 @title : 'Support Incidents'
 entity Incidents : cuid, managed {
   customer       : Association to Customers @changelog : [customer.name];
   title          : String @title: 'Title';
   urgency        : Association to Urgency default 'M';
   status         : Association to Status default 'N' @changelog : [status.descr] @title : 'Status';
+  statusExpr         : Association to Status default 'N' @changelog : (status.descr) @UI.Hidden;
   date           : Date @title : 'date' @changelog;
   datetime       : DateTime @title : 'datetime' @changelog;
   datetimeWTimeZone : DateTime @title : 'datetime with TimeZone' @changelog @Common : { Timezone : 'Asia/Riyadh' };
@@ -44,7 +45,7 @@ entity Incidents : cuid, managed {
   timezone : String default 'Asia/Riyadh' @Common.IsTimezone;
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
-  decimalProp : Decimal @title : 'Decimal prop' @changelog;
+  decimalProp : Decimal(15,4) @title : 'Decimal prop' @changelog;
   @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
@@ -147,4 +148,17 @@ entity VHWithMultiKey : CodeList {
   key code    : String;
   key code2 : String;
   name: localized String;
+}
+
+
+/**
+ * Test entity for expression-based @changelog annotations.
+ * Uses CDS expressions (parenthesized) instead of simple paths.
+ */
+@changelog : (firstName || ' ' || lastName)
+entity ExpressionScenarios : cuid {
+  firstName : String @changelog;
+  lastName  : String @changelog;
+  price     : Decimal @changelog: (price < 100 ? 'Budget' : 'Premium');
+  status    : Association to Status default 'N' @changelog : (status.code || ': ' || status.descr);
 }

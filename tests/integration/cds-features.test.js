@@ -157,6 +157,69 @@ describe('CDS Features', () => {
 		});
 	});
 
+	describe('tracking decimals', () => {
+		it('tracked decimal change with scale stores value with correct precision', async () => {
+			const { DifferentFieldTypes } = cds.entities('sap.change_tracking');
+			const { DifferentFieldTypes: srvDifferentFieldTypes } = cds.entities('VariantTesting');
+			const data = {
+				ID: cds.utils.uuid(),
+				numberWithScale: 0
+			};
+			await INSERT.into(DifferentFieldTypes).entries(data);
+			let change = await SELECT.one.from({ ref: [{ id: srvDifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: data.ID,
+				attribute: 'numberWithScale'
+			});
+
+			// Value is stored as string with correct scale padding (Decimal(11,4) -> 4 decimal places)
+			expect(change.valueChangedTo).toEqual('0.0000');
+			expect(change.valueDataType).toEqual('cds.Decimal');
+		});
+
+		it('tracked decimal change without scale stores value as-is', async () => {
+			const { DifferentFieldTypes } = cds.entities('sap.change_tracking');
+			const { DifferentFieldTypes: srvDifferentFieldTypes } = cds.entities('VariantTesting');
+			const data = {
+				ID: cds.utils.uuid(),
+				number: 42.5
+			};
+			await INSERT.into(DifferentFieldTypes).entries(data);
+			let change = await SELECT.one.from({ ref: [{ id: srvDifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: data.ID,
+				attribute: 'number'
+			});
+
+			// Without explicit scale, value is stored without padding
+			expect(change.valueChangedTo).toEqual('42.5');
+			expect(change.valueDataType).toEqual('cds.Decimal');
+		});
+
+		it('tracked decimal change from null preserves null in valueChangedFrom', async () => {
+			const { DifferentFieldTypes } = cds.entities('sap.change_tracking');
+			const { DifferentFieldTypes: srvDifferentFieldTypes } = cds.entities('VariantTesting');
+
+			// Create without numberWithScale (null)
+			const data = { ID: cds.utils.uuid(), title: 'null decimal test' };
+			await INSERT.into(DifferentFieldTypes).entries(data);
+
+			// Update to set the decimal value
+			await UPDATE.entity(DifferentFieldTypes).where({ ID: data.ID }).set({ numberWithScale: 9.99 });
+
+			let change = await SELECT.one.from({ ref: [{ id: srvDifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.DifferentFieldTypes',
+				entityKey: data.ID,
+				attribute: 'numberWithScale',
+				modification: 'update'
+			});
+
+			// NULL should remain null, not become '0.0000'
+			expect(change.valueChangedFrom).toEqual(null);
+			expect(change.valueChangedTo).toEqual('9.9900');
+		});
+	});
+
 	it('default values are tracked', async () => {
 		const {
 			data: { ID }
@@ -681,6 +744,45 @@ describe('CDS Features', () => {
 			expect(valueChangedFromLabel.xpr.some((r) => r.val === 'status1')).toEqual(false);
 			const valueChangedToLabel = ChangeView.query.SELECT.columns.find((c) => c.as === 'valueChangedToLabel');
 			expect(valueChangedToLabel.xpr.some((r) => r.val === 'status1')).toEqual(false);
+		});
+
+		it('ValueFrom and ValueTo labels are localized if changelog is an expression', async () => {
+			const incidentID = await newIncident();
+			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
+
+			await PATCH(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)`, {
+				statusExpr_code: 'R'
+			});
+
+			await POST(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+				headers: { 'Accept-Language': 'de' }
+			});
+			const statusChange = changes.find((change) => change.attribute === 'statusExpr' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChange).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'Neu',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Gelöst'
+			});
+
+			const {
+				data: { value: changesEN }
+			} = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
+				headers: { 'Accept-Language': 'en' }
+			});
+			const statusChangeEN = changesEN.find((change) => change.attribute === 'statusExpr' && change.modification === 'update' && change.entityKey === incidentID);
+
+			expect(statusChangeEN).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'New',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Resolved'
+			});
 		});
 
 		it('ValueFrom and ValueTo labels are not localized if changelog label uses another association path', async () => {

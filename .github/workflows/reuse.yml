@@ -2,6 +2,9 @@ name: "Launch Metadata Creation Tool for REUSE"
 on:
   workflow_dispatch: ~
 
+permissions:
+  contents: read
+
 jobs:
   create_metadata_proposal:
     runs-on: ubuntu-latest

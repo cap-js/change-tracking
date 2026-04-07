@@ -8,6 +8,9 @@ on:
     branches: [main]
     types: [reopened, synchronize, opened]
 
+permissions:
+  contents: read
+
 env:
   PERF_CLUSTER_KUBECONF: ${{ secrets.PERF_CLUSTER_KUBECONF }}
 
@@ -91,10 +94,12 @@ jobs:
             # Update workspace package dependencies to CDS 8 compatible versions
             cd ./tests/performance/perf-bookshop
             npm pkg set "dependencies.@sap/cds=^8.9.8"
-            npm pkg set "dependencies.@sap/cds-dk=^8.9.16"
+            npm pkg set "devDependencies.@sap/cds-dk=^8.9.16"
             npm pkg set "dependencies.@cap-js/hana=^1"
             npm pkg set "dependencies.@cap-js/postgres=^1"
             npm pkg set "devDependencies.@cap-js/sqlite=^1"
+            # CDS v8 does not auto-infer db kind from @cap-js/hana plugin, set explicitly
+            npm pkg set "cds.requires.db.kind=hana"
           fi
 
       - name: Install global CDS
@@ -165,10 +170,10 @@ jobs:
       - name: Wait for test to finish
         shell: bash
         run: |
-          for i in {1..10}; do
+          for i in {1..15}; do
             STATUS="$(kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq -r '.status.state // empty')"
             THRESHOLD_STATUS="$(kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq -r '.status.phases[0].status // empty')"
-            echo "Current test status (attempt $i/10): ${STATUS:-<empty>}"
+            echo "Current test status (attempt $i/15): ${STATUS:-<empty>}"
 
             if [ "$STATUS" = "Succeeded" ] && [ "$THRESHOLD_STATUS" = "Completed" ]; then
               echo "Performance tests succeeded."
@@ -176,8 +181,8 @@ jobs:
               exit 0
             fi
 
-            if [ "$i" -eq 10 ]; then
-              echo "❌ performance tests did not reach 'Succeeded' after 10 attempts."
+            if [ "$i" -eq 15 ]; then
+              echo "❌ performance tests did not reach 'Succeeded' after 15 attempts."
               kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
               exit 1
             fi
