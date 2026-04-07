@@ -23,7 +23,7 @@ sap.ui.require(
         "sap-language": "EN",
       },
       opaConfig: {
-        timeout: 60,
+        timeout: 30,
       },
     });
 

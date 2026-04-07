@@ -8,10 +8,11 @@
 	"devDependencies": {
 		"@cap-js/sqlite": "^1 || ^2",
 		"@sap/cds-dk": "^9.8.2",
-		"ui5-test-runner": "^5",
-		"puppeteer": "^24.40.0"
+		"puppeteer": "^24.40.0",
+		"ui5-test-runner": "^5.13.1"
 	},
 	"scripts": {
+		"start": "cds-serve",
 		"watch:h2": "mvn spring-boot:run",
 		"watch:hana": "cds watch --profile hana",
 		"watch:sqlite": "cds watch --profile sqlite",
@@ -19,7 +20,7 @@
 		"deploy:hana": "cds deploy --to hana",
 		"deploy:postgres": "CDS_ENV=pg cds build --production && cds deploy --profile pg",
 		"start:pg": "docker compose -f pg-stack.yml up -d && npm run deploy:postgres",
-		"test:opa": "ui5-test-runner --url http://localhost:4004/incidents/webapp/test/integration/Opa.qunit.html --start 'cds-serve' --start-timeout 30s --page-timeout 5min"
+		"test:opa": "ui5-test-runner"
 	},
 	"cds": {
 		"log": {

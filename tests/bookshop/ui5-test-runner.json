@@ -1,0 +1,8 @@
+{
+	"url": "http://localhost:4004/incidents/webapp/test/testsuite.qunit.html",
+	"start": "start",
+	"startWaitUrl": "http://localhost:4004/",
+	"startTimeout": "30s",
+	"failOpaFast": true,
+	"browserArgs": ["--basic-auth-username", "alice", "--basic-auth-password", "alice"]
+}

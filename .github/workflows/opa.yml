@@ -40,6 +40,5 @@ jobs:
           node-version: 22.x
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
       - run: npm i
-      - run: cd tests/bookshop && npm i
       - name: Run OPA tests
         run: cd tests/bookshop && npm run test:opa
