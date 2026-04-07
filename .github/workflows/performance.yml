@@ -181,6 +181,12 @@ jobs:
               exit 0
             fi
 
+            if [ "$STATUS" = "Failed" ]; then
+              echo "❌ Performance tests failed."
+              kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
+              exit 1
+            fi
+
             if [ "$i" -eq 15 ]; then
               echo "❌ performance tests did not reach 'Succeeded' after 15 attempts."
               kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
