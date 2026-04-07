@@ -1,17 +1,17 @@
-sap.ui.define(["sap/fe/test/ListReport"], function (ListReport) {
-  "use strict";
+sap.ui.define(['sap/fe/test/ListReport'], function (ListReport) {
+	'use strict';
 
-  var AdditionalCustomListReportDefinition = {
-    actions: {},
-    assertions: {},
-  };
+	var AdditionalCustomListReportDefinition = {
+		actions: {},
+		assertions: {}
+	};
 
-  return new ListReport(
-    {
-      appId: "ns.incidents",
-      componentId: "IncidentsList",
-      entitySet: "Incidents",
-    },
-    AdditionalCustomListReportDefinition
-  );
+	return new ListReport(
+		{
+			appId: 'ns.incidents',
+			componentId: 'IncidentsList',
+			entitySet: 'Incidents'
+		},
+		AdditionalCustomListReportDefinition
+	);
 });
