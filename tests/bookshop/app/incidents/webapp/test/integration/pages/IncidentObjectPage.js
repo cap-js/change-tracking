@@ -50,6 +50,18 @@ sap.ui.define(
       return aHeaders.indexOf("Changed by") > -1;
     }
 
+    function _isChangeHistoryRow(oRow) {
+      var oInnerTable = oRow.getParent();
+      if (!oInnerTable) {
+        return false;
+      }
+      var oMdcTable = oInnerTable.getParent();
+      if (!oMdcTable || !oMdcTable.isA("sap.ui.mdc.Table")) {
+        return false;
+      }
+      return _isChangeHistoryTable(oMdcTable);
+    }
+
     /**
      * Custom actions and assertions for the Incident Object Page,
      * specifically for verifying the Change History section injected
@@ -97,6 +109,9 @@ sap.ui.define(
           return this.waitFor({
             controlType: "sap.ui.table.Row",
             matchers: function (oRow) {
+              if (!_isChangeHistoryRow(oRow)) {
+                return false;
+              }
               var oDomRef = oRow.getDomRef();
               if (!oDomRef) {
                 return false;
@@ -566,6 +581,9 @@ sap.ui.define(
           return OpaBuilder.create(this)
             .hasType("sap.ui.table.Row")
             .has(function (oRow) {
+              if (!_isChangeHistoryRow(oRow)) {
+                return false;
+              }
               var oDomRef = oRow.getDomRef();
               if (!oDomRef) {
                 return false;
