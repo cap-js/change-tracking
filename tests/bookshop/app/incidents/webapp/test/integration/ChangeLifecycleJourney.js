@@ -39,7 +39,7 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
 				When.onTheDetailPage.iSelectStatus('In Process');
 			});
 
-			opaTest('Add two conversation entries', function (Given, When, Then) {
+			opaTest('Add two conversation entries', function (Given, When) {
 				// Scroll to the Conversation section to make the table visible
 				When.onTheDetailPage.iGoToSection('Conversation');
 
@@ -103,7 +103,7 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
 				Then.onTheDetailPage.iSeeObjectPageInEditMode();
 			});
 
-			opaTest('Update first conversation and delete second', function (Given, When, Then) {
+			opaTest('Update first conversation and delete second', function (Given, When) {
 				// Navigate to the Conversation section
 				When.onTheDetailPage.iGoToSection('Conversation');
 

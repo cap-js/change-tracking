@@ -1,3 +1,4 @@
+/* global QUnit */
 sap.ui.define(['sap/fe/test/ObjectPage', 'sap/ui/test/OpaBuilder', 'sap/ui/test/actions/Press', 'sap/ui/test/actions/EnterText'], function (ObjectPage, OpaBuilder, Press, EnterText) {
 	'use strict';
 
