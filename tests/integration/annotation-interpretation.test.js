@@ -533,6 +533,64 @@ describe('@changelog annotation interpretation', () => {
 		});
 	});
 
+	describe('does not add duplicate changes facet when @UI.Facets already has one', () => {
+		function countChangesFacets(facets) {
+			let count = 0;
+			for (const f of facets) {
+				if (f.Target?.startsWith('changes/')) count++;
+				if (f.Facets) count += countChangesFacets(f.Facets);
+			}
+			return count;
+		}
+
+		it('when a top-level facet targets changes/@UI.LineItem', () => {
+			const entity = cds.model.definitions['AdminService.BookStores'];
+			const facets = entity['@UI.Facets'];
+			expect(facets).toBeDefined();
+			expect(countChangesFacets(facets)).toBe(1);
+			expect(facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+		});
+
+		it('when a top-level facet targets changes/@UI.PresentationVariant', () => {
+			const entity = cds.model.definitions['AdminService.Order'];
+			const facets = entity['@UI.Facets'];
+			expect(facets).toBeDefined();
+			expect(countChangesFacets(facets)).toBe(1);
+			expect(facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+		});
+
+		it('when a nested facet targets changes/@UI.LineItem inside a CollectionFacet', () => {
+			const entity = cds.model.definitions['VariantTesting.RootSample'];
+			const facets = entity['@UI.Facets'];
+			expect(facets).toBeDefined();
+			expect(countChangesFacets(facets)).toBe(1);
+			const collection = facets.find((f) => f.Facets);
+			expect(collection).toBeDefined();
+			expect(collection.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+		});
+
+		it('when a nested facet targets changes/@UI.PresentationVariant inside a CollectionFacet', () => {
+			const entity = cds.model.definitions['VariantTesting.DifferentFieldTypes'];
+			const facets = entity['@UI.Facets'];
+			expect(facets).toBeDefined();
+			expect(countChangesFacets(facets)).toBe(1);
+			const collection = facets.find((f) => f.Facets);
+			expect(collection).toBeDefined();
+			expect(collection.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+		});
+
+		it('when a facet is nested three levels deep in CollectionFacets', () => {
+			const entity = cds.model.definitions['VariantTesting.CompositeKeyParent'];
+			const facets = entity['@UI.Facets'];
+			expect(facets).toBeDefined();
+			expect(countChangesFacets(facets)).toBe(1);
+			const level1 = facets.find((f) => f.ID === 'Level1');
+			const level2 = level1.Facets.find((f) => f.ID === 'Level2');
+			const level3 = level2.Facets.find((f) => f.ID === 'Level3');
+			expect(level3.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+		});
+	});
+
 	describe('service projections with element renames', () => {
 		it('does not conflict when a service renames an element but @changelog annotations are inherited unchanged', async () => {
 			const {

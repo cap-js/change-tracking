@@ -30,3 +30,52 @@ service VariantTesting {
   entity DataExtractionSummaryView as select from my.DataExtractionSummaryView;
 
 }
+
+// Test: changes facet nested in CollectionFacet targeting changes/@UI.LineItem — plugin must not add a duplicate
+annotate VariantTesting.RootSample with @(UI.Facets: [{
+  $Type  : 'UI.CollectionFacet',
+  ID     : 'TestCollection',
+  Label  : 'Test Collection',
+  Facets : [{
+    $Type  : 'UI.ReferenceFacet',
+    ID     : 'CustomChangesFacet',
+    Label  : 'Custom Changes',
+    Target : 'changes/@UI.LineItem',
+  }]
+}]);
+
+// Test: changes facet nested in CollectionFacet targeting changes/@UI.PresentationVariant — plugin must not add a duplicate
+annotate VariantTesting.DifferentFieldTypes with @(UI.Facets: [{
+  $Type  : 'UI.CollectionFacet',
+  ID     : 'TestCollection',
+  Label  : 'Test Collection',
+  Facets : [{
+    $Type  : 'UI.ReferenceFacet',
+    ID     : 'CustomChangesFacet',
+    Label  : 'Custom Changes',
+    Target : 'changes/@UI.PresentationVariant',
+  }]
+}]);
+
+// Test: changes facet nested three levels deep in CollectionFacets — plugin must not add a duplicate
+annotate VariantTesting.CompositeKeyParent with @(UI.Facets: [{
+  $Type  : 'UI.CollectionFacet',
+  ID     : 'Level1',
+  Label  : 'Level 1',
+  Facets : [{
+    $Type  : 'UI.CollectionFacet',
+    ID     : 'Level2',
+    Label  : 'Level 2',
+    Facets : [{
+      $Type  : 'UI.CollectionFacet',
+      ID     : 'Level3',
+      Label  : 'Level 3',
+      Facets : [{
+        $Type  : 'UI.ReferenceFacet',
+        ID     : 'CustomChangesFacet',
+        Label  : 'Custom Changes',
+        Target : 'changes/@UI.PresentationVariant',
+      }]
+    }]
+  }]
+}]);
