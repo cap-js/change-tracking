@@ -5,6 +5,7 @@ service VariantTesting {
   @cds.redirection.target
   entity DifferentFieldTypes as projection on my.DifferentFieldTypes;
 
+  entity GrandRootSample as projection on my.GrandRootSample;
   entity RootSample as projection on my.RootSample;
   entity Level1Sample as projection on my.Level1Sample;
   entity Level2Sample as projection on my.Level2Sample;

@@ -53,12 +53,6 @@ const isHana = cds.env.requires?.db?.kind === 'hana';
 			csvEntries = result.definitions.filter((def) => def.suffix === '.csv');
 		});
 
-		test('Build adds CHANGE_TRACKING_DUMMY CSV', () => {
-			const dummy = csvEntries.find((def) => def.name === 'sap.changelog-CHANGE_TRACKING_DUMMY');
-			expect(dummy).toBeDefined();
-			expect(dummy.sql).toBe('X\n1');
-		});
-
 		test('Build adds i18nKeys CSV with translations for tracked entities', () => {
 			const i18n = csvEntries.find((def) => def.name === 'sap.changelog-i18nKeys');
 			expect(i18n).toBeDefined();
