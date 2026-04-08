@@ -239,7 +239,7 @@ describe('@changelog annotation interpretation', () => {
 			modification: 'delete',
 			entityKey: [newRoot.ID, lvl1ID, lvl2ID]
 		});
-		expect(deleteChanges.length).toEqual(2);
+		expect(deleteChanges.length).toEqual(3); // +1 for RootSample.children composition entry (RootSample is a composition child of GrandRootSample)
 		//expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
 		//expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, new Level2Sample title, ${newRoot.ID}`);
 	});

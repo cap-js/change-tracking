@@ -32,12 +32,21 @@ entity DifferentFieldTypesChildren {
       double : Double;
 }
 
+// Test for 4-level composition hierarchy: GrandRootSample -> RootSample -> Level1Sample -> Level2Sample
+entity GrandRootSample {
+  key ID       : String;
+      children : Composition of many RootSample
+                   on children.grandParent = $self;
+      title    : String @title: 'GrandRoot Sample Title';
+}
+
 // Test for key which include special character: '/' -- draft disabled
 entity RootSample {
-  key ID       : String;
-      children : Composition of many Level1Sample
-                   on children.parent = $self;
-      title    : String @title: 'Root Sample Title';
+  key ID          : String;
+      grandParent : Association to one GrandRootSample;
+      children    : Composition of many Level1Sample
+                      on children.parent = $self;
+      title       : String @title: 'Root Sample Title';
 }
 
 entity Level1Sample {
