@@ -4,14 +4,19 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.0.0-beta.7 - tbd
+## Version 2.0.0-beta.7 - 08.04.26
 
 ### Added
+- Support CDS expression language (CXL) in `@changelog` annotations to enable broader customization of objectIDs and changelog labels
 
 ### Fixed
 - Existing Facets for displaying the Changes UI are correctly detected avoiding redundant Changes sections.
+- Format tracked decimal values with correct precision (e.g., Decimal(11,4) stores 0 as '0.0000')
 
 ### Changed
+- HANA triggers changed from row-level to statement-level execution
+- Removed `CHANGE_TRACKING_DUMMY` entity
+- Change History section is now hidden in draft mode
 
 ## Version 2.0.0-beta.6 - 26.03.26
 
