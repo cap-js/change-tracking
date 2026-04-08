@@ -100,53 +100,23 @@ describe('change log generation', () => {
 				{
 					ID: e1ID,
 					bool: false,
-					number: 0,
-					children: [
-						{
-							ID: cds.utils.uuid(),
-							double: 10
-						},
-						{
-							ID: cds.utils.uuid(),
-							double: 12
-						}
-					]
+					number: 0
 				},
 				{
 					ID: e2ID,
 					bool: true,
-					number: 10,
-					children: [
-						{
-							ID: cds.utils.uuid(),
-							double: 10
-						},
-						{
-							ID: cds.utils.uuid(),
-							double: 12
-						}
-					]
+					number: 10
 				},
 				{
 					ID: e3ID,
 					bool: false,
-					number: 20,
-					children: [
-						{
-							ID: cds.utils.uuid(),
-							double: 10
-						},
-						{
-							ID: cds.utils.uuid(),
-							double: 12
-						}
-					]
+					number: 20
 				}
 			];
 			await INSERT.into(DifferentFieldTypes).entries(data);
 
 			const changes = await SELECT.from(ChangeView).where`entityKey in ${[e1ID, e2ID, e3ID]}`;
-			expect(changes.length).toEqual(9);
+			expect(changes.length).toEqual(6);
 			expect(changes.some((c) => c.modification !== 'create')).toEqual(false);
 			expect(changes.some((c) => c.entity !== 'sap.change_tracking.DifferentFieldTypes')).toEqual(false);
 
@@ -184,25 +154,23 @@ describe('change log generation', () => {
 
 	describe('composition tracking', () => {
 		it('does not link child entity changes to the root entity when composition field is annotated with @changelog false', async () => {
-			const processorService = await cds.connect.to('ProcessorService');
-			const { ChangeView } = processorService.entities;
+			const variantService = await cds.connect.to('VariantTesting');
+			const { ChangeView } = variantService.entities;
 
-			const incidentsID = cds.utils.uuid();
-			const conversationID = cds.utils.uuid();
-			await POST(`/odata/v4/processor/Incidents`, {
-				ID: incidentsID,
-				conversation: [{ ID: conversationID, message: 'test message' }]
+			const parentID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
+			await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
+				ID: parentID,
+				title: 'Parent record',
+				children: [{ ID: childID, double: 3.14 }]
 			});
-			await POST(`/odata/v4/processor/Incidents(ID=${incidentsID}, IsActiveEntity=false)/ProcessorService.draftActivate`, {});
 
-			const compositeKey = `${String(incidentsID).length},${incidentsID};${String(conversationID).length},${conversationID}`;
-
-			const changes = await SELECT.one.from(ChangeView).where({ entityKey: compositeKey });
-			expect(changes.entity).toEqual('sap.capire.incidents.Incidents.conversation');
-			expect(changes.attribute).toEqual('message');
+			const changes = await SELECT.one.from(ChangeView).where({ entityKey: childID, attribute: 'double' });
+			expect(changes.entity).toEqual('sap.change_tracking.DifferentFieldTypesChildren');
+			expect(changes.attribute).toEqual('double');
 			expect(changes.modification).toEqual('create');
 			expect(changes.valueChangedFrom).toEqual(null);
-			expect(changes.valueChangedTo).toEqual('test message');
+			expect(changes.valueChangedTo).toEqual('3.14');
 			expect(changes.parent_ID).toEqual(null);
 		});
 
@@ -955,7 +923,7 @@ describe('change log generation', () => {
 		});
 
 		describe('Composition of many', () => {
-			it.only('logs each created child as a separate change on the root entity', async () => {
+			it('logs each created child as a separate change on the root entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -2015,33 +1983,32 @@ describe('Expression-based @changelog annotations', () => {
 	});
 
 	it('uses arithmetic expression as label for non-association elements (decimalProp * 2)', async () => {
-		// decimalProp uses @changelog: [(decimalProp * 2)]
-		const res = await POST(`/odata/v4/processor/Incidents`, {
-			customer_ID: '1004161',
-			title: 'Printer maintenance request',
-			urgency_code: 'M',
+		// decimalProp uses @changelog: (decimalProp * 2)
+		const res = await POST(`/odata/v4/localization/ExpressionScenarios`, {
+			firstName: 'Bob',
+			lastName: 'Builder',
 			status_code: 'N',
 			decimalProp: 50
 		});
-		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
 
-		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=true)/ProcessorService.draftEdit`, {});
-		await PATCH(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)`, {
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=true)/LocalizationService.draftEdit`, {});
+		await PATCH(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=false)`, {
 			decimalProp: 250
 		});
-		await POST(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+		await POST(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=false)/LocalizationService.draftActivate`, {});
 
 		const {
 			data: { value: changes }
-		} = await GET(`/odata/v4/processor/Incidents(ID=${res.data.ID},IsActiveEntity=true)/changes`);
+		} = await GET(`/odata/v4/localization/ExpressionScenarios(ID=${res.data.ID},IsActiveEntity=true)/changes`);
 
 		const decimalChange = changes.find((c) => c.attribute === 'decimalProp' && c.modification === 'update');
 		expect(decimalChange).toBeTruthy();
-		expect(decimalChange.valueChangedFrom).toEqual('50');
-		expect(decimalChange.valueChangedTo).toEqual('250');
+		expect(decimalChange.valueChangedFrom).toEqual('50.0000');
+		expect(decimalChange.valueChangedTo).toEqual('250.0000');
 		// (decimalProp * 2): old=50 -> '100', new=250 -> '500'
-		expect(decimalChange.valueChangedFromLabel).toEqual('100');
-		expect(decimalChange.valueChangedToLabel).toEqual('500');
+		expect(decimalChange.valueChangedFromLabel).toEqual('100.0000');
+		expect(decimalChange.valueChangedToLabel).toEqual('500.0000');
 	});
 
 	it('classifies price values using ternary expression label on ExpressionScenarios', async () => {

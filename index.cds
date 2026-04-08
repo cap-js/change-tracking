@@ -14,7 +14,8 @@ entity aspect @(UI.Facets: [{
   ID               : 'ChangeHistoryFacet',
   Label            : '{i18n>ChangeHistory}',
   Target           : 'changes/@UI.PresentationVariant',
-  @UI.PartOfPreview: false
+  @UI.PartOfPreview: false,
+  @UI.Hidden       : (not $draft.IsActiveEntity)
 }]) {
       changes : Association to many ChangeView
                   on  changes.entityKey = ID

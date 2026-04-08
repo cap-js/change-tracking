@@ -2,21 +2,25 @@
 	"dependencies": {
 		"@cap-js/attachments": "^2",
 		"@cap-js/change-tracking": "file:../../.",
-		"@cap-js/postgres": "^1 || ^2",
-		"@cap-js/hana": "^2"
+		"@cap-js/hana": "^2",
+		"@cap-js/postgres": "^1 || ^2"
 	},
 	"devDependencies": {
+		"@cap-js/sqlite": "^1 || ^2",
 		"@sap/cds-dk": "^9.8.2",
-		"@cap-js/sqlite": "^1 || ^2"
+		"puppeteer": "^24.40.0",
+		"ui5-test-runner": "^5.13.1"
 	},
 	"scripts": {
+		"start": "cds-serve",
 		"watch:h2": "mvn spring-boot:run",
 		"watch:hana": "cds watch --profile hana",
 		"watch:sqlite": "cds watch --profile sqlite",
 		"watch:postgres": "cds watch --profile pg",
 		"deploy:hana": "cds deploy --to hana",
 		"deploy:postgres": "CDS_ENV=pg cds build --production && cds deploy --profile pg",
-		"start:pg": "docker compose -f pg-stack.yml up -d && npm run deploy:postgres"
+		"start:pg": "docker compose -f pg-stack.yml up -d && npm run deploy:postgres",
+		"test:opa": "ui5-test-runner"
 	},
 	"cds": {
 		"log": {
