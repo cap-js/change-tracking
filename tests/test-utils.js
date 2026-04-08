@@ -17,12 +17,19 @@ function _resolveEntities(entityNames, allEntities, hierarchyMap) {
 		const rootEntity = rootEntityName ? model.definitions[rootEntityName] : null;
 		const rootMergedAnnotations = rootEntityName ? allEntities.find((d) => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
 
-		// Get grandparent info for deep linking
-		const grandParentEntityName = hierarchyInfo?.grandParent ?? null;
+		// Resolve full ancestor chain for deep linking
+		const ancestorChain = (hierarchyInfo?.ancestors ?? []).map((a) => ({
+			entity: model.definitions[a.entity] ?? null,
+			mergedAnnotations: allEntities.find((d) => d.dbEntityName === a.entity)?.mergedAnnotations ?? null,
+			compositionField: a.compositionField
+		}));
+
+		// Backward-compatible grandParentContext derived from ancestorChain[0]
 		const grandParentContext = {
-			grandParentEntity: grandParentEntityName ? model.definitions[grandParentEntityName] : null,
-			grandParentMergedAnnotations: grandParentEntityName ? allEntities.find((d) => d.dbEntityName === grandParentEntityName)?.mergedAnnotations : null,
-			grandParentCompositionField: hierarchyInfo?.grandParentCompositionField ?? null
+			grandParentEntity: ancestorChain[0]?.entity ?? null,
+			grandParentMergedAnnotations: ancestorChain[0]?.mergedAnnotations ?? null,
+			grandParentCompositionField: ancestorChain[0]?.compositionField ?? null,
+			ancestorChain
 		};
 
 		return [{ entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext }];
@@ -71,24 +78,10 @@ async function _regenerateH2Triggers(entityNames, allEntities, hierarchyMap) {
 	}
 }
 
-async function _regenerateHANATriggers(entityNames, allEntities, hierarchyMap) {
-	const model = cds.context?.model ?? cds.model;
-	const { generateHANATriggers } = require('../lib/hana/hdi.js');
-	require('../lib/utils/change-tracking.js');
-
-	for (const { entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext } of _resolveEntities(entityNames, allEntities, hierarchyMap)) {
-		const triggers = generateHANATriggers(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext);
-		for (const trigger of triggers) {
-			await cds.db.run(`CREATE OR REPLACE ${trigger.sql}`);
-		}
-	}
-}
-
 const _generators = {
 	sqlite: _regenerateSQLiteTriggers,
 	postgres: _regeneratePostgresTriggers,
-	h2: _regenerateH2Triggers,
-	hana: _regenerateHANATriggers
+	h2: _regenerateH2Triggers
 };
 
 async function regenerateTriggers(entityNames) {

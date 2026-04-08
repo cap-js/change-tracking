@@ -1,7 +1,6 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE, GET, axios } = cds.test(bookshop);
-const { regenerateTriggers } = require('../test-utils.js');
 axios.defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('change log generation', () => {
@@ -1785,26 +1784,7 @@ describe('change log generation', () => {
 		// Limitation: hierarchy linking only supports up to 3 levels (parent + grandparent).
 		// 4-level hierarchies (great-grandparent) are not linked correctly.
 		describe('4-level composition hierarchy (GrandRootSample -> RootSample -> Level1Sample -> Level2Sample)', () => {
-			const grandRootEntities = [
-				'sap.change_tracking.GrandRootSample',
-				'sap.change_tracking.RootSample',
-				'sap.change_tracking.Level1Sample',
-				'sap.change_tracking.Level2Sample'
-			];
-			let originalDepth;
-
-			beforeAll(async () => {
-				originalDepth = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth;
-				cds.env.requires['change-tracking'].maxDisplayHierarchyDepth = 4;
-				await regenerateTriggers(grandRootEntities);
-			});
-
-			afterAll(async () => {
-				cds.env.requires['change-tracking'].maxDisplayHierarchyDepth = originalDepth;
-				await regenerateTriggers(grandRootEntities);
-			});
-
-			it.skip('links changes through all 4 levels when creating the deepest entity', async () => {
+			it('links changes through all 4 levels when creating the deepest entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -1883,7 +1863,7 @@ describe('change log generation', () => {
 				});
 			});
 
-			it.skip('links changes through all 4 levels when updating the deepest entity', async () => {
+			it('links changes through all 4 levels when updating the deepest entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -1937,7 +1917,8 @@ describe('change log generation', () => {
 					attribute: 'children',
 					modification: 'update',
 					parent_ID: null,
-					valueDataType: 'cds.Composition'
+					valueDataType: 'cds.Composition',
+					objectID: `${grandRootID}, GrandRoot title`
 				});
 
 				// Level 2: RootSample.children composition entry (grandparent, links to great-grandparent)
@@ -1947,7 +1928,8 @@ describe('change log generation', () => {
 					attribute: 'children',
 					modification: 'update',
 					parent_ID: grandRootChange.ID,
-					valueDataType: 'cds.Composition'
+					valueDataType: 'cds.Composition',
+					objectID: `${rootID}, Root title`
 				});
 
 				// Level 3: Level1Sample.children composition entry (parent, links to grandparent)
@@ -1972,7 +1954,7 @@ describe('change log generation', () => {
 				});
 			});
 
-			it.skip('links changes through all 4 levels when deleting the deepest entity', async () => {
+			it('links changes through all 4 levels when deleting the deepest entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
