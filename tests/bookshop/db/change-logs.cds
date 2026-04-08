@@ -18,6 +18,14 @@ annotate change_tracking.DifferentFieldTypesChildren with {
   double @changelog;
 }
 
+annotate change_tracking.GrandRootSample with @(changelog: [
+  ID,
+  title
+]) {
+  title @changelog;
+  children @changelog;
+}
+
 annotate change_tracking.RootSample with @(changelog: [
   ID,
   title
