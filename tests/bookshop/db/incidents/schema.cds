@@ -46,7 +46,6 @@ entity Incidents : cuid, managed {
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
   decimalProp : Decimal(15,4) @title : 'Decimal prop' @changelog;
-  @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;
     timestamp : type of managed:createdAt;
@@ -159,6 +158,7 @@ entity VHWithMultiKey : CodeList {
 entity ExpressionScenarios : cuid {
   firstName : String @changelog;
   lastName  : String @changelog;
-  price     : Decimal @changelog: (price < 100 ? 'Budget' : 'Premium');
-  status    : Association to Status default 'N' @changelog : (status.code || ': ' || status.descr);
+  price       : Decimal @changelog: (price < 100 ? 'Budget' : 'Premium');
+  decimalProp : Decimal(15,4) @changelog: (decimalProp * 2);
+  status      : Association to Status default 'N' @changelog : (status.code || ': ' || status.descr);
 }

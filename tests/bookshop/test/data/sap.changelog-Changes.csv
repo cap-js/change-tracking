@@ -1,0 +1,6 @@
+ID;parent_ID;attribute;valueChangedFrom;valueChangedTo;valueChangedFromLabel;valueChangedToLabel;entity;entityKey;objectID;modification;valueDataType;createdAt;createdBy;transactionID
+a1b2c3d4-0001-4000-8000-000000000001;;title;;No current on a sunny day;;;sap.capire.incidents.Incidents;3a4ede72-244a-4f5f-8efa-b17e032d01ee;Stormy Weathers;create;cds.String;2025-01-15T10:30:00.000Z;alice;1
+a1b2c3d4-0002-4000-8000-000000000002;;status;;N;;New;sap.capire.incidents.Incidents;3a4ede72-244a-4f5f-8efa-b17e032d01ee;Stormy Weathers;create;cds.Association;2025-01-15T10:30:00.000Z;alice;1
+a1b2c3d4-0003-4000-8000-000000000003;;customer;;1004161;;Stormy Weathers;sap.capire.incidents.Incidents;3a4ede72-244a-4f5f-8efa-b17e032d01ee;Stormy Weathers;create;cds.Association;2025-01-15T10:30:00.000Z;alice;1
+a1b2c3d4-0004-4000-8000-000000000004;;title;No current on a sunny day;Panel replacement scheduled;;;sap.capire.incidents.Incidents;3a4ede72-244a-4f5f-8efa-b17e032d01ee;Stormy Weathers;update;cds.String;2025-02-20T14:15:00.000Z;alice;2
+a1b2c3d4-0005-4000-8000-000000000005;;status;N;I;New;In Process;sap.capire.incidents.Incidents;3a4ede72-244a-4f5f-8efa-b17e032d01ee;Stormy Weathers;update;cds.Association;2025-02-20T14:15:00.000Z;alice;2

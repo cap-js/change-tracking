@@ -20,6 +20,7 @@ entity DifferentFieldTypes {
       icon      : Binary      @changelog; // Unsupported - should trigger warning
       dppField1 : String      @PersonalData.IsPotentiallyPersonal;
       dppField2 : String      @PersonalData.IsPotentiallySensitive;
+      @changelog: false
       children  : Composition of many DifferentFieldTypesChildren
                     on children.parent = $self;
       nonExistent : Association to one NonExistentTable @changelog: [nonExistent.name]; // Unsupported - should trigger warning

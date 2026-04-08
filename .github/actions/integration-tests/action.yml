@@ -106,7 +106,7 @@ runs:
     - name: Create HDI Container
       shell: bash
       run: cf create-service hana hdi-shared cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION
-    - run: cd tests/bookshop/ && cds deploy --to hana:cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION
+    - run: cd tests/bookshop/ && CDS_ENV=production cds deploy --to hana:cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION
       shell: bash
 
     # Bind against BTP services

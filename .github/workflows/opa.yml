@@ -1,0 +1,36 @@
+name: OPA tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-opa:
+    runs-on: ubuntu-latest
+    name: OPA Tests on CAP ${{ matrix.cds-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cds-version: [latest]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.x
+      - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
+      - run: npm i
+      - name: Run OPA tests
+        run: cd tests/bookshop && npm run test:opa
+      - name: Upload OPA test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: opa-test-report-${{ matrix.cds-version }}
+          path: tests/bookshop/report/
