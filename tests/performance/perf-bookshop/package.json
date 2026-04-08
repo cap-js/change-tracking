@@ -26,7 +26,8 @@
 						"max": 200
 					}
 				}
-			}
+			},
+			"application-logging": true
 		}
 	}
 }

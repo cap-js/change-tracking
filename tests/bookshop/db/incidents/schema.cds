@@ -159,6 +159,7 @@ entity VHWithMultiKey : CodeList {
 entity ExpressionScenarios : cuid {
   firstName : String @changelog;
   lastName  : String @changelog;
-  price     : Decimal @changelog: (price < 100 ? 'Budget' : 'Premium');
-  status    : Association to Status default 'N' @changelog : (status.code || ': ' || status.descr);
+  price       : Decimal @changelog: (price < 100 ? 'Budget' : 'Premium');
+  decimalProp : Decimal(15,4) @changelog: (decimalProp * 2);
+  status      : Association to Status default 'N' @changelog : (status.code || ': ' || status.descr);
 }

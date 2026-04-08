@@ -30,6 +30,7 @@ modules:
     requires:
       - name: perf-bookshop-auth
       - name: perf-bookshop-db
+      - name: perf-bookshop-logging
 
   - name: perf-bookshop-db-deployer
     type: hdb
@@ -38,6 +39,7 @@ modules:
       buildpack: nodejs_buildpack
     requires:
       - name: perf-bookshop-db
+      - name: perf-bookshop-logging
 
 resources:
   - name: perf-bookshop-auth
@@ -58,3 +60,8 @@ resources:
     parameters:
       service: hana
       service-plan: hdi-shared
+  - name: perf-bookshop-logging
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: application-logs
+      service-plan: lite
