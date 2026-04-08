@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Support CDS expression language (CXL) in `@changelog` annotations to enable broader customization of objectIDs and changelog labels
 
 ### Fixed
+- Existing Facets for displaying the Changes UI are correctly detected avoiding redundant Changes sections.
 - Format tracked decimal values with correct precision (e.g., Decimal(11,4) stores 0 as '0.0000')
 
 ### Changed
