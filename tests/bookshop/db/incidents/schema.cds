@@ -45,7 +45,7 @@ entity Incidents : cuid, managed {
   timezone : String default 'Asia/Riyadh' @Common.IsTimezone;
   time           : Time @title : 'time' @changelog;
   timestamp      : Timestamp @title : 'timestamp' @changelog;
-  decimalProp : Decimal(15,4) @title : 'Decimal prop' @changelog;
+  decimalProp : Decimal(15,4) @title : 'Decimal prop' @changelog: (decimalProp * 2);
   @changelog: false
   conversation   : Composition of many {
     key ID    : UUID;

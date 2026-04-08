@@ -955,7 +955,7 @@ describe('change log generation', () => {
 		});
 
 		describe('Composition of many', () => {
-			it.only('logs each created child as a separate change on the root entity', async () => {
+			it('logs each created child as a separate change on the root entity', async () => {
 				const adminService = await cds.connect.to('AdminService');
 				const { ChangeView } = adminService.entities;
 
@@ -2015,7 +2015,7 @@ describe('Expression-based @changelog annotations', () => {
 	});
 
 	it('uses arithmetic expression as label for non-association elements (decimalProp * 2)', async () => {
-		// decimalProp uses @changelog: [(decimalProp * 2)]
+		// decimalProp uses @changelog: (decimalProp * 2)
 		const res = await POST(`/odata/v4/processor/Incidents`, {
 			customer_ID: '1004161',
 			title: 'Printer maintenance request',
@@ -2037,11 +2037,11 @@ describe('Expression-based @changelog annotations', () => {
 
 		const decimalChange = changes.find((c) => c.attribute === 'decimalProp' && c.modification === 'update');
 		expect(decimalChange).toBeTruthy();
-		expect(decimalChange.valueChangedFrom).toEqual('50');
-		expect(decimalChange.valueChangedTo).toEqual('250');
+		expect(decimalChange.valueChangedFrom).toEqual('50.0000');
+		expect(decimalChange.valueChangedTo).toEqual('250.0000');
 		// (decimalProp * 2): old=50 -> '100', new=250 -> '500'
-		expect(decimalChange.valueChangedFromLabel).toEqual('100');
-		expect(decimalChange.valueChangedToLabel).toEqual('500');
+		expect(decimalChange.valueChangedFromLabel).toEqual('100.0000');
+		expect(decimalChange.valueChangedToLabel).toEqual('500.0000');
 	});
 
 	it('classifies price values using ternary expression label on ExpressionScenarios', async () => {
