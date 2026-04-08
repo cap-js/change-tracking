@@ -87,3 +87,19 @@ annotate AdminService.Customers with {
   country @changelog;
   age     @changelog;
 }
+
+// Test: top-level facet already targeting changes/@UI.LineItem — plugin must not add a duplicate
+annotate AdminService.BookStores with @(UI.Facets: [{
+  $Type  : 'UI.ReferenceFacet',
+  ID     : 'CustomChangesFacet',
+  Label  : 'Custom Changes',
+  Target : 'changes/@UI.LineItem',
+}]);
+
+// Test: top-level facet already targeting changes/@UI.PresentationVariant — plugin must not add a duplicate
+annotate AdminService.Order with @(UI.Facets: [{
+  $Type  : 'UI.ReferenceFacet',
+  ID     : 'CustomChangesFacet',
+  Label  : 'Custom Changes',
+  Target : 'changes/@UI.PresentationVariant',
+}]);

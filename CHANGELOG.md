@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 
 ### Fixed
+- Existing Facets for displaying the Changes UI are correctly detected avoiding redundant Changes sections.
 
 ### Changed
 
