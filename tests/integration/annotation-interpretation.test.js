@@ -533,6 +533,23 @@ describe('@changelog annotation interpretation', () => {
 		});
 	});
 
+	describe('Hiding section in draft also works for readonly entities.', () => {
+		it('does not have UI.Hidden on the change tracking facet for non-draft-enabled Incidents', () => {
+			const entity = cds.model.definitions['LocalizationService.Incidents'];
+			const facets = entity['@UI.Facets'];
+			expect(facets).toBeDefined();
+			const changesFacet = facets.find((f) => f.Target?.startsWith('changes/'));
+			expect(changesFacet).toBeDefined();
+			expect(changesFacet).not.toHaveProperty('@UI.Hidden');
+		});
+
+		it('serves $metadata without errors', async () => {
+			const { status, data } = await GET(`/odata/v4/localization/$metadata`);
+			expect(status).toBe(200);
+			expect(data).toContain('Incidents');
+		});
+	});
+
 	describe('does not add duplicate changes facet when @UI.Facets already has one', () => {
 		function countChangesFacets(facets) {
 			let count = 0;
