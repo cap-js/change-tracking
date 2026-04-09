@@ -188,6 +188,28 @@ spec:
           expectedValue: "3000"
           metric: responseTime
           operator: <=
+    - api: ${PERF_HOST}/odata/v4/admin/cleanUp
+      appName:
+        - perf-bookshop-srv
+      assertion:
+        successStatusCode: "204"
+      dependsOn: deletechildren
+      name: cleanup
+      requestData:
+        headersConfigMapKeyRef:
+          key: header.json
+          name: ct-new-entity-headers
+        payloadConfigMapKeyRef:
+          key: raw.json
+          name: ct-empty-body
+        type: static
+      requestMethod: POST
+      sleep: 1s
+      thresholds:
+        - aggregationMethod: percent
+          expectedValue: "1"
+          metric: errors
+          operator: <=
   customTest:
     constantRunDuration: 5m0s
     rampupDuration: 10s
