@@ -21,7 +21,7 @@
 				"auth": "xsuaa",
 				"db": {
 					"pool": {
-						"acquireTimeoutMillis": 5000,
+						"acquireTimeoutMillis": 20000,
 						"min": 0,
 						"max": 200
 					}

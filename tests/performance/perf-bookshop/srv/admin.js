@@ -42,7 +42,9 @@ export default class AdminService extends cds.ApplicationService {
 		});
 
 		this.on('cleanUp', async () => {
-			await DELETE.from(Books).where('1 = 1');
+			const { Changes } = cds.entities('sap.changelog');
+			await DELETE.from(Changes);
+			await DELETE.from(Books);
 		});
 
 		return super.init();
