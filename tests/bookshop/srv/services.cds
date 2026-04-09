@@ -30,6 +30,12 @@ service IncidentsAdminService {
 }
 
 service LocalizationService {
+  @UI.Facets : [
+    {
+        $Type : 'UI.ReferenceFacet',
+        Target : 'attachments/@UI.LineItem',
+    },
+  ]
   entity Incidents as projection on my.Incidents {
     *,
     status as renamedStatus
