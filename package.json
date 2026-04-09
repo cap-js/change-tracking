@@ -1,6 +1,6 @@
 {
 	"name": "@cap-js/change-tracking",
-	"version": "2.0.0-beta.7",
+	"version": "2.0.0-beta.8",
 	"publishConfig": {
 		"access": "public",
 		"tag": "beta"
