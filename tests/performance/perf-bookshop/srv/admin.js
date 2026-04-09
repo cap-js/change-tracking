@@ -4,7 +4,6 @@ const AMOUNT_CHILDREN = 2000;
 
 export default class AdminService extends cds.ApplicationService {
 	init() {
-		const { Changes } = cds.entities('sap.changelog');
 		const { Chapters, Books } = cds.entities('sap.capire.bookshop');
 		const { Chapters: srvChapters, Books: srvBooks } = this.entities;
 
@@ -43,6 +42,7 @@ export default class AdminService extends cds.ApplicationService {
 		});
 
 		this.on('cleanUp', async () => {
+			const { Changes } = cds.entities('sap.changelog');
 			await DELETE.from(Changes).where('1 = 1');
 			await DELETE.from(Books).where('1 = 1');
 		});
