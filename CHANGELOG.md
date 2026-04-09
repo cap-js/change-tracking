@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.0.0-beta.8 - 09.04.26
+
+### Fixed
+- Do not add @UI.Hidden: ($draft.IsActiveEntity) to the UI changes section when the entity is not draft enabled.
+
 ## Version 2.0.0-beta.7 - 08.04.26
 
 ### Added
