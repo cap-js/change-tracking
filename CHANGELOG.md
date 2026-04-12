@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.0.0-beta.9 - upcoming
+
+### Changed
+- Only skip change tracking for `@PersonalData.IsPotentiallySensitive` and `@PersonalData.IsPotentiallyPersonal` and not `@PersonalData.FieldSemantics`
+
 ## Version 2.0.0-beta.8 - 09.04.26
 
 ### Fixed
