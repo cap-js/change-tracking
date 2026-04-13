@@ -528,7 +528,8 @@ describe('change log generation', () => {
 			const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
 
 			// Update the book title through deep update on existing data
-			await UPDATE(BookStores).where({ ID: bookStoreID })
+			await UPDATE(BookStores)
+				.where({ ID: bookStoreID })
 				.with({
 					books: [{ ID: bookID, title: 'Wuthering Heights Test' }]
 				});

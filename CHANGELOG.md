@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Version 2.0.0-beta.9 - upcoming
 
+### Added
+- Changelogs for compositions use the objectID definition of the target child entity, otherwise fallbacks to entity keys:
+    ```cds
+    annotate Orders with { orderElement @changelog; } // Orders has a composition of many to OrderElements
+
+    // ObjectID of orderElement changelogs will be [number, orderType.title]
+    annotate OrderElements with @changelog: [number, orderType.title] {
+        number    @changelog;
+        orderType @changelog: [orderType.title];
+    };
+    ```
+
 ### Changed
 - Only skip change tracking for `@PersonalData.IsPotentiallySensitive` and `@PersonalData.IsPotentiallyPersonal` and not `@PersonalData.FieldSemantics`
 
