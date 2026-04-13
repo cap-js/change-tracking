@@ -9,6 +9,7 @@ annotate change_tracking.DifferentFieldTypes with @(changelog: [title]) {
   bool      @changelog;
   dppField1 @changelog;
   dppField2 @changelog;
+  dppField3 @changelog;
   // Ignored changelog annotations due to data type
   image @changelog;
   icon @changelog;

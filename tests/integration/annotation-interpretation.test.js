@@ -354,16 +354,25 @@ describe('@changelog annotation interpretation', () => {
 		await INSERT.into(DifferentFieldTypes).entries({
 			ID,
 			dppField1: 'John Doe',
-			dppField2: 'John Doe'
+			dppField2: 'John Doe',
+			dppField3: 'Controller-123'
 		});
 
-		const changes = await SELECT.from(ChangeView).where({
+		// @PersonalData.IsPotentiallyPersonal and @PersonalData.IsPotentiallySensitive must be ignored
+		const ignoredChanges = await SELECT.from(ChangeView).where({
 			entity: 'sap.change_tracking.DifferentFieldTypes',
 			entityKey: ID,
 			attribute: { in: ['dppField1', 'dppField2'] }
 		});
+		expect(ignoredChanges.length).toEqual(0);
 
-		expect(changes.length).toEqual(0);
+		// @PersonalData.FieldSemantics must still be tracked (e.g. DataSubjectID, PurposeID, EndOfBusinessDate)
+		const trackedChanges = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.DifferentFieldTypes',
+			entityKey: ID,
+			attribute: 'dppField3'
+		});
+		expect(trackedChanges.length).toEqual(1);
 	});
 
 	describe('Code lists resolution', () => {
