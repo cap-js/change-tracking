@@ -164,7 +164,7 @@ The changelog annotations for *New Value* and *Old Value* are defined at element
 
 They are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
 
-For example, having a `@changelog` annotation on Incident's `customer`field without any additional identifiers, would show up as UUIDs:
+For example, having a `@changelog` annotation on Incident's `customer` field without any additional identifiers, changes would show up as UUIDs:
 
 ```cds
 customer @changelog;
