@@ -44,7 +44,7 @@ describe('@changelog annotation interpretation', () => {
 
 		const parentChanges = await SELECT.one.from(ChangeView).where({ ID: changes[0].parent_ID }).columns(['entityLabel', 'objectID']);
 		expect(parentChanges.entityLabel).toEqual('Book Store');
-		expect(parentChanges.objectID).toEqual(parentID);
+		expect(parentChanges.objectID).toEqual(childID);
 	});
 
 	it('builds objectID from entity keys when @changelog annotation is simply set to true', async () => {

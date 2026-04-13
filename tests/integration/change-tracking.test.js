@@ -514,11 +514,11 @@ describe('change log generation', () => {
 
 		it('tracks changes on child entities during deep update operations', async () => {
 			const adminService = await cds.connect.to('AdminService');
-			const { ChangeView } = adminService.entities;
+			const { ChangeView, BookStores } = adminService.entities;
 
 			const bookStoreID = cds.utils.uuid();
 			const bookID = cds.utils.uuid();
-			await INSERT.into(adminService.entities.BookStores).entries({
+			await INSERT.into(BookStores).entries({
 				ID: bookStoreID,
 				name: 'Shakespeare and Company',
 				books: [{ ID: bookID, title: 'Old Wuthering Heights Test', author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387' }]
@@ -528,8 +528,7 @@ describe('change log generation', () => {
 			const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
 
 			// Update the book title through deep update on existing data
-			await UPDATE(adminService.entities.BookStores)
-				.where({ ID: bookStoreID })
+			await UPDATE(BookStores).where({ ID: bookStoreID })
 				.with({
 					books: [{ ID: bookID, title: 'Wuthering Heights Test' }]
 				});
@@ -545,7 +544,8 @@ describe('change log generation', () => {
 				modification: 'update',
 				parent_ID: null,
 				valueDataType: 'cds.Composition',
-				objectID: 'Shakespeare and Company'
+				// Books objectID : [title, author.name.firstName, author.name.lastName]
+				objectID: 'Wuthering Heights Test, Emily, Brontë'
 			});
 
 			// Books.title field change linked to parent
@@ -649,7 +649,8 @@ describe('change log generation', () => {
 				modification: 'update',
 				parent_ID: null,
 				valueDataType: 'cds.Composition',
-				objectID: 'Test Bookstore'
+				// BookStoreRegistry objectID : [code]
+				objectID: 'TEST-1'
 			});
 
 			// Registry change linked to parent
@@ -845,7 +846,8 @@ describe('change log generation', () => {
 					modification: 'update',
 					parent_ID: null,
 					valueDataType: 'cds.Composition',
-					objectID: 'Test Bookstore'
+					// BookStoreRegistry objectID : [code]
+					objectID: 'TEST-REG'
 				});
 
 				// Registry change linked to parent
@@ -902,7 +904,8 @@ describe('change log generation', () => {
 					modification: 'update',
 					parent_ID: null,
 					valueDataType: 'cds.Composition',
-					objectID: 'Test Bookstore'
+					// BookStoreRegistry objectID : [code]
+					objectID: 'TEST-REG'
 				});
 
 				// Registry change linked to parent
@@ -954,7 +957,8 @@ describe('change log generation', () => {
 				expect(changes[0].entity).toEqual('sap.capire.bookshop.BookStores');
 				expect(changes[0].valueChangedFrom).toEqual(null);
 				expect(changes[0].valueChangedTo).toEqual(null);
-				expect(changes[0].objectID).toEqual('Shakespeare and Company');
+				// Books objectID : [title, author.name.firstName, author.name.lastName]
+				expect(changes[0].objectID).toEqual('Test Book 1');
 
 				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes[0].ID });
 				expect(relatedChanges.length).toEqual(2);
@@ -1010,7 +1014,8 @@ describe('change log generation', () => {
 				expect(changes[0].entityKey).toEqual(bookStoreID);
 				expect(changes[0].valueChangedFrom).toEqual(null);
 				expect(changes[0].valueChangedTo).toEqual(null);
-				expect(changes[0].objectID).toEqual('Shakespeare and Company');
+				// Books objectID : [title, author.name.firstName, author.name.lastName]
+				expect(changes[0].objectID).toEqual('Updated Title');
 
 				// check related changes
 				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes[0].ID });
@@ -1051,7 +1056,8 @@ describe('change log generation', () => {
 					modification: 'update',
 					parent_ID: null,
 					valueDataType: 'cds.Composition',
-					objectID: 'Shakespeare and Company'
+					// Books objectID : [title, author.name.firstName, author.name.lastName]
+					objectID: 'Book to Delete'
 				});
 
 				const bookDeleteChange = changes.find((c) => c.entityKey === bookID && c.modification === 'delete');
@@ -1910,7 +1916,7 @@ describe('change log generation', () => {
 				// GrandRootSample.children (great-grandparent) -> RootSample.children (grandparent) -> Level1Sample.children (parent) -> Level2Sample.title (leaf)
 				expect(changes.length).toEqual(4);
 
-				// Level 1: GrandRootSample.children composition entry (great-grandparent, top of chain)
+				// Level 1: GrandRootSample.children composition entry
 				const grandRootChange = changes.find((c) => c.entityKey === grandRootID);
 				expect(grandRootChange).toMatchObject({
 					entity: 'sap.change_tracking.GrandRootSample',
@@ -1918,10 +1924,11 @@ describe('change log generation', () => {
 					modification: 'update',
 					parent_ID: null,
 					valueDataType: 'cds.Composition',
-					objectID: `${grandRootID}, GrandRoot title`
+					// Root objectID : [ID, title]
+					objectID: `${rootID}, Root title`
 				});
 
-				// Level 2: RootSample.children composition entry (grandparent, links to great-grandparent)
+				// Level 2: RootSample.children composition entry
 				const rootChange = changes.find((c) => c.entityKey === rootID);
 				expect(rootChange).toMatchObject({
 					entity: 'sap.change_tracking.RootSample',
@@ -1929,7 +1936,8 @@ describe('change log generation', () => {
 					modification: 'update',
 					parent_ID: grandRootChange.ID,
 					valueDataType: 'cds.Composition',
-					objectID: `${rootID}, Root title`
+					// Level1Sample objectID : [ID, title, parent.ID]
+					objectID: `${lvl1ID}, Level1 title, ${rootID}`
 				});
 
 				// Level 3: Level1Sample.children composition entry (parent, links to grandparent)
