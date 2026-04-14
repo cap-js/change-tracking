@@ -53,8 +53,9 @@ entity Incidents : cuid, managed {
     message   : String @changelog;
   };
   tasks : Composition of many IncidentTasks on tasks.incident = $self;
-  task : Composition of one IncidentTasks on task.incident = $self and task.title = 'ANC';
 }
+
+annotate Incidents.conversation with @changelog: (author);
 
 @changelog : [title, timestamp]
 entity IncidentTasks : cuid, managed {
