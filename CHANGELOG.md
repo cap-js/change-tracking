@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ## Version 2.0.0-beta.9 - upcoming
 
 ### Added
-- Changelogs for compositions use the objectID definition of the target child entity, otherwise fallbacks to entity keys:
+- Changelogs for composition entries on parent (e.g. `Orders:orderElement`) use child entity's `@changelog`-derived objectID, before fallbacking to entity keys:
     ```cds
     annotate Orders with { orderElement @changelog; } // Orders has a composition of many to OrderElements
 
