@@ -58,7 +58,7 @@ annotate change_tracking.TrackingComposition with {
   childrenAspectOne    @changelog;
   childrenAspectMany   @changelog;
   childrenExplicitOne  @changelog;
-  childrenExplicitMany @changelog;
+  childrenExplicitMany @changelog: ('Explicit items from ' || name);
 }
 
 annotate change_tracking.TrackingComposition.childrenAspectOne with {

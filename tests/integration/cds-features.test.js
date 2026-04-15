@@ -367,10 +367,11 @@ describe('CDS Features', () => {
 			const variantTesting = await cds.connect.to('VariantTesting');
 			const { ChangeView, TrackingComposition } = variantTesting.entities;
 			const ID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
 			await INSERT.into(TrackingComposition).entries({ ID });
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
 			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${ID},IsActiveEntity=false)/children`, {
-				ID: cds.utils.uuid(),
+				ID: childID,
 				price: 1.0,
 				title: 'ABC'
 			});

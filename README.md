@@ -1,11 +1,11 @@
 # Change Tracking Plugin for SAP Cloud Application Programming Model (CAP)
 
-a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) for automatic capturing, storing, and viewing of change records for modelled entities.
+A [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-packages) for automatic capturing, storing, and viewing of change records for modelled entities.
 
 [![REUSE status](https://api.reuse.software/badge/github.com/cap-js/change-tracking)](https://api.reuse.software/info/github.com/cap-js/change-tracking)
 
 > [!IMPORTANT]
-> With version 2.0 we completely refactored how changes are tracked. Previously the logic was completely on the application layer, which limited the types of queries trackable and came with major performance penalties in larger projects. With v2.0 the changes are now fully tracked on the database layer via database triggers. Furthermore with v2.0 the table definition for changes was cleaned up. This means any upgrade involves a schema change.
+> With version 2.0, we completely refactored how changes are tracked. Previously, the logic relied on the application layer, which limited the types of trackable queries and came with major performance penalties in larger projects. With v2.0 the changes are now fully tracked on the database layer via database triggers. Furthermore, the table definition for changes was cleaned up with v2.0. This means any upgrade involves a schema change.
 
 
 ### Table of Contents
@@ -17,6 +17,7 @@ a [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
   - [Human-readable Values](#human-readable-values)
     - [Expression-based labels](#expression-based-labels)
     - [Localized values](#localized-values)
+  - [Human-readable IDs for Composition Entries](#human-readable-ids-for-composition-entries)
 - [Advanced Options](#advanced-options)
   - [Altered Table View](#altered-table-view)
   - [Disable Lazy Loading](#disable-lazy-loading)
@@ -37,7 +38,7 @@ To enable change tracking, simply add this self-configuring plugin package to yo
 npm add @cap-js/change-tracking
 ```
 
-Alternatively, a full sample application is provided in the `tests/bookshop` folder, against which you can test your changes:
+Alternatively, a full sample application is provided in the `tests/bookshop` folder:
 
 ```sh
 git clone https://github.com/cap-js/change-tracking
@@ -61,7 +62,7 @@ cds watch
 > [!WARNING]
 > Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) (annotated with `@PersonalData`) is not change tracked, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
 
-All you need to do is to identify what should be change-tracked by annotating respective entities and elements in our model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _db/change-tracking.cds_:
+All you need to do, is to identify what should be change-tracked by annotating respective entities and elements in your model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _db/change-tracking.cds_:
 
 ```cds
 using { sap.capire.Incidents, sap.capire.Conversations } from './schema.cds';
@@ -127,7 +128,7 @@ Having a `@changelog` annotation without any additional identifiers, changes to 
 
 <img width="1300" alt="change-history-id" src="_assets/changes-id-wbox.png">
 
-However, this is not advisable, with an explicit object ID increasing readability as follows:
+However, this is not advisable and the readability can be increased with an explicit object ID as follows:
 
 ```cds
 annotate Incidents.conversation with @changelog: [author, timestamp];
@@ -163,7 +164,7 @@ The changelog annotations for *New Value* and *Old Value* are defined at element
 
 They are already human-readable by default, unless the `@changelog` definition cannot be uniquely mapped such as types `enum` or `Association`.
 
-For example, having a `@changelog` annotation without any additional identifiers, changes to incident customer would show up as UUIDs:
+For example, having a `@changelog` annotation on Incident's `customer` field without any additional identifiers, changes would show up as UUIDs:
 
 ```cds
 customer @changelog;
@@ -178,6 +179,78 @@ customer @changelog: [customer.name];
 ```
 
 <img width="1300" alt="change-history-value-hr" src="_assets/changes-value-hr-wbox.png">
+
+### Human-readable IDs for Composition Entries
+
+When a child entity is modified, a composition changelog entry is created on the parent entity with `valueDataType = 'cds.Composition'`. The *Object ID* on this entry identifies what was affected. How this Object ID is resolved depends on whether the composition is a **composition of one** or a **composition of many**.
+
+#### Composition of one
+
+For composition of one, the Object ID is derived from the **child entity's** `@changelog` annotation. If the child entity has no `@changelog`, it falls back to the **parent entity's** `@changelog`. Any `@changelog` annotation on the composition field itself is not considered for the Object ID.
+
+```cds
+@changelog: [name]
+entity BookStores {
+  key ID   : UUID;
+  name     : String;
+  registry : Composition of one BookStoreRegistry @changelog: ('Not considered');
+}
+
+@changelog: [code]
+entity BookStoreRegistry {
+  key ID      : UUID;
+  code        : String;
+  validOn     : Date @changelog;
+}
+```
+
+When `validOn` is changed on `BookStoreRegistry`, the composition entry on `BookStores` will have `objectID = 'TEST-REG'` (from the child's `@changelog: [code]`), not the parent's `name`.
+
+#### Composition of many
+
+For composition of many, the Object ID is **not** derived from the child entity, since different children can have different identifiers. Instead, it falls back to the **parent entity's** `@changelog` annotation.
+
+```cds
+@changelog: [name]
+entity BookStores {
+  key ID : UUID;
+  name   : String;
+  books  : Composition of many Books on books.bookStore = $self @changelog;
+}
+
+@changelog: [title]
+entity Books {
+  key ID    : UUID;
+  bookStore : Association to BookStores;
+  title     : String @changelog;
+}
+```
+
+When a `Books` entry is modified, the composition entry on `BookStores` will have `objectID = 'Shakespeare and Company'` (from the parent's `@changelog: [name]`).
+
+You can customize the Object ID on the composition field using `@changelog` with a path or an expression. The annotation **must only reference elements from the parent entity**, not from the child entity.
+
+**Path-based:**
+
+```cds
+annotate BookStores with @changelog: [name] {
+  books @changelog: [name];  // uses parent's 'name' as Object ID
+}
+```
+
+**Expression-based:**
+
+```cds
+annotate BookStores with @changelog: [name] {
+  books @changelog: ('Books from ' || name);  // evaluates to e.g. 'Books from Shakespeare and Company'
+}
+```
+
+> [!NOTE]
+> When multiple children are created or deleted in a single transaction, only one composition entry is created per parent.
+
+Results in the following change logs:
+![Change Tracking Composition of many children](./_assets/changes-children.png)
 
 #### Expression-based labels
 
@@ -413,9 +486,15 @@ Add the following `@changelog` annotations in `db/change-tracking.cds`
 
 ```cds
 annotate Incidents with @changelog: [title] {
-  conversation @changelog: [conversation.message];
+  conversation @changelog;
+}
+
+annotate Conversation with @changelog: [message] {
+  message @changelog;
 }
 ```
+
+When a `Conversation` entry is modified, the composition changelog entry on `Incidents` will automatically use the child's *Object ID* derived from `Conversation @changelog: [message]`. This way, the change history on the parent shows which conversation was affected.
 
 #### Use Case 2: Trace the changes of associated entities from the current entity and display the meaningful data from associated entities (association relation)
 
@@ -473,9 +552,11 @@ annotate Incidents with @changelog: [title] {
 
 > Change-tracking supports analyzing chained associated entities from the current entity in case the entity in consumer applications is a pure relation table. However, the usage of chained associated entities is not recommended due to performance cost.
 
-### Don'ts
+---
 
-Don'ts
+### 🛑 Don'ts
+
+
 
 #### Use Case 1: Don't trace changes for field(s) with `Association to many`
 
