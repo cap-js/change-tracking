@@ -182,42 +182,75 @@ customer @changelog: [customer.name];
 
 ### Human-readable IDs for Composition Entries
 
-When a child entity is modified, a composition changelog entry is created on the parent entity with `valueDataType = 'cds.Composition'`. The *Object ID* of this composition entry is automatically derived from the **child entity's** `@changelog` annotation, identifying which child was affected.
+When a child entity is modified, a composition changelog entry is created on the parent entity with `valueDataType = 'cds.Composition'`. The *Object ID* on this entry identifies what was affected. How this Object ID is resolved depends on whether the composition is a **composition of one** or a **composition of many**.
 
-For example, given the following model:
+#### Composition of one
+
+For composition of one, the Object ID is derived from the **child entity's** `@changelog` annotation. If the child entity has no `@changelog`, it falls back to the **parent entity's** `@changelog`. Any `@changelog` annotation on the composition field itself is not considered for the Object ID.
 
 ```cds
-entity Orders {
-  key ID    : UUID;
-  orderNo   : String;
-  items     : Composition of many OrderItems on items.order = $self;
+@changelog: [name]
+entity BookStores {
+  key ID   : UUID;
+  name     : String;
+  registry : Composition of one BookStoreRegistry @changelog: ('Not considered');
 }
 
-entity OrderItems {
-  key ID    : UUID;
-  order     : Association to Orders;
-  product   : String;
-  quantity  : Integer;
+@changelog: [code]
+entity BookStoreRegistry {
+  key ID      : UUID;
+  code        : String;
+  validOn     : Date @changelog;
 }
 ```
 
-With these annotations:
+When `validOn` is changed on `BookStoreRegistry`, the composition entry on `BookStores` will have `objectID = 'TEST-REG'` (from the child's `@changelog: [code]`), not the parent's `name`.
+
+#### Composition of many
+
+For composition of many, the Object ID is **not** derived from the child entity, since different children can have different identifiers. Instead, it falls back to the **parent entity's** `@changelog` annotation.
 
 ```cds
-annotate Orders with @changelog: [orderNo] {
-  items @changelog;
+@changelog: [name]
+entity BookStores {
+  key ID : UUID;
+  name   : String;
+  books  : Composition of many Books on books.bookStore = $self @changelog;
 }
 
-annotate OrderItems with @changelog: [product] {
-  quantity @changelog;
+@changelog: [title]
+entity Books {
+  key ID    : UUID;
+  bookStore : Association to BookStores;
+  title     : String @changelog;
 }
 ```
 
-Results to the following change logs:
-![Change Tracking Composition of many children](./_assets/changes-children.png)
+When a `Books` entry is modified, the composition entry on `BookStores` will have `objectID = 'Shakespeare and Company'` (from the parent's `@changelog: [name]`).
+
+You can customize the Object ID on the composition field using `@changelog` with a path or an expression. The annotation **must only reference elements from the parent entity**, not from the child entity.
+
+**Path-based:**
+
+```cds
+annotate BookStores with @changelog: [name] {
+  books @changelog: [name];  // uses parent's 'name' as Object ID
+}
+```
+
+**Expression-based:**
+
+```cds
+annotate BookStores with @changelog: [name] {
+  books @changelog: ('Books from ' || name);  // evaluates to e.g. 'Books from Shakespeare and Company'
+}
+```
 
 > [!NOTE]
-> When multiple children are created or deleted in a single transaction, only one composition entry is created per parent. Its *Object ID* will reflect the first child processed.
+> When multiple children are created or deleted in a single transaction, only one composition entry is created per parent.
+
+Results in the following change logs:
+![Change Tracking Composition of many children](./_assets/changes-children.png)
 
 #### Expression-based labels
 
