@@ -76,8 +76,8 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
 				Then.onTheDetailPage.iSeeChangeHistoryRow({
 					field: 'conversation',
 					changeType: 'Create',
-					objectID: 'Sunny Sunshine',
-					objectType: 'Support Incidents'
+					objectID: 'alice',
+					objectType: 'alice'
 				});
 
 				// Expand the conversation tree row to reveal child entries
@@ -131,7 +131,7 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
 				Then.onTheDetailPage.iSeeChangeHistoryRow({
 					field: 'conversation',
 					changeType: 'Update',
-					objectID: 'Sunny Sunshine',
+					objectID: 'alice',
 					objectType: 'Support Incidents'
 				});
 

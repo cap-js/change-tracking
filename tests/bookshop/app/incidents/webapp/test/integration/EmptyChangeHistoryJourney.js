@@ -68,6 +68,7 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
 
 				Then.onTheDetailPage.iSeeChangeHistoryEntries(1);
 				Then.onTheDetailPage.iSeeChangeHistoryRow({
+					field: 'Status',
 					changeType: 'Update',
 					newValue: 'Resolved',
 					objectID: 'Sunny Sunshine',
