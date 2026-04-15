@@ -68,6 +68,7 @@ entity Level2Sample {
 @title: '{i18n>bookStore.objectTitle}'
 entity TrackingComposition {
   key ID                   : UUID;
+      name                 : String;
       children             : Composition of many ComposedEntities
                                on children.parent = $self;
       childrenAspectOne    : Composition of one CompositionAspect;

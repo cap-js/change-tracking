@@ -545,8 +545,8 @@ describe('change log generation', () => {
 				modification: 'update',
 				parent_ID: null,
 				valueDataType: 'cds.Composition',
-				// Books objectID : [title, author.name.firstName, author.name.lastName]
-				objectID: 'Wuthering Heights Test, Emily, Brontë'
+				// Composition-of-many: uses parent's @changelog: [name] as objectID
+				objectID: 'Shakespeare and Company'
 			});
 
 			// Books.title field change linked to parent
@@ -958,8 +958,8 @@ describe('change log generation', () => {
 				expect(changes[0].entity).toEqual('sap.capire.bookshop.BookStores');
 				expect(changes[0].valueChangedFrom).toEqual(null);
 				expect(changes[0].valueChangedTo).toEqual(null);
-				// Books objectID : [title, author.name.firstName, author.name.lastName]
-				expect(changes[0].objectID).toEqual('Test Book 1');
+				// Composition-of-many: uses parent's @changelog: [name] as objectID
+				expect(changes[0].objectID).toEqual('Shakespeare and Company');
 
 				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes[0].ID });
 				expect(relatedChanges.length).toEqual(2);
@@ -1015,8 +1015,8 @@ describe('change log generation', () => {
 				expect(changes[0].entityKey).toEqual(bookStoreID);
 				expect(changes[0].valueChangedFrom).toEqual(null);
 				expect(changes[0].valueChangedTo).toEqual(null);
-				// Books objectID : [title, author.name.firstName, author.name.lastName]
-				expect(changes[0].objectID).toEqual('Updated Title');
+				// Composition-of-many: uses parent's @changelog: [name] as objectID
+				expect(changes[0].objectID).toEqual('Shakespeare and Company');
 
 				// check related changes
 				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes[0].ID });
@@ -1057,8 +1057,8 @@ describe('change log generation', () => {
 					modification: 'update',
 					parent_ID: null,
 					valueDataType: 'cds.Composition',
-					// Books objectID : [title, author.name.firstName, author.name.lastName]
-					objectID: 'Book to Delete'
+					// Composition-of-many: uses parent's @changelog: [name] as objectID
+					objectID: 'Shakespeare and Company'
 				});
 
 				const bookDeleteChange = changes.find((c) => c.entityKey === bookID && c.modification === 'delete');
@@ -1522,6 +1522,7 @@ describe('change log generation', () => {
 
 				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
 					ID: parentID,
+					name: 'Test Parent',
 					childrenExplicitMany: [
 						{ ID: child1ID, title: 'Explicit Child 1', price: 10.0 },
 						{ ID: child2ID, title: 'Explicit Child 2', price: 20.0 }
@@ -1538,6 +1539,8 @@ describe('change log generation', () => {
 				});
 				expect(parentChanges.length).toEqual(1);
 				expect(parentChanges[0].parent_ID).toEqual(null);
+				// Composition-of-many: uses expression @changelog: ('Explicit items from ' || name)
+				expect(parentChanges[0].objectID).toEqual('Explicit items from Test Parent');
 
 				// Child changes linked to parent
 				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: parentChanges[0].ID });
@@ -1569,6 +1572,7 @@ describe('change log generation', () => {
 
 				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
 					ID: parentID,
+					name: 'Test Parent',
 					childrenExplicitMany: [{ ID: childID, title: 'Original Title', price: 5.0 }]
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
@@ -1591,7 +1595,9 @@ describe('change log generation', () => {
 					attribute: 'childrenExplicitMany',
 					modification: 'update',
 					parent_ID: null,
-					valueDataType: 'cds.Composition'
+					valueDataType: 'cds.Composition',
+					// Composition-of-many: uses expression @changelog: ('Explicit items from ' || name)
+					objectID: 'Explicit items from Test Parent'
 				});
 
 				const childChange = changes.find((c) => c.entityKey === childID);
@@ -1614,6 +1620,7 @@ describe('change log generation', () => {
 
 				await POST(`/odata/v4/variant-testing/TrackingComposition`, {
 					ID: parentID,
+					name: 'Test Parent',
 					childrenExplicitMany: [{ ID: childID, title: 'Title To Delete', price: 15.0 }]
 				});
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
@@ -1634,7 +1641,9 @@ describe('change log generation', () => {
 					attribute: 'childrenExplicitMany',
 					modification: 'update',
 					parent_ID: null,
-					valueDataType: 'cds.Composition'
+					valueDataType: 'cds.Composition',
+					// Composition-of-many: uses expression @changelog: ('Explicit items from ' || name)
+					objectID: 'Explicit items from Test Parent'
 				});
 
 				const titleChange = changes.find((c) => c.entityKey === childID && c.attribute === 'title' && c.modification === 'delete');
