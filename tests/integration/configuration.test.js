@@ -655,7 +655,7 @@ describe('Configuration Options', () => {
 		expect(restoredDeleteLvl1.parent_ID).toEqual(restoredRootComp.ID);
 	});
 
-	it.only('restores backlinks for composite-key parent with correct objectID', async () => {
+	it('restores backlinks for composite-key parent with correct objectID', async () => {
 		const testingSRV = await cds.connect.to('VariantTesting');
 		const { ChangeView } = testingSRV.entities;
 
@@ -685,8 +685,8 @@ describe('Configuration Options', () => {
 		expect(compositionChange.valueDataType).toEqual('cds.Composition');
 
 		// Delete composition change
-		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: originalChange[0].ID });
-		await cds.delete('sap.changelog.Changes').where({ ID: originalChange[0].ID });
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: compositionChange.ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: compositionChange.ID });
 
 		// Restore backlinks
 		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
