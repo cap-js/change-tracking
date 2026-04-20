@@ -1,0 +1,46 @@
+@server=http://localhost:62544
+@username=alice
+@password=
+
+
+### Books
+# @name Books_GET
+GET {{server}}/odata/v4/admin/Books?&$expand=chapters($select=number,name)
+Authorization: Basic {{username}}:{{password}}
+
+
+### Books
+# @name Books_POST
+POST {{server}}/odata/v4/admin/Books
+Content-Type: application/json
+Authorization: Basic {{username}}:{{password}}
+
+{
+  "ID": "27882070-9f7d-40b2-b49f-5b5576e6ae57",
+  "name": "name-27882070",
+  "chapters": [
+    {
+      "ID": "2346461c-d95c-436a-820b-53ae0e304709",
+      "number": 96,
+      "name": "name-2346461"
+    },
+    {
+      "ID": "23464620-0768-4e21-8f7f-2825f1941096",
+      "number": 43,
+      "name": "name-2346462"
+    }
+  ]
+}
+
+
+
+### Request sent for `getChanges`
+GET {{server}}/odata/v4/admin/Books('27882070-9f7d-40b2-b49f-5b5576e6ae57')/changes?$apply=orderby(createdAt%20desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/Books('27882070-9f7d-40b2-b49f-5b5576e6ae57')/changes,HierarchyQualifier='ChangeHierarchy',NodeProperty='ID',Levels=1)&$select=DrillState,ID,attributeLabel,createdAt,createdBy,entityLabel,modificationLabel,objectID,valueChangedFromLabel,valueChangedToLabel&$count=true&$skip=0&$top=210
+
+### createChildren
+# @name createChildren_POST
+POST {{server}}/odata/v4/admin/Books('27882070-9f7d-40b2-b49f-5b5576e6ae57')/AdminService.createChildren
+Content-Type: application/json
+Authorization: Basic {{username}}:{{password}}
+
+{}

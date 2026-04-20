@@ -17,6 +17,7 @@ metadata:
   uid: 9491994c-8b4d-49b1-925c-51fb723c5c66
 spec:
   apps:
+  # Create a new entity
     - api: ${PERF_HOST}/odata/v4/admin/Books
       appName:
         - perf-bookshop-srv
@@ -46,6 +47,7 @@ spec:
           expectedValue: "1600"
           metric: responseTime
           operator: <=
+    # Create children for the created entity
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.createChildren
       appName:
         - perf-bookshop-srv
@@ -83,6 +85,7 @@ spec:
           expectedValue: "2500"
           metric: responseTime
           operator: <=
+    # Update children for the created entity
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.updateChildren
       appName:
         - perf-bookshop-srv
@@ -120,6 +123,7 @@ spec:
           expectedValue: "3000"
           metric: responseTime
           operator: <=
+    # Get all changes for the created entity in the hierarchy
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/changes?$apply=orderby(createdAt%20desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/Books({bookID})/changes,HierarchyQualifier='ChangeHierarchy',NodeProperty='ID',Levels=1)&$select=DrillState,ID,attributeLabel,createdAt,createdBy,entityLabel,modificationLabel,objectID,valueChangedFromLabel,valueChangedToLabel&$count=true&$skip=0&$top=210
       appName:
         - perf-bookshop-srv
