@@ -26,7 +26,7 @@
 		"test:hana": "npm run start:hana && cds bind --exec -- npx jest --silent",
 		"start:pg": "cd tests/bookshop/ && docker compose -f pg-stack.yml up -d && npm run deploy:postgres && cd ../..",
 		"deploy:postgres": "CDS_ENV=pg cds build --production && cds deploy --profile pg",
-		"start:hana": "cd tests/bookshop/ && CDS_ENV=production cds deploy -2 hana && cd ../..",
+		"start:hana": "node scripts/setup-hana.js",
 		"test:all": "npm run test:sqlite && npm run test:postgres && npm run test:hana",
 		"format": "npx -y prettier@3 . --write",
 		"format:check": "npx -y prettier@3 --check ."
