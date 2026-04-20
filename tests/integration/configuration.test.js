@@ -654,6 +654,59 @@ describe('Configuration Options', () => {
 		const restoredDeleteLvl1 = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title' && c.modification === 'delete');
 		expect(restoredDeleteLvl1.parent_ID).toEqual(restoredRootComp.ID);
 	});
+
+	it.only('restores backlinks for composite-key parent with correct objectID', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const year = Math.floor(Math.random() * 9000) + 1000;
+		const code = cds.utils.uuid().slice(0, 8);
+		const itemID = cds.utils.uuid();
+		const parentTitle = 'CompositeKey Parent Title';
+
+		// Create a CompositeKeyParent with an inline composition child
+		await POST(`/odata/v4/variant-testing/CompositeKeyParent`, {
+			year,
+			code,
+			title: parentTitle,
+			items: [{ ID: itemID, value: 'Item Value' }]
+		});
+
+		const parentKey = `${String(year).length},${year};${String(code).length},${code}`;
+		const childKey = `${String(year).length},${year};${String(code).length},${code};${String(itemID).length},${itemID}`;
+
+		// Capture original state: should have composition + child entries
+		const originalChange = await SELECT.from(ChangeView).where({ entityKey: [parentKey, childKey] });
+		expect(originalChange.length).toEqual(3);
+
+		const compositionChange = originalChange.find((c) => c.attribute === 'items');
+		expect(compositionChange.entity).toEqual('sap.change_tracking.CompositeKeyParent');
+		expect(compositionChange.objectID).toEqual(parentTitle);
+		expect(compositionChange.valueDataType).toEqual('cds.Composition');
+
+		// Delete composition change
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: originalChange[0].ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: originalChange[0].ID });
+
+		// Restore backlinks
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		// Verify the composition entry was recreated
+		const restoredChange = await SELECT.from(ChangeView).where(`entityKey IN ('${parentKey}', '${childKey}')`);
+		expect(restoredChange.length).toEqual(3);
+
+		const itemChange = restoredChange.find((c) => c.attribute === 'items');
+		expect(itemChange.entity).toEqual('sap.change_tracking.CompositeKeyParent');
+		expect(itemChange.objectID).toEqual(parentTitle);
+		expect(itemChange.valueDataType).toEqual('cds.Composition');
+		expect(itemChange.parent_ID).toBeNull();
+
+		const valueChange = restoredChange.find((c) => c.attribute === 'value');
+		expect(valueChange.entity).toEqual('sap.change_tracking.CompositeKeyParent.items');
+		expect(valueChange.objectID).toEqual(childKey); // REVISIT: with new logic it should fallback to the objectID of the parent change
+		expect(valueChange.valueDataType).toEqual('cds.String');
+		expect(valueChange.parent_ID).toEqual(itemChange.ID);
+	});
 });
 describe('MTX Build', () => {
 	it('adds changes association only during runtime compilation, not during xtended CSN build', async () => {
