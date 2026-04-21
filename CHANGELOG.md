@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.0.0-beta.10 - Upcoming
+
+### Fixed
+- Server crash when running raw inserts due to missing guards in service handler for setting session variables.
+
 ## Version 2.0.0-beta.9 - 15.04.26
 
 ### Added
