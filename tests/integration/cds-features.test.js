@@ -811,9 +811,10 @@ describe('CDS Features', () => {
 
 	describe('Draft', () => {
 		test('Insert into Draft_DraftAdministrativeData', async () => {
-			await INSERT.into("DRAFT_DraftAdministrativeData").entries({
-				DraftUUID: cds.utils.uuid(),
+			const res = await INSERT.into('DRAFT_DraftAdministrativeData').entries({
+				DraftUUID: cds.utils.uuid()
 			});
-		})
-	})
+			expect(res).toBeTruthy();
+		});
+	});
 });
