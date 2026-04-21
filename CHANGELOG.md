@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 - Server crash when running raw inserts due to missing guards in service handler for setting session variables.
+- Deployment crash during trigger and procedure generation for entities that use SQL reserved keywords as columns names (e.g. `order`) due to missing escaping
+- Only cast entity keys to type string in the ON condition of changes when they are not type of `cds.String` or `cds.UUID`
+- ObjectID correctly falls back to entity key when all @changelog fields are NULL instead of showing "<empty>, <empty>,..., <empty>"
 
 ## Version 2.0.0-beta.9 - 15.04.26
 

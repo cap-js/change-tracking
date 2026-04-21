@@ -2472,5 +2472,92 @@ describe('Expression-based @changelog annotations', () => {
 			expect(compositionChanges.length).toEqual(1);
 			expect(compositionChanges[0].objectID).toEqual(parentID);
 		});
+
+		it('composition of one: objectID from child entity @changelog', async () => {
+			const adminService = await cds.connect.to('AdminService');
+			const { ChangeView } = adminService.entities;
+
+			const bookStoreID = cds.utils.uuid();
+			const registryID = cds.utils.uuid();
+
+			// objectID of BookStores: name, objectID of BookStoreRegistry: code
+			await POST(`/odata/v4/admin/BookStores`, {
+				ID: bookStoreID,
+				name: 'My Bookstore',
+				registry: {
+					ID: registryID,
+					code: 'REG-42',
+					validOn: '2024-01-01'
+				}
+			});
+			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+			const compositionChange = await SELECT.one.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.BookStores',
+				entityKey: bookStoreID,
+				attribute: 'registry',
+				valueDataType: 'cds.Composition'
+			});
+			expect(compositionChange).toBeTruthy();
+			expect(compositionChange.objectID).toEqual('My Bookstore');
+
+			// The child's own change entry should use its own @changelog: [code] as objectID
+			const childChange = await SELECT.one.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.BookStoreRegistry',
+				entityKey: registryID,
+				attribute: 'validOn'
+			});
+			expect(childChange).toBeTruthy();
+			expect(childChange.objectID).toEqual('REG-42');
+		});
+
+		it('composition of many: objectID from parent entity @changelog', async () => {
+			const testingSRV = await cds.connect.to('VariantTesting');
+			const { ChangeView } = testingSRV.entities;
+
+			const parentID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
+
+			await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+				ID: parentID,
+				title: 'My Parent',
+				children: [{ ID: childID, fieldA: 'Alpha', name: 'Child' }]
+			});
+
+			// The composition entry on the parent should use parent's @changelog: [title] as objectID
+			const compositionChange = await SELECT.one.from(ChangeView).where({
+				entity: 'sap.change_tracking.ObjectIdFallbackParent',
+				entityKey: parentID,
+				attribute: 'children',
+				valueDataType: 'cds.Composition'
+			});
+			expect(compositionChange).toBeTruthy();
+			expect(compositionChange.objectID).toEqual('My Parent');
+		});
+
+		it('composition of many: custom objectID via expression on composition field', async () => {
+			const variantTesting = await cds.connect.to('VariantTesting');
+			const { ChangeView } = variantTesting.entities;
+
+			const parentID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
+
+			// TrackingComposition.childrenExplicitMany has @changelog: ('Explicit items from ' || name)
+			await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+				ID: parentID,
+				name: 'Test Parent',
+				childrenExplicitMany: [{ ID: childID, title: 'Child Title', price: 10 }]
+			});
+			await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+			const compositionChange = await SELECT.one.from(ChangeView).where({
+				entity: 'sap.change_tracking.TrackingComposition',
+				entityKey: parentID,
+				attribute: 'childrenExplicitMany',
+				valueDataType: 'cds.Composition'
+			});
+			expect(compositionChange).toBeTruthy();
+			expect(compositionChange.objectID).toEqual('Explicit items from Test Parent');
+		});
 	});
 });
