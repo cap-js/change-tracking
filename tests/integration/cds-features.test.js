@@ -808,4 +808,12 @@ describe('CDS Features', () => {
 			expect(valueChangedToLabel.xpr.some((r) => r.val === 'status3')).toEqual(false);
 		});
 	});
+
+	describe('Draft', () => {
+		test('Insert into Draft_DraftAdministrativeData', async () => {
+			await INSERT.into("DRAFT_DraftAdministrativeData").entries({
+				DraftUUID: cds.utils.uuid(),
+			});
+		})
+	})
 });
