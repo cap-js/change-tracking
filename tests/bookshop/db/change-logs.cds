@@ -48,9 +48,11 @@ annotate change_tracking.Level1Sample with @(changelog: [
 annotate change_tracking.Level2Sample with @(changelog: [
   ID,
   title,
+  order,
   parent.parent.ID
 ]) {
   title @changelog;
+  order @changelog;
 }
 
 annotate change_tracking.TrackingComposition with {

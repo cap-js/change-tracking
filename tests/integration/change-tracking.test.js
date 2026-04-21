@@ -2314,4 +2314,70 @@ describe('Expression-based @changelog annotations', () => {
 		expect(priceChange.valueChangedToLabel).toEqual('Premium');
 		expect(priceChange.objectID).toEqual('Alice Johnson');
 	});
+
+	describe('reserved keyword element names', () => {
+		it("tracks create, update, and delete of elements with reserved SQL keyword name 'order'", async () => {
+			const testingSRV = await cds.connect.to('VariantTesting');
+			const { ChangeView } = testingSRV.entities;
+
+			const rootID = cds.utils.uuid();
+			const level1ID = cds.utils.uuid();
+			const level2ID = cds.utils.uuid();
+
+			// Create hierarchy with Level2Sample.order = 42 ('order' is a SQL reserved keyword)
+			await POST('/odata/v4/variant-testing/RootSample', {
+				ID: rootID,
+				title: 'Root',
+				children: [
+					{
+						ID: level1ID,
+						title: 'Level1',
+						children: [{ ID: level2ID, title: 'Level2', order: 42 }]
+					}
+				]
+			});
+
+			// Verify create change for 'order' attribute
+			const createChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.Level2Sample',
+				entityKey: level2ID,
+				attribute: 'order',
+				modification: 'create'
+			});
+			expect(createChanges.length).toEqual(1);
+			expect(createChanges[0].valueChangedFrom).toBeNull();
+			expect(createChanges[0].valueChangedTo).toEqual('42');
+			expect(createChanges[0].objectID).toEqual(`${level2ID}, Level2, 42`);
+
+			// Update order value
+			await PATCH(`/odata/v4/variant-testing/Level2Sample(ID='${level2ID}')`, { order: 99 });
+
+			// Verify update change
+			const updateChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.Level2Sample',
+				entityKey: level2ID,
+				attribute: 'order',
+				modification: 'update'
+			});
+			expect(updateChanges.length).toEqual(1);
+			expect(updateChanges[0].valueChangedFrom).toEqual('42');
+			expect(updateChanges[0].valueChangedTo).toEqual('99');
+			expect(updateChanges[0].objectID).toEqual(`${level2ID}, Level2, 99, ${rootID}`);
+
+			// Delete the Level2Sample entry
+			await DELETE(`/odata/v4/variant-testing/Level2Sample(ID='${level2ID}')`);
+
+			// Verify delete change
+			const deleteChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.Level2Sample',
+				entityKey: level2ID,
+				attribute: 'order',
+				modification: 'delete'
+			});
+			expect(deleteChanges.length).toEqual(1);
+			expect(deleteChanges[0].valueChangedFrom).toEqual('99');
+			expect(deleteChanges[0].valueChangedTo).toBeNull();
+			expect(deleteChanges[0].objectID).toEqual(`${level2ID}, Level2, 99`);
+		});
+	});
 });

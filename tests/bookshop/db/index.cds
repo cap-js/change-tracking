@@ -61,6 +61,7 @@ entity Level1Sample {
 entity Level2Sample {
   key ID     : String;
       title  : String @title: 'Level2 Sample Title';
+      order  : Integer;
       parent : Association to one Level1Sample;
 }
 

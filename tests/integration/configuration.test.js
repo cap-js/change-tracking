@@ -707,6 +707,64 @@ describe('Configuration Options', () => {
 		expect(valueChange.valueDataType).toEqual('cds.String');
 		expect(valueChange.parent_ID).toEqual(itemChange.ID);
 	});
+
+	it("restores backlinks for composition that includes reserved element name 'order'", async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const rootID = cds.utils.uuid();
+		const level1ID = cds.utils.uuid();
+		const level2ID = cds.utils.uuid();
+
+		// Create hierarchy with Level2Sample.order = 7
+		await POST('/odata/v4/variant-testing/RootSample', {
+			ID: rootID,
+			title: 'Root',
+			children: [
+				{
+					ID: level1ID,
+					title: 'Level1',
+					children: [{ ID: level2ID, title: 'Level2', order: 7 }]
+				}
+			]
+		});
+
+		// Find the Level1 -> Level2 composition entry
+		const originalChanges = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level1Sample',
+			entityKey: level1ID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(originalChanges.length).toEqual(1);
+		const compositionChange = originalChanges[0];
+
+		// Delete the composition entry (orphan the child entries)
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: compositionChange.ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: compositionChange.ID });
+
+		// Restore backlinks
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		// Verify the composition entry was recreated
+		const restoredChanges = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level1Sample',
+			entityKey: level1ID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(restoredChanges.length).toEqual(1);
+
+		// Verify the child 'order' entry has restored parent_ID
+		const orderChange = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level2Sample',
+			entityKey: level2ID,
+			attribute: 'order'
+		});
+		expect(orderChange.length).toEqual(1);
+		expect(orderChange[0].parent_ID).toEqual(restoredChanges[0].ID);
+		expect(orderChange[0].objectID).toEqual(`${level2ID}, Level2, 7`);
+	});
 });
 describe('MTX Build', () => {
 	it('adds changes association only during runtime compilation, not during xtended CSN build', async () => {
