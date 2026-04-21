@@ -88,7 +88,7 @@ function main() {
 	try {
 		execSync('CDS_ENV=production cds deploy -2 hana', {
 			cwd: BOOKSHOP,
-			stdio: 'inherit',
+			stdio: 'inherit'
 		});
 	} catch (err) {
 		console.error('[setup-hana] HANA deploy failed — hash NOT updated so next run will retry.');
