@@ -9,4 +9,3 @@ gen/
 .env
 .secrets
 report/
-.hana-deploy-hash
