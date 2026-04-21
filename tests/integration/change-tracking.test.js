@@ -2380,4 +2380,97 @@ describe('Expression-based @changelog annotations', () => {
 			expect(deleteChanges[0].objectID).toEqual(`${level2ID}, Level2, 99`);
 		});
 	});
+
+	describe('objectID fallback behavior', () => {
+		it('builds objectID from all @changelog fields when all are present', async () => {
+			const testingSRV = await cds.connect.to('VariantTesting');
+			const { ChangeView } = testingSRV.entities;
+
+			const parentID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
+
+			await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+				ID: parentID,
+				title: 'Parent Title',
+				children: [{ ID: childID, fieldA: 'Alpha', fieldB: 'Beta', name: 'Child' }]
+			});
+
+			const childChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.ObjectIdFallbackChild',
+				entityKey: childID,
+				attribute: 'fieldA',
+				modification: 'create'
+			});
+			expect(childChanges.length).toEqual(1);
+			expect(childChanges[0].objectID).toEqual('Alpha, Beta');
+		});
+
+		it('shows <empty> in objectID for NULL @changelog fields when some are present', async () => {
+			const testingSRV = await cds.connect.to('VariantTesting');
+			const { ChangeView } = testingSRV.entities;
+
+			const parentID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
+
+			await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+				ID: parentID,
+				title: 'Parent Title',
+				children: [{ ID: childID, fieldA: 'Alpha', name: 'Child' }]
+			});
+
+			const childChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.ObjectIdFallbackChild',
+				entityKey: childID,
+				attribute: 'fieldA',
+				modification: 'create'
+			});
+			expect(childChanges.length).toEqual(1);
+			expect(childChanges[0].objectID).toEqual('Alpha, <empty>');
+		});
+
+		it('falls back to entityKey for objectID when all @changelog fields are NULL', async () => {
+			const testingSRV = await cds.connect.to('VariantTesting');
+			const { ChangeView } = testingSRV.entities;
+
+			const parentID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
+
+			await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+				ID: parentID,
+				title: 'Parent Title',
+				children: [{ ID: childID, name: 'Child' }]
+			});
+
+			const childChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.ObjectIdFallbackChild',
+				entityKey: childID,
+				attribute: 'name',
+				modification: 'create'
+			});
+			expect(childChanges.length).toEqual(1);
+			expect(childChanges[0].objectID).toEqual(childID);
+		});
+
+		it('falls back to entityKey for parent objectID when @changelog field is NULL', async () => {
+			const testingSRV = await cds.connect.to('VariantTesting');
+			const { ChangeView } = testingSRV.entities;
+
+			const parentID = cds.utils.uuid();
+			const childID = cds.utils.uuid();
+
+			await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+				ID: parentID,
+				children: [{ ID: childID, fieldA: 'Alpha', name: 'Child' }]
+			});
+
+			const compositionChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.change_tracking.ObjectIdFallbackParent',
+				entityKey: parentID,
+				attribute: 'children',
+				valueDataType: 'cds.Composition'
+			});
+			expect(compositionChanges.length).toEqual(1);
+			expect(compositionChanges[0].objectID).toEqual(parentID);
+		});
+	});
 });

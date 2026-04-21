@@ -19,6 +19,8 @@ service VariantTesting {
 
   entity CompositeKeyParent as projection on my.CompositeKeyParent;
 
+  entity ObjectIdFallbackParent as projection on my.ObjectIdFallbackParent;
+
   entity ChangeView as projection on change.ChangeView;
 
   @changelog: false

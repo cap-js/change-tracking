@@ -122,6 +122,24 @@ entity CompositeKeyParent {
       };
 }
 
+@changelog: [title]
+entity ObjectIdFallbackParent {
+  key ID   : UUID;
+  title    : String @changelog;
+  @changelog
+  children : Composition of many ObjectIdFallbackChild
+                 on children.parent = $self;
+}
+
+@changelog: [fieldA, fieldB]
+entity ObjectIdFallbackChild {
+  key ID   : UUID;
+  parent   : Association to one ObjectIdFallbackParent;
+  fieldA   : String @changelog;
+  fieldB   : String @changelog;
+  name     : String @changelog;
+}
+
 @cds.persistence.skip
 entity NonExistentTable {
   key ID : UUID;
