@@ -374,7 +374,9 @@ describe('change log generation', () => {
 			});
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, noteID]}`;
-			const transactionID = changesBefore.find((c) => c.transactionID).transactionID;
+			expect(changesBefore.length).toBeGreaterThan(0);
+			const transactionID = changesBefore[0].transactionID;
+
 			await PATCH(`/odata/v4/admin/Order(ID=${orderID})/orderItems(ID=${orderItemID})/notes(ID=${noteID})`, {
 				content: 'new content'
 			});
@@ -423,7 +425,8 @@ describe('change log generation', () => {
 			});
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, noteID]}`;
-			const transactionID = changesBefore.find((c) => c.transactionID).transactionID;
+			expect(changesBefore.length).toBeGreaterThan(0);
+			const transactionID = changesBefore[0].transactionID;
 
 			await DELETE(`/odata/v4/admin/Order(ID=${orderID})/orderItems(ID=${orderItemID})/notes(ID=${noteID})`);
 
@@ -525,7 +528,8 @@ describe('change log generation', () => {
 			});
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, bookID]}`;
-			const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+			expect(changesBefore.length).toBeGreaterThan(0);
+			const transactionID = changesBefore[0].transactionID;
 
 			// Update the book title through deep update on existing data
 			await UPDATE(BookStores)
@@ -581,7 +585,8 @@ describe('change log generation', () => {
 			});
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, orderItemID, compositeKey]}`;
-			const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+			expect(changesBefore.length).toBeGreaterThan(0);
+			const transactionID = changesBefore[0].transactionID;
 
 			await PATCH(`/odata/v4/admin/Order(ID=${orderID})/Items(ID=${orderItemID})`, {
 				quantity: 12
@@ -632,7 +637,8 @@ describe('change log generation', () => {
 			);
 
 			const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, registryID]}`;
-			const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+			expect(changesBefore.length).toBeGreaterThan(0);
+			const transactionID = changesBefore[0].transactionID;
 
 			await UPDATE(BookStores).where({ ID: bookStoreID }).with({
 				registry: null,
@@ -723,7 +729,8 @@ describe('change log generation', () => {
 				const headerID = order.header_ID;
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[orderID, headerID]}`;
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				await DELETE(`/odata/v4/admin/Order(ID=${orderID})/header`);
 
@@ -822,7 +829,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, registryID]}`;
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
 				await PATCH(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)`, {
@@ -886,7 +894,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, registryID]}`;
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
 				await PATCH(`/odata/v4/admin/BookStoreRegistry(ID=${registryID},IsActiveEntity=false)`, {
@@ -1133,7 +1142,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Edit draft and update aspect child
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
@@ -1185,7 +1195,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Edit draft and delete the aspect child
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
@@ -1285,7 +1296,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Edit draft and update the aspect child
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
@@ -1331,7 +1343,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Edit draft and delete the aspect child
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
@@ -1432,7 +1445,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Edit draft and update explicit FK child
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
@@ -1481,7 +1495,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Edit draft and delete the explicit FK child
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
@@ -1578,7 +1593,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Edit draft and update explicit FK child
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
@@ -1626,7 +1642,8 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
 
 				const changesBefore = await SELECT.from(ChangeView).where({ entityKey: parentID });
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Edit draft and delete explicit FK child
 				await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
@@ -1827,7 +1844,8 @@ describe('change log generation', () => {
 				});
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[grandRootID, rootID, lvl1ID]}`;
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Now create a Level2Sample on the existing Level1Sample
 				const lvl2ID = cds.utils.uuid();
@@ -1913,7 +1931,8 @@ describe('change log generation', () => {
 				});
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[grandRootID, rootID, lvl1ID, lvl2ID]}`;
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Update the deepest entity (Level2Sample)
 				await PATCH(`/odata/v4/variant-testing/Level2Sample(ID='${lvl2ID}')`, {
@@ -2006,7 +2025,8 @@ describe('change log generation', () => {
 				});
 
 				const changesBefore = await SELECT.from(ChangeView).where`entityKey in ${[grandRootID, rootID, lvl1ID, lvl2ID]}`;
-				const transactionID = changesBefore.find((c) => c.transactionID)?.transactionID;
+				expect(changesBefore.length).toBeGreaterThan(0);
+				const transactionID = changesBefore[0].transactionID;
 
 				// Delete the deepest entity
 				await DELETE(`/odata/v4/variant-testing/Level2Sample(ID='${lvl2ID}')`);
