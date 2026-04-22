@@ -61,6 +61,7 @@ entity Level1Sample {
 entity Level2Sample {
   key ID     : String;
       title  : String @title: 'Level2 Sample Title';
+      order  : Integer;
       parent : Association to one Level1Sample;
 }
 
@@ -119,6 +120,24 @@ entity CompositeKeyParent {
         key ID    : UUID;
             value : String;
       };
+}
+
+@changelog: [title]
+entity ObjectIdFallbackParent {
+  key ID   : UUID;
+  title    : String @changelog;
+  @changelog
+  children : Composition of many ObjectIdFallbackChild
+                 on children.parent = $self;
+}
+
+@changelog: [fieldA, fieldB]
+entity ObjectIdFallbackChild {
+  key ID   : UUID;
+  parent   : Association to one ObjectIdFallbackParent;
+  fieldA   : String @changelog;
+  fieldB   : String @changelog;
+  name     : String @changelog;
 }
 
 @cds.persistence.skip

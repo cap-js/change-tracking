@@ -654,6 +654,266 @@ describe('Configuration Options', () => {
 		const restoredDeleteLvl1 = restoredChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title' && c.modification === 'delete');
 		expect(restoredDeleteLvl1.parent_ID).toEqual(restoredRootComp.ID);
 	});
+
+	it('restores backlinks for composite-key parent with correct objectID', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const year = Math.floor(Math.random() * 9000) + 1000;
+		const code = cds.utils.uuid().slice(0, 8);
+		const itemID = cds.utils.uuid();
+		const parentTitle = 'CompositeKey Parent Title';
+
+		// Create a CompositeKeyParent with an inline composition child
+		await POST(`/odata/v4/variant-testing/CompositeKeyParent`, {
+			year,
+			code,
+			title: parentTitle,
+			items: [{ ID: itemID, value: 'Item Value' }]
+		});
+
+		const parentKey = `${String(year).length},${year};${String(code).length},${code}`;
+		const childKey = `${String(year).length},${year};${String(code).length},${code};${String(itemID).length},${itemID}`;
+
+		// Capture original state: should have composition + child entries
+		const originalChange = await SELECT.from(ChangeView).where({ entityKey: [parentKey, childKey] });
+		expect(originalChange.length).toEqual(3);
+
+		const compositionChange = originalChange.find((c) => c.attribute === 'items');
+		expect(compositionChange.entity).toEqual('sap.change_tracking.CompositeKeyParent');
+		expect(compositionChange.objectID).toEqual(parentTitle);
+		expect(compositionChange.valueDataType).toEqual('cds.Composition');
+
+		// Delete composition change
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: compositionChange.ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: compositionChange.ID });
+
+		// Restore backlinks
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		// Verify the composition entry was recreated
+		const restoredChange = await SELECT.from(ChangeView).where(`entityKey IN ('${parentKey}', '${childKey}')`);
+		expect(restoredChange.length).toEqual(3);
+
+		const itemChange = restoredChange.find((c) => c.attribute === 'items');
+		expect(itemChange.entity).toEqual('sap.change_tracking.CompositeKeyParent');
+		expect(itemChange.objectID).toEqual(parentTitle);
+		expect(itemChange.valueDataType).toEqual('cds.Composition');
+		expect(itemChange.parent_ID).toBeNull();
+
+		const valueChange = restoredChange.find((c) => c.attribute === 'value');
+		expect(valueChange.entity).toEqual('sap.change_tracking.CompositeKeyParent.items');
+		expect(valueChange.objectID).toEqual(childKey); // REVISIT: with new logic it should fallback to the objectID of the parent change
+		expect(valueChange.valueDataType).toEqual('cds.String');
+		expect(valueChange.parent_ID).toEqual(itemChange.ID);
+	});
+
+	it("restores backlinks for composition that includes reserved element name 'order'", async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const rootID = cds.utils.uuid();
+		const level1ID = cds.utils.uuid();
+		const level2ID = cds.utils.uuid();
+
+		// Create hierarchy with Level2Sample.order = 7
+		await POST('/odata/v4/variant-testing/RootSample', {
+			ID: rootID,
+			title: 'Root',
+			children: [
+				{
+					ID: level1ID,
+					title: 'Level1',
+					children: [{ ID: level2ID, title: 'Level2', order: 7 }]
+				}
+			]
+		});
+
+		// Find the Level1 -> Level2 composition entry
+		const originalChanges = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level1Sample',
+			entityKey: level1ID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(originalChanges.length).toEqual(1);
+		const compositionChange = originalChanges[0];
+
+		// Delete the composition entry (orphan the child entries)
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: compositionChange.ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: compositionChange.ID });
+
+		// Restore backlinks
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		// Verify the composition entry was recreated
+		const restoredChanges = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level1Sample',
+			entityKey: level1ID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(restoredChanges.length).toEqual(1);
+
+		// Verify the child 'order' entry has restored parent_ID
+		const orderChange = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.Level2Sample',
+			entityKey: level2ID,
+			attribute: 'order'
+		});
+		expect(orderChange.length).toEqual(1);
+		expect(orderChange[0].parent_ID).toEqual(restoredChanges[0].ID);
+		expect(orderChange[0].objectID).toEqual(`${level2ID}, Level2, 7`);
+	});
+
+	it('restores child objectID with all @changelog fields present', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const parentID = cds.utils.uuid();
+		const childID = cds.utils.uuid();
+
+		await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+			ID: parentID,
+			title: 'Parent Title',
+			children: [{ ID: childID, fieldA: 'Alpha', fieldB: 'Beta', name: 'Child' }]
+		});
+
+		const originalChange = await SELECT.one.from(ChangeView).where({
+			entity: 'sap.change_tracking.ObjectIdFallbackParent',
+			entityKey: parentID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(originalChange).toBeTruthy();
+
+		// Delete composition entry (orphan the child entries)
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: originalChange.ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: originalChange.ID });
+
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		// Verify restored child objectID contains both fields
+		const restoredChange = await SELECT.one.from(ChangeView).where({
+			entity: 'sap.change_tracking.ObjectIdFallbackChild',
+			entityKey: childID,
+			attribute: 'fieldA'
+		});
+		expect(restoredChange).toBeTruthy();
+		expect(restoredChange.objectID).toEqual('Alpha, Beta');
+		expect(restoredChange.parent_ID).not.toBeNull();
+	});
+
+	it('restores child objectID with <empty> for NULL @changelog fields', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const parentID = cds.utils.uuid();
+		const childID = cds.utils.uuid();
+
+		await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+			ID: parentID,
+			title: 'Parent Title',
+			children: [{ ID: childID, fieldA: 'Alpha', name: 'Child' }]
+		});
+
+		const originalChange = await SELECT.one.from(ChangeView).where({
+			entity: 'sap.change_tracking.ObjectIdFallbackParent',
+			entityKey: parentID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(originalChange).toBeTruthy();
+
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: originalChange.ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: originalChange.ID });
+
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		// Verify restored child objectID shows '<empty>' for NULL fieldB
+		const restoredChange = await SELECT.one.from(ChangeView).where({
+			entity: 'sap.change_tracking.ObjectIdFallbackChild',
+			entityKey: childID,
+			attribute: 'fieldA'
+		});
+		expect(restoredChange).toBeTruthy();
+		expect(restoredChange.objectID).toEqual('Alpha, <empty>');
+		expect(restoredChange.parent_ID).not.toBeNull();
+	});
+
+	it('restores child objectID falling back to entityKey when all @changelog fields are NULL', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const parentID = cds.utils.uuid();
+		const childID = cds.utils.uuid();
+
+		// Create child with both objectID fields NULL but name set so the trigger creates a change entry
+		await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+			ID: parentID,
+			title: 'Parent Title',
+			children: [{ ID: childID, name: 'Child' }]
+		});
+
+		const originalChange = await SELECT.one.from(ChangeView).where({
+			entity: 'sap.change_tracking.ObjectIdFallbackParent',
+			entityKey: parentID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(originalChange).toBeTruthy();
+
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: originalChange.ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: originalChange.ID });
+
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		const restoredChange = await SELECT.from(ChangeView).where({
+			entity: 'sap.change_tracking.ObjectIdFallbackChild',
+			entityKey: childID,
+			attribute: 'name',
+			modification: 'create'
+		});
+		expect(restoredChange.length).toEqual(1);
+		expect(restoredChange[0].objectID).toEqual(childID);
+		expect(restoredChange[0].parent_ID).not.toBeNull();
+	});
+
+	it('restores parent objectID falling back to entityKey when @changelog field is NULL', async () => {
+		const testingSRV = await cds.connect.to('VariantTesting');
+		const { ChangeView } = testingSRV.entities;
+
+		const parentID = cds.utils.uuid();
+		const childID = cds.utils.uuid();
+
+		// Create parent with title=NULL — parent objectID should fall back to entityKey
+		await POST('/odata/v4/variant-testing/ObjectIdFallbackParent', {
+			ID: parentID,
+			children: [{ ID: childID, fieldA: 'Alpha', name: 'Child' }]
+		});
+
+		const originalChange = await SELECT.one.from(ChangeView).where({
+			entity: 'sap.change_tracking.ObjectIdFallbackParent',
+			entityKey: parentID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(originalChange).toBeTruthy();
+
+		await UPDATE('sap.changelog.Changes').set({ parent_ID: null }).where({ parent_ID: originalChange.ID });
+		await cds.delete('sap.changelog.Changes').where({ ID: originalChange.ID });
+
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		const restoredChange = await SELECT.one.from(ChangeView).where({
+			entity: 'sap.change_tracking.ObjectIdFallbackParent',
+			entityKey: parentID,
+			attribute: 'children',
+			valueDataType: 'cds.Composition'
+		});
+		expect(restoredChange).toBeTruthy();
+		expect(restoredChange.objectID).toEqual(parentID);
+	});
 });
 describe('MTX Build', () => {
 	it('adds changes association only during runtime compilation, not during xtended CSN build', async () => {

@@ -159,6 +159,15 @@ annotate Incidents with @changelog: [
 }
 ```
 
+#### ObjectID fallback for NULL values
+When **some** `@changelog` fields are null, the object ID shows `<empty>` for the missing values:
+
+```cds
+annotate Orders with @changelog: [customer, region];
+```
+
+If region is null, the objectID would display for example as `ACME Corp, <empty>`. When all `@changelog` fields are null, the object ID falls back to the entity's primary key.
+
 ### Human-readable Values
 
 The changelog annotations for *New Value* and *Old Value* are defined at element level.
