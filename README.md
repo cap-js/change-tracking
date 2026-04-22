@@ -26,6 +26,7 @@ A [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 - [Examples](#examples)
   - [Tracing Changes](#tracing-changes)
   - [Don&#39;ts](#donts)
+- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
 - [Licensing](#licensing)
@@ -592,6 +593,17 @@ entity AggregatedBusinessTransactionData @(cds.autoexpose) : cuid {
 
 The reason is that: When deploying to relational databases, Associations are mapped to foreign keys. Yet, when mapped to non-relational databases they're just references. More details could be found in [Prefer Managed Associations](https://cap.cloud.sap/docs/guides/domain-models#managed-associations). In the above sample, there is no column for FootprintInventory in the table AggregatedBusinessTransactionData, but there is a navigation property FootprintInventory of in OData entity metadata.
 
+## Troubleshooting
+
+### Modifying records directly on the database fails after upgrading to version 2
+
+The database triggers for change tracking leverage session context to retrieve the user id needed for the `createdBy` field of the change record.
+
+On HANA `session_context('APPLICATIONUSER')` is being used. All queries going through the CAP database driver `@cap-js/hana` will have the context. In HANA Cloud Cockpit it is set to the logged in user as well.
+
+On Postgres `current_setting('cap.applicationuser', true)` is being used to retrieve the user information and again all queries going through `@cap-js/postgres` have the context. 
+
+On SQLite no session context function exists. Thus `@cap-js/sqlite` defines a UDF called `session_context` which looks up the session context from the database client used by `@cap-js/sqlite`. If you manually insert to SQLite circumventing the CAP driver, please make sure the UDF is defined.
 
 ## Contributing
 
