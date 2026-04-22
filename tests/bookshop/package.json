@@ -16,10 +16,10 @@
 		"watch:h2": "mvn spring-boot:run",
 		"watch:hana": "cds watch --profile hana",
 		"watch:sqlite": "cds watch --profile sqlite",
-		"watch:postgres": "cds watch --profile pg",
+		"watch:pg": "cds watch --profile pg",
 		"deploy:hana": "cds deploy --to hana",
-		"deploy:postgres": "CDS_ENV=pg cds build --production && cds deploy --profile pg",
-		"start:pg": "docker compose -f pg-stack.yml up -d && npm run deploy:postgres",
+		"deploy:pg": "CDS_ENV=pg cds build --production && cds deploy --profile pg",
+		"start:pg": "docker compose -f pg-stack.yml up -d && npm run deploy:pg",
 		"test:opa": "ui5-test-runner"
 	},
 	"cds": {
