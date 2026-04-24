@@ -821,14 +821,14 @@ describe('CDS Features', () => {
 	it.skip('tracks changes correctly for bulk insert with JSON_TABLE inserts', async () => {
 		const { DataSets } = cds.entities('sap.dh');
 		// Arrange
-		const timeAtStart = Date.now()
-		const largeDataSetCount = 16000
-		const dataSets = []
-		const dataSetIds = []
-		const dataRequestID = cds.utils.uuid()
+		const timeAtStart = Date.now();
+		const largeDataSetCount = 16000;
+		const dataSets = [];
+		const dataSetIds = [];
+		const dataRequestID = cds.utils.uuid();
 
 		for (let i = 0; i < largeDataSetCount; i++) {
-			const id = cds.utils.uuid()
+			const id = cds.utils.uuid();
 			dataSets.push({
 				ID: id,
 				dataRequest_ID: dataRequestID,
@@ -837,26 +837,26 @@ describe('CDS Features', () => {
 				modifiedAt: '2024-01-01T00:00:00.000Z',
 				modifiedBy: 'test',
 				tenant_ID: 'TestTenant',
-				status_ID: 'WAITING',
-			})
-			dataSetIds.push(id)
+				status_ID: 'WAITING'
+			});
+			dataSetIds.push(id);
 		}
 
 		// Single unbatched INSERT — same as original ng test
-		await INSERT.into(DataSets).entries(dataSets)
+		await INSERT.into(DataSets).entries(dataSets);
 
 		// Act — batched UPDATE simulating updateStatusesGrouped
-		const newStatus = 'DELIVERED'
-		await UPDATE(DataSets).set({ status_ID: newStatus }).where({ ID: dataSetIds })
+		const newStatus = 'DELIVERED';
+		await UPDATE(DataSets).set({ status_ID: newStatus }).where({ ID: dataSetIds });
 
 		// Assert
-		const updatedDataSets = await SELECT.from(DataSets).where({ ID: dataSetIds })
+		const updatedDataSets = await SELECT.from(DataSets).where({ ID: dataSetIds });
 
-		expect(updatedDataSets).toHaveLength(largeDataSetCount)
-		expect(updatedDataSets.every(ds => ds.status_ID === 'DELIVERED')).toBeTruthy()
+		expect(updatedDataSets).toHaveLength(largeDataSetCount);
+		expect(updatedDataSets.every((ds) => ds.status_ID === 'DELIVERED')).toBeTruthy();
 
-		const timeAtEnd = Date.now()
-		const durationInSeconds = (timeAtEnd - timeAtStart) / 1000
-		console.log(`Updated ${largeDataSetCount} datasets in ${durationInSeconds} seconds`)
-	})
+		const timeAtEnd = Date.now();
+		const durationInSeconds = (timeAtEnd - timeAtStart) / 1000;
+		// console.log(`Updated ${largeDataSetCount} datasets in ${durationInSeconds} seconds`);
+	});
 });
