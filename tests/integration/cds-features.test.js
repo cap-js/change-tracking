@@ -818,45 +818,45 @@ describe('CDS Features', () => {
 		});
 	});
 
-	it.skip('tracks changes correctly for bulk insert with JSON_TABLE inserts', async () => {
-		const { DataSets } = cds.entities('sap.dh');
+	it.skip('change tracking scales for large batch INSERT and UPDATE operations', async () => {
+		const { WorkItems } = cds.entities('sap.change_tracking.batch');
 		// Arrange
 		const timeAtStart = Date.now();
-		const largeDataSetCount = 16000;
-		const dataSets = [];
-		const dataSetIds = [];
-		const dataRequestID = cds.utils.uuid();
+		const largeWorkItemCount = 16000;
+		const workItems = [];
+		const workItemIds = [];
+		const taskID = cds.utils.uuid();
 
-		for (let i = 0; i < largeDataSetCount; i++) {
+		for (let i = 0; i < largeWorkItemCount; i++) {
 			const id = cds.utils.uuid();
-			dataSets.push({
+			workItems.push({
 				ID: id,
-				dataRequest_ID: dataRequestID,
+				task_ID: taskID,
 				createdAt: '2024-01-01T00:00:00.000Z',
 				createdBy: 'test',
 				modifiedAt: '2024-01-01T00:00:00.000Z',
 				modifiedBy: 'test',
-				tenant_ID: 'TestTenant',
+				assignee_ID: 'TestAssignee',
 				status_ID: 'WAITING'
 			});
-			dataSetIds.push(id);
+			workItemIds.push(id);
 		}
 
-		// Single unbatched INSERT — same as original ng test
-		await INSERT.into(DataSets).entries(dataSets);
+		// Single unbatched INSERT
+		await INSERT.into(WorkItems).entries(workItems);
 
-		// Act — batched UPDATE simulating updateStatusesGrouped
+		// Act — batched UPDATE
 		const newStatus = 'DELIVERED';
-		await UPDATE(DataSets).set({ status_ID: newStatus }).where({ ID: dataSetIds });
+		await UPDATE(WorkItems).set({ status_ID: newStatus }).where({ ID: workItemIds });
 
 		// Assert
-		const updatedDataSets = await SELECT.from(DataSets).where({ ID: dataSetIds });
+		const updatedWorkItems = await SELECT.from(WorkItems).where({ ID: workItemIds });
 
-		expect(updatedDataSets).toHaveLength(largeDataSetCount);
-		expect(updatedDataSets.every((ds) => ds.status_ID === 'DELIVERED')).toBeTruthy();
+		expect(updatedWorkItems).toHaveLength(largeWorkItemCount);
+		expect(updatedWorkItems.every((wi) => wi.status_ID === 'DELIVERED')).toBeTruthy();
 
 		const timeAtEnd = Date.now();
 		const durationInSeconds = (timeAtEnd - timeAtStart) / 1000;
-		// console.log(`Updated ${largeDataSetCount} datasets in ${durationInSeconds} seconds`);
+		// console.log(`Updated ${largeWorkItemCount} work items in ${durationInSeconds} seconds`);
 	});
 });

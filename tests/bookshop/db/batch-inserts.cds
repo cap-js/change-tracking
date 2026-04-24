@@ -3,54 +3,54 @@ using {
   managed,
 } from '@sap/cds/common';
 
-namespace sap.dh;
+namespace sap.change_tracking.batch;
 
-entity UseCases : cuid, managed {
+entity Projects : cuid, managed {
   name             : String(100)  @mandatory;
   description      : String(500)  @mandatory;
   type             : String(100);
   closed           : Boolean default false;
   owner_ID         : String(100)  @readonly;
-  dataRequests     : Composition of many DataRequests
-                       on dataRequests.useCase = $self;
+  tasks            : Composition of many Tasks
+                       on tasks.project = $self;
 }
 
-entity DataRequests : cuid, managed {
-  useCase_ID       : UUID         @mandatory;
+entity Tasks : cuid, managed {
+  project_ID       : UUID         @mandatory;
   type_ID          : String       @mandatory;
-  govStatus_ID     : String(100) default 'IN_PROCESS';
-  useCase          : Association to one UseCases
-                       on useCase.ID = useCase_ID;
-  dataSets         : Composition of many DataSets
-                       on dataSets.dataRequest.ID = $self.ID;
+  approvalStatus_ID : String(100) default 'IN_PROCESS';
+  project          : Association to one Projects
+                       on project.ID = project_ID;
+  workItems        : Composition of many WorkItems
+                       on workItems.task.ID = $self.ID;
 }
 
-@assert.unique: {DataSets: [
-  tenant_ID,
-  definitions_ID
+@assert.unique: {WorkItems: [
+  assignee_ID,
+  category_ID
 ]}
-entity DataSets : cuid, managed {
-  dataRequest                 : Association to one DataRequests       @changelog: [dataRequest.ID];
-  tenant_ID                   : UUID                                 @mandatory  @changelog;
-  definitions_ID              : UUID                                 @changelog;
-  extractions                 : Composition of many DataSetExtractions
-                                  on extractions.dataSet = $self     @changelog: [extractions.ID];
-  lastExtraction              : Composition of one DataSetExtractions @changelog: [lastExtraction.ID];
-  lastSuccessfulExtraction    : Composition of one DataSetExtractions @changelog: [lastSuccessfulExtraction.ID];
-  prefix                      : String default ''                    @changelog;
-  status_ID                   : String(100) default 'NEW'            @changelog;
-  autoRetryTotalCount         : Integer default 0;
-  autoRetryCurrentPolicyCount : Integer default 0;
-  lastAutoRetryPolicy_ID      : UUID;
-  isAutoRetryActive           : Boolean default false;
+entity WorkItems : cuid, managed {
+  task                        : Association to one Tasks               @changelog: [task.ID];
+  assignee_ID                 : UUID                                   @mandatory  @changelog;
+  category_ID                 : UUID                                   @changelog;
+  logs                        : Composition of many WorkItemLogs
+                                  on logs.workItem = $self             @changelog: [logs.ID];
+  lastLog                     : Composition of one WorkItemLogs        @changelog: [lastLog.ID];
+  lastSuccessfulLog           : Composition of one WorkItemLogs        @changelog: [lastSuccessfulLog.ID];
+  prefix                      : String default ''                      @changelog;
+  status_ID                   : String(100) default 'NEW'              @changelog;
+  retryTotalCount             : Integer default 0;
+  retryCurrentPolicyCount     : Integer default 0;
+  lastRetryPolicy_ID          : UUID;
+  isRetryActive               : Boolean default false;
 }
 
-entity DataSetExtractions : cuid, managed {
-  dataSet_ID          : UUID                                         @mandatory  @changelog;
-  extractionTime      : Timestamp                                    @changelog;
-  folderName          : String                                       @changelog;
-  dataSet             : Association to DataSets
-                          on dataSet.ID = dataSet_ID;
-  status_ID           : String(100)                                  @changelog;
-  extractionReference : String                                       @changelog;
+entity WorkItemLogs : cuid, managed {
+  workItem_ID         : UUID                                           @mandatory  @changelog;
+  executionTime       : Timestamp                                      @changelog;
+  folderName          : String                                         @changelog;
+  workItem            : Association to WorkItems
+                          on workItem.ID = workItem_ID;
+  status_ID           : String(100)                                    @changelog;
+  logReference        : String                                         @changelog;
 }
