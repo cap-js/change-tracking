@@ -820,8 +820,7 @@ describe('CDS Features', () => {
 
 	it.skip('change tracking scales for large batch INSERT and UPDATE operations', async () => {
 		const { WorkItems } = cds.entities('sap.change_tracking.batch');
-		// Arrange
-		const timeAtStart = Date.now();
+
 		const largeWorkItemCount = 16000;
 		const workItems = [];
 		const workItemIds = [];
@@ -854,9 +853,5 @@ describe('CDS Features', () => {
 
 		expect(updatedWorkItems).toHaveLength(largeWorkItemCount);
 		expect(updatedWorkItems.every((wi) => wi.status_ID === 'DELIVERED')).toBeTruthy();
-
-		const timeAtEnd = Date.now();
-		const durationInSeconds = (timeAtEnd - timeAtStart) / 1000;
-		// console.log(`Updated ${largeWorkItemCount} work items in ${durationInSeconds} seconds`);
 	});
 });
