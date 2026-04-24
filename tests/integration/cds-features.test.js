@@ -818,7 +818,7 @@ describe('CDS Features', () => {
 		});
 	});
 
-	it.skip('statement-level trigger on SAP_BAI_CDH_DATASETS fails for CAP-generated JSON_TABLE inserts, but works for normal relational inserts.', async () => {
+	it.skip('tracks changes correctly for bulk insert with JSON_TABLE inserts', async () => {
 		const { DataSets } = cds.entities('sap.dh');
 		// Arrange
 		const timeAtStart = Date.now()
