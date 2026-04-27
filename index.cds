@@ -170,6 +170,12 @@ entity i18nKeys {
       text   : String(5000);
 }
 
+// Dummy table necessary for HANA triggers because DUMMY cannot be used in HDI
+@cds.persistence.skip
+entity CHANGE_TRACKING_DUMMY {
+  key X : String(5);
+}
+
 entity Changes : cuid {
   parent                : Association to one Changes;
   children              : Composition of many Changes

@@ -1,5 +1,7 @@
 using from './change-logs';
 using from './joins-and-unions';
+using from './batch-inserts';
+
 
 namespace sap.change_tracking;
 

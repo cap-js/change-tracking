@@ -817,4 +817,41 @@ describe('CDS Features', () => {
 			expect(res).toBeTruthy();
 		});
 	});
+
+	it.skip('change tracking scales for large batch INSERT and UPDATE operations', async () => {
+		const { WorkItems } = cds.entities('sap.change_tracking.batch');
+
+		const largeWorkItemCount = 16000;
+		const workItems = [];
+		const workItemIds = [];
+		const taskID = cds.utils.uuid();
+
+		for (let i = 0; i < largeWorkItemCount; i++) {
+			const id = cds.utils.uuid();
+			workItems.push({
+				ID: id,
+				task_ID: taskID,
+				createdAt: '2024-01-01T00:00:00.000Z',
+				createdBy: 'test',
+				modifiedAt: '2024-01-01T00:00:00.000Z',
+				modifiedBy: 'test',
+				assignee_ID: 'TestAssignee',
+				status_ID: 'WAITING'
+			});
+			workItemIds.push(id);
+		}
+
+		// Single unbatched INSERT
+		await INSERT.into(WorkItems).entries(workItems);
+
+		// Act — batched UPDATE
+		const newStatus = 'DELIVERED';
+		await UPDATE(WorkItems).set({ status_ID: newStatus }).where({ ID: workItemIds });
+
+		// Assert
+		const updatedWorkItems = await SELECT.from(WorkItems).where({ ID: workItemIds });
+
+		expect(updatedWorkItems).toHaveLength(largeWorkItemCount);
+		expect(updatedWorkItems.every((wi) => wi.status_ID === 'DELIVERED')).toBeTruthy();
+	});
 });
