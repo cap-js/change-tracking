@@ -97,7 +97,7 @@ describe('CDS Features', () => {
 				timezone: 'Europe/Amsterdam'
 			};
 			await INSERT.into(CustomTypeKeyTable).entries(customTypeData);
-			
+
 			let changes = await SELECT.from({ ref: [{ id: srvCustomTypeKeyTable.name, where: [{ ref: ['abc_ID'] }, '=', { val: customTypeData.abc_ID }] }, 'changes'] }).where({
 				entity: 'sap.change_tracking.CustomTypeKeyTable',
 				entityKey: customTypeData.abc_ID,
