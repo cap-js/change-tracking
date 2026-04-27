@@ -70,12 +70,14 @@ jobs:
           # Add @sap/cds as direct devDependency to anchor the version
           npm pkg set "devDependencies.@sap/cds=^8.9.8"
           npm pkg set "devDependencies.@cap-js/sqlite=^1.0.0"
+          npm pkg set "devDependencies.@cap-js/cds-test=^0.4.1"
           # Root overrides enforce versions across the entire workspace
           npm pkg set "overrides.@cap-js/sqlite=^1.0.0"
           npm pkg set "overrides.@cap-js/hana=^1.0.0"
           npm pkg set "overrides.@cap-js/db-service=^1.0.0"
           npm pkg set "overrides.@cap-js/postgres=^1.0.0"
           npm pkg set "overrides.@sap/cds-mtxs=^2.0.0"
+          npm pkg set "overrides.@cap-js/cds-test=^0.4.1"
           npm pkg set "devDependencies.@cap-js/cds-types=^0.11"
           # Update workspace package dependencies
           cd tests/bookshop
