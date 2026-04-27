@@ -87,6 +87,24 @@ describe('CDS Features', () => {
 			let change = changes[0];
 			expect(change.valueTimeZone).toEqual('Europe/Amsterdam');
 		});
+
+		it('timezone field has timezone for dynamic annotation value and entity has custom association type as key', async () => {
+			const { CustomTypeKeyTable } = cds.entities('sap.change_tracking');
+			const { CustomTypeKeyTable: srvCustomTypeKeyTable } = cds.entities('VariantTesting');
+			const customTypeData = {
+				abc_ID: cds.utils.uuid(),
+				name: 'Test Name',
+				timezone: 'Europe/Amsterdam'
+			};
+			await INSERT.into(CustomTypeKeyTable).entries(customTypeData);
+			
+			let changes = await SELECT.from({ ref: [{ id: srvCustomTypeKeyTable.name, where: [{ ref: ['abc_ID'] }, '=', { val: customTypeData.abc_ID }] }, 'changes'] }).where({
+				entity: 'sap.change_tracking.CustomTypeKeyTable',
+				entityKey: customTypeData.abc_ID,
+				attribute: 'timezone'
+			});
+			expect(changes.length).toEqual(1);
+		});
 	});
 
 	describe('tracking dates', () => {

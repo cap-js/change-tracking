@@ -32,6 +32,8 @@ service VariantTesting {
   entity ExtendedEvents as select from my.ExtendedEvents;
   entity DataExtractionSummaryView as select from my.DataExtractionSummaryView;
 
+  entity CustomTypeKeyTable as projection on my.CustomTypeKeyTable;
+
 }
 
 // Test: changes facet nested in CollectionFacet targeting changes/@UI.LineItem — plugin must not add a duplicate
