@@ -31,6 +31,9 @@ entity aspect @(UI.Facets: [{
 //   This would extract 'en' from 'en_GB', 'de' from 'de_DE', etc. (indexof was introduced in CDS 9)
 @readonly
 @cds.autoexpose
+@Capabilities.ReadRestrictions : {
+  Readable: false,
+}
 view ChangeView as
   select from Changes as change
   left outer join i18nKeys as attributeI18n
