@@ -2,8 +2,8 @@ const cds = require('@sap/cds');
 const path = require('path');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { axios, POST, PATCH, DELETE, GET } = cds.test(bookshop);
-axios.defaults.auth = { username: 'alice' };
+const { defaults, POST, PATCH, DELETE, GET, expect } = cds.test(bookshop);
+defaults.auth = { username: 'alice' };
 
 describe('CDS Features', () => {
 	describe('@Common.Timezone handling', () => {

@@ -3,8 +3,8 @@ const path = require('path');
 const { regenerateTriggers } = require('../test-utils.js');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, GET, axios } = cds.test(bookshop);
-axios.defaults.auth = { username: 'alice', password: 'admin' };
+const { POST, PATCH, DELETE, GET, defaults, expect } = cds.test(bookshop);
+defaults.auth = { username: 'alice', password: 'admin' };
 
 const isHana = cds.env.requires?.db?.kind === 'hana';
 
