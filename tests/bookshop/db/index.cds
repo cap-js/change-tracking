@@ -147,3 +147,11 @@ entity NonExistentTable {
   key ID : UUID;
       name : String;
 }
+
+entity CustomTypeKeyTable {
+  key abc : CustomType;
+      name : String;
+      timezone : String default 'Asia/Riyadh' @Common.IsTimezone @changelog;
+}
+
+type CustomType : Association to one TrackingComposition;

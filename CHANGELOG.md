@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 - ChangeView in services is no longer directly accessible. Now it can only be accessed via the navigation paths
+- Deployment error when an entity key uses a custom type defined as an association (e.g., `type MyType : Association to SomeEntity`) due to incorrect entityKey expression in the changes association mapping
+- Runtime error when requesting `ChangeView` due to incorrect `where` clause for entities with association-typed keys in timezone column subselects
 
 ## Version 2.0.0-beta.10 - 27.04.26
 
