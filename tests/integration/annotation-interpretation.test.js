@@ -97,12 +97,10 @@ describe('@changelog annotation interpretation', () => {
 			quantity: 14
 		});
 
-		let changes = await adminService.run(
-			SELECT.from(ChangeView).where({
-				modification: 'update',
-				entityKey: orderItemID
-			})
-		);
+		let changes = await SELECT.from(ChangeView).where({
+			modification: 'update',
+			entityKey: orderItemID
+		});
 		expect(changes.length).toEqual(1);
 		const change = changes[0];
 		const IDsegments = change.objectID.split(', ');
@@ -132,12 +130,10 @@ describe('@changelog annotation interpretation', () => {
 			placeOfBirth: 'new placeOfBirth'
 		});
 
-		const changes = await adminService.run(
-			SELECT.from(ChangeView).where({
-				modification: 'update',
-				entityKey: authorID
-			})
-		);
+		const changes = await SELECT.from(ChangeView).where({
+			modification: 'update',
+			entityKey: authorID
+		});
 		expect(changes.length).toEqual(1);
 		expect(changes[0].objectID).toEqual('new placeOfBirth, Emily, Brontë, Haworth, Yorkshire, 1848-12-19, 1818-07-30');
 	});
@@ -161,12 +157,10 @@ describe('@changelog annotation interpretation', () => {
 			placeOfBirth: 'updated placeOfBirth'
 		});
 
-		const changes = await adminService.run(
-			SELECT.from(ChangeView).where({
-				modification: 'update',
-				entityKey: authorID
-			})
-		);
+		const changes = await SELECT.from(ChangeView).where({
+			modification: 'update',
+			entityKey: authorID
+		});
 		expect(changes.length).toEqual(1);
 		expect(changes[0].objectID).toEqual('updated placeOfBirth, Emily, Brontë, <empty>, <empty>, 1818-07-30');
 	});
@@ -391,13 +385,11 @@ describe('@changelog annotation interpretation', () => {
 
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
-			const lifecycleStatusChanges = await adminService.run(
-				SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.BookStores',
-					attribute: 'lifecycleStatus',
-					entityKey: bookStoreID
-				})
-			);
+			const lifecycleStatusChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.BookStores',
+				attribute: 'lifecycleStatus',
+				entityKey: bookStoreID
+			});
 			expect(lifecycleStatusChanges.length).toEqual(1);
 
 			const lifecycleStatusChange = lifecycleStatusChanges[0];
@@ -415,14 +407,12 @@ describe('@changelog annotation interpretation', () => {
 
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
-			const lifecycleStatusUpdateChanges = await adminService.run(
-				SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.BookStores',
-					attribute: 'lifecycleStatus',
-					modification: 'update',
-					entityKey: bookStoreID
-				})
-			);
+			const lifecycleStatusUpdateChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.BookStores',
+				attribute: 'lifecycleStatus',
+				modification: 'update',
+				entityKey: bookStoreID
+			});
 			expect(lifecycleStatusUpdateChanges.length).toEqual(1);
 
 			const lifecycleStatusUpdateChange = lifecycleStatusUpdateChanges[0];
@@ -481,14 +471,12 @@ describe('@changelog annotation interpretation', () => {
 
 			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
-			const bookTypeUpdateChanges = await adminService.run(
-				SELECT.from(ChangeView).where({
-					entity: 'sap.capire.bookshop.Books',
-					entityKey: bookID,
-					attribute: 'bookType',
-					modification: 'update'
-				})
-			);
+			const bookTypeUpdateChanges = await SELECT.from(ChangeView).where({
+				entity: 'sap.capire.bookshop.Books',
+				entityKey: bookID,
+				attribute: 'bookType',
+				modification: 'update'
+			});
 			expect(bookTypeUpdateChanges.length).toEqual(1);
 
 			const bookTypeUpdateChange = bookTypeUpdateChanges[0];
