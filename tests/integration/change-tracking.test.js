@@ -2077,7 +2077,7 @@ describe('change log generation', () => {
 	});
 
 	it('tracks zero values and false booleans correctly during create and delete', async () => {
-		const testingSrv = await cds.connect.to('VariantTesting');
+		const { ChangeView } = (await cds.connect.to('VariantTesting')).entities;
 		const orderID = cds.utils.uuid();
 
 		await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
@@ -2086,12 +2086,10 @@ describe('change log generation', () => {
 			number: 0
 		});
 
-		let changes = await testingSrv.run(
-			SELECT.from(testingSrv.entities.ChangeView).where({
-				entityKey: orderID,
-				modification: 'create'
-			})
-		);
+		let changes = await SELECT.from(ChangeView).where({
+			entityKey: orderID,
+			modification: 'create'
+		});
 
 		expect(changes.length).toEqual(2);
 
@@ -2113,12 +2111,10 @@ describe('change log generation', () => {
 
 		await DELETE(`/odata/v4/variant-testing/DifferentFieldTypes(ID=${orderID})`);
 
-		changes = await testingSrv.run(
-			SELECT.from(testingSrv.entities.ChangeView).where({
-				entityKey: orderID,
-				modification: 'delete'
-			})
-		);
+		changes = await SELECT.from(ChangeView).where({
+			entityKey: orderID,
+			modification: 'delete'
+		});
 
 		expect(changes.length).toEqual(2);
 
@@ -2579,5 +2575,27 @@ describe('Expression-based @changelog annotations', () => {
 			expect(compositionChange).toBeTruthy();
 			expect(compositionChange.objectID).toEqual('Explicit items from Test Parent');
 		});
+	});
+});
+
+describe('ChangeView access restrictions', () => {
+	it('rejects direct read of ChangeView from service root with 405', async () => {
+		try {
+			await GET(`/odata/v4/admin/ChangeView`);
+			expect('request').toBe('should have failed');
+		} catch (error) {
+			expect(error.response.status).toBe(405);
+		}
+	});
+
+	it('allows reading changes via entity navigation', async () => {
+		const { data: bookStore } = await POST(`/odata/v4/admin/BookStores`, {
+			name: 'Access Test Store'
+		});
+		await POST(`/odata/v4/admin/BookStores(ID=${bookStore.ID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+		const response = await GET(`/odata/v4/admin/BookStores(ID=${bookStore.ID},IsActiveEntity=true)/changes`);
+		expect(response.status).toBe(200);
+		expect(response.data.value.length).toBeGreaterThan(0);
 	});
 });

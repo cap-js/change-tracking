@@ -488,7 +488,7 @@ describe('CDS Features', () => {
 
 	describe('Large string truncation', () => {
 		it('truncates strings larger than 5000 characters with ellipsis', async () => {
-			const testingSrv = await cds.connect.to('VariantTesting');
+			const { ChangeView } = (await cds.connect.to('VariantTesting')).entities;
 			const recordID = cds.utils.uuid();
 
 			// Create a string with exactly 5001 characters (should be truncated)
@@ -499,13 +499,11 @@ describe('CDS Features', () => {
 				largeText: largeString
 			});
 
-			const changes = await testingSrv.run(
-				SELECT.from(testingSrv.entities.ChangeView).where({
-					entityKey: recordID,
-					attribute: 'largeText',
-					modification: 'create'
-				})
-			);
+			const changes = await SELECT.from(ChangeView).where({
+				entityKey: recordID,
+				attribute: 'largeText',
+				modification: 'create'
+			});
 
 			expect(changes.length).toEqual(1);
 			expect(changes[0].valueChangedTo.length).toEqual(5000);
@@ -513,7 +511,7 @@ describe('CDS Features', () => {
 		});
 
 		it('does not truncate strings with exactly 5000 characters', async () => {
-			const testingSrv = await cds.connect.to('VariantTesting');
+			const { ChangeView } = (await cds.connect.to('VariantTesting')).entities;
 			const recordID = cds.utils.uuid();
 
 			// Create a string with exactly 5000 characters (should not be truncated)
@@ -524,13 +522,11 @@ describe('CDS Features', () => {
 				largeText: exactString
 			});
 
-			const changes = await testingSrv.run(
-				SELECT.from(testingSrv.entities.ChangeView).where({
-					entityKey: recordID,
-					attribute: 'largeText',
-					modification: 'create'
-				})
-			);
+			const changes = await SELECT.from(ChangeView).where({
+				entityKey: recordID,
+				attribute: 'largeText',
+				modification: 'create'
+			});
 
 			expect(changes.length).toEqual(1);
 			expect(changes[0].valueChangedTo.length).toEqual(5000);
@@ -538,7 +534,7 @@ describe('CDS Features', () => {
 		});
 
 		it('truncates both old and new values during update when they exceed 5000 characters', async () => {
-			const testingSrv = await cds.connect.to('VariantTesting');
+			const { ChangeView } = (await cds.connect.to('VariantTesting')).entities;
 			const recordID = cds.utils.uuid();
 
 			const oldLargeString = 'a'.repeat(6000);
@@ -553,13 +549,11 @@ describe('CDS Features', () => {
 				largeText: newLargeString
 			});
 
-			const changes = await testingSrv.run(
-				SELECT.from(testingSrv.entities.ChangeView).where({
-					entityKey: recordID,
-					attribute: 'largeText',
-					modification: 'update'
-				})
-			);
+			const changes = await SELECT.from(ChangeView).where({
+				entityKey: recordID,
+				attribute: 'largeText',
+				modification: 'update'
+			});
 
 			expect(changes.length).toEqual(1);
 			expect(changes[0].valueChangedFrom.length).toEqual(5000);
@@ -569,7 +563,7 @@ describe('CDS Features', () => {
 		});
 
 		it('truncates string value during delete when it exceeds 5000 characters', async () => {
-			const testingSrv = await cds.connect.to('VariantTesting');
+			const { ChangeView } = (await cds.connect.to('VariantTesting')).entities;
 			const recordID = cds.utils.uuid();
 
 			const largeString = 'z'.repeat(8000);
@@ -581,13 +575,11 @@ describe('CDS Features', () => {
 
 			await DELETE(`/odata/v4/variant-testing/DifferentFieldTypes(ID=${recordID})`);
 
-			const changes = await testingSrv.run(
-				SELECT.from(testingSrv.entities.ChangeView).where({
-					entityKey: recordID,
-					attribute: 'largeText',
-					modification: 'delete'
-				})
-			);
+			const changes = await SELECT.from(ChangeView).where({
+				entityKey: recordID,
+				attribute: 'largeText',
+				modification: 'delete'
+			});
 
 			expect(changes.length).toEqual(1);
 			expect(changes[0].valueChangedFrom.length).toEqual(5000);
