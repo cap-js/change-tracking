@@ -120,6 +120,7 @@ spec:
           expectedValue: "3000"
           metric: responseTime
           operator: <=
+    # TODO: Re-enable once the hierarchy SQL query is optimised
     # - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/changes?$apply=orderby(createdAt%20desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/Books({bookID})/changes,HierarchyQualifier='ChangeHierarchy',NodeProperty='ID',Levels=1)&$select=DrillState,ID,attributeLabel,createdAt,createdBy,entityLabel,modificationLabel,objectID,valueChangedFromLabel,valueChangedToLabel&$count=true&$skip=0&$top=210
     #   appName:
     #     - perf-bookshop-srv
