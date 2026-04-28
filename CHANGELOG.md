@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Version 2.0.0-beta.11 - 28.04.26
 
+### Added
+- Database indexes for `sap.changelog.Changes` table on `parent_ID` for navigating the parent association hierarchy (SQLite, HANA, Postgres)
+
 ### Fixed
 - ChangeView in services is no longer directly accessible. Now it can only be accessed via the navigation paths
 - Deployment error when an entity key uses a custom type defined as an association (e.g., `type MyType : Association to SomeEntity`) due to incorrect entityKey expression in the changes association mapping
