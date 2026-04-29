@@ -832,9 +832,7 @@ describe('CDS Features', () => {
 			} = await GET(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})/changes`, {
 				headers: { 'Accept-Language': 'en' }
 			});
-			const statusNavChange = changes.find(
-				(change) => change.attribute === 'status4Nav' && change.modification === 'update' && change.entityKey === incidentID
-			);
+			const statusNavChange = changes.find((change) => change.attribute === 'status4Nav' && change.modification === 'update' && change.entityKey === incidentID);
 			expect(statusNavChange).toMatchObject({
 				valueChangedFrom: 'N',
 				valueChangedFromLabel: 'New',
