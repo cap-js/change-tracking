@@ -257,7 +257,7 @@ annotate BookStores with @changelog: [name] {
 ```
 
 > [!NOTE]
-> When multiple children are created or deleted in a single transaction, only one composition entry is created per parent.
+> When multiple children are created or deleted in a single transaction, only one composition entry is created per parent. The `modification` type on composition parent entries is always `'update'`, regardless of whether children were created, updated, or deleted. This is because a single transaction may involve multiple types of operations on different children, making it impossible to assign a single accurate modification type. The actual modification type is reflected on the child entries themselves.
 
 Results in the following change logs:
 ![Change Tracking Composition of many children](./_assets/changes-children.png)

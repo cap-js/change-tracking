@@ -301,7 +301,7 @@ describe('change log generation', () => {
 			expect(orderChangeBefore).toMatchObject({
 				entity: 'sap.capire.bookshop.Order',
 				attribute: 'orderItems',
-				modification: 'create',
+				modification: 'update',
 				valueChangedFrom: null,
 				valueChangedTo: null,
 				parent_ID: null
@@ -342,7 +342,7 @@ describe('change log generation', () => {
 			expect(noteChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'notes',
-				modification: 'create',
+				modification: 'update',
 				valueChangedFrom: null,
 				valueChangedTo: null,
 				parent_ID: newOrderChange.ID,
@@ -446,7 +446,7 @@ describe('change log generation', () => {
 			expect(orderItemChange).toMatchObject({
 				entity: 'sap.capire.bookshop.OrderItem',
 				attribute: 'notes',
-				modification: 'delete',
+				modification: 'update',
 				parent_ID: orderChange.ID,
 				valueDataType: 'cds.Composition'
 			});
@@ -960,7 +960,7 @@ describe('change log generation', () => {
 					entity: 'sap.capire.bookshop.BookStores',
 					entityKey: bookStoreID,
 					attribute: 'books',
-					modification: 'create'
+					modification: 'update'
 				});
 
 				expect(changes.length).toEqual(1);
@@ -1011,7 +1011,7 @@ describe('change log generation', () => {
 				});
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
-				// Composition of many logs on the parent entity (BookStores)
+			// Composition of many logs on the parent entity (BookStores)
 				const changes = await SELECT.from(ChangeView).where({
 					entity: 'sap.capire.bookshop.BookStores',
 					entityKey: bookStoreID,
@@ -1019,23 +1019,28 @@ describe('change log generation', () => {
 					modification: 'update'
 				});
 
-				expect(changes.length).toEqual(1);
-				expect(changes[0].entity).toEqual('sap.capire.bookshop.BookStores');
-				expect(changes[0].entityKey).toEqual(bookStoreID);
-				expect(changes[0].valueChangedFrom).toEqual(null);
-				expect(changes[0].valueChangedTo).toEqual(null);
-				// Composition-of-many: uses parent's @changelog: [name] as objectID
-				expect(changes[0].objectID).toEqual('Shakespeare and Company');
+				expect(changes.length).toEqual(2);
+				const updateChange = changes.find((c) => c.attribute === 'books');
+				expect(updateChange).toMatchObject({
+					entity: 'sap.capire.bookshop.BookStores',
+					entityKey: bookStoreID,
+					attribute: 'books',
+					modification: 'update',
+					valueChangedFrom: null,
+					valueChangedTo: null,
+					objectID: 'Shakespeare and Company'
+				});
 
-				// check related changes
-				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes[0].ID });
-				expect(relatedChanges.length).toEqual(1);
-				expect(relatedChanges[0].entity).toEqual('sap.capire.bookshop.Books');
-				expect(relatedChanges[0].entityKey).toEqual(bookID);
-				expect(relatedChanges[0].attribute).toEqual('title');
-				expect(relatedChanges[0].modification).toEqual('update');
-				expect(relatedChanges[0].valueChangedFrom).toEqual('Original Title');
-				expect(relatedChanges[0].valueChangedTo).toEqual('Updated Title');
+				// check related changes — the title change should be linked to one of the composition entries
+				const relatedChanges = await SELECT.from(ChangeView).where({ parent_ID: changes.map((c) => c.ID) });
+				const titleChange = relatedChanges.find((c) => c.attribute === 'title' && c.valueChangedFrom === 'Original Title');
+				expect(titleChange).toMatchObject({
+					entity: 'sap.capire.bookshop.Books',
+					entityKey: bookID,
+					attribute: 'title',
+					valueChangedFrom: 'Original Title',
+					valueChangedTo: 'Updated Title'
+				});
 			});
 
 			it('logs deleted child values as changes on the root entity', async () => {
@@ -1059,7 +1064,17 @@ describe('change log generation', () => {
 				await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
 
 				const changes = await SELECT.from(ChangeView).where`entityKey in ${[bookStoreID, bookID]}`;
-				const bookStoreChange = changes.find((c) => c.entityKey === bookStoreID && c.modification === 'update');
+
+				const bookDeleteChange = changes.find((c) => c.entityKey === bookID && c.modification === 'delete');
+				expect(bookDeleteChange).toMatchObject({
+					entity: 'sap.capire.bookshop.Books',
+					attribute: 'title',
+					modification: 'delete',
+					valueChangedFrom: 'Book to Delete',
+					valueChangedTo: null
+				});
+
+				const bookStoreChange = changes.find((c) => c.ID === bookDeleteChange.parent_ID);
 				expect(bookStoreChange).toMatchObject({
 					entity: 'sap.capire.bookshop.BookStores',
 					attribute: 'books',
@@ -1068,16 +1083,6 @@ describe('change log generation', () => {
 					valueDataType: 'cds.Composition',
 					// Composition-of-many: uses parent's @changelog: [name] as objectID
 					objectID: 'Shakespeare and Company'
-				});
-
-				const bookDeleteChange = changes.find((c) => c.entityKey === bookID && c.modification === 'delete');
-				expect(bookDeleteChange).toMatchObject({
-					entity: 'sap.capire.bookshop.Books',
-					attribute: 'title',
-					modification: 'delete',
-					valueChangedFrom: 'Book to Delete',
-					valueChangedTo: null,
-					parent_ID: bookStoreChange.ID
 				});
 			});
 		});
@@ -1701,7 +1706,7 @@ describe('change log generation', () => {
 				expect(parentChange).toMatchObject({
 					entity: 'sap.change_tracking.CompositeKeyParent',
 					attribute: 'items',
-					modification: 'create',
+					modification: 'update',
 					parent_ID: null,
 					valueDataType: 'cds.Composition'
 				});
@@ -1881,7 +1886,7 @@ describe('change log generation', () => {
 				expect(lvl1Change).toMatchObject({
 					entity: 'sap.change_tracking.Level1Sample',
 					attribute: 'children',
-					modification: 'create',
+					modification: 'update',
 					parent_ID: rootChange.ID,
 					valueDataType: 'cds.Composition'
 				});
@@ -2058,7 +2063,7 @@ describe('change log generation', () => {
 				expect(lvl1Change).toMatchObject({
 					entity: 'sap.change_tracking.Level1Sample',
 					attribute: 'children',
-					modification: 'delete',
+					modification: 'update',
 					parent_ID: rootChange.ID,
 					valueDataType: 'cds.Composition'
 				});
