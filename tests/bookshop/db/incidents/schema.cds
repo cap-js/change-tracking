@@ -141,7 +141,7 @@ entity DynamicLocalizationScenarios : cuid {
   status3 : Association to one VHWithMultiKey @changelog : [status3.name]; //Target has multiple keys -> not possible
 
   status4 : String @changelog : [status4Nav.descr]; //Unmanaged association -> possible;
-  status4Nav: Association to one Status on status4Nav.code = status4;
+  status4Nav: Association to one Status on status4Nav.code = status4 @changelog : [status4Nav.descr];
 }
 
 entity VHWithMultiKey : CodeList {
