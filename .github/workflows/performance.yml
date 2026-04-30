@@ -3,10 +3,10 @@ name: Performance tests
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-    types: [ reopened, synchronize, opened ]
+    branches: [main]
+    types: [reopened, synchronize, opened]
 
 permissions:
   contents: read
@@ -17,13 +17,12 @@ jobs:
     environment: performance
     concurrency:
       group: performance-tests
-    name: Performance tests for ${{ matrix.node-version }} and CAP ${{
-      matrix.cds-version }}
+    name: Performance tests for ${{ matrix.node-version }} and CAP ${{matrix.cds-version }}
     strategy:
       fail-fast: false
       matrix:
-        node-version: [ 22.x ]
-        cds-version: [ latest, 8 ]
+        node-version: [22.x]
+        cds-version: [latest, 8]
     steps:
 
       - name: Harden Runner

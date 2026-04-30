@@ -57,9 +57,6 @@ runs:
           fi
         done
 
-    - uses: actions/checkout@v5
-      with:
-        ref: ${{ github.event.pull_request.head.sha || github.sha }}
     - name: Use Node.js ${{ inputs.NODE_VERSION}}
       uses: actions/setup-node@v6
       with:
