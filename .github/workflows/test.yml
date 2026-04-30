@@ -86,7 +86,7 @@ jobs:
 
   test-hana:
     runs-on: ubuntu-latest
-    environment: ci-hana
+    environment: CI
     name: HANA Integration Tests on Node.js ${{ matrix.node-version }} and CAP ${{ matrix.cds-version }}
     strategy:
       fail-fast: false
