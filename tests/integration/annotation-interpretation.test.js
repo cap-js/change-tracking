@@ -653,7 +653,7 @@ describe('@changelog annotation interpretation', () => {
 			// The objectID should be resolved from the entity-level @changelog expression
 			const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
 			expect(statusChange).toBeDefined();
-			expect(statusChange.objectID).toEqual('Stormy Weathers: Assigned');
+			expect(statusChange.objectID).toEqual('Stormy Weathers: Munich - Entity-level expression test');
 		});
 	});
 });

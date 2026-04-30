@@ -2214,7 +2214,7 @@ describe('Expression-based @changelog annotations', () => {
 		expect(firstNameChange.objectID).toEqual('John Doe');
 	});
 
-	it('uses expression for label when element has @changelog : [(status.code || status.descr)]', async () => {
+	it('uses expression for label when element has @changelog : (status.code || status.descr)', async () => {
 		const {
 			data: { ID }
 		} = await POST(`/odata/v4/localization/ExpressionScenarios`, {
