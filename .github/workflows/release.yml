@@ -8,33 +8,64 @@ permissions:
   id-token: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 22.x]
+        cds-version: [latest]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Run Tests
+        run: |
+          npm install
+          npm run lint
+          npm run test
+      - name: Integration tests
+        uses: ./.github/actions/integration-tests
+        with:
+          CF_API: ${{ secrets.CF_API }}
+          CF_USERNAME: ${{ secrets.CF_USERNAME }}
+          CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
+          CF_ORG: ${{ secrets.CF_ORG }}
+          CF_SPACE: ${{ secrets.CF_SPACE }}
+          NODE_VERSION: ${{ matrix.node-version }}
+          
   publish-npm:
+    needs: test
     runs-on: ubuntu-latest
     environment: npm
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: 24
-        registry-url: https://registry.npmjs.org/
-    - name: run tests
-      run: |
-        npm i -g @sap/cds-dk
-        npm i
-        npm run lint
-        npm run test
-    - name: Get Version
-      id: get-version
-      run: |
-        echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
-    - name: parse changelog
-      id: parse-changelog
-      uses: schwma/parse-changelog-action@v1.0.0
-      with:
-        version: '${{ steps.get-version.outputs.version }}'
-    - name: create a GitHub release
-      uses: ncipollo/release-action@v1.20.0
-      with:
-        tag: 'v${{ steps.get-version.outputs.version }}'
-        body: '${{ steps.parse-changelog.outputs.body }}'
-    - run: npm publish --access public --provenance
+      - name: Harden Runner
+        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+      - run: npm install
+      - name: get-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.2.3
+      - name: Parse changelog
+        id: parse-changelog
+        uses: schwma/parse-changelog-action@69a9f9ab4cf2f2e736108ab41396fc3c55f65e40 # v1.0.0
+        with:
+          version: "${{ steps.package-version.outputs.current-version }}"
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
+        with:
+          tag: "v${{ steps.package-version.outputs.current-version }}"
+          body: "${{ steps.parse-changelog.outputs.body }}"
+      - name: Publish package to npmjs.com
+        run: npm publish --access public --provenance

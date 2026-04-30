@@ -3,10 +3,10 @@ name: Performance tests
 on:
   workflow_dispatch:
   push:
-    branches: [main]
-  pull_request_target:
-    branches: [main]
-    types: [reopened, synchronize, opened]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [ reopened, synchronize, opened ]
 
 permissions:
   contents: read
@@ -17,19 +17,22 @@ jobs:
     environment: performance
     concurrency:
       group: performance-tests
-    name: Performance tests for ${{ matrix.node-version }} and CAP ${{ matrix.cds-version }}
+    name: Performance tests for ${{ matrix.node-version }} and CAP ${{
+      matrix.cds-version }}
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22.x]
-        cds-version: [latest, 8]
+        node-version: [ 22.x ]
+        cds-version: [ latest, 8 ]
     steps:
 
-      - uses: actions/checkout@v5
+      - name: Harden Runner
+        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Use Node.js ${{ matrix.node-version}}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -51,9 +54,17 @@ jobs:
 
       - name: Authenticate with Cloud Foundry
         shell: bash
+        env:
+          CF_API: ${{ secrets.CF_API }}
+          CF_USERNAME: ${{ secrets.CF_USERNAME }}
+          CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
+          CF_ORG: ${{ secrets.CF_ORG }}
+          CF_SPACE: ${{ secrets.CF_SPACE }}
         run: |
           for i in {1..3}; do
-            cf login -a ${{ secrets['CF_API'] }} -u ${{ secrets['CF_USERNAME'] }} -p ${{ secrets['CF_PASSWORD'] }} -o ${{ secrets['CF_ORG'] }} -s ${{ secrets['CF_SPACE'] }} && break
+            cf api "$CF_API" && \
+            cf auth && \
+            cf target -o "$CF_ORG" -s "$CF_SPACE" && break
             echo "cf login failed, retrying ($i/3)..."
             sleep 10
             if [ "$i" -eq 3 ]; then
@@ -96,7 +107,7 @@ jobs:
       - name: Install all dependencies
         shell: bash
         run: npm install
-        
+
       - name: Package change tracking
         shell: bash
         run: cd ./tests/performance/perf-bookshop && npm pack ../../../
@@ -118,9 +129,8 @@ jobs:
         shell: bash
         run: cd ./tests/performance/perf-bookshop && cds up
 
-
       # Install kubectl, add kubeconf, modify test config file, run test
-      - uses: azure/setup-kubectl@v4
+      - uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         id: install
       - name: pull kubeconfig
         shell: bash
@@ -138,7 +148,7 @@ jobs:
       - name: export KUBECONFIG path
         shell: bash
         run: echo "KUBECONFIG=populated_kube.conf" >> $GITHUB_ENV
-      
+
       - name: Set PERF_TEST_RUN_NAME
         shell: bash
         run: echo "PERF_TEST_RUN_NAME=$(echo ${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-${{ matrix.cds-version }} | tr . -)" >> $GITHUB_ENV

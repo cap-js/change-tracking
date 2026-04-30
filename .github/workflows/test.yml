@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-  pull_request_target:
+  pull_request:
     branches: [main]
     types: [reopened, synchronize, opened]
 
@@ -21,11 +21,13 @@ jobs:
         node-version: [20.x, 22.x]
         cds-version: [latest, 8]
     steps:
-      - uses: actions/checkout@v5
+      - name: Harden Runner
+        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
@@ -44,11 +46,13 @@ jobs:
         node-version: [20.x, 22.x]
         cds-version: [latest, 8]
     steps:
-      - uses: actions/checkout@v5
+      - name: Harden Runner
+        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: Set CDS 8 compatible dependencies
@@ -94,9 +98,11 @@ jobs:
         node-version: [20.x, 22.x]
         cds-version: [latest, 8]
     steps:
-      - uses: actions/checkout@v5
+      - name: Harden Runner
+        uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          egress-policy: audit
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Run HANA integration tests
         uses: ./.github/actions/integration-tests
         with:
