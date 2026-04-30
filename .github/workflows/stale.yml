@@ -11,6 +11,10 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - uses: actions/stale@v10
         with:
           close-issue-message: "This issue has been automatically closed due to 2 weeks of inactivity. If you believe this was a mistake, please reopen or comment to continue the discussion."
