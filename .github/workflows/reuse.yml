@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     name: "Metadata Creation Tool"
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - uses: SAP/metadata-creation-tool-for-reuse@main
         with:
           repository_url: "${{ github.server_url }}/${{ github.repository }}"

@@ -21,6 +21,10 @@ jobs:
     if: github.event_name == 'pull_request_target' && github.event.pull_request.base.user.login != 'cap-js'
     environment: pr-approval
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - name: Approval Step
         run: echo "This job has been approved!"
   perf-tests:
@@ -37,6 +41,10 @@ jobs:
         cds-version: [latest, 8]
     steps:
 
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}

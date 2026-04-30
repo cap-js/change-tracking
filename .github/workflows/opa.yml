@@ -19,6 +19,10 @@ jobs:
       matrix:
         cds-version: [latest]
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
       - uses: actions/checkout@v5
       - name: Use Node.js 22.x
         uses: actions/setup-node@v6
