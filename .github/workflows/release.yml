@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
     steps:
-    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
-    - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       with:
         node-version: 24
         registry-url: https://registry.npmjs.org/
