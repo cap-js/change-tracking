@@ -201,3 +201,8 @@ jobs:
 
             sleep 60
           done
+
+      - name: Undeploy application
+        if: ${{ always() }}
+        shell: bash
+        run: cf undeploy perf-bookshop --delete-services -f
