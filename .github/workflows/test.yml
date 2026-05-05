@@ -108,9 +108,6 @@ jobs:
         node-version: [20.x, 22.x]
         cds-version: [latest, 8]
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run HANA integration tests
         uses: cap-js/change-tracking/.github/actions/integration-tests@main
         with:
