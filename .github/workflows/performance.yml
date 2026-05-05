@@ -18,7 +18,7 @@ jobs:
   requires-approval:
     runs-on: ubuntu-latest
     name: Waiting for PR approval as this workflow runs on pull_request_target
-    if: github.event_name == 'pull_request_target' && github.event.pull_request.base.user.login != 'cap-js'
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.owner.login != 'cap-js'
     environment: pr-approval
     steps:
       - name: Approval Step
