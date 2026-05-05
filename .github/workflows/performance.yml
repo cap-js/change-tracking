@@ -205,4 +205,4 @@ jobs:
       - name: Undeploy application
         if: ${{ always() }}
         shell: bash
-        run: cf undeploy perf-bookshop --delete-services -f
+        run: cf undeploy perf-bookshop --delete-services -f || true
