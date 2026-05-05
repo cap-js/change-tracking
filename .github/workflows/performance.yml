@@ -137,7 +137,7 @@ jobs:
 
 
       # Install kubectl, add kubeconf, modify test config file, run test
-      - uses: azure/setup-kubectl@v4
+      - uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         id: install
       - name: pull kubeconfig
         env:
