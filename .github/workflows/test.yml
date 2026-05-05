@@ -112,7 +112,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run HANA integration tests
-        uses: ./.github/actions/integration-tests@main
+        uses: cap-js/change-tracking/.github/actions/integration-tests@main
         with:
           CF_API: ${{ secrets['CF_API'] }}
           CF_USERNAME: ${{ secrets['CF_USERNAME'] }}
