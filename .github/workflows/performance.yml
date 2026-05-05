@@ -11,9 +11,6 @@ on:
 permissions:
   contents: read
 
-env:
-  PERF_CLUSTER_KUBECONF: ${{ secrets.PERF_CLUSTER_KUBECONF }}
-
 jobs:
   requires-approval:
     runs-on: ubuntu-latest
@@ -135,6 +132,8 @@ jobs:
       - uses: azure/setup-kubectl@v4
         id: install
       - name: pull kubeconfig
+        env:
+          PERF_CLUSTER_KUBECONF: ${{ secrets.PERF_CLUSTER_KUBECONF }}
         shell: bash
         run: |
           mkdir kubeconf
