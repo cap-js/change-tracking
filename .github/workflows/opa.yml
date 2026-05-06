@@ -19,9 +19,9 @@ jobs:
       matrix:
         cds-version: [latest]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Use Node.js 22.x
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22.x
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
@@ -30,7 +30,7 @@ jobs:
         run: cd tests/bookshop && npm run test:opa
       - name: Upload OPA test reports
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: opa-test-report-${{ matrix.cds-version }}
           path: tests/bookshop/report/

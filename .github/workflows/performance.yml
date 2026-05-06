@@ -11,14 +11,11 @@ on:
 permissions:
   contents: read
 
-env:
-  PERF_CLUSTER_KUBECONF: ${{ secrets.PERF_CLUSTER_KUBECONF }}
-
 jobs:
   requires-approval:
     runs-on: ubuntu-latest
     name: Waiting for PR approval as this workflow runs on pull_request_target
-    if: github.event_name == 'pull_request_target' && github.event.pull_request.base.user.login != 'cap-js'
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.owner.login != 'cap-js'
     environment: pr-approval
     steps:
       - name: Approval Step
@@ -37,11 +34,11 @@ jobs:
         cds-version: [latest, 8]
     steps:
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Use Node.js ${{ matrix.node-version}}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -63,13 +60,21 @@ jobs:
 
       - name: Authenticate with Cloud Foundry
         shell: bash
+        env:
+          CF_API: ${{ secrets['CF_API'] }}
+          CF_USERNAME: ${{ secrets['CF_USERNAME'] }}
+          CF_PASSWORD: ${{ secrets['CF_PASSWORD'] }}
+          CF_ORG: ${{ secrets['CF_ORG'] }}
+          CF_SPACE: ${{ secrets['CF_SPACE'] }}
         run: |
-          for i in {1..3}; do
-            cf login -a ${{ secrets['CF_API'] }} -u ${{ secrets['CF_USERNAME'] }} -p ${{ secrets['CF_PASSWORD'] }} -o ${{ secrets['CF_ORG'] }} -s ${{ secrets['CF_SPACE'] }} && break
-            echo "cf login failed, retrying ($i/3)..."
+          for i in {1..5}; do
+            cf api "$CF_API" && \
+            cf auth && \
+            cf target -o "$CF_ORG" -s "$CF_SPACE" && break
+            echo "cf login failed, retrying ($i/5)..."
             sleep 10
-            if [ "$i" -eq 3 ]; then
-              echo "❌ cf login failed after 3 attempts."
+            if [ "$i" -eq 5 ]; then
+              echo "❌ cf login failed after 5 attempts."
               exit 1
             fi
           done
@@ -132,9 +137,11 @@ jobs:
 
 
       # Install kubectl, add kubeconf, modify test config file, run test
-      - uses: azure/setup-kubectl@v4
+      - uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
         id: install
       - name: pull kubeconfig
+        env:
+          PERF_CLUSTER_KUBECONF: ${{ secrets.PERF_CLUSTER_KUBECONF }}
         shell: bash
         run: |
           mkdir kubeconf
@@ -194,3 +201,8 @@ jobs:
 
             sleep 60
           done
+
+      - name: Undeploy application
+        if: ${{ always() }}
+        shell: bash
+        run: cf undeploy perf-bookshop --delete-services -f || true

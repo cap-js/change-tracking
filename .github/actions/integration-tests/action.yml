@@ -38,23 +38,30 @@ runs:
 
     - name: Authenticate with Cloud Foundry
       shell: bash
+      env:
+        CF_API: ${{ inputs.CF_API }}
+        CF_USERNAME: ${{ inputs.CF_USERNAME }}
+        CF_PASSWORD: ${{ inputs.CF_PASSWORD }}
+        CF_ORG: ${{ inputs.CF_ORG }}
+        CF_SPACE: ${{ inputs.CF_SPACE }}
       run: |
-        echo "::debug::CF_API=${{ inputs.CF_API }}"
-        for i in {1..3}; do
-          cf login -a ${{ inputs.CF_API }} -u ${{ inputs.CF_USERNAME }} -p ${{ inputs.CF_PASSWORD }} -o ${{ inputs.CF_ORG }} -s ${{ inputs.CF_SPACE }} && break
-          echo "cf login failed, retrying ($i/3)..."
+        for i in {1..5}; do
+          cf api "$CF_API" && \
+          cf auth && \
+          cf target -o "$CF_ORG" -s "$CF_SPACE" && break
+          echo "cf login failed, retrying ($i/5)..."
           sleep 10
-          if [ "$i" -eq 3 ]; then
-            echo "❌ cf login failed after 3 attempts."
+          if [ "$i" -eq 5 ]; then
+            echo "❌ cf login failed after 5 attempts."
             exit 1
           fi
         done
 
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       with:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
     - name: Use Node.js ${{ inputs.NODE_VERSION}}
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       with:
         node-version: ${{ inputs.NODE_VERSION }}
     - name: Set CDS version-specific dependencies
