@@ -817,6 +817,29 @@ describe('CDS Features', () => {
 			const valueChangedToLabel = ChangeView.query.SELECT.columns.find((c) => c.as === 'valueChangedToLabel');
 			expect(valueChangedToLabel.xpr.some((r) => r.val === 'status3')).toEqual(false);
 		});
+
+		it('Tracks changes on unmanaged association element with @changelog path annotation', async () => {
+			const {
+				data: { ID: incidentID }
+			} = await POST(`odata/v4/localization/DynamicLocalizationScenarios`, {
+				status4: 'N'
+			});
+			await PATCH(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})`, {
+				status4: 'R'
+			});
+			const {
+				data: { value: changes }
+			} = await GET(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})/changes`, {
+				headers: { 'Accept-Language': 'en' }
+			});
+			const statusNavChange = changes.find((change) => change.attribute === 'status4Nav' && change.modification === 'update' && change.entityKey === incidentID);
+			expect(statusNavChange).toMatchObject({
+				valueChangedFrom: 'N',
+				valueChangedFromLabel: 'New',
+				valueChangedTo: 'R',
+				valueChangedToLabel: 'Resolved'
+			});
+		});
 	});
 
 	describe('Draft', () => {

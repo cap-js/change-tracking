@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.0.0-beta.12 - 29.04.26
+
+### Fixed
+- Build crash when using `@changelog` path annotations on unmanaged associations due to missing guard on `col.keys`
+- SQLite update trigger `OF` clause generates correct column names for unmanaged associations (e.g., `assocName_fkField` instead of `fkField`)
+- SQLite association label lookup using the entity's primary key instead of the foreign key field in the `where` clause for unmanaged associations
+- Deduplication of column names in update trigger `OF` clauses when a field is referenced by both a tracked element and an unmanaged association
+
+### Added
+- Optimization to skip unnecessary subselect lookups for unmanaged associations when the `@changelog` path references a target key that is already available as a local foreign key field
+
 ## Version 2.0.0-beta.11 - 28.04.26
 
 ### Added
