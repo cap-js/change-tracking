@@ -914,6 +914,43 @@ describe('Configuration Options', () => {
 		expect(restoredChange).toBeTruthy();
 		expect(restoredChange.objectID).toEqual(parentID);
 	});
+
+	it('handles entries with NULL entityKey gracefully (no MERGE duplicate error)', async () => {
+		// Simulate broken v1 data: entries with NULL entityKey that would cause
+		// HANA error 689 "duplicate rowid matched during merge into"
+		const txID = cds.utils.uuid();
+		const nullKeyEntries = Array.from({ length: 5 }, () => ({
+			ID: cds.utils.uuid(),
+			entity: 'sap.change_tracking.Level2Sample',
+			entityKey: null,
+			attribute: 'title',
+			objectID: null,
+			modification: 'update',
+			valueChangedFrom: 'old',
+			valueChangedTo: 'new',
+			valueDataType: 'cds.String',
+			parent_ID: null,
+			transactionID: txID,
+			createdAt: new Date().toISOString(),
+			createdBy: 'test-user'
+		}));
+
+		await INSERT.into('sap.changelog.Changes').entries(nullKeyEntries);
+
+		// This should NOT throw "duplicate rowid matched during merge into"
+		await cds.run(`CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();`);
+
+		// The NULL entityKey entries should remain unlinked (parent_ID still NULL)
+		const unlinked = await SELECT.from('sap.changelog.Changes').where({
+			transactionID: txID,
+			entity: 'sap.change_tracking.Level2Sample',
+			parent_ID: null
+		});
+		expect(unlinked.length).toBe(5);
+
+		// Cleanup
+		await cds.delete('sap.changelog.Changes').where({ transactionID: txID });
+	});
 });
 describe('MTX Build', () => {
 	it('adds changes association only during runtime compilation, not during xtended CSN build', async () => {
