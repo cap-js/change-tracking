@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - SQLite update trigger `OF` clause generates correct column names for unmanaged associations (e.g., `assocName_fkField` instead of `fkField`)
 - SQLite association label lookup using the entity's primary key instead of the foreign key field in the `where` clause for unmanaged associations
 - Deduplication of column names in update trigger `OF` clauses when a field is referenced by both a tracked element and an unmanaged association
+- Prevent server crash when no db connection is available during session variable assignment
 
 ### Added
 - Optimization to skip unnecessary subselect lookups for unmanaged associations when the `@changelog` path references a target key that is already available as a local foreign key field
