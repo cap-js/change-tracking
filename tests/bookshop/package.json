@@ -7,7 +7,7 @@
 	},
 	"devDependencies": {
 		"@cap-js/sqlite": "^1 || ^2",
-		"@sap/cds-dk": "^9.8.2",
+		"@sap/cds-dk": "^9",
 		"puppeteer": "^24.40.0",
 		"ui5-test-runner": "^5.13.1"
 	},
