@@ -1,1 +1,1 @@
-npx -y prettier@3 --check .
+npm run format:check
