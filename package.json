@@ -28,7 +28,8 @@
 		"deploy:pg": "CDS_ENV=pg cds build --production && cds deploy --profile pg",
 		"test:all": "npm run test:sqlite && npm run test:pg && npm run test:hana",
 		"format": "npx -y prettier@3 . --write",
-		"format:check": "npx -y prettier@3 --check ."
+		"format:check": "npx -y prettier@3 --check .",
+		"prepare": "husky"
 	},
 	"peerDependencies": {
 		"@sap/cds": ">=8.5"
@@ -38,7 +39,8 @@
 	},
 	"devDependencies": {
 		"@cap-js/cds-test": "*",
-		"@cap-js/cds-types": "^0.16.0"
+		"@cap-js/cds-types": "^0.16.0",
+		"husky": "^9.1.7"
 	},
 	"cds": {
 		"requires": {
