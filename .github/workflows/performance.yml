@@ -25,7 +25,7 @@ jobs:
     needs: requires-approval
     if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
     concurrency:
-      group: performance-tests-${{ matrix.cds-version }}
+      group: performance-tests
     name: Performance tests for ${{ matrix.node-version }} and CAP ${{ matrix.cds-version }}
     strategy:
       fail-fast: false
