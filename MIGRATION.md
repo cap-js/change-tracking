@@ -1,34 +1,34 @@
 # Migration Guide: Change Tracking Plugin v1 to v2
 
-This guide explains how to migrate existing data from `@cap-js/change-tracking` v1 to v2.
+This guide explains how to migrate existing data when upgrading the `@cap-js/change-tracking` plugin from v1 to v2.
 
 > [!NOTE]
-> This migration guide only applies for migrating from `@cap-js/change-tracking` v1 to v2. A separate migration guide for migrating from the Java change-tracking plugin to v2 will follow.
+> This guide applies exclusively to migrations from `@cap-js/change-tracking` v1 to v2. A separate migration guide for upgrading from the Java change-tracking plugin to v2 will be provided later.
 
 ## Overview
 
-In version 1, change tracking data was split across two tables and tracked on the application layer:
+In version 1, change-tracking data was split across two tables and tracked at the application layer:
 
-- **`sap_changelog_ChangeLog`** — one row per change event (who changed what, when)
-- **`sap_changelog_Changes`** — one row per changed attribute (the actual field-level diffs)
+- **`sap_changelog_ChangeLog`**: one row per change event (who changed what and when)
+- **`sap_changelog_Changes`**: one row per changed attribute (the actual field-level diffs)
 
-In v2, the `ChangeLog` table is removed and the schema of `Changes` is adjusted to store all data directly within it and allow tracking changes on the database layer.
+In v2, the `ChangeLog` table is removed. The schema of `Changes` has been redesigned to store all data directly within a single table.
 
 ## Step-by-Step Guide
 
-### Step 1: Use the latest v1 version of the plugin
+### Step 1: Upgrade to the latest v1 plugin version
 
-Make sure you are using version `1.2.1` of the `@cap-js/change-tracking` plugin and that this version is deployed to your database. You can check the version with:
+Ensure your database is deployed with version `1.2.1` of `@cap-js/change-tracking`. You can verify your installed version by running:
 
 ```bash
 npm ls @cap-js/change-tracking
 ```
 
-This step is necessary because version `1.2.1` includes two new columns in `Changes` which are required for the migration.
+This step is required because version `1.2.1` introduces two new columns to the `Changes` table that are necessary for the data migration.
 
-### Step 2: Copy data from the Changelog table to the Changes table
+### Step 2: Copy data from the ChangeLog table to the Changes table
 
-Run the following SQL command to copy `createdAt` and `createdBy` from `sap.changelog.ChangeLog` to `sap.changelog.Changes` for existing data:
+Run the following SQL command to copy the `createdAt` and `createdBy` columns from `sap.changelog.ChangeLog` to `sap.changelog.Changes` for all existing records:
 
 ```sql
 MERGE INTO SAP_CHANGELOG_CHANGES AS c
@@ -40,11 +40,11 @@ MERGE INTO SAP_CHANGELOG_CHANGES AS c
 ```
 
 > [!INFO]
-> This manual step is only necessary for single-tenant applications. For multi-tenant applications, it is done automatically.
+> This manual step is only required for single-tenant applications. For multi-tenant applications, this data migration is handled automatically.
 
-### Step 3: Update to version 2
+### Step 3: Update the plugin dependency to version 2
 
-Update the `@cap-js/change-tracking` dependency to version 2.
+Update your `@cap-js/change-tracking` dependency to the target v2 version:
 
 ```bash
 npm i @cap-js/change-tracking@2.0.0-beta.12
@@ -58,21 +58,32 @@ Run the following command to generate the `sap.changelog.Changes.hdbmigrationtab
 cds add change-tracking-migration
 ```
 
-This will:
+This command automatically:
 
-- Create `db/src/sap.changelog.Changes.hdbmigrationtable` with the v1 → v2 migration SQL
-- Add the old `.hdbtable` entries for `Changes` and `ChangeLog` to `db/undeploy.json`
+- Creates `db/src/sap.changelog.Changes.hdbmigrationtable` containing the v1-to-v2 migration SQL
+- Adds the deprecated v1 `.hdbtable` entries for `Changes` and `ChangeLog` to `db/undeploy.json`
 
 > [!NOTE]
-> The migration table supports composite keys with up to 5 key parts. Entities with more than 5 keys in their `entityKey` will have their `entityKey` set to `NULL` during migration. Adjust the migration table as needed.
+> The default migration table configuration supports composite keys of up to 5 parts. For entities with more than 5 primary keys, the corresponding `entityKey` will be set to `NULL` during migration. If your data model exceeds this limit, adjust the generated migration table SQL before deploying.
 
-### Step 5: Deploy your application with version 2
+> [!NOTE]
+> Earlier releases of `@cap-js/change-tracking` v1 occasionally generated invalid change records where the `entityKey` contained `null` or `undefined` values. While the migration process safely ignores these corrupt entries, it does not automatically delete them. We recommend manually reviewing and purging these invalid records to keep your database clean.
 
-Use `cds deploy -2 hana` or `cds up` to deploy the new schema.
+### Step 5: Deploy the schema updates
 
-### Step 6: Cleanup
+Deploy the updated schema to your database using CDS tools:
 
-Remove the `.hdbtable` entries in `db/undeploy.json` and replace them with the migration table entry:
+```bash
+cds deploy --to hana # just deploy database schema
+cds up # redeploy entire application
+```
+
+### Step 6: Cleanup deployment artifacts
+
+To prevent HDI from dropping your migrated tables, you must clean up the temporary migration configurations.
+
+1. **Remove** the old `.hdbtable` entries for `Changes` and `ChangeLog` in the `db/undeploy.json`.
+2. Add the migration table entry to the file:
 
 ```json
 [
@@ -81,34 +92,36 @@ Remove the `.hdbtable` entries in `db/undeploy.json` and replace them with the m
 ]
 ```
 
-And remove the `sap.changelog.Changes.hdbmigrationtable` migration table from the `db/src` folder.
+3. Delete the `sap.changelog.Changes.hdbmigrationtable` file from your `db/src` directory.
 
 > [!IMPORTANT]
-> You must remove the `.hdbtable` entries from `undeploy.json`. If they remain, the table will be undeployed and all your data will be lost.
+> Failing to remove the v1 `.hdbtable` entries from `undeploy.json` will cause the database to undeploy the tables during your next deployment, resulting in permanent data loss.
 
 ### Step 7: Generate missing hierarchy information
 
-The new version of `@cap-js/change-tracking` tracks changes on children entites (compositions) in a different way. Previously, the change on a child would be assigned to the parent. With version 2 the change is assigned to the child, the actual entity on which the change was made. In addtion, another change record is created for the parent entity that indicates the child had a change. Furthermore hierarchy information via a `parent` association is present in changes, to expand the change record in the parent and see the actual changes on the child.
+Version 2 tracks changes on child entities (compositions) differently. In v1, changes to a child entity were assigned to the parent entity. In v2, the change record is assigned directly to the child (the entity where the change occurred). Additionally, a parent change record is generated to signal that a nested change took place, linking them via a new `parent` association to support hierarchical expansion.
 
-Call the `SAP_CHANGELOG_RESTORE_BACKLINKS` procedure to automatically generate missing parent change records for changes assigned to child entities.
+Run the `SAP_CHANGELOG_RESTORE_BACKLINKS` database procedure to backfill parent change records for historical child entity changes:
 
 ```sql
 CALL "SAP_CHANGELOG_RESTORE_BACKLINKS"();
 ```
 
-The procedure is idempotent. It only creates change records on parent entities where they don't already exist and only updates child change records that don't yet have a `parent_ID`.
+This procedure is idempotent and it only creates backlink parent records where they are missing and only updates child records that do not yet reference a `parent_ID`.
 
-The procedure is generated by default. It can be disabled by setting `procedureForRestoringBacklinks` to `false`:
+The restore procedure is generated by default. You can disable its generation:
 
 ```json
-"cds": {
-  "requires": {
-    "change-tracking": {
-      "procedureForRestoringBacklinks": false
+{
+  "cds": {
+    "requires": {
+      "change-tracking": {
+        "procedureForRestoringBacklinks": false
+      }
     }
   }
 }
 ```
 
 > [!INFO]
-> The procedure is also useful for v2 users who want to regenerate backlinks.
+> This procedure also remains available for native v2 environments to repair or regenerate broken backlink hierarchies if needed.
