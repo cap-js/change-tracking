@@ -9,4 +9,4 @@ gen/
 .env
 .secrets
 report/
-# *.sql
+*.sql
