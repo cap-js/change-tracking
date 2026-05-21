@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
       with:
         node-version: 24
         registry-url: https://registry.npmjs.org/
@@ -29,11 +29,11 @@ jobs:
         echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
     - name: parse changelog
       id: parse-changelog
-      uses: schwma/parse-changelog-action@v1.0.0
+      uses: schwma/parse-changelog-action@69a9f9ab4cf2f2e736108ab41396fc3c55f65e40 # v1.0.0
       with:
         version: '${{ steps.get-version.outputs.version }}'
     - name: create a GitHub release
-      uses: ncipollo/release-action@v1.20.0
+      uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
       with:
         tag: 'v${{ steps.get-version.outputs.version }}'
         body: '${{ steps.parse-changelog.outputs.body }}'

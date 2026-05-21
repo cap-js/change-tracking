@@ -1,13 +1,13 @@
 {
 	"dependencies": {
-		"@cap-js/attachments": "^2",
+		"@cap-js/attachments": "^3",
 		"@cap-js/change-tracking": "file:../../.",
 		"@cap-js/hana": "^2",
 		"@cap-js/postgres": "^1 || ^2"
 	},
 	"devDependencies": {
 		"@cap-js/sqlite": "^1 || ^2",
-		"@sap/cds-dk": "^9.8.2",
+		"@sap/cds-dk": "^9",
 		"puppeteer": "^24.40.0",
 		"ui5-test-runner": "^5.13.1"
 	},

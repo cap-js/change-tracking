@@ -440,6 +440,27 @@ By default, the depth of the changes hierarchy for any entity is 3. This means, 
 > [!IMPORTANT]
 > The depth of the hierarchy has a performance impact, so be careful with increasing it!
 
+### Disable Chidlren Change Linking
+
+By default, when a child entity in a composition is change-tracked, an additional changelog is created on the parent entity. This record has `valueDataType = 'cds.Composition'` and the `attribute` set to the composition field name (e.g. `conversation`). It links changes from a child to the parent allows hierarchical viewing of changes across the composition tree.
+
+To disable this linking behavior for a specific composition, annotate the composition field with `@changelog: false`:
+
+```cds
+entity Incidents : cuid, managed {
+  title : String @changelog;
+  @changelog: false
+  conversation : Composition of many {
+    key ID    : UUID;
+    timestamp : type of managed:createdAt;
+    author    : type of managed:createdBy;
+    message   : String @changelog;
+  };
+}
+```
+
+With `@changelog: false` on the composition field, individual changes on the child entity (e.g. changes to `message`) are still tracked, but no linking changelog is created on the parent. This means the child's changes will not appear in the parent's change history hierarchy.
+
 ### Tracking localized values
 
 Localized properties, like `descr` in the example, are respected and the localized value during change log creation is used for the label.

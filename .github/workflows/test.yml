@@ -15,7 +15,7 @@ jobs:
   requires-approval:
     runs-on: ubuntu-latest
     name: Waiting for PR approval as this workflow runs on pull_request_target
-    if: github.event_name == 'pull_request_target' && github.event.pull_request.base.user.login != 'cap-js'
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.owner.login != 'cap-js'
     environment: pr-approval
     steps:
       - name: Approval Step
@@ -32,11 +32,11 @@ jobs:
         node-version: [20.x, 22.x]
         cds-version: [latest, 8]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
@@ -57,11 +57,11 @@ jobs:
         node-version: [20.x, 22.x]
         cds-version: [latest, 8]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ matrix.node-version }}
       - name: Set CDS 8 compatible dependencies
@@ -108,11 +108,8 @@ jobs:
         node-version: [20.x, 22.x]
         cds-version: [latest, 8]
     steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Run HANA integration tests
-        uses: ./.github/actions/integration-tests
+        uses: cap-js/change-tracking/.github/actions/integration-tests@main
         with:
           CF_API: ${{ secrets['CF_API'] }}
           CF_USERNAME: ${{ secrets['CF_USERNAME'] }}
