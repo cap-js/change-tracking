@@ -7,7 +7,6 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_expressionscenarios_func_change(
         transaction_id BIGINT := txid_current();
         
         
-        
     BEGIN
         
         DECLARE

@@ -1,6 +1,6 @@
-CREATE OR REPLACE FUNCTION sap_capire_incidents_booksnotid_func_change() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION sap_capire_bookshop_books_func_change() RETURNS TRIGGER AS $$
     DECLARE
-        entity_name TEXT := 'sap.capire.incidents.BooksNotID';
+        entity_name TEXT := 'sap.capire.bookshop.Books';
         entity_key TEXT;
         object_id TEXT;
         user_id TEXT := coalesce(current_setting('cap.applicationuser', true), 'anonymous');
@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_booksnotid_func_change() RETURNS
         DECLARE
             rec RECORD;
         BEGIN
-            IF NOT (COALESCE(current_setting('ct.skip', true), 'false') != 'true' AND COALESCE(current_setting('ct.skip_entity.sap_capire_incidents_BooksNotID', true), 'false') != 'true') THEN
+            IF NOT (COALESCE(current_setting('ct.skip', true), 'false') != 'true' AND COALESCE(current_setting('ct.skip_entity.sap_capire_bookshop_Books', true), 'false') != 'true') THEN
                 RETURN NULL;
             END IF;
 
@@ -22,8 +22,8 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_booksnotid_func_change() RETURNS
                 rec := NEW;
             END IF;
 
-            entity_key := rec.NOT_ID::TEXT;
-            object_id := entity_key;
+            entity_key := rec.ID::TEXT;
+            object_id := COALESCE(rec.name::TEXT, entity_key);
 
             IF (TG_OP = 'INSERT') THEN
                 
@@ -46,7 +46,7 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_booksnotid_func_change() RETURNS
                 'create',
                 transaction_id
             FROM (
-            SELECT 'title' AS attribute, NULL AS valueChangedFrom, CASE WHEN LENGTH(NEW.title::TEXT) > 5000 THEN LEFT(NEW.title::TEXT, 4997) || '...' ELSE NEW.title::TEXT END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType WHERE (NEW.title IS NOT NULL) AND COALESCE(current_setting('ct.skip_element.sap_capire_incidents_BooksNotID.title', true), 'false') != 'true'
+            SELECT 'name' AS attribute, NULL AS valueChangedFrom, CASE WHEN LENGTH(NEW.name::TEXT) > 5000 THEN LEFT(NEW.name::TEXT, 4997) || '...' ELSE NEW.name::TEXT END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType WHERE (NEW.name IS NOT NULL) AND COALESCE(current_setting('ct.skip_element.sap_capire_bookshop_Books.name', true), 'false') != 'true'
             ) AS changes;
             ELSIF (TG_OP = 'UPDATE') THEN
                 
@@ -69,11 +69,11 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_booksnotid_func_change() RETURNS
                 'update',
                 transaction_id
             FROM (
-            SELECT 'title' AS attribute, CASE WHEN LENGTH(OLD.title::TEXT) > 5000 THEN LEFT(OLD.title::TEXT, 4997) || '...' ELSE OLD.title::TEXT END AS valueChangedFrom, CASE WHEN LENGTH(NEW.title::TEXT) > 5000 THEN LEFT(NEW.title::TEXT, 4997) || '...' ELSE NEW.title::TEXT END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType WHERE (NEW.title IS DISTINCT FROM OLD.title) AND COALESCE(current_setting('ct.skip_element.sap_capire_incidents_BooksNotID.title', true), 'false') != 'true'
+            SELECT 'name' AS attribute, CASE WHEN LENGTH(OLD.name::TEXT) > 5000 THEN LEFT(OLD.name::TEXT, 4997) || '...' ELSE OLD.name::TEXT END AS valueChangedFrom, CASE WHEN LENGTH(NEW.name::TEXT) > 5000 THEN LEFT(NEW.name::TEXT, 4997) || '...' ELSE NEW.name::TEXT END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType WHERE (NEW.name IS DISTINCT FROM OLD.name) AND COALESCE(current_setting('ct.skip_element.sap_capire_bookshop_Books.name', true), 'false') != 'true'
             ) AS changes;
             ELSIF (TG_OP = 'DELETE') THEN
                 
-                DELETE FROM sap_changelog_changes WHERE entity = 'sap.capire.incidents.BooksNotID' AND entitykey = OLD.NOT_ID::TEXT;
+                DELETE FROM sap_changelog_changes WHERE entity = 'sap.capire.bookshop.Books' AND entitykey = OLD.ID::TEXT;
             INSERT INTO sap_changelog_changes
             (ID, PARENT_ID, ATTRIBUTE, VALUECHANGEDFROM, VALUECHANGEDTO, VALUECHANGEDFROMLABEL, VALUECHANGEDTOLABEL, ENTITY, ENTITYKEY, OBJECTID, CREATEDAT, CREATEDBY, VALUEDATATYPE, MODIFICATION, TRANSACTIONID)
             SELECT
@@ -93,7 +93,7 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_booksnotid_func_change() RETURNS
                 'delete',
                 transaction_id
             FROM (
-            SELECT 'title' AS attribute, CASE WHEN LENGTH(OLD.title::TEXT) > 5000 THEN LEFT(OLD.title::TEXT, 4997) || '...' ELSE OLD.title::TEXT END AS valueChangedFrom, NULL AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType WHERE (OLD.title IS NOT NULL) AND COALESCE(current_setting('ct.skip_element.sap_capire_incidents_BooksNotID.title', true), 'false') != 'true'
+            SELECT 'name' AS attribute, CASE WHEN LENGTH(OLD.name::TEXT) > 5000 THEN LEFT(OLD.name::TEXT, 4997) || '...' ELSE OLD.name::TEXT END AS valueChangedFrom, NULL AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType WHERE (OLD.name IS NOT NULL) AND COALESCE(current_setting('ct.skip_element.sap_capire_bookshop_Books.name', true), 'false') != 'true'
             ) AS changes;
             END IF;
         END;
@@ -101,7 +101,7 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_booksnotid_func_change() RETURNS
     END;
     $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER sap_capire_incidents_booksnotid_tr_change
-    AFTER INSERT OR UPDATE OF title OR DELETE ON "sap_capire_incidents_booksnotid"
-    FOR EACH ROW EXECUTE FUNCTION sap_capire_incidents_booksnotid_func_change();
+CREATE OR REPLACE TRIGGER sap_capire_bookshop_books_tr_change
+    AFTER INSERT OR UPDATE OF name OR DELETE ON "sap_capire_bookshop_books"
+    FOR EACH ROW EXECUTE FUNCTION sap_capire_bookshop_books_func_change();
     

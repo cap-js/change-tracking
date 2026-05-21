@@ -3,32 +3,26 @@ CREATE TRIGGER IF NOT EXISTS SAP_CAPIRE_INCIDENTS_PAGESNOTID_ct_create AFTER INS
     WHEN (COALESCE(session_context('ct.skip'), 'false') != 'true' AND COALESCE(session_context('ct.skip_entity.sap_capire_incidents_PagesNotID'), 'false') != 'true')
     BEGIN
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
-			SELECT
-				hex(randomblob(16)),
-				NULL,
-				'pages',
-				'sap.capire.incidents.BooksNotID',
-				new.book_NOT_ID,
-				new.book_NOT_ID,
-				session_context('$now'),
-				session_context('$user.id'),
-				'cds.Composition',
-				CASE WHEN EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.BooksNotID'
-				AND entityKey = new.book_NOT_ID
-				AND modification = 'create'
-				AND transactionID = session_context('$now')
-			) THEN 'create' ELSE 'update' END,
-				session_context('$now')
-			WHERE NOT EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.BooksNotID'
-				AND entityKey = new.book_NOT_ID
-				AND attribute = 'pages'
-				AND valueDataType = 'cds.Composition'
-				AND transactionID = session_context('$now')
-			);
+		SELECT
+			hex(randomblob(16)),
+			NULL,
+			'pages',
+			'sap.capire.incidents.BooksNotID',
+			new.book_NOT_ID,
+			new.book_NOT_ID,
+			session_context('$now'),
+			session_context('$user.id'),
+			'cds.Composition',
+			'update',
+			session_context('$now')
+		WHERE NOT EXISTS (
+			SELECT 1 FROM sap_changelog_Changes
+			WHERE entity = 'sap.capire.incidents.BooksNotID'
+			AND entityKey = new.book_NOT_ID
+			AND attribute = 'pages'
+			AND valueDataType = 'cds.Composition'
+			AND transactionID = session_context('$now')
+		);
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
 		SELECT
 			hex(randomblob(16)),
@@ -70,32 +64,26 @@ CREATE TRIGGER IF NOT EXISTS SAP_CAPIRE_INCIDENTS_PAGESNOTID_ct_update AFTER UPD
     WHEN (COALESCE(session_context('ct.skip'), 'false') != 'true' AND COALESCE(session_context('ct.skip_entity.sap_capire_incidents_PagesNotID'), 'false') != 'true')
     BEGIN
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
-			SELECT
-				hex(randomblob(16)),
-				NULL,
-				'pages',
-				'sap.capire.incidents.BooksNotID',
-				new.book_NOT_ID,
-				new.book_NOT_ID,
-				session_context('$now'),
-				session_context('$user.id'),
-				'cds.Composition',
-				CASE WHEN EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.BooksNotID'
-				AND entityKey = new.book_NOT_ID
-				AND modification = 'create'
-				AND transactionID = session_context('$now')
-			) THEN 'create' ELSE 'update' END,
-				session_context('$now')
-			WHERE NOT EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.BooksNotID'
-				AND entityKey = new.book_NOT_ID
-				AND attribute = 'pages'
-				AND valueDataType = 'cds.Composition'
-				AND transactionID = session_context('$now')
-			);
+		SELECT
+			hex(randomblob(16)),
+			NULL,
+			'pages',
+			'sap.capire.incidents.BooksNotID',
+			new.book_NOT_ID,
+			new.book_NOT_ID,
+			session_context('$now'),
+			session_context('$user.id'),
+			'cds.Composition',
+			'update',
+			session_context('$now')
+		WHERE NOT EXISTS (
+			SELECT 1 FROM sap_changelog_Changes
+			WHERE entity = 'sap.capire.incidents.BooksNotID'
+			AND entityKey = new.book_NOT_ID
+			AND attribute = 'pages'
+			AND valueDataType = 'cds.Composition'
+			AND transactionID = session_context('$now')
+		);
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
 		SELECT
 			hex(randomblob(16)),
@@ -138,32 +126,26 @@ CREATE TRIGGER IF NOT EXISTS SAP_CAPIRE_INCIDENTS_PAGESNOTID_ct_delete AFTER DEL
     BEGIN
         DELETE FROM SAP_CHANGELOG_CHANGES WHERE entity = 'sap.capire.incidents.PagesNotID' AND entityKey = old.NOT_ID;
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
-			SELECT
-				hex(randomblob(16)),
-				NULL,
-				'pages',
-				'sap.capire.incidents.BooksNotID',
-				old.book_NOT_ID,
-				old.book_NOT_ID,
-				session_context('$now'),
-				session_context('$user.id'),
-				'cds.Composition',
-				CASE WHEN EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.BooksNotID'
-				AND entityKey = old.book_NOT_ID
-				AND modification = 'create'
-				AND transactionID = session_context('$now')
-			) THEN 'create' ELSE 'update' END,
-				session_context('$now')
-			WHERE NOT EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.BooksNotID'
-				AND entityKey = old.book_NOT_ID
-				AND attribute = 'pages'
-				AND valueDataType = 'cds.Composition'
-				AND transactionID = session_context('$now')
-			);
+		SELECT
+			hex(randomblob(16)),
+			NULL,
+			'pages',
+			'sap.capire.incidents.BooksNotID',
+			old.book_NOT_ID,
+			old.book_NOT_ID,
+			session_context('$now'),
+			session_context('$user.id'),
+			'cds.Composition',
+			'update',
+			session_context('$now')
+		WHERE NOT EXISTS (
+			SELECT 1 FROM sap_changelog_Changes
+			WHERE entity = 'sap.capire.incidents.BooksNotID'
+			AND entityKey = old.book_NOT_ID
+			AND attribute = 'pages'
+			AND valueDataType = 'cds.Composition'
+			AND transactionID = session_context('$now')
+		);
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
 		SELECT
 			hex(randomblob(16)),

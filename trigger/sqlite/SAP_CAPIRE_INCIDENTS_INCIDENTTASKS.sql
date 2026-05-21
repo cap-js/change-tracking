@@ -3,32 +3,26 @@ CREATE TRIGGER IF NOT EXISTS SAP_CAPIRE_INCIDENTS_INCIDENTTASKS_ct_create AFTER 
     WHEN (COALESCE(session_context('ct.skip'), 'false') != 'true' AND COALESCE(session_context('ct.skip_entity.sap_capire_incidents_IncidentTasks'), 'false') != 'true')
     BEGIN
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
-			SELECT
-				hex(randomblob(16)),
-				NULL,
-				'tasks',
-				'sap.capire.incidents.Incidents',
-				new.incident_ID,
-				COALESCE((SELECT (customer.firstName || ' ' || customer.lastName) || ': ' || address.city || ' - ' || "$I".title as value FROM sap_capire_incidents_Incidents as "$I" left JOIN sap_capire_incidents_Customers as customer ON customer.ID = "$I".customer_ID left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = customer.ID WHERE "$I".ID = new.incident_ID LIMIT 1), new.incident_ID),
-				session_context('$now'),
-				session_context('$user.id'),
-				'cds.Composition',
-				CASE WHEN EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.Incidents'
-				AND entityKey = new.incident_ID
-				AND modification = 'create'
-				AND transactionID = session_context('$now')
-			) THEN 'create' ELSE 'update' END,
-				session_context('$now')
-			WHERE NOT EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.Incidents'
-				AND entityKey = new.incident_ID
-				AND attribute = 'tasks'
-				AND valueDataType = 'cds.Composition'
-				AND transactionID = session_context('$now')
-			);
+		SELECT
+			hex(randomblob(16)),
+			NULL,
+			'tasks',
+			'sap.capire.incidents.Incidents',
+			new.incident_ID,
+			COALESCE((SELECT (customer.firstName || ' ' || customer.lastName) || ': ' || address.city || ' - ' || "$I".title as value FROM sap_capire_incidents_Incidents as "$I" left JOIN sap_capire_incidents_Customers as customer ON customer.ID = "$I".customer_ID left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = customer.ID WHERE "$I".ID = new.incident_ID LIMIT 1), new.incident_ID),
+			session_context('$now'),
+			session_context('$user.id'),
+			'cds.Composition',
+			'update',
+			session_context('$now')
+		WHERE NOT EXISTS (
+			SELECT 1 FROM sap_changelog_Changes
+			WHERE entity = 'sap.capire.incidents.Incidents'
+			AND entityKey = new.incident_ID
+			AND attribute = 'tasks'
+			AND valueDataType = 'cds.Composition'
+			AND transactionID = session_context('$now')
+		);
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
 		SELECT
 			hex(randomblob(16)),
@@ -80,32 +74,26 @@ CREATE TRIGGER IF NOT EXISTS SAP_CAPIRE_INCIDENTS_INCIDENTTASKS_ct_update AFTER 
     WHEN (COALESCE(session_context('ct.skip'), 'false') != 'true' AND COALESCE(session_context('ct.skip_entity.sap_capire_incidents_IncidentTasks'), 'false') != 'true')
     BEGIN
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
-			SELECT
-				hex(randomblob(16)),
-				NULL,
-				'tasks',
-				'sap.capire.incidents.Incidents',
-				new.incident_ID,
-				COALESCE((SELECT (customer.firstName || ' ' || customer.lastName) || ': ' || address.city || ' - ' || "$I".title as value FROM sap_capire_incidents_Incidents as "$I" left JOIN sap_capire_incidents_Customers as customer ON customer.ID = "$I".customer_ID left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = customer.ID WHERE "$I".ID = new.incident_ID LIMIT 1), new.incident_ID),
-				session_context('$now'),
-				session_context('$user.id'),
-				'cds.Composition',
-				CASE WHEN EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.Incidents'
-				AND entityKey = new.incident_ID
-				AND modification = 'create'
-				AND transactionID = session_context('$now')
-			) THEN 'create' ELSE 'update' END,
-				session_context('$now')
-			WHERE NOT EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.Incidents'
-				AND entityKey = new.incident_ID
-				AND attribute = 'tasks'
-				AND valueDataType = 'cds.Composition'
-				AND transactionID = session_context('$now')
-			);
+		SELECT
+			hex(randomblob(16)),
+			NULL,
+			'tasks',
+			'sap.capire.incidents.Incidents',
+			new.incident_ID,
+			COALESCE((SELECT (customer.firstName || ' ' || customer.lastName) || ': ' || address.city || ' - ' || "$I".title as value FROM sap_capire_incidents_Incidents as "$I" left JOIN sap_capire_incidents_Customers as customer ON customer.ID = "$I".customer_ID left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = customer.ID WHERE "$I".ID = new.incident_ID LIMIT 1), new.incident_ID),
+			session_context('$now'),
+			session_context('$user.id'),
+			'cds.Composition',
+			'update',
+			session_context('$now')
+		WHERE NOT EXISTS (
+			SELECT 1 FROM sap_changelog_Changes
+			WHERE entity = 'sap.capire.incidents.Incidents'
+			AND entityKey = new.incident_ID
+			AND attribute = 'tasks'
+			AND valueDataType = 'cds.Composition'
+			AND transactionID = session_context('$now')
+		);
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
 		SELECT
 			hex(randomblob(16)),
@@ -158,32 +146,26 @@ CREATE TRIGGER IF NOT EXISTS SAP_CAPIRE_INCIDENTS_INCIDENTTASKS_ct_delete AFTER 
     BEGIN
         DELETE FROM SAP_CHANGELOG_CHANGES WHERE entity = 'sap.capire.incidents.IncidentTasks' AND entityKey = old.ID;
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
-			SELECT
-				hex(randomblob(16)),
-				NULL,
-				'tasks',
-				'sap.capire.incidents.Incidents',
-				old.incident_ID,
-				COALESCE((SELECT (customer.firstName || ' ' || customer.lastName) || ': ' || address.city || ' - ' || "$I".title as value FROM sap_capire_incidents_Incidents as "$I" left JOIN sap_capire_incidents_Customers as customer ON customer.ID = "$I".customer_ID left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = customer.ID WHERE "$I".ID = old.incident_ID LIMIT 1), old.incident_ID),
-				session_context('$now'),
-				session_context('$user.id'),
-				'cds.Composition',
-				CASE WHEN EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.Incidents'
-				AND entityKey = old.incident_ID
-				AND modification = 'create'
-				AND transactionID = session_context('$now')
-			) THEN 'create' ELSE 'update' END,
-				session_context('$now')
-			WHERE NOT EXISTS (
-				SELECT 1 FROM sap_changelog_Changes
-				WHERE entity = 'sap.capire.incidents.Incidents'
-				AND entityKey = old.incident_ID
-				AND attribute = 'tasks'
-				AND valueDataType = 'cds.Composition'
-				AND transactionID = session_context('$now')
-			);
+		SELECT
+			hex(randomblob(16)),
+			NULL,
+			'tasks',
+			'sap.capire.incidents.Incidents',
+			old.incident_ID,
+			COALESCE((SELECT (customer.firstName || ' ' || customer.lastName) || ': ' || address.city || ' - ' || "$I".title as value FROM sap_capire_incidents_Incidents as "$I" left JOIN sap_capire_incidents_Customers as customer ON customer.ID = "$I".customer_ID left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = customer.ID WHERE "$I".ID = old.incident_ID LIMIT 1), old.incident_ID),
+			session_context('$now'),
+			session_context('$user.id'),
+			'cds.Composition',
+			'update',
+			session_context('$now')
+		WHERE NOT EXISTS (
+			SELECT 1 FROM sap_changelog_Changes
+			WHERE entity = 'sap.capire.incidents.Incidents'
+			AND entityKey = old.incident_ID
+			AND attribute = 'tasks'
+			AND valueDataType = 'cds.Composition'
+			AND transactionID = session_context('$now')
+		);
         INSERT INTO sap_changelog_Changes (ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
 		SELECT
 			hex(randomblob(16)),

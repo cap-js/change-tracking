@@ -7,7 +7,6 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_incidents_conversation_func_chan
         transaction_id BIGINT := txid_current();
         comp_parent_id UUID := NULL;
         
-        
     BEGIN
         
         DECLARE
@@ -46,13 +45,7 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_incidents_conversation_func_chan
                         now(),
                         user_id,
                         'cds.Composition',
-                        CASE WHEN EXISTS (
-                    SELECT 1 FROM sap_changelog_changes
-                    WHERE entity = 'sap.capire.incidents.Incidents'
-                    AND entitykey = rec.up__ID::TEXT
-                    AND modification = 'create'
-                    AND transactionid = transaction_id
-                ) THEN 'create' ELSE 'update' END,
+                        'update',
                         transaction_id
                     );
             END IF;
@@ -97,13 +90,7 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_incidents_conversation_func_chan
                         now(),
                         user_id,
                         'cds.Composition',
-                        CASE WHEN EXISTS (
-                    SELECT 1 FROM sap_changelog_changes
-                    WHERE entity = 'sap.capire.incidents.Incidents'
-                    AND entitykey = rec.up__ID::TEXT
-                    AND modification = 'create'
-                    AND transactionid = transaction_id
-                ) THEN 'create' ELSE 'update' END,
+                        'update',
                         transaction_id
                     );
             END IF;
@@ -148,13 +135,7 @@ CREATE OR REPLACE FUNCTION sap_capire_incidents_incidents_conversation_func_chan
                         now(),
                         user_id,
                         'cds.Composition',
-                        CASE WHEN EXISTS (
-                    SELECT 1 FROM sap_changelog_changes
-                    WHERE entity = 'sap.capire.incidents.Incidents'
-                    AND entitykey = rec.up__ID::TEXT
-                    AND modification = 'create'
-                    AND transactionid = transaction_id
-                ) THEN 'create' ELSE 'update' END,
+                        'update',
                         transaction_id
                     );
             END IF;

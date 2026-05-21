@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Generates trigger SQL for all entities in tests/bookshop/db/incidents/schema.cds
- * for sqlite, postgres, and hana dialects.
+ * Generates trigger SQL for multiple projects and dialects.
  *
- * Output is written to:
- *   trigger/sqlite/<entity>.sql
- *   trigger/postgres/<entity>.sql
- *   trigger/hana/<TriggerName>.hdbtrigger
+ * Projects:
+ *   1. tests/bookshop (incidents namespace only) -> trigger/sqlite, trigger/postgres, trigger/hana
+ *   2. tests/performance/perf-bookshop (all entities) -> trigger/perf-bookshop/sqlite, trigger/perf-bookshop/postgres, trigger/perf-bookshop/hana
+ *
+ * Each entity gets one file containing all its triggers (create + update + delete).
  *
  * Usage: node generate-triggers.js
  */
@@ -14,63 +14,86 @@
 const path = require('path');
 const fs = require('fs');
 
-const INCIDENTS_NAMESPACE = 'sap.capire.incidents';
+const projects = [
+  {
+    name: 'bookshop (incidents)',
+    dir: 'tests/bookshop',
+    modelPaths: ['db', 'srv'],
+    filter: (e) => e.dbEntityName.startsWith('sap.capire.incidents.'),
+    outputDir: 'trigger'
+  },
+  {
+    name: 'perf-bookshop',
+    dir: 'tests/performance/perf-bookshop',
+    modelPaths: ['db/schema.cds', 'srv/services.cds'],
+    filter: null,
+    outputDir: 'trigger/perf-bookshop'
+  }
+];
 
 async function main() {
+  for (const project of projects) {
+    await generateTriggersForProject(project);
+  }
+}
+
+async function generateTriggersForProject({ name, dir, modelPaths, filter, outputDir }) {
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`Project: ${name}`);
+  console.log(`${'='.repeat(60)}`);
+
   const cds = require('@sap/cds');
-  const bookshopDir = path.join(__dirname, 'tests/bookshop');
+  const projectDir = path.join(__dirname, dir);
 
-  // Configure CDS to use bookshop's settings (change-tracking config etc.)
-  cds.env = cds.env.for('cds', bookshopDir);
+  // Configure CDS to use this project's settings
+  cds.env = cds.env.for('cds', projectDir);
 
-  // Load the full model (db + srv) so service projections are available for entity collection
-  const model = await cds.load([path.join(bookshopDir, 'db'), path.join(bookshopDir, 'srv')]);
+  // Load the full model
+  const model = await cds.load(modelPaths.map((p) => path.join(projectDir, p)));
 
   // Prepare for trigger generation
   const { prepareCSNForTriggers, generateTriggersForEntities } = require('./lib/utils/trigger-utils');
   const { runtimeCSN, hierarchy, entities } = prepareCSNForTriggers(model);
 
-  // Filter to only entities from the incidents namespace
-  const incidentEntities = entities.filter((e) => e.dbEntityName.startsWith(INCIDENTS_NAMESPACE + '.'));
+  // Optionally filter entities
+  const targetEntities = filter ? entities.filter(filter) : entities;
 
-  console.log(`Found ${incidentEntities.length} entities in namespace "${INCIDENTS_NAMESPACE}":`);
-  for (const e of incidentEntities) {
+  console.log(`Found ${targetEntities.length} entities:`);
+  for (const e of targetEntities) {
     console.log(`  - ${e.dbEntityName}`);
   }
 
   // Prepare output directories
-  const triggerDir = path.join(__dirname, 'trigger');
+  const baseDir = path.join(__dirname, outputDir);
   const dirs = {
-    sqlite: path.join(triggerDir, 'sqlite'),
-    postgres: path.join(triggerDir, 'postgres'),
-    hana: path.join(triggerDir, 'hana')
+    sqlite: path.join(baseDir, 'sqlite'),
+    postgres: path.join(baseDir, 'postgres'),
+    hana: path.join(baseDir, 'hana')
   };
-  for (const dir of Object.values(dirs)) {
-    fs.mkdirSync(dir, { recursive: true });
+  for (const d of Object.values(dirs)) {
+    fs.mkdirSync(d, { recursive: true });
   }
 
   // --- SQLite ---
   const { generateSQLiteTrigger } = require('./lib/sqlite/triggers');
-  const sqliteTriggers = generateTriggersForEntities(runtimeCSN, hierarchy, incidentEntities, generateSQLiteTrigger);
-  // SQLite triggers are plain SQL strings; group by entity name extracted from the trigger
+  const sqliteTriggers = generateTriggersForEntities(runtimeCSN, hierarchy, targetEntities, generateSQLiteTrigger);
   writeSQLiteOutput(dirs.sqlite, sqliteTriggers);
 
   // --- PostgreSQL ---
   const { generatePostgresTriggers } = require('./lib/postgres/triggers');
-  const pgTriggers = generateTriggersForEntities(runtimeCSN, hierarchy, incidentEntities, generatePostgresTriggers);
-  // Postgres triggers are SQL strings (CREATE FUNCTION + CREATE TRIGGER); group by function name
+  const pgTriggers = generateTriggersForEntities(runtimeCSN, hierarchy, targetEntities, generatePostgresTriggers);
   writePostgresOutput(dirs.postgres, pgTriggers);
 
   // --- HANA ---
-  const { generateHANATriggers } = require('./lib/hana/triggers');
-  const hanaTriggers = generateTriggersForEntities(runtimeCSN, hierarchy, incidentEntities, generateHANATriggers);
-  // HANA triggers are objects { name, sql, suffix }
-  writeHanaOutput(dirs.hana, hanaTriggers);
+  try {
+    const { generateHANATriggers } = require('./lib/hana/triggers');
+    const hanaTriggers = generateTriggersForEntities(runtimeCSN, hierarchy, targetEntities, generateHANATriggers);
+    writeHanaOutput(dirs.hana, hanaTriggers);
+  } catch (err) {
+    console.log(`HANA: SKIPPED (error: ${err.message})`);
+  }
 
-  console.log('\nDone! Triggers written to:');
-  console.log(`  ${dirs.sqlite}`);
-  console.log(`  ${dirs.postgres}`);
-  console.log(`  ${dirs.hana}`);
+  console.log(`\nOutput written to: ${baseDir}`);
 }
 
 /**
@@ -82,7 +105,6 @@ function writeSQLiteOutput(dir, triggers) {
   const grouped = new Map();
 
   for (const sql of triggers) {
-    // Extract entity table name from: CREATE TRIGGER IF NOT EXISTS <tableName>_ct_<type>
     const match = sql.match(/CREATE\s+TRIGGER\s+IF NOT EXISTS\s+(\S+?)_ct_(create|update|delete)/i);
     const entityTable = match ? match[1] : 'unknown';
 
@@ -95,19 +117,17 @@ function writeSQLiteOutput(dir, triggers) {
     fs.writeFileSync(filePath, sqls.join('\n\n') + '\n');
   }
 
-  console.log(`\nSQLite: ${triggers.length} triggers for ${grouped.size} entities`);
+  console.log(`SQLite: ${triggers.length} triggers for ${grouped.size} entities`);
 }
 
 /**
  * Write PostgreSQL triggers grouped by entity.
  * CREATE FUNCTION and CREATE TRIGGER statements come in pairs.
- * The function name pattern is: <tablename>_func_change
  */
 function writePostgresOutput(dir, triggers) {
   const grouped = new Map();
 
   for (const sql of triggers) {
-    // Extract entity table name from CREATE OR REPLACE FUNCTION <name>_func_change or CREATE OR REPLACE TRIGGER <name>_tr_change
     const funcMatch = sql.match(/(?:FUNCTION|TRIGGER)\s+(\S+?)_(?:func|tr)_change/i);
     const entityTable = funcMatch ? funcMatch[1] : 'unknown';
 
