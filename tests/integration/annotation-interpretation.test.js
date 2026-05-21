@@ -3,657 +3,657 @@ const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
 
 describe('@changelog annotation interpretation', () => {
-	it('builds objectID from entity keys when explicit @changelog annotation is missing', async () => {
-		const variantSrv = await cds.connect.to('VariantTesting');
-		const { ChangeView } = variantSrv.entities;
-		const parentID = cds.utils.uuid();
-		const childID = cds.utils.uuid();
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition`, {
-			ID: parentID
-		});
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/children`, {
-			ID: childID,
-			title: 'Original Title'
-		});
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
-
-		await PATCH(`/odata/v4/variant-testing/ComposedEntities(ID=${childID},IsActiveEntity=false)`, {
-			title: 'New title'
-		});
-
-		await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
-
-		const changes = await SELECT.from(ChangeView).where({
-			modification: 'update',
-			attribute: 'title',
-			entityKey: childID
-		});
-		expect(changes.length).toEqual(1);
-
-		// if object type is localized, use the localized object type as object ID
-		expect(changes[0].entity).toEqual('sap.change_tracking.ComposedEntities');
-		expect(changes[0].entityLabel).toEqual('Book');
-		expect(changes[0].objectID).toEqual(childID);
-
-		const parentChanges = await SELECT.one.from(ChangeView).where({ ID: changes[0].parent_ID }).columns(['entityLabel', 'objectID']);
-		expect(parentChanges.entityLabel).toEqual('Book Store');
-		// Composition-of-many: uses parent entity keys as objectID (no entity-level @changelog on TrackingComposition)
-		expect(parentChanges.objectID).toEqual(parentID);
-	});
-
-	it('builds objectID from entity keys when @changelog annotation is simply set to true', async () => {
-		const adminService = await cds.connect.to('AdminService');
-		const { ChangeView } = adminService.entities;
-
-		// Create new Order
-		const orderID = cds.utils.uuid();
-		await POST(`/odata/v4/admin/Order`, { ID: orderID, title: 'test order' });
-
-		const changes = await SELECT.from(ChangeView).where({
-			modification: 'create',
-			entityKey: orderID
-		});
-		expect(changes.length).toEqual(1);
-		expect(changes[0].objectID).toEqual(orderID);
-	});
-	it('builds objectID from entity fields and associated entity fields when multiple @changelog annotations are used', async () => {
-		const adminService = await cds.connect.to('AdminService');
-		const { ChangeView } = adminService.entities;
-
-		// Create test data: Customer, Order, and OrderItem
-		const customerID = cds.utils.uuid();
-		const orderID = cds.utils.uuid();
-		const orderItemID = cds.utils.uuid();
-
-		await INSERT.into('sap.capire.bookshop.Customers').entries({
-			ID: customerID,
-			name: 'Honda',
-			city: 'Ōsaka',
-			country: 'Japan'
-		});
-
-		await INSERT.into('sap.capire.bookshop.Order').entries({
-			ID: orderID,
-			status: 'Post',
-			customer_ID: customerID
-		});
-
-		await INSERT.into('sap.capire.bookshop.OrderItemWithLongerName').entries({
-			ID: orderItemID,
-			order_ID: orderID,
-			customer_ID: customerID,
-			price: 5,
-			quantity: 10
-		});
-
-		await PATCH(`/odata/v4/admin/OrderItemWithLongerName(ID=${orderItemID})`, {
-			quantity: 14
-		});
-
-		let changes = await SELECT.from(ChangeView).where({
-			modification: 'update',
-			entityKey: orderItemID
-		});
-		expect(changes.length).toEqual(1);
-		const change = changes[0];
-		const IDsegments = change.objectID.split(', ');
-		expect(IDsegments[0]).toEqual('Ōsaka');
-		expect(IDsegments[1]).toEqual('Post');
-		expect(Number(IDsegments[2])).toEqual(5);
-		expect(Number(IDsegments[3])).toEqual(14);
-	});
-
-	it('builds objectID from multiple entity fields when @changelog lists several attributes', async () => {
-		const adminService = await cds.connect.to('AdminService');
-		const { ChangeView } = adminService.entities;
-
-		// Create test data: Author
-		const authorID = cds.utils.uuid();
-		await INSERT.into('sap.capire.bookshop.AuthorsWithLongerChangelog').entries({
-			ID: authorID,
-			name_firstName: 'Emily',
-			name_lastName: 'Brontë',
-			placeOfBirth: 'Thornton, Yorkshire',
-			placeOfDeath: 'Haworth, Yorkshire',
-			dateOfBirth: '1818-07-30',
-			dateOfDeath: '1848-12-19'
-		});
-
-		await PATCH(`/odata/v4/admin/AuthorsWithLongerChangelog(ID=${authorID})`, {
-			placeOfBirth: 'new placeOfBirth'
-		});
-
-		const changes = await SELECT.from(ChangeView).where({
-			modification: 'update',
-			entityKey: authorID
-		});
-		expect(changes.length).toEqual(1);
-		expect(changes[0].objectID).toEqual('new placeOfBirth, Emily, Brontë, Haworth, Yorkshire, 1848-12-19, 1818-07-30');
-	});
-
-	it('builds objectID from non-null fields when some @changelog objectID fields are null', async () => {
-		const adminService = await cds.connect.to('AdminService');
-		const { ChangeView } = adminService.entities;
-
-		// Create author with some objectID fields left NULL (dateOfDeath, placeOfDeath)
-		const authorID = cds.utils.uuid();
-		await INSERT.into('sap.capire.bookshop.AuthorsWithLongerChangelog').entries({
-			ID: authorID,
-			name_firstName: 'Emily',
-			name_lastName: 'Brontë',
-			placeOfBirth: 'Thornton',
-			dateOfBirth: '1818-07-30'
-			// dateOfDeath and placeOfDeath intentionally omitted (NULL)
-		});
-
-		await PATCH(`/odata/v4/admin/AuthorsWithLongerChangelog(ID=${authorID})`, {
-			placeOfBirth: 'updated placeOfBirth'
-		});
-
-		const changes = await SELECT.from(ChangeView).where({
-			modification: 'update',
-			entityKey: authorID
-		});
-		expect(changes.length).toEqual(1);
-		expect(changes[0].objectID).toEqual('updated placeOfBirth, Emily, Brontë, <empty>, <empty>, 1818-07-30');
-	});
-
-	// REVISIT: db-services only puts the root query of a deep query first
-	it('resolves objectID through chained associations to parent entities', async () => {
-		const variantSrv = await cds.connect.to('VariantTesting');
-		const { ChangeView } = variantSrv.entities;
-
-		const lvl1ID = cds.utils.uuid();
-		const lvl2ID = cds.utils.uuid();
-		const { data: newRoot } = await POST(`/odata/v4/variant-testing/RootSample`, {
-			ID: cds.utils.uuid(),
-			title: 'RootSample title',
-			children: [
-				{
-					ID: lvl1ID,
-					title: 'Level1Sample title',
-					children: [
-						{
-							ID: lvl2ID,
-							title: 'Level2Sample title'
-						}
-					]
-				}
-			]
-		});
-
-		const createChanges = await SELECT.from(ChangeView).where({
-			modification: 'create',
-			entityKey: [newRoot.ID, lvl1ID, lvl2ID]
-		});
-		expect(createChanges.length).toEqual(5);
-		expect(createChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'title').objectID).toEqual(`${newRoot.ID}, RootSample title`);
-		// expect(createChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children').objectID).toEqual(`${newRoot.ID}, RootSample title`);
-		expect(createChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title').objectID).toEqual(`${lvl1ID}, Level1Sample title, ${newRoot.ID}`);
-		// expect(createChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'children').objectID).toEqual(`${newRoot.ID}, RootSample title`);
-		//expect(createChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, Level2Sample title, ${newRoot.ID}`);
-
-		await PATCH(`/odata/v4/variant-testing/RootSample(ID=${newRoot.ID})`, {
-			title: 'new RootSample title',
-			children: [
-				{
-					ID: lvl1ID,
-					title: 'new Level1Sample title',
-					children: [
-						{
-							ID: lvl2ID,
-							title: 'new Level2Sample title'
-						}
-					]
-				}
-			]
-		});
-
-		const updateChanges = await SELECT.from(ChangeView).where({
-			modification: 'update',
-			entityKey: [newRoot.ID, lvl1ID, lvl2ID]
-		});
-		expect(updateChanges.length).toEqual(5);
-		expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'title').objectID).toEqual(`${newRoot.ID}, new RootSample title`);
-		// expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children').objectID).toEqual(`${newRoot.ID}, new RootSample title`);
-		expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
-		// expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'children').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
-		//expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, new Level2Sample title, ${newRoot.ID}`);
-
-		await DELETE(`/odata/v4/variant-testing/Level2Sample(ID=${lvl2ID})`);
-		await DELETE(`/odata/v4/variant-testing/Level1Sample(ID=${lvl1ID})`);
-
-		const deleteChanges = await SELECT.from(ChangeView).where({
-			modification: 'delete',
-			entityKey: [newRoot.ID, lvl1ID, lvl2ID]
-		});
-		expect(deleteChanges.length).toEqual(3); // +1 for RootSample.children composition entry (RootSample is a composition child of GrandRootSample)
-		//expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
-		//expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, new Level2Sample title, ${newRoot.ID}`);
-	});
-
-	it('records data type and resolves display values for association fields annotated with @changelog', async () => {
-		const adminService = await cds.connect.to('AdminService');
-		const { ChangeView } = adminService.entities;
-		const bookStoreID = cds.utils.uuid();
-		const bookID = cds.utils.uuid();
-
-		await POST(`/odata/v4/admin/BookStores`, {
-			ID: bookStoreID,
-			name: 'Test BookStore'
-		});
-
-		await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-		await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
-
-		await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/books`, {
-			ID: bookID,
-			authorWithAssocObjectID_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
-			author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
-			title: 'test title'
-		});
-
-		await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-		// valueDataType field only appears in db table Changes
-		// there are no localization features for table Changes
-		const authorChangesInDb = await SELECT.from(ChangeView).where({
-			entity: 'sap.capire.bookshop.Books',
-			entityKey: bookID,
-			attribute: 'authorWithAssocObjectID',
-			modification: 'create'
-		});
-		expect(authorChangesInDb.length).toEqual(1);
-
-		const authorChangeInDb = authorChangesInDb[0];
-		expect(authorChangeInDb.valueChangedFromLabel).toEqual(null);
-		expect(authorChangeInDb.valueChangedToLabel).toEqual('Emily, 1818-07-30, Brontë');
-		expect(authorChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.Date, cds.String
-
-		await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
-
-		await PATCH(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`, {
-			author_ID: '47f97f40-4f41-488a-b10b-a5725e762d5e'
-		});
-
-		await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-		// valueDataType field only appears in db table Changes
-		// there are no localization features for table Changes
-		const authorUpdateChangesInDb = await SELECT.from(ChangeView).where({
-			entity: 'sap.capire.bookshop.Books',
-			entityKey: bookID,
-			attribute: 'author',
-			modification: 'update'
-		});
-		expect(authorUpdateChangesInDb.length).toEqual(1);
-
-		const authorUpdateChangeInDb = authorUpdateChangesInDb[0];
-		expect(authorUpdateChangeInDb.valueChangedFromLabel).toEqual('Emily, Brontë');
-		expect(authorUpdateChangeInDb.valueChangedToLabel).toEqual('Charlotte, Brontë');
-		expect(authorUpdateChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
-	});
-
-	it('records data type and resolves display values for composition fields annotated with @changelog', async () => {
-		const adminService = await cds.connect.to('AdminService');
-		const { ChangeView } = adminService.entities;
-
-		// Create test data: Customer, Order, and OrderItem
-		const customerID = cds.utils.uuid();
-		const orderItemID = cds.utils.uuid();
-
-		await INSERT.into('sap.capire.bookshop.Customers').entries({
-			ID: customerID,
-			name: 'Honda',
-			city: 'Ōsaka',
-			country: 'Japan'
-		});
-
-		await INSERT.into('sap.capire.bookshop.OrderItemWithLongerName').entries({
-			ID: orderItemID,
-			price: 5,
-			quantity: 10
-		});
-
-		await PATCH(`/odata/v4/admin/OrderItemWithLongerName(ID=${orderItemID})`, {
-			customer_ID: customerID
-		});
-
-		// valueDataType field only appears in db table Changes
-		// there are no localization features for table Changes
-		const changesInDb = await SELECT.from(ChangeView).where({
-			entity: 'sap.capire.bookshop.OrderItemWithLongerName',
-			attribute: 'customer',
-			modification: 'update',
-			entityKey: orderItemID
-		});
-
-		expect(changesInDb.length).toEqual(1);
-		expect(changesInDb[0].valueChangedFromLabel).toEqual(null);
-		expect(changesInDb[0].valueChangedToLabel).toEqual('Japan, Honda, Ōsaka');
-		expect(changesInDb[0].valueDataType).toEqual('cds.Association');
-	});
-
-	it('excludes fields annotated with @PersonalData from change tracking', async () => {
-		const testingSRV = await cds.connect.to('VariantTesting');
-		const { ChangeView, DifferentFieldTypes } = testingSRV.entities;
-		const ID = cds.utils.uuid();
-		await INSERT.into(DifferentFieldTypes).entries({
-			ID,
-			dppField1: 'John Doe',
-			dppField2: 'John Doe',
-			dppField3: 'Controller-123'
-		});
-
-		// @PersonalData.IsPotentiallyPersonal and @PersonalData.IsPotentiallySensitive must be ignored
-		const ignoredChanges = await SELECT.from(ChangeView).where({
-			entity: 'sap.change_tracking.DifferentFieldTypes',
-			entityKey: ID,
-			attribute: { in: ['dppField1', 'dppField2'] }
-		});
-		expect(ignoredChanges.length).toEqual(0);
-
-		// @PersonalData.FieldSemantics must still be tracked (e.g. DataSubjectID, PurposeID, EndOfBusinessDate)
-		const trackedChanges = await SELECT.from(ChangeView).where({
-			entity: 'sap.change_tracking.DifferentFieldTypes',
-			entityKey: ID,
-			attribute: 'dppField3'
-		});
-		expect(trackedChanges.length).toEqual(1);
-	});
-
-	describe('Code lists resolution', () => {
-		it('displays human-readable code list name when single attribute is annotated with @changelog', async () => {
-			const adminService = await cds.connect.to('AdminService');
-			const { ChangeView } = adminService.entities;
-
-			// Create new BookStore with lifecycle status
-			const bookStoreID = cds.utils.uuid();
-
-			await POST(`/odata/v4/admin/BookStores`, {
-				ID: bookStoreID,
-				name: 'test name'
-			});
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-			const lifecycleStatusChanges = await SELECT.from(ChangeView).where({
-				entity: 'sap.capire.bookshop.BookStores',
-				attribute: 'lifecycleStatus',
-				entityKey: bookStoreID
-			});
-			expect(lifecycleStatusChanges.length).toEqual(1);
-
-			const lifecycleStatusChange = lifecycleStatusChanges[0];
-			expect(lifecycleStatusChange.modification).toEqual('create');
-			expect(lifecycleStatusChange.valueChangedFromLabel).toEqual(null);
-			expect(lifecycleStatusChange.valueChangedToLabel).toEqual('In Preparation');
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
-
-			await PATCH(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)`, {
-				lifecycleStatus: {
-					code: 'CL'
-				}
-			});
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-			const lifecycleStatusUpdateChanges = await SELECT.from(ChangeView).where({
-				entity: 'sap.capire.bookshop.BookStores',
-				attribute: 'lifecycleStatus',
-				modification: 'update',
-				entityKey: bookStoreID
-			});
-			expect(lifecycleStatusUpdateChanges.length).toEqual(1);
-
-			const lifecycleStatusUpdateChange = lifecycleStatusUpdateChanges[0];
-			expect(lifecycleStatusUpdateChange.modification).toEqual('update');
-			expect(lifecycleStatusUpdateChange.valueChangedFromLabel).toEqual('In Preparation');
-			expect(lifecycleStatusUpdateChange.valueChangedToLabel).toEqual('Closed');
-		});
-
-		it('displays resolved code list values and direct attributes when attributes are annotated with @changelog', async () => {
-			const adminService = await cds.connect.to('AdminService');
-			const { ChangeView } = adminService.entities;
-
-			// Create new BookStore and Book
-			const bookStoreID = cds.utils.uuid();
-			const bookID = cds.utils.uuid();
-
-			await POST(`/odata/v4/admin/BookStores`, {
-				ID: bookStoreID,
-				name: 'Test BookStore'
-			});
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/books`, {
-				ID: bookID,
-				bookType: {
-					code: 'MAN'
-				}
-			});
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-			const bookTypeChanges = await SELECT.from(ChangeView).where({
-				entity: 'sap.capire.bookshop.Books',
-				entityKey: bookID,
-				attribute: 'bookType'
-			});
-			expect(bookTypeChanges.length).toEqual(1);
-			const bookTypeChange = bookTypeChanges[0];
-			expect(bookTypeChange.modification).toEqual('create');
-			expect(bookTypeChange.valueChangedFromLabel).toEqual(null);
-			expect(bookTypeChange.valueChangedToLabel).toEqual('Management, Management Books');
-			expect(bookTypeChange.parent_ID).not.toBeNull();
-			expect(bookTypeChange.parent_entity).toEqual('sap.capire.bookshop.BookStores');
-			expect(bookTypeChange.parent_entityKey).toEqual(bookStoreID);
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
-
-			await PATCH(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`, {
-				bookType: {
-					code: 'SCI'
-				}
-			});
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-			const bookTypeUpdateChanges = await SELECT.from(ChangeView).where({
-				entity: 'sap.capire.bookshop.Books',
-				entityKey: bookID,
-				attribute: 'bookType',
-				modification: 'update'
-			});
-			expect(bookTypeUpdateChanges.length).toEqual(1);
-
-			const bookTypeUpdateChange = bookTypeUpdateChanges[0];
-			expect(bookTypeUpdateChange.valueChangedFromLabel).toEqual('Management, Management Books');
-			expect(bookTypeUpdateChange.valueChangedToLabel).toEqual('Science, Science Books');
-			expect(bookTypeUpdateChange.parent_ID).not.toBeNull();
-			expect(bookTypeUpdateChange.parent_entity).toEqual('sap.capire.bookshop.BookStores');
-			expect(bookTypeUpdateChange.parent_entityKey).toEqual(bookStoreID);
-		});
-
-		it('displays combined code list values when multiple attributes are annotated with @changelog', async () => {
-			const adminService = await cds.connect.to('AdminService');
-			const { ChangeView } = adminService.entities;
-
-			// Create test data: City with Country, then BookStore referencing the City
-			const cityID = cds.utils.uuid();
-			const countryID = cds.utils.uuid();
-			const bookStoreID = cds.utils.uuid();
-
-			await INSERT.into('sap.capire.bookshop.Country').entries({
-				ID: countryID,
-				countryName_name: 'Test Country',
-				countryName_code: 'TC'
-			});
-
-			await INSERT.into('sap.capire.bookshop.City').entries({
-				ID: cityID,
-				name: 'Test City',
-				country_ID: countryID
-			});
-
-			await POST(`/odata/v4/admin/BookStores`, {
-				ID: bookStoreID,
-				name: 'Test BookStore',
-				location: 'Test Location',
-				city_ID: cityID
-			});
-
-			await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-
-			const cityChanges = await SELECT.from(ChangeView).where({
-				entity: 'sap.capire.bookshop.BookStores',
-				entityKey: bookStoreID,
-				attribute: 'city'
-			});
-			expect(cityChanges.length).toEqual(1);
-			expect(cityChanges[0]).toMatchObject({
-				modification: 'create',
-				valueChangedFromLabel: null,
-				valueChangedToLabel: 'Test Location, Test City, TC'
-			});
-		});
-	});
-
-	describe('Hiding section in draft also works for readonly entities.', () => {
-		it('does not have UI.Hidden on the change tracking facet for non-draft-enabled Incidents', () => {
-			const entity = cds.model.definitions['LocalizationService.Incidents'];
-			const facets = entity['@UI.Facets'];
-			expect(facets).toBeDefined();
-			const changesFacet = facets.find((f) => f.Target?.startsWith('changes/'));
-			expect(changesFacet).toBeDefined();
-			expect(changesFacet).not.toHaveProperty('@UI.Hidden');
-		});
-
-		it('serves $metadata without errors', async () => {
-			const { status, data } = await GET(`/odata/v4/localization/$metadata`);
-			expect(status).toBe(200);
-			expect(data).toContain('Incidents');
-		});
-	});
-
-	describe('does not add duplicate changes facet when @UI.Facets already has one', () => {
-		function countChangesFacets(facets) {
-			let count = 0;
-			for (const f of facets) {
-				if (f.Target?.startsWith('changes/')) count++;
-				if (f.Facets) count += countChangesFacets(f.Facets);
-			}
-			return count;
-		}
-
-		it('when a top-level facet targets changes/@UI.LineItem', () => {
-			const entity = cds.model.definitions['AdminService.BookStores'];
-			const facets = entity['@UI.Facets'];
-			expect(facets).toBeDefined();
-			expect(countChangesFacets(facets)).toBe(1);
-			expect(facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
-		});
-
-		it('when a top-level facet targets changes/@UI.PresentationVariant', () => {
-			const entity = cds.model.definitions['AdminService.Order'];
-			const facets = entity['@UI.Facets'];
-			expect(facets).toBeDefined();
-			expect(countChangesFacets(facets)).toBe(1);
-			expect(facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
-		});
-
-		it('when a nested facet targets changes/@UI.LineItem inside a CollectionFacet', () => {
-			const entity = cds.model.definitions['VariantTesting.RootSample'];
-			const facets = entity['@UI.Facets'];
-			expect(facets).toBeDefined();
-			expect(countChangesFacets(facets)).toBe(1);
-			const collection = facets.find((f) => f.Facets);
-			expect(collection).toBeDefined();
-			expect(collection.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
-		});
-
-		it('when a nested facet targets changes/@UI.PresentationVariant inside a CollectionFacet', () => {
-			const entity = cds.model.definitions['VariantTesting.DifferentFieldTypes'];
-			const facets = entity['@UI.Facets'];
-			expect(facets).toBeDefined();
-			expect(countChangesFacets(facets)).toBe(1);
-			const collection = facets.find((f) => f.Facets);
-			expect(collection).toBeDefined();
-			expect(collection.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
-		});
-
-		it('when a facet is nested three levels deep in CollectionFacets', () => {
-			const entity = cds.model.definitions['VariantTesting.CompositeKeyParent'];
-			const facets = entity['@UI.Facets'];
-			expect(facets).toBeDefined();
-			expect(countChangesFacets(facets)).toBe(1);
-			const level1 = facets.find((f) => f.ID === 'Level1');
-			const level2 = level1.Facets.find((f) => f.ID === 'Level2');
-			const level3 = level2.Facets.find((f) => f.ID === 'Level3');
-			expect(level3.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
-		});
-	});
-
-	describe('service projections with element renames', () => {
-		it('does not conflict when a service renames an element but @changelog annotations are inherited unchanged', async () => {
-			const {
-				data: { ID: incidentID }
-			} = await POST(`odata/v4/localization/Incidents`, {
-				customer_ID: '1004161',
-				title: 'Rename tolerance test',
-				urgency_code: 'M',
-				renamedStatus_code: 'N'
-			});
-
-			// Update status via the renamed element
-			await PATCH(`odata/v4/localization/Incidents(ID=${incidentID})`, {
-				renamedStatus_code: 'R'
-			});
-
-			const {
-				data: { value: changes }
-			} = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`);
-
-			const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
-			expect(statusChange).toBeDefined();
-			expect(statusChange.valueChangedFrom).toEqual('N');
-			expect(statusChange.valueChangedTo).toEqual('R');
-		});
-
-		it('resolves entity-level expression @changelog correctly despite element rename in service projection', async () => {
-			const {
-				data: { ID: incidentID }
-			} = await POST(`odata/v4/localization/Incidents`, {
-				customer_ID: '1004161',
-				title: 'Entity-level expression test',
-				urgency_code: 'M',
-				renamedStatus_code: 'N'
-			});
-
-			await PATCH(`odata/v4/localization/Incidents(ID=${incidentID})`, {
-				renamedStatus_code: 'A'
-			});
-
-			const {
-				data: { value: changes }
-			} = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`);
-
-			// The objectID should be resolved from the entity-level @changelog expression
-			const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
-			expect(statusChange).toBeDefined();
-			expect(statusChange.objectID).toEqual('Stormy Weathers: Munich - Entity-level expression test');
-		});
-	});
+  it('builds objectID from entity keys when explicit @changelog annotation is missing', async () => {
+    const variantSrv = await cds.connect.to('VariantTesting');
+    const { ChangeView } = variantSrv.entities;
+    const parentID = cds.utils.uuid();
+    const childID = cds.utils.uuid();
+
+    await POST(`/odata/v4/variant-testing/TrackingComposition`, {
+      ID: parentID
+    });
+
+    await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+    await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+
+    await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/children`, {
+      ID: childID,
+      title: 'Original Title'
+    });
+
+    await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+    await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=true)/VariantTesting.draftEdit`, {});
+
+    await PATCH(`/odata/v4/variant-testing/ComposedEntities(ID=${childID},IsActiveEntity=false)`, {
+      title: 'New title'
+    });
+
+    await POST(`/odata/v4/variant-testing/TrackingComposition(ID=${parentID},IsActiveEntity=false)/VariantTesting.draftActivate`, {});
+
+    const changes = await SELECT.from(ChangeView).where({
+      modification: 'update',
+      attribute: 'title',
+      entityKey: childID
+    });
+    expect(changes.length).toEqual(1);
+
+    // if object type is localized, use the localized object type as object ID
+    expect(changes[0].entity).toEqual('sap.change_tracking.ComposedEntities');
+    expect(changes[0].entityLabel).toEqual('Book');
+    expect(changes[0].objectID).toEqual(childID);
+
+    const parentChanges = await SELECT.one.from(ChangeView).where({ ID: changes[0].parent_ID }).columns(['entityLabel', 'objectID']);
+    expect(parentChanges.entityLabel).toEqual('Book Store');
+    // Composition-of-many: uses parent entity keys as objectID (no entity-level @changelog on TrackingComposition)
+    expect(parentChanges.objectID).toEqual(parentID);
+  });
+
+  it('builds objectID from entity keys when @changelog annotation is simply set to true', async () => {
+    const adminService = await cds.connect.to('AdminService');
+    const { ChangeView } = adminService.entities;
+
+    // Create new Order
+    const orderID = cds.utils.uuid();
+    await POST(`/odata/v4/admin/Order`, { ID: orderID, title: 'test order' });
+
+    const changes = await SELECT.from(ChangeView).where({
+      modification: 'create',
+      entityKey: orderID
+    });
+    expect(changes.length).toEqual(1);
+    expect(changes[0].objectID).toEqual(orderID);
+  });
+  it('builds objectID from entity fields and associated entity fields when multiple @changelog annotations are used', async () => {
+    const adminService = await cds.connect.to('AdminService');
+    const { ChangeView } = adminService.entities;
+
+    // Create test data: Customer, Order, and OrderItem
+    const customerID = cds.utils.uuid();
+    const orderID = cds.utils.uuid();
+    const orderItemID = cds.utils.uuid();
+
+    await INSERT.into('sap.capire.bookshop.Customers').entries({
+      ID: customerID,
+      name: 'Honda',
+      city: 'Ōsaka',
+      country: 'Japan'
+    });
+
+    await INSERT.into('sap.capire.bookshop.Order').entries({
+      ID: orderID,
+      status: 'Post',
+      customer_ID: customerID
+    });
+
+    await INSERT.into('sap.capire.bookshop.OrderItemWithLongerName').entries({
+      ID: orderItemID,
+      order_ID: orderID,
+      customer_ID: customerID,
+      price: 5,
+      quantity: 10
+    });
+
+    await PATCH(`/odata/v4/admin/OrderItemWithLongerName(ID=${orderItemID})`, {
+      quantity: 14
+    });
+
+    let changes = await SELECT.from(ChangeView).where({
+      modification: 'update',
+      entityKey: orderItemID
+    });
+    expect(changes.length).toEqual(1);
+    const change = changes[0];
+    const IDsegments = change.objectID.split(', ');
+    expect(IDsegments[0]).toEqual('Ōsaka');
+    expect(IDsegments[1]).toEqual('Post');
+    expect(Number(IDsegments[2])).toEqual(5);
+    expect(Number(IDsegments[3])).toEqual(14);
+  });
+
+  it('builds objectID from multiple entity fields when @changelog lists several attributes', async () => {
+    const adminService = await cds.connect.to('AdminService');
+    const { ChangeView } = adminService.entities;
+
+    // Create test data: Author
+    const authorID = cds.utils.uuid();
+    await INSERT.into('sap.capire.bookshop.AuthorsWithLongerChangelog').entries({
+      ID: authorID,
+      name_firstName: 'Emily',
+      name_lastName: 'Brontë',
+      placeOfBirth: 'Thornton, Yorkshire',
+      placeOfDeath: 'Haworth, Yorkshire',
+      dateOfBirth: '1818-07-30',
+      dateOfDeath: '1848-12-19'
+    });
+
+    await PATCH(`/odata/v4/admin/AuthorsWithLongerChangelog(ID=${authorID})`, {
+      placeOfBirth: 'new placeOfBirth'
+    });
+
+    const changes = await SELECT.from(ChangeView).where({
+      modification: 'update',
+      entityKey: authorID
+    });
+    expect(changes.length).toEqual(1);
+    expect(changes[0].objectID).toEqual('new placeOfBirth, Emily, Brontë, Haworth, Yorkshire, 1848-12-19, 1818-07-30');
+  });
+
+  it('builds objectID from non-null fields when some @changelog objectID fields are null', async () => {
+    const adminService = await cds.connect.to('AdminService');
+    const { ChangeView } = adminService.entities;
+
+    // Create author with some objectID fields left NULL (dateOfDeath, placeOfDeath)
+    const authorID = cds.utils.uuid();
+    await INSERT.into('sap.capire.bookshop.AuthorsWithLongerChangelog').entries({
+      ID: authorID,
+      name_firstName: 'Emily',
+      name_lastName: 'Brontë',
+      placeOfBirth: 'Thornton',
+      dateOfBirth: '1818-07-30'
+      // dateOfDeath and placeOfDeath intentionally omitted (NULL)
+    });
+
+    await PATCH(`/odata/v4/admin/AuthorsWithLongerChangelog(ID=${authorID})`, {
+      placeOfBirth: 'updated placeOfBirth'
+    });
+
+    const changes = await SELECT.from(ChangeView).where({
+      modification: 'update',
+      entityKey: authorID
+    });
+    expect(changes.length).toEqual(1);
+    expect(changes[0].objectID).toEqual('updated placeOfBirth, Emily, Brontë, <empty>, <empty>, 1818-07-30');
+  });
+
+  // REVISIT: db-services only puts the root query of a deep query first
+  it('resolves objectID through chained associations to parent entities', async () => {
+    const variantSrv = await cds.connect.to('VariantTesting');
+    const { ChangeView } = variantSrv.entities;
+
+    const lvl1ID = cds.utils.uuid();
+    const lvl2ID = cds.utils.uuid();
+    const { data: newRoot } = await POST(`/odata/v4/variant-testing/RootSample`, {
+      ID: cds.utils.uuid(),
+      title: 'RootSample title',
+      children: [
+        {
+          ID: lvl1ID,
+          title: 'Level1Sample title',
+          children: [
+            {
+              ID: lvl2ID,
+              title: 'Level2Sample title'
+            }
+          ]
+        }
+      ]
+    });
+
+    const createChanges = await SELECT.from(ChangeView).where({
+      modification: 'create',
+      entityKey: [newRoot.ID, lvl1ID, lvl2ID]
+    });
+    expect(createChanges.length).toEqual(5);
+    expect(createChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'title').objectID).toEqual(`${newRoot.ID}, RootSample title`);
+    // expect(createChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children').objectID).toEqual(`${newRoot.ID}, RootSample title`);
+    expect(createChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title').objectID).toEqual(`${lvl1ID}, Level1Sample title, ${newRoot.ID}`);
+    // expect(createChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'children').objectID).toEqual(`${newRoot.ID}, RootSample title`);
+    //expect(createChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, Level2Sample title, ${newRoot.ID}`);
+
+    await PATCH(`/odata/v4/variant-testing/RootSample(ID=${newRoot.ID})`, {
+      title: 'new RootSample title',
+      children: [
+        {
+          ID: lvl1ID,
+          title: 'new Level1Sample title',
+          children: [
+            {
+              ID: lvl2ID,
+              title: 'new Level2Sample title'
+            }
+          ]
+        }
+      ]
+    });
+
+    const updateChanges = await SELECT.from(ChangeView).where({
+      modification: 'update',
+      entityKey: [newRoot.ID, lvl1ID, lvl2ID]
+    });
+    expect(updateChanges.length).toEqual(5);
+    expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'title').objectID).toEqual(`${newRoot.ID}, new RootSample title`);
+    // expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children').objectID).toEqual(`${newRoot.ID}, new RootSample title`);
+    expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
+    // expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'children').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
+    //expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, new Level2Sample title, ${newRoot.ID}`);
+
+    await DELETE(`/odata/v4/variant-testing/Level2Sample(ID=${lvl2ID})`);
+    await DELETE(`/odata/v4/variant-testing/Level1Sample(ID=${lvl1ID})`);
+
+    const deleteChanges = await SELECT.from(ChangeView).where({
+      modification: 'delete',
+      entityKey: [newRoot.ID, lvl1ID, lvl2ID]
+    });
+    expect(deleteChanges.length).toEqual(3); // +1 for RootSample.children composition entry (RootSample is a composition child of GrandRootSample)
+    //expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
+    //expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, new Level2Sample title, ${newRoot.ID}`);
+  });
+
+  it('records data type and resolves display values for association fields annotated with @changelog', async () => {
+    const adminService = await cds.connect.to('AdminService');
+    const { ChangeView } = adminService.entities;
+    const bookStoreID = cds.utils.uuid();
+    const bookID = cds.utils.uuid();
+
+    await POST(`/odata/v4/admin/BookStores`, {
+      ID: bookStoreID,
+      name: 'Test BookStore'
+    });
+
+    await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+    await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+
+    await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/books`, {
+      ID: bookID,
+      authorWithAssocObjectID_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
+      author_ID: 'd4d4a1b3-5b83-4814-8a20-f039af6f0387',
+      title: 'test title'
+    });
+
+    await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+    // valueDataType field only appears in db table Changes
+    // there are no localization features for table Changes
+    const authorChangesInDb = await SELECT.from(ChangeView).where({
+      entity: 'sap.capire.bookshop.Books',
+      entityKey: bookID,
+      attribute: 'authorWithAssocObjectID',
+      modification: 'create'
+    });
+    expect(authorChangesInDb.length).toEqual(1);
+
+    const authorChangeInDb = authorChangesInDb[0];
+    expect(authorChangeInDb.valueChangedFromLabel).toEqual(null);
+    expect(authorChangeInDb.valueChangedToLabel).toEqual('Emily, 1818-07-30, Brontë');
+    expect(authorChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.Date, cds.String
+
+    await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+
+    await PATCH(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`, {
+      author_ID: '47f97f40-4f41-488a-b10b-a5725e762d5e'
+    });
+
+    await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+    // valueDataType field only appears in db table Changes
+    // there are no localization features for table Changes
+    const authorUpdateChangesInDb = await SELECT.from(ChangeView).where({
+      entity: 'sap.capire.bookshop.Books',
+      entityKey: bookID,
+      attribute: 'author',
+      modification: 'update'
+    });
+    expect(authorUpdateChangesInDb.length).toEqual(1);
+
+    const authorUpdateChangeInDb = authorUpdateChangesInDb[0];
+    expect(authorUpdateChangeInDb.valueChangedFromLabel).toEqual('Emily, Brontë');
+    expect(authorUpdateChangeInDb.valueChangedToLabel).toEqual('Charlotte, Brontë');
+    expect(authorUpdateChangeInDb.valueDataType).toEqual('cds.Association'); // breaking chage, should be cds.String, cds.String based on the annotation (but also only for associations, not for normal values)
+  });
+
+  it('records data type and resolves display values for composition fields annotated with @changelog', async () => {
+    const adminService = await cds.connect.to('AdminService');
+    const { ChangeView } = adminService.entities;
+
+    // Create test data: Customer, Order, and OrderItem
+    const customerID = cds.utils.uuid();
+    const orderItemID = cds.utils.uuid();
+
+    await INSERT.into('sap.capire.bookshop.Customers').entries({
+      ID: customerID,
+      name: 'Honda',
+      city: 'Ōsaka',
+      country: 'Japan'
+    });
+
+    await INSERT.into('sap.capire.bookshop.OrderItemWithLongerName').entries({
+      ID: orderItemID,
+      price: 5,
+      quantity: 10
+    });
+
+    await PATCH(`/odata/v4/admin/OrderItemWithLongerName(ID=${orderItemID})`, {
+      customer_ID: customerID
+    });
+
+    // valueDataType field only appears in db table Changes
+    // there are no localization features for table Changes
+    const changesInDb = await SELECT.from(ChangeView).where({
+      entity: 'sap.capire.bookshop.OrderItemWithLongerName',
+      attribute: 'customer',
+      modification: 'update',
+      entityKey: orderItemID
+    });
+
+    expect(changesInDb.length).toEqual(1);
+    expect(changesInDb[0].valueChangedFromLabel).toEqual(null);
+    expect(changesInDb[0].valueChangedToLabel).toEqual('Japan, Honda, Ōsaka');
+    expect(changesInDb[0].valueDataType).toEqual('cds.Association');
+  });
+
+  it('excludes fields annotated with @PersonalData from change tracking', async () => {
+    const testingSRV = await cds.connect.to('VariantTesting');
+    const { ChangeView, DifferentFieldTypes } = testingSRV.entities;
+    const ID = cds.utils.uuid();
+    await INSERT.into(DifferentFieldTypes).entries({
+      ID,
+      dppField1: 'John Doe',
+      dppField2: 'John Doe',
+      dppField3: 'Controller-123'
+    });
+
+    // @PersonalData.IsPotentiallyPersonal and @PersonalData.IsPotentiallySensitive must be ignored
+    const ignoredChanges = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.DifferentFieldTypes',
+      entityKey: ID,
+      attribute: { in: ['dppField1', 'dppField2'] }
+    });
+    expect(ignoredChanges.length).toEqual(0);
+
+    // @PersonalData.FieldSemantics must still be tracked (e.g. DataSubjectID, PurposeID, EndOfBusinessDate)
+    const trackedChanges = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.DifferentFieldTypes',
+      entityKey: ID,
+      attribute: 'dppField3'
+    });
+    expect(trackedChanges.length).toEqual(1);
+  });
+
+  describe('Code lists resolution', () => {
+    it('displays human-readable code list name when single attribute is annotated with @changelog', async () => {
+      const adminService = await cds.connect.to('AdminService');
+      const { ChangeView } = adminService.entities;
+
+      // Create new BookStore with lifecycle status
+      const bookStoreID = cds.utils.uuid();
+
+      await POST(`/odata/v4/admin/BookStores`, {
+        ID: bookStoreID,
+        name: 'test name'
+      });
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      const lifecycleStatusChanges = await SELECT.from(ChangeView).where({
+        entity: 'sap.capire.bookshop.BookStores',
+        attribute: 'lifecycleStatus',
+        entityKey: bookStoreID
+      });
+      expect(lifecycleStatusChanges.length).toEqual(1);
+
+      const lifecycleStatusChange = lifecycleStatusChanges[0];
+      expect(lifecycleStatusChange.modification).toEqual('create');
+      expect(lifecycleStatusChange.valueChangedFromLabel).toEqual(null);
+      expect(lifecycleStatusChange.valueChangedToLabel).toEqual('In Preparation');
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+
+      await PATCH(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)`, {
+        lifecycleStatus: {
+          code: 'CL'
+        }
+      });
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      const lifecycleStatusUpdateChanges = await SELECT.from(ChangeView).where({
+        entity: 'sap.capire.bookshop.BookStores',
+        attribute: 'lifecycleStatus',
+        modification: 'update',
+        entityKey: bookStoreID
+      });
+      expect(lifecycleStatusUpdateChanges.length).toEqual(1);
+
+      const lifecycleStatusUpdateChange = lifecycleStatusUpdateChanges[0];
+      expect(lifecycleStatusUpdateChange.modification).toEqual('update');
+      expect(lifecycleStatusUpdateChange.valueChangedFromLabel).toEqual('In Preparation');
+      expect(lifecycleStatusUpdateChange.valueChangedToLabel).toEqual('Closed');
+    });
+
+    it('displays resolved code list values and direct attributes when attributes are annotated with @changelog', async () => {
+      const adminService = await cds.connect.to('AdminService');
+      const { ChangeView } = adminService.entities;
+
+      // Create new BookStore and Book
+      const bookStoreID = cds.utils.uuid();
+      const bookID = cds.utils.uuid();
+
+      await POST(`/odata/v4/admin/BookStores`, {
+        ID: bookStoreID,
+        name: 'Test BookStore'
+      });
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/books`, {
+        ID: bookID,
+        bookType: {
+          code: 'MAN'
+        }
+      });
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      const bookTypeChanges = await SELECT.from(ChangeView).where({
+        entity: 'sap.capire.bookshop.Books',
+        entityKey: bookID,
+        attribute: 'bookType'
+      });
+      expect(bookTypeChanges.length).toEqual(1);
+      const bookTypeChange = bookTypeChanges[0];
+      expect(bookTypeChange.modification).toEqual('create');
+      expect(bookTypeChange.valueChangedFromLabel).toEqual(null);
+      expect(bookTypeChange.valueChangedToLabel).toEqual('Management, Management Books');
+      expect(bookTypeChange.parent_ID).not.toBeNull();
+      expect(bookTypeChange.parent_entity).toEqual('sap.capire.bookshop.BookStores');
+      expect(bookTypeChange.parent_entityKey).toEqual(bookStoreID);
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+
+      await PATCH(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`, {
+        bookType: {
+          code: 'SCI'
+        }
+      });
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      const bookTypeUpdateChanges = await SELECT.from(ChangeView).where({
+        entity: 'sap.capire.bookshop.Books',
+        entityKey: bookID,
+        attribute: 'bookType',
+        modification: 'update'
+      });
+      expect(bookTypeUpdateChanges.length).toEqual(1);
+
+      const bookTypeUpdateChange = bookTypeUpdateChanges[0];
+      expect(bookTypeUpdateChange.valueChangedFromLabel).toEqual('Management, Management Books');
+      expect(bookTypeUpdateChange.valueChangedToLabel).toEqual('Science, Science Books');
+      expect(bookTypeUpdateChange.parent_ID).not.toBeNull();
+      expect(bookTypeUpdateChange.parent_entity).toEqual('sap.capire.bookshop.BookStores');
+      expect(bookTypeUpdateChange.parent_entityKey).toEqual(bookStoreID);
+    });
+
+    it('displays combined code list values when multiple attributes are annotated with @changelog', async () => {
+      const adminService = await cds.connect.to('AdminService');
+      const { ChangeView } = adminService.entities;
+
+      // Create test data: City with Country, then BookStore referencing the City
+      const cityID = cds.utils.uuid();
+      const countryID = cds.utils.uuid();
+      const bookStoreID = cds.utils.uuid();
+
+      await INSERT.into('sap.capire.bookshop.Country').entries({
+        ID: countryID,
+        countryName_name: 'Test Country',
+        countryName_code: 'TC'
+      });
+
+      await INSERT.into('sap.capire.bookshop.City').entries({
+        ID: cityID,
+        name: 'Test City',
+        country_ID: countryID
+      });
+
+      await POST(`/odata/v4/admin/BookStores`, {
+        ID: bookStoreID,
+        name: 'Test BookStore',
+        location: 'Test Location',
+        city_ID: cityID
+      });
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      const cityChanges = await SELECT.from(ChangeView).where({
+        entity: 'sap.capire.bookshop.BookStores',
+        entityKey: bookStoreID,
+        attribute: 'city'
+      });
+      expect(cityChanges.length).toEqual(1);
+      expect(cityChanges[0]).toMatchObject({
+        modification: 'create',
+        valueChangedFromLabel: null,
+        valueChangedToLabel: 'Test Location, Test City, TC'
+      });
+    });
+  });
+
+  describe('Hiding section in draft also works for readonly entities.', () => {
+    it('does not have UI.Hidden on the change tracking facet for non-draft-enabled Incidents', () => {
+      const entity = cds.model.definitions['LocalizationService.Incidents'];
+      const facets = entity['@UI.Facets'];
+      expect(facets).toBeDefined();
+      const changesFacet = facets.find((f) => f.Target?.startsWith('changes/'));
+      expect(changesFacet).toBeDefined();
+      expect(changesFacet).not.toHaveProperty('@UI.Hidden');
+    });
+
+    it('serves $metadata without errors', async () => {
+      const { status, data } = await GET(`/odata/v4/localization/$metadata`);
+      expect(status).toBe(200);
+      expect(data).toContain('Incidents');
+    });
+  });
+
+  describe('does not add duplicate changes facet when @UI.Facets already has one', () => {
+    function countChangesFacets(facets) {
+      let count = 0;
+      for (const f of facets) {
+        if (f.Target?.startsWith('changes/')) count++;
+        if (f.Facets) count += countChangesFacets(f.Facets);
+      }
+      return count;
+    }
+
+    it('when a top-level facet targets changes/@UI.LineItem', () => {
+      const entity = cds.model.definitions['AdminService.BookStores'];
+      const facets = entity['@UI.Facets'];
+      expect(facets).toBeDefined();
+      expect(countChangesFacets(facets)).toBe(1);
+      expect(facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+    });
+
+    it('when a top-level facet targets changes/@UI.PresentationVariant', () => {
+      const entity = cds.model.definitions['AdminService.Order'];
+      const facets = entity['@UI.Facets'];
+      expect(facets).toBeDefined();
+      expect(countChangesFacets(facets)).toBe(1);
+      expect(facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+    });
+
+    it('when a nested facet targets changes/@UI.LineItem inside a CollectionFacet', () => {
+      const entity = cds.model.definitions['VariantTesting.RootSample'];
+      const facets = entity['@UI.Facets'];
+      expect(facets).toBeDefined();
+      expect(countChangesFacets(facets)).toBe(1);
+      const collection = facets.find((f) => f.Facets);
+      expect(collection).toBeDefined();
+      expect(collection.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+    });
+
+    it('when a nested facet targets changes/@UI.PresentationVariant inside a CollectionFacet', () => {
+      const entity = cds.model.definitions['VariantTesting.DifferentFieldTypes'];
+      const facets = entity['@UI.Facets'];
+      expect(facets).toBeDefined();
+      expect(countChangesFacets(facets)).toBe(1);
+      const collection = facets.find((f) => f.Facets);
+      expect(collection).toBeDefined();
+      expect(collection.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+    });
+
+    it('when a facet is nested three levels deep in CollectionFacets', () => {
+      const entity = cds.model.definitions['VariantTesting.CompositeKeyParent'];
+      const facets = entity['@UI.Facets'];
+      expect(facets).toBeDefined();
+      expect(countChangesFacets(facets)).toBe(1);
+      const level1 = facets.find((f) => f.ID === 'Level1');
+      const level2 = level1.Facets.find((f) => f.ID === 'Level2');
+      const level3 = level2.Facets.find((f) => f.ID === 'Level3');
+      expect(level3.Facets.find((f) => f.Target?.startsWith('changes/')).ID).toBe('CustomChangesFacet');
+    });
+  });
+
+  describe('service projections with element renames', () => {
+    it('does not conflict when a service renames an element but @changelog annotations are inherited unchanged', async () => {
+      const {
+        data: { ID: incidentID }
+      } = await POST(`odata/v4/localization/Incidents`, {
+        customer_ID: '1004161',
+        title: 'Rename tolerance test',
+        urgency_code: 'M',
+        renamedStatus_code: 'N'
+      });
+
+      // Update status via the renamed element
+      await PATCH(`odata/v4/localization/Incidents(ID=${incidentID})`, {
+        renamedStatus_code: 'R'
+      });
+
+      const {
+        data: { value: changes }
+      } = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`);
+
+      const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
+      expect(statusChange).toBeDefined();
+      expect(statusChange.valueChangedFrom).toEqual('N');
+      expect(statusChange.valueChangedTo).toEqual('R');
+    });
+
+    it('resolves entity-level expression @changelog correctly despite element rename in service projection', async () => {
+      const {
+        data: { ID: incidentID }
+      } = await POST(`odata/v4/localization/Incidents`, {
+        customer_ID: '1004161',
+        title: 'Entity-level expression test',
+        urgency_code: 'M',
+        renamedStatus_code: 'N'
+      });
+
+      await PATCH(`odata/v4/localization/Incidents(ID=${incidentID})`, {
+        renamedStatus_code: 'A'
+      });
+
+      const {
+        data: { value: changes }
+      } = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`);
+
+      // The objectID should be resolved from the entity-level @changelog expression
+      const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
+      expect(statusChange).toBeDefined();
+      expect(statusChange.objectID).toEqual('Stormy Weathers: Munich - Entity-level expression test');
+    });
+  });
 });
