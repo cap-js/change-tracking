@@ -1,0 +1,46 @@
+TRIGGER SAP_CAPIRE_INCIDENTS_INCIDENTS_CT_UPDATE AFTER UPDATE OF customer_ID, status_code, statusExpr_code, "DATE", "DATETIME", datetimeWTimeZone, datetimeWDynamicTimeZone, "TIME", "TIMESTAMP", decimalProp 
+ON SAP_CAPIRE_INCIDENTS_INCIDENTS
+REFERENCING NEW ROW new, OLD ROW old
+BEGIN
+	IF (COALESCE(SESSION_CONTEXT('ct.skip'), 'false') != 'true' AND COALESCE(SESSION_CONTEXT('ct.skip_entity.sap_capire_incidents_Incidents'), 'false') != 'true') THEN
+		INSERT INTO SAP_CHANGELOG_CHANGES
+		(ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+		SELECT
+			SYSUUID,
+			null,
+			attribute,
+			valueChangedFrom,
+			valueChangedTo,
+			valueChangedFromLabel,
+			valueChangedToLabel,
+			'sap.capire.incidents.Incidents',
+			TO_NVARCHAR(:new.ID),
+			COALESCE(TO_NVARCHAR((SELECT "$C".firstName || ' ' || "$C".lastName as value FROM sap_capire_incidents_Customers as "$C" WHERE "$C".ID = :new.customer_ID LIMIT 1) || ': ' || (SELECT address.city as value FROM sap_capire_incidents_Customers as "$C" left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = "$C".ID WHERE "$C".ID = :new.customer_ID LIMIT 1) || ' - ' || :new.title), TO_NVARCHAR(:new.ID)),
+			CURRENT_TIMESTAMP,
+			SESSION_CONTEXT('APPLICATIONUSER'),
+			valueDataType,
+			'update',
+			CURRENT_UPDATE_TRANSACTION()
+		FROM (
+			SELECT 'customer' AS attribute, TO_NVARCHAR(:old.customer_ID) AS valueChangedFrom, TO_NVARCHAR(:new.customer_ID) AS valueChangedTo, (SELECT "$C".firstName || ' ' || "$C".lastName as name FROM sap_capire_incidents_Customers as "$C" WHERE "$C".ID = :old.customer_ID LIMIT 1) AS valueChangedFromLabel, (SELECT "$C".firstName || ' ' || "$C".lastName as name FROM sap_capire_incidents_Customers as "$C" WHERE "$C".ID = :new.customer_ID LIMIT 1) AS valueChangedToLabel, 'cds.Association' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.customer_ID <> :new.customer_ID OR :old.customer_ID IS NULL OR :new.customer_ID IS NULL) AND NOT (:old.customer_ID IS NULL AND :new.customer_ID IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.customer'), 'false') != 'true'
+UNION ALL
+SELECT 'status' AS attribute, TO_NVARCHAR(:old.status_code) AS valueChangedFrom, TO_NVARCHAR(:new.status_code) AS valueChangedTo, COALESCE((SELECT "$T".descr FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :old.status_code and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :old.status_code LIMIT 1)) AS valueChangedFromLabel, COALESCE((SELECT "$T".descr FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :new.status_code and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :new.status_code LIMIT 1)) AS valueChangedToLabel, 'cds.Association' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.status_code <> :new.status_code OR :old.status_code IS NULL OR :new.status_code IS NULL) AND NOT (:old.status_code IS NULL AND :new.status_code IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.status'), 'false') != 'true'
+UNION ALL
+SELECT 'statusExpr' AS attribute, TO_NVARCHAR(:old.statusExpr_code) AS valueChangedFrom, TO_NVARCHAR(:new.statusExpr_code) AS valueChangedTo, COALESCE((SELECT "$T".descr FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :old.statusExpr_code and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :old.statusExpr_code LIMIT 1)) AS valueChangedFromLabel, COALESCE((SELECT "$T".descr FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :new.statusExpr_code and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :new.statusExpr_code LIMIT 1)) AS valueChangedToLabel, 'cds.Association' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.statusExpr_code <> :new.statusExpr_code OR :old.statusExpr_code IS NULL OR :new.statusExpr_code IS NULL) AND NOT (:old.statusExpr_code IS NULL AND :new.statusExpr_code IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.statusExpr'), 'false') != 'true'
+UNION ALL
+SELECT 'date' AS attribute, TO_NVARCHAR(:old."DATE") AS valueChangedFrom, TO_NVARCHAR(:new."DATE") AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.Date' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old."DATE" <> :new."DATE" OR :old."DATE" IS NULL OR :new."DATE" IS NULL) AND NOT (:old."DATE" IS NULL AND :new."DATE" IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.date'), 'false') != 'true'
+UNION ALL
+SELECT 'datetime' AS attribute, TO_NVARCHAR(:old."DATETIME") AS valueChangedFrom, TO_NVARCHAR(:new."DATETIME") AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.DateTime' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old."DATETIME" <> :new."DATETIME" OR :old."DATETIME" IS NULL OR :new."DATETIME" IS NULL) AND NOT (:old."DATETIME" IS NULL AND :new."DATETIME" IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.datetime'), 'false') != 'true'
+UNION ALL
+SELECT 'datetimeWTimeZone' AS attribute, TO_NVARCHAR(:old.datetimeWTimeZone) AS valueChangedFrom, TO_NVARCHAR(:new.datetimeWTimeZone) AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.DateTime' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.datetimeWTimeZone <> :new.datetimeWTimeZone OR :old.datetimeWTimeZone IS NULL OR :new.datetimeWTimeZone IS NULL) AND NOT (:old.datetimeWTimeZone IS NULL AND :new.datetimeWTimeZone IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.datetimeWTimeZone'), 'false') != 'true'
+UNION ALL
+SELECT 'datetimeWDynamicTimeZone' AS attribute, TO_NVARCHAR(:old.datetimeWDynamicTimeZone) AS valueChangedFrom, TO_NVARCHAR(:new.datetimeWDynamicTimeZone) AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.DateTime' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.datetimeWDynamicTimeZone <> :new.datetimeWDynamicTimeZone OR :old.datetimeWDynamicTimeZone IS NULL OR :new.datetimeWDynamicTimeZone IS NULL) AND NOT (:old.datetimeWDynamicTimeZone IS NULL AND :new.datetimeWDynamicTimeZone IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.datetimeWDynamicTimeZone'), 'false') != 'true'
+UNION ALL
+SELECT 'time' AS attribute, TO_NVARCHAR(:old."TIME") AS valueChangedFrom, TO_NVARCHAR(:new."TIME") AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.Time' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old."TIME" <> :new."TIME" OR :old."TIME" IS NULL OR :new."TIME" IS NULL) AND NOT (:old."TIME" IS NULL AND :new."TIME" IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.time'), 'false') != 'true'
+UNION ALL
+SELECT 'timestamp' AS attribute, TO_NVARCHAR(:old."TIMESTAMP") AS valueChangedFrom, TO_NVARCHAR(:new."TIMESTAMP") AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.Timestamp' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old."TIMESTAMP" <> :new."TIMESTAMP" OR :old."TIMESTAMP" IS NULL OR :new."TIMESTAMP" IS NULL) AND NOT (:old."TIMESTAMP" IS NULL AND :new."TIMESTAMP" IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.timestamp'), 'false') != 'true'
+UNION ALL
+SELECT 'decimalProp' AS attribute, TO_NVARCHAR(:old.decimalProp) AS valueChangedFrom, TO_NVARCHAR(:new.decimalProp) AS valueChangedTo, TO_NVARCHAR(:old.decimalProp * 2) AS valueChangedFromLabel, TO_NVARCHAR(:new.decimalProp * 2) AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.decimalProp <> :new.decimalProp OR :old.decimalProp IS NULL OR :new.decimalProp IS NULL) AND NOT (:old.decimalProp IS NULL AND :new.decimalProp IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents.decimalProp'), 'false') != 'true'
+		);
+	END IF;
+END;

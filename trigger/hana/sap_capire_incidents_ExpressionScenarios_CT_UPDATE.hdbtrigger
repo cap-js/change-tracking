@@ -1,0 +1,36 @@
+TRIGGER SAP_CAPIRE_INCIDENTS_EXPRESSIONSCENARIOS_CT_UPDATE AFTER UPDATE OF firstName, lastName, price, decimalProp, status_code 
+ON SAP_CAPIRE_INCIDENTS_EXPRESSIONSCENARIOS
+REFERENCING NEW ROW new, OLD ROW old
+BEGIN
+	IF (COALESCE(SESSION_CONTEXT('ct.skip'), 'false') != 'true' AND COALESCE(SESSION_CONTEXT('ct.skip_entity.sap_capire_incidents_ExpressionScenarios'), 'false') != 'true') THEN
+		INSERT INTO SAP_CHANGELOG_CHANGES
+		(ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+		SELECT
+			SYSUUID,
+			null,
+			attribute,
+			valueChangedFrom,
+			valueChangedTo,
+			valueChangedFromLabel,
+			valueChangedToLabel,
+			'sap.capire.incidents.ExpressionScenarios',
+			TO_NVARCHAR(:new.ID),
+			COALESCE(TO_NVARCHAR(:new.firstName || ' ' || :new.lastName), TO_NVARCHAR(:new.ID)),
+			CURRENT_TIMESTAMP,
+			SESSION_CONTEXT('APPLICATIONUSER'),
+			valueDataType,
+			'update',
+			CURRENT_UPDATE_TRANSACTION()
+		FROM (
+			SELECT 'firstName' AS attribute, CASE WHEN LENGTH(:old.firstName) > 5000 THEN LEFT(:old.firstName, 4997) || '...' ELSE :old.firstName END AS valueChangedFrom, CASE WHEN LENGTH(:new.firstName) > 5000 THEN LEFT(:new.firstName, 4997) || '...' ELSE :new.firstName END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.firstName <> :new.firstName OR :old.firstName IS NULL OR :new.firstName IS NULL) AND NOT (:old.firstName IS NULL AND :new.firstName IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_ExpressionScenarios.firstName'), 'false') != 'true'
+UNION ALL
+SELECT 'lastName' AS attribute, CASE WHEN LENGTH(:old.lastName) > 5000 THEN LEFT(:old.lastName, 4997) || '...' ELSE :old.lastName END AS valueChangedFrom, CASE WHEN LENGTH(:new.lastName) > 5000 THEN LEFT(:new.lastName, 4997) || '...' ELSE :new.lastName END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.lastName <> :new.lastName OR :old.lastName IS NULL OR :new.lastName IS NULL) AND NOT (:old.lastName IS NULL AND :new.lastName IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_ExpressionScenarios.lastName'), 'false') != 'true'
+UNION ALL
+SELECT 'price' AS attribute, TO_NVARCHAR(:old.price) AS valueChangedFrom, TO_NVARCHAR(:new.price) AS valueChangedTo, TO_NVARCHAR(case when :old.price < 100 then 'Budget' else 'Premium' end) AS valueChangedFromLabel, TO_NVARCHAR(case when :new.price < 100 then 'Budget' else 'Premium' end) AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.price <> :new.price OR :old.price IS NULL OR :new.price IS NULL) AND NOT (:old.price IS NULL AND :new.price IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_ExpressionScenarios.price'), 'false') != 'true'
+UNION ALL
+SELECT 'decimalProp' AS attribute, TO_NVARCHAR(:old.decimalProp) AS valueChangedFrom, TO_NVARCHAR(:new.decimalProp) AS valueChangedTo, TO_NVARCHAR(:old.decimalProp * 2) AS valueChangedFromLabel, TO_NVARCHAR(:new.decimalProp * 2) AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.decimalProp <> :new.decimalProp OR :old.decimalProp IS NULL OR :new.decimalProp IS NULL) AND NOT (:old.decimalProp IS NULL AND :new.decimalProp IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_ExpressionScenarios.decimalProp'), 'false') != 'true'
+UNION ALL
+SELECT 'status' AS attribute, TO_NVARCHAR(:old.status_code) AS valueChangedFrom, TO_NVARCHAR(:new.status_code) AS valueChangedTo, TO_NVARCHAR(:old.status_code || ': ' || (SELECT "$S".descr as value FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :old.status_code LIMIT 1)) AS valueChangedFromLabel, TO_NVARCHAR(:new.status_code || ': ' || (SELECT "$S".descr as value FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :new.status_code LIMIT 1)) AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.status_code <> :new.status_code OR :old.status_code IS NULL OR :new.status_code IS NULL) AND NOT (:old.status_code IS NULL AND :new.status_code IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_ExpressionScenarios.status'), 'false') != 'true'
+		);
+	END IF;
+END;

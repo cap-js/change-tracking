@@ -1,0 +1,36 @@
+TRIGGER SAP_CAPIRE_INCIDENTS_DYNAMICLOCALIZATIONSCENARIOS_CT_UPDATE AFTER UPDATE OF status1_code, status2_code, status3_code, status3_code2, status4 
+ON SAP_CAPIRE_INCIDENTS_DYNAMICLOCALIZATIONSCENARIOS
+REFERENCING NEW ROW new, OLD ROW old
+BEGIN
+	IF (COALESCE(SESSION_CONTEXT('ct.skip'), 'false') != 'true' AND COALESCE(SESSION_CONTEXT('ct.skip_entity.sap_capire_incidents_DynamicLocalizationScenarios'), 'false') != 'true') THEN
+		INSERT INTO SAP_CHANGELOG_CHANGES
+		(ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+		SELECT
+			SYSUUID,
+			null,
+			attribute,
+			valueChangedFrom,
+			valueChangedTo,
+			valueChangedFromLabel,
+			valueChangedToLabel,
+			'sap.capire.incidents.DynamicLocalizationScenarios',
+			TO_NVARCHAR(:new.ID),
+			TO_NVARCHAR(:new.ID),
+			CURRENT_TIMESTAMP,
+			SESSION_CONTEXT('APPLICATIONUSER'),
+			valueDataType,
+			'update',
+			CURRENT_UPDATE_TRANSACTION()
+		FROM (
+			SELECT 'status1' AS attribute, TO_NVARCHAR(:old.status1_code) AS valueChangedFrom, TO_NVARCHAR(:new.status1_code) AS valueChangedTo, COALESCE((SELECT "$T".descr || ', ' || "$T".code as value FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :old.status1_code and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr || ', ' || "$S".code as value FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :old.status1_code LIMIT 1)) AS valueChangedFromLabel, COALESCE((SELECT "$T".descr || ', ' || "$T".code as value FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :new.status1_code and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr || ', ' || "$S".code as value FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :new.status1_code LIMIT 1)) AS valueChangedToLabel, 'cds.Association' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.status1_code <> :new.status1_code OR :old.status1_code IS NULL OR :new.status1_code IS NULL) AND NOT (:old.status1_code IS NULL AND :new.status1_code IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_DynamicLocalizationScenarios.status1'), 'false') != 'true'
+UNION ALL
+SELECT 'status2' AS attribute, TO_NVARCHAR(:old.status2_code) AS valueChangedFrom, TO_NVARCHAR(:new.status2_code) AS valueChangedTo, COALESCE((SELECT "$T".descr FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :old.status2_code and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :old.status2_code LIMIT 1)) AS valueChangedFromLabel, COALESCE((SELECT "$T".descr FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :new.status2_code and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :new.status2_code LIMIT 1)) AS valueChangedToLabel, 'cds.Association' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.status2_code <> :new.status2_code OR :old.status2_code IS NULL OR :new.status2_code IS NULL) AND NOT (:old.status2_code IS NULL AND :new.status2_code IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_DynamicLocalizationScenarios.status2'), 'false') != 'true'
+UNION ALL
+SELECT 'status3' AS attribute, TO_NVARCHAR(:old.status3_code) || ' ' || TO_NVARCHAR(:old.status3_code2) AS valueChangedFrom, TO_NVARCHAR(:new.status3_code) || ' ' || TO_NVARCHAR(:new.status3_code2) AS valueChangedTo, COALESCE((SELECT "$T".name FROM sap_capire_incidents_VHWithMultiKey_texts as "$T" WHERE "$T".code = :old.status3_code and "$T".code2 = :old.status3_code2 and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$V".name FROM sap_capire_incidents_VHWithMultiKey as "$V" WHERE "$V".code = :old.status3_code and "$V".code2 = :old.status3_code2 LIMIT 1)) AS valueChangedFromLabel, COALESCE((SELECT "$T".name FROM sap_capire_incidents_VHWithMultiKey_texts as "$T" WHERE "$T".code = :new.status3_code and "$T".code2 = :new.status3_code2 and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$V".name FROM sap_capire_incidents_VHWithMultiKey as "$V" WHERE "$V".code = :new.status3_code and "$V".code2 = :new.status3_code2 LIMIT 1)) AS valueChangedToLabel, 'cds.Association' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.status3_code <> :new.status3_code OR :old.status3_code IS NULL OR :new.status3_code IS NULL) AND NOT (:old.status3_code IS NULL AND :new.status3_code IS NULL) OR (:old.status3_code2 <> :new.status3_code2 OR :old.status3_code2 IS NULL OR :new.status3_code2 IS NULL) AND NOT (:old.status3_code2 IS NULL AND :new.status3_code2 IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_DynamicLocalizationScenarios.status3'), 'false') != 'true'
+UNION ALL
+SELECT 'status4' AS attribute, CASE WHEN LENGTH(:old.status4) > 5000 THEN LEFT(:old.status4, 4997) || '...' ELSE :old.status4 END AS valueChangedFrom, CASE WHEN LENGTH(:new.status4) > 5000 THEN LEFT(:new.status4, 4997) || '...' ELSE :new.status4 END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.status4 <> :new.status4 OR :old.status4 IS NULL OR :new.status4 IS NULL) AND NOT (:old.status4 IS NULL AND :new.status4 IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_DynamicLocalizationScenarios.status4'), 'false') != 'true'
+UNION ALL
+SELECT 'status4Nav' AS attribute, TO_NVARCHAR(:old.status4) AS valueChangedFrom, TO_NVARCHAR(:new.status4) AS valueChangedTo, COALESCE((SELECT "$T".descr FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :old.status4 and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :old.status4 LIMIT 1)) AS valueChangedFromLabel, COALESCE((SELECT "$T".descr FROM sap_capire_incidents_Status_texts as "$T" WHERE "$T".code = :new.status4 and "$T".locale = session_context('LOCALE') LIMIT 1), (SELECT "$S".descr FROM sap_capire_incidents_Status as "$S" WHERE "$S".code = :new.status4 LIMIT 1)) AS valueChangedToLabel, 'cds.Association' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.status4 <> :new.status4 OR :old.status4 IS NULL OR :new.status4 IS NULL) AND NOT (:old.status4 IS NULL AND :new.status4 IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_DynamicLocalizationScenarios.status4Nav'), 'false') != 'true'
+		);
+	END IF;
+END;

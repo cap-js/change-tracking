@@ -1,0 +1,28 @@
+TRIGGER SAP_CAPIRE_INCIDENTS_BOOKSNOTID_CT_UPDATE AFTER UPDATE OF title 
+ON SAP_CAPIRE_INCIDENTS_BOOKSNOTID
+REFERENCING NEW ROW new, OLD ROW old
+BEGIN
+	IF (COALESCE(SESSION_CONTEXT('ct.skip'), 'false') != 'true' AND COALESCE(SESSION_CONTEXT('ct.skip_entity.sap_capire_incidents_BooksNotID'), 'false') != 'true') THEN
+		INSERT INTO SAP_CHANGELOG_CHANGES
+		(ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+		SELECT
+			SYSUUID,
+			null,
+			attribute,
+			valueChangedFrom,
+			valueChangedTo,
+			valueChangedFromLabel,
+			valueChangedToLabel,
+			'sap.capire.incidents.BooksNotID',
+			TO_NVARCHAR(:new.NOT_ID),
+			TO_NVARCHAR(:new.NOT_ID),
+			CURRENT_TIMESTAMP,
+			SESSION_CONTEXT('APPLICATIONUSER'),
+			valueDataType,
+			'update',
+			CURRENT_UPDATE_TRANSACTION()
+		FROM (
+			SELECT 'title' AS attribute, CASE WHEN LENGTH(:old.title) > 5000 THEN LEFT(:old.title, 4997) || '...' ELSE :old.title END AS valueChangedFrom, CASE WHEN LENGTH(:new.title) > 5000 THEN LEFT(:new.title, 4997) || '...' ELSE :new.title END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.title <> :new.title OR :old.title IS NULL OR :new.title IS NULL) AND NOT (:old.title IS NULL AND :new.title IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_BooksNotID.title'), 'false') != 'true'
+		);
+	END IF;
+END;

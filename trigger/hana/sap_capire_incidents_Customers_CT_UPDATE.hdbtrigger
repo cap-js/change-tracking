@@ -1,0 +1,34 @@
+TRIGGER SAP_CAPIRE_INCIDENTS_CUSTOMERS_CT_UPDATE AFTER UPDATE OF firstName, lastName, email, phone 
+ON SAP_CAPIRE_INCIDENTS_CUSTOMERS
+REFERENCING NEW ROW new, OLD ROW old
+BEGIN
+	IF (COALESCE(SESSION_CONTEXT('ct.skip'), 'false') != 'true' AND COALESCE(SESSION_CONTEXT('ct.skip_entity.sap_capire_incidents_Customers'), 'false') != 'true') THEN
+		INSERT INTO SAP_CHANGELOG_CHANGES
+		(ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+		SELECT
+			SYSUUID,
+			null,
+			attribute,
+			valueChangedFrom,
+			valueChangedTo,
+			valueChangedFromLabel,
+			valueChangedToLabel,
+			'sap.capire.incidents.Customers',
+			TO_NVARCHAR(:new.ID),
+			COALESCE(TO_NVARCHAR((SELECT "$C".firstName || ' ' || "$C".lastName as name FROM sap_capire_incidents_Customers as "$C" WHERE "$C".ID = :new.ID LIMIT 1)), TO_NVARCHAR(:new.ID)),
+			CURRENT_TIMESTAMP,
+			SESSION_CONTEXT('APPLICATIONUSER'),
+			valueDataType,
+			'update',
+			CURRENT_UPDATE_TRANSACTION()
+		FROM (
+			SELECT 'firstName' AS attribute, CASE WHEN LENGTH(:old.firstName) > 5000 THEN LEFT(:old.firstName, 4997) || '...' ELSE :old.firstName END AS valueChangedFrom, CASE WHEN LENGTH(:new.firstName) > 5000 THEN LEFT(:new.firstName, 4997) || '...' ELSE :new.firstName END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.firstName <> :new.firstName OR :old.firstName IS NULL OR :new.firstName IS NULL) AND NOT (:old.firstName IS NULL AND :new.firstName IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Customers.firstName'), 'false') != 'true'
+UNION ALL
+SELECT 'lastName' AS attribute, CASE WHEN LENGTH(:old.lastName) > 5000 THEN LEFT(:old.lastName, 4997) || '...' ELSE :old.lastName END AS valueChangedFrom, CASE WHEN LENGTH(:new.lastName) > 5000 THEN LEFT(:new.lastName, 4997) || '...' ELSE :new.lastName END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.lastName <> :new.lastName OR :old.lastName IS NULL OR :new.lastName IS NULL) AND NOT (:old.lastName IS NULL AND :new.lastName IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Customers.lastName'), 'false') != 'true'
+UNION ALL
+SELECT 'email' AS attribute, CASE WHEN LENGTH(:old.email) > 5000 THEN LEFT(:old.email, 4997) || '...' ELSE :old.email END AS valueChangedFrom, CASE WHEN LENGTH(:new.email) > 5000 THEN LEFT(:new.email, 4997) || '...' ELSE :new.email END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.email <> :new.email OR :old.email IS NULL OR :new.email IS NULL) AND NOT (:old.email IS NULL AND :new.email IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Customers.email'), 'false') != 'true'
+UNION ALL
+SELECT 'phone' AS attribute, CASE WHEN LENGTH(:old.phone) > 5000 THEN LEFT(:old.phone, 4997) || '...' ELSE :old.phone END AS valueChangedFrom, CASE WHEN LENGTH(:new.phone) > 5000 THEN LEFT(:new.phone, 4997) || '...' ELSE :new.phone END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.phone <> :new.phone OR :old.phone IS NULL OR :new.phone IS NULL) AND NOT (:old.phone IS NULL AND :new.phone IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Customers.phone'), 'false') != 'true'
+		);
+	END IF;
+END;

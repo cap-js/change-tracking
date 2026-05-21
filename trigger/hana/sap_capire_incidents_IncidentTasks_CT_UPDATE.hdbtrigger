@@ -1,0 +1,65 @@
+TRIGGER SAP_CAPIRE_INCIDENTS_INCIDENTTASKS_CT_UPDATE AFTER UPDATE OF title, description 
+ON SAP_CAPIRE_INCIDENTS_INCIDENTTASKS
+REFERENCING NEW ROW new, OLD ROW old
+BEGIN
+	DECLARE parent_id NVARCHAR(36);
+	DECLARE parent_modification NVARCHAR(10);
+	IF (COALESCE(SESSION_CONTEXT('ct.skip'), 'false') != 'true' AND COALESCE(SESSION_CONTEXT('ct.skip_entity.sap_capire_incidents_IncidentTasks'), 'false') != 'true') THEN
+		IF :new.incident_ID IS NOT NULL THEN
+			SELECT MAX(ID) INTO parent_id FROM SAP_CHANGELOG_CHANGES
+			WHERE entity = 'sap.capire.incidents.Incidents'
+			AND entityKey = TO_NVARCHAR(:new.incident_ID)
+			AND attribute = 'tasks'
+			AND valueDataType = 'cds.Composition'
+			AND transactionID = CURRENT_UPDATE_TRANSACTION();
+		IF parent_id IS NULL THEN
+			parent_id := SYSUUID;
+			
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'create' ELSE 'update' END INTO parent_modification
+			FROM SAP_CHANGELOG_CHANGES
+			WHERE entity = 'sap.capire.incidents.Incidents'
+			AND entityKey = TO_NVARCHAR(:new.incident_ID)
+			AND modification = 'create'
+			AND transactionID = CURRENT_UPDATE_TRANSACTION();
+		INSERT INTO SAP_CHANGELOG_CHANGES
+			(ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+			VALUES (
+				parent_id,
+				NULL,
+				'tasks',
+				'sap.capire.incidents.Incidents',
+				TO_NVARCHAR(:new.incident_ID),
+				COALESCE(TO_NVARCHAR((SELECT (customer.firstName || ' ' || customer.lastName) || ': ' || address.city || ' - ' || "$I".title as value FROM sap_capire_incidents_Incidents as "$I" left JOIN sap_capire_incidents_Customers as customer ON customer.ID = "$I".customer_ID left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = customer.ID WHERE "$I".ID = :new.incident_ID LIMIT 1)), TO_NVARCHAR(:new.incident_ID)),
+				CURRENT_TIMESTAMP,
+				SESSION_CONTEXT('APPLICATIONUSER'),
+				'cds.Composition',
+				parent_modification,
+				CURRENT_UPDATE_TRANSACTION()
+			);
+		END IF;
+		END IF;
+		INSERT INTO SAP_CHANGELOG_CHANGES
+		(ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+		SELECT
+			SYSUUID,
+			parent_id,
+			attribute,
+			valueChangedFrom,
+			valueChangedTo,
+			valueChangedFromLabel,
+			valueChangedToLabel,
+			'sap.capire.incidents.IncidentTasks',
+			TO_NVARCHAR(:new.ID),
+			COALESCE(COALESCE(TO_NVARCHAR(:new.title), '<empty>'), TO_NVARCHAR(:new.ID)),
+			CURRENT_TIMESTAMP,
+			SESSION_CONTEXT('APPLICATIONUSER'),
+			valueDataType,
+			'update',
+			CURRENT_UPDATE_TRANSACTION()
+		FROM (
+			SELECT 'title' AS attribute, CASE WHEN LENGTH(:old.title) > 5000 THEN LEFT(:old.title, 4997) || '...' ELSE :old.title END AS valueChangedFrom, CASE WHEN LENGTH(:new.title) > 5000 THEN LEFT(:new.title, 4997) || '...' ELSE :new.title END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.title <> :new.title OR :old.title IS NULL OR :new.title IS NULL) AND NOT (:old.title IS NULL AND :new.title IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_IncidentTasks.title'), 'false') != 'true'
+UNION ALL
+SELECT 'description' AS attribute, CASE WHEN LENGTH(:old.description) > 5000 THEN LEFT(:old.description, 4997) || '...' ELSE :old.description END AS valueChangedFrom, CASE WHEN LENGTH(:new.description) > 5000 THEN LEFT(:new.description, 4997) || '...' ELSE :new.description END AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE ((:old.description <> :new.description OR :old.description IS NULL OR :new.description IS NULL) AND NOT (:old.description IS NULL AND :new.description IS NULL)) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_IncidentTasks.description'), 'false') != 'true'
+		);
+	END IF;
+END;

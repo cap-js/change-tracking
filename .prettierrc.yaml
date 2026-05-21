@@ -1,4 +1,4 @@
-useTabs: true
+useTabs: false
 tabWidth: 2
 printWidth: 240
 trailingComma: none

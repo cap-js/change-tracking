@@ -1,0 +1,64 @@
+TRIGGER SAP_CAPIRE_INCIDENTS_INCIDENTS_CONVERSATION_CT_DELETE AFTER DELETE
+ON SAP_CAPIRE_INCIDENTS_INCIDENTS_CONVERSATION
+REFERENCING OLD ROW old
+BEGIN
+	DECLARE parent_id NVARCHAR(36);
+	DECLARE parent_modification NVARCHAR(10);
+	IF (COALESCE(SESSION_CONTEXT('ct.skip'), 'false') != 'true' AND COALESCE(SESSION_CONTEXT('ct.skip_entity.sap_capire_incidents_Incidents_conversation'), 'false') != 'true') THEN
+		DELETE FROM SAP_CHANGELOG_CHANGES WHERE entity = 'sap.capire.incidents.Incidents.conversation' AND entityKey = HIERARCHY_COMPOSITE_ID(:old.up__ID, :old.ID);
+		IF :old.up__ID IS NOT NULL THEN
+			SELECT MAX(ID) INTO parent_id FROM SAP_CHANGELOG_CHANGES
+			WHERE entity = 'sap.capire.incidents.Incidents'
+			AND entityKey = TO_NVARCHAR(:old.up__ID)
+			AND attribute = 'conversation'
+			AND valueDataType = 'cds.Composition'
+			AND transactionID = CURRENT_UPDATE_TRANSACTION();
+		IF parent_id IS NULL THEN
+			parent_id := SYSUUID;
+			
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'create' ELSE 'update' END INTO parent_modification
+			FROM SAP_CHANGELOG_CHANGES
+			WHERE entity = 'sap.capire.incidents.Incidents'
+			AND entityKey = TO_NVARCHAR(:old.up__ID)
+			AND modification = 'create'
+			AND transactionID = CURRENT_UPDATE_TRANSACTION();
+		INSERT INTO SAP_CHANGELOG_CHANGES
+			(ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+			VALUES (
+				parent_id,
+				NULL,
+				'conversation',
+				'sap.capire.incidents.Incidents',
+				TO_NVARCHAR(:old.up__ID),
+				COALESCE(TO_NVARCHAR((SELECT (customer.firstName || ' ' || customer.lastName) || ': ' || address.city || ' - ' || "$I".title as value FROM sap_capire_incidents_Incidents as "$I" left JOIN sap_capire_incidents_Customers as customer ON customer.ID = "$I".customer_ID left JOIN sap_capire_incidents_Addresses as address ON address.customer_ID = customer.ID WHERE "$I".ID = :old.up__ID LIMIT 1)), TO_NVARCHAR(:old.up__ID)),
+				CURRENT_TIMESTAMP,
+				SESSION_CONTEXT('APPLICATIONUSER'),
+				'cds.Composition',
+				parent_modification,
+				CURRENT_UPDATE_TRANSACTION()
+			);
+		END IF;
+		END IF;
+		INSERT INTO SAP_CHANGELOG_CHANGES
+		(ID, parent_ID, attribute, valueChangedFrom, valueChangedTo, valueChangedFromLabel, valueChangedToLabel, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
+		SELECT
+			SYSUUID,
+			parent_id,
+			attribute,
+			valueChangedFrom,
+			valueChangedTo,
+			valueChangedFromLabel,
+			valueChangedToLabel,
+			'sap.capire.incidents.Incidents.conversation',
+			HIERARCHY_COMPOSITE_ID(:old.up__ID, :old.ID),
+			COALESCE(TO_NVARCHAR((SELECT "$C".author FROM sap_capire_incidents_Incidents_conversation as "$C" WHERE "$C".up__ID = :old.up__ID and "$C".ID = :old.ID LIMIT 1)), HIERARCHY_COMPOSITE_ID(:old.up__ID, :old.ID)),
+			CURRENT_TIMESTAMP,
+			SESSION_CONTEXT('APPLICATIONUSER'),
+			valueDataType,
+			'delete',
+			CURRENT_UPDATE_TRANSACTION()
+		FROM (
+			SELECT 'message' AS attribute, CASE WHEN LENGTH(:old.message) > 5000 THEN LEFT(:old.message, 4997) || '...' ELSE :old.message END AS valueChangedFrom, NULL AS valueChangedTo, NULL AS valueChangedFromLabel, NULL AS valueChangedToLabel, 'cds.String' AS valueDataType FROM SAP_CHANGELOG_CHANGE_TRACKING_DUMMY WHERE (:old.message IS NOT NULL) AND COALESCE(SESSION_CONTEXT('ct.skip_element.sap_capire_incidents_Incidents_conversation.message'), 'false') != 'true'
+		);
+	END IF;
+END;
