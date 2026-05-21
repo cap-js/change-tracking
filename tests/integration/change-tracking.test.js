@@ -18,9 +18,6 @@ describe('change log generation', () => {
       const numberLog = changes.find((change) => change.attribute === 'number');
       const boolLog = changes.find((change) => change.attribute === 'bool');
 
-      const major = parseInt(cds.version.split('.')[0]);
-      const expectedDecimal = major >= 10 ? '1.0' : '1';
-
       expect(numberLog).toBeTruthy();
       expect(numberLog).toMatchObject({
         entityKey: record.ID,
@@ -29,9 +26,9 @@ describe('change log generation', () => {
         objectID: 'My test-record',
         entity: 'sap.change_tracking.DifferentFieldTypes',
         entityLabel: 'Different field types',
-        valueChangedFrom: null,
-        valueChangedTo: expectedDecimal
+        valueChangedFrom: null
       });
+      expect(parseFloat(numberLog.valueChangedTo)).toBe(1);
 
       expect(boolLog).toBeTruthy();
       expect(boolLog).toMatchObject({

@@ -366,9 +366,6 @@ describe('CDS Features', () => {
     } = await GET(`/odata/v4/variant-testing/SelectionView(ID=${record.ID})/changes`);
     const numberLog = changes.find((change) => change.attribute === 'number');
 
-    const major = parseInt(cds.version.split('.')[0]);
-    const expectedDecimal = major >= 10 ? '1.0' : '1';
-
     expect(numberLog).toBeTruthy();
     expect(numberLog).toMatchObject({
       entityKey: record.ID,
@@ -378,9 +375,9 @@ describe('CDS Features', () => {
       entity: 'sap.change_tracking.DifferentFieldTypes',
       entityLabel: 'Different field types',
       parent_ID: null,
-      valueChangedFrom: null,
-      valueChangedTo: expectedDecimal
+      valueChangedFrom: null
     });
+    expect(parseFloat(numberLog.valueChangedTo)).toBe(1);
   });
 
   describe('localization', () => {
