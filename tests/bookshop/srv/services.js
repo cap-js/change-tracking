@@ -2,51 +2,51 @@ const cds = require('@sap/cds');
 const { SELECT, UPDATE } = cds.ql;
 
 class ProcessorService extends cds.ApplicationService {
-	/** Registering custom event handlers */
-	init() {
-		this.before('UPDATE', 'Incidents', (req) => this.onUpdate(req));
-		this.before(['CREATE', 'UPDATE'], 'Incidents', (req) => this.changeUrgencyDueToSubject(req.data));
-		const { Incidents } = this.entities;
+  /** Registering custom event handlers */
+  init() {
+    this.before('UPDATE', 'Incidents', (req) => this.onUpdate(req));
+    this.before(['CREATE', 'UPDATE'], 'Incidents', (req) => this.changeUrgencyDueToSubject(req.data));
+    const { Incidents } = this.entities;
 
-		// Register for both active entity and draft entity
-		this.on('setToDone', Incidents, async (req) => {
-			const { ID } = req.params[0];
-			await UPDATE(Incidents).set({ status_code: 'C' }).where({ ID });
-		});
+    // Register for both active entity and draft entity
+    this.on('setToDone', Incidents, async (req) => {
+      const { ID } = req.params[0];
+      await UPDATE(Incidents).set({ status_code: 'C' }).where({ ID });
+    });
 
-		this.before('SAVE', 'Incidents', (req) => {
-			req.data.time = String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
-			req.data.date = new Date(req.data.date);
-			req.data.date.setDate(new Date(req.data.date).getDate() + 1);
-			req.data.date = req.data.date.toISOString().substring(0, 10);
-			req.data.timestamp = new Date(req.data.timestamp);
-			req.data.timestamp.setDate(new Date(req.data.timestamp).getDate() + 1);
-			req.data.timestamp = req.data.timestamp.toISOString();
-			req.data.datetime = new Date(req.data.datetime);
-			req.data.datetime.setDate(new Date(req.data.datetime).getDate() + 1);
-			req.data.datetime = req.data.datetime.toISOString();
-		});
-		return super.init();
-	}
+    this.before('SAVE', 'Incidents', (req) => {
+      req.data.time = String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
+      req.data.date = new Date(req.data.date);
+      req.data.date.setDate(new Date(req.data.date).getDate() + 1);
+      req.data.date = req.data.date.toISOString().substring(0, 10);
+      req.data.timestamp = new Date(req.data.timestamp);
+      req.data.timestamp.setDate(new Date(req.data.timestamp).getDate() + 1);
+      req.data.timestamp = req.data.timestamp.toISOString();
+      req.data.datetime = new Date(req.data.datetime);
+      req.data.datetime.setDate(new Date(req.data.datetime).getDate() + 1);
+      req.data.datetime = req.data.datetime.toISOString();
+    });
+    return super.init();
+  }
 
-	changeUrgencyDueToSubject(data) {
-		if (data) {
-			const incidents = Array.isArray(data) ? data : [data];
-			incidents.forEach((incident) => {
-				if (incident.title?.toLowerCase().includes('urgent')) {
-					incident.urgency = { code: 'H', descr: 'High' };
-				}
-			});
-		}
-	}
+  changeUrgencyDueToSubject(data) {
+    if (data) {
+      const incidents = Array.isArray(data) ? data : [data];
+      incidents.forEach((incident) => {
+        if (incident.title?.toLowerCase().includes('urgent')) {
+          incident.urgency = { code: 'H', descr: 'High' };
+        }
+      });
+    }
+  }
 
-	/** Custom Validation */
-	async onUpdate(req) {
-		const { status_code } = await SELECT.one(req.subject, (i) => i.status_code).where({ ID: req.data.ID });
-		if (status_code === 'C') {
-			return req.reject(`Can't modify a closed incident`);
-		}
-	}
+  /** Custom Validation */
+  async onUpdate(req) {
+    const { status_code } = await SELECT.one(req.subject, (i) => i.status_code).where({ ID: req.data.ID });
+    if (status_code === 'C') {
+      return req.reject(`Can't modify a closed incident`);
+    }
+  }
 }
 
 module.exports = { ProcessorService };
