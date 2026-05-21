@@ -26,9 +26,9 @@ describe('change log generation', () => {
         objectID: 'My test-record',
         entity: 'sap.change_tracking.DifferentFieldTypes',
         entityLabel: 'Different field types',
-        valueChangedFrom: null,
-        valueChangedTo: '1'
+        valueChangedFrom: null
       });
+      expect(parseFloat(numberLog.valueChangedTo)).toBe(1);
 
       expect(boolLog).toBeTruthy();
       expect(boolLog).toMatchObject({
