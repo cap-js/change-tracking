@@ -3,7 +3,6 @@ ON SAP_CAPIRE_INCIDENTS_INCIDENTS_CONVERSATION
 REFERENCING OLD ROW old
 BEGIN
 	DECLARE parent_id NVARCHAR(36);
-	DECLARE parent_modification NVARCHAR(10);
 	IF (COALESCE(SESSION_CONTEXT('ct.skip'), 'false') != 'true' AND COALESCE(SESSION_CONTEXT('ct.skip_entity.sap_capire_incidents_Incidents_conversation'), 'false') != 'true') THEN
 		DELETE FROM SAP_CHANGELOG_CHANGES WHERE entity = 'sap.capire.incidents.Incidents.conversation' AND entityKey = HIERARCHY_COMPOSITE_ID(:old.up__ID, :old.ID);
 		IF :old.up__ID IS NOT NULL THEN
@@ -16,12 +15,6 @@ BEGIN
 		IF parent_id IS NULL THEN
 			parent_id := SYSUUID;
 			
-		SELECT CASE WHEN COUNT(*) > 0 THEN 'create' ELSE 'update' END INTO parent_modification
-			FROM SAP_CHANGELOG_CHANGES
-			WHERE entity = 'sap.capire.incidents.Incidents'
-			AND entityKey = TO_NVARCHAR(:old.up__ID)
-			AND modification = 'create'
-			AND transactionID = CURRENT_UPDATE_TRANSACTION();
 		INSERT INTO SAP_CHANGELOG_CHANGES
 			(ID, parent_ID, attribute, entity, entityKey, objectID, createdAt, createdBy, valueDataType, modification, transactionID)
 			VALUES (
@@ -34,7 +27,7 @@ BEGIN
 				CURRENT_TIMESTAMP,
 				SESSION_CONTEXT('APPLICATIONUSER'),
 				'cds.Composition',
-				parent_modification,
+				'update',
 				CURRENT_UPDATE_TRANSACTION()
 			);
 		END IF;
