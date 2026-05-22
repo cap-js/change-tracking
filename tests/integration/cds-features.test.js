@@ -375,9 +375,9 @@ describe('CDS Features', () => {
       entity: 'sap.change_tracking.DifferentFieldTypes',
       entityLabel: 'Different field types',
       parent_ID: null,
-      valueChangedFrom: null,
-      valueChangedTo: '1'
+      valueChangedFrom: null
     });
+    expect(parseFloat(numberLog.valueChangedTo)).toBe(1);
   });
 
   describe('localization', () => {
