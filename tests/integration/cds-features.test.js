@@ -161,6 +161,24 @@ describe('CDS Features', () => {
       let change = changes[0];
       expect(change.valueTimeZone).toEqual('Europe/Amsterdam');
     });
+
+    it('timezone resolves when both @changelog and @Common.Timezone are service-level only on a renamed column', async () => {
+      const { ServiceOnlyTimezoneRenamed } = testingSRV.entities;
+      const data = {
+        ID: cds.utils.uuid(),
+        renamedPlain: new Date('2024-10-16T08:53:48Z'),
+        renamedTimezone: 'Asia/Tokyo'
+      };
+      await INSERT.into(ServiceOnlyTimezoneRenamed).entries(data);
+      let changes = await SELECT.from({ ref: [{ id: ServiceOnlyTimezoneRenamed.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+        entity: 'sap.change_tracking.DifferentFieldTypes',
+        entityKey: data.ID,
+        attribute: 'plainDateTime'
+      });
+      expect(changes.length).toEqual(1);
+      let change = changes[0];
+      expect(change.valueTimeZone).toEqual('Asia/Tokyo');
+    });
   });
 
   describe('tracking dates', () => {

@@ -27,6 +27,7 @@ entity DifferentFieldTypes {
       srvDateTimeWTZ          : DateTime @Common.Timezone : 'Europe/Berlin';
       srvDateTimeWDTZ         : DateTime @Common.Timezone : timeZone;
       srvRenamedDateTimeWDTZ  : DateTime @Common.Timezone : timeZone;
+      plainDateTime           : DateTime;
       @changelog: false
       children  : Composition of many DifferentFieldTypesChildren
                     on children.parent = $self;
