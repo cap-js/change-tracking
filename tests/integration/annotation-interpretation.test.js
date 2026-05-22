@@ -1,6 +1,6 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, GET, expect } = cds.test(bookshop);
+const { POST, PATCH, DELETE, GET } = cds.test(bookshop);
 
 describe('@changelog annotation interpretation', () => {
   it('builds objectID from entity keys when explicit @changelog annotation is missing', async () => {
