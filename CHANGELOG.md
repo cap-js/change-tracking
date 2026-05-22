@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Version 2.0.0-beta.13 - tbd
 
+### Added
+- Consider `@Common.Timezone` on entities that are change-tracked only via a service-level `@changelog`.  Previously, `valueTimeZone` in `ChangeView` was resolved only for entities annotated with `@changelog` at the DB level
+
 ### Fixed
 - Migration table now correctly handles composite keys from v1 using `HIERARCHY_COMPOSITE_ID` (supports up to 5 key parts)
 
