@@ -160,6 +160,14 @@ describe('CDS Features', () => {
       expect(changes.length).toEqual(1);
       let change = changes[0];
       expect(change.valueTimeZone).toEqual('Europe/Amsterdam');
+
+      await UPDATE.entity(ServiceLevelTimezoneRenamed).where({ ID: rootEntityData.ID }).set({ renamedTimeZone: 'Asia/Tokyo' });
+      changes = await SELECT.from({ ref: [{ id: ServiceLevelTimezoneRenamed.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+        ID: change.ID
+      });
+      expect(changes.length).toEqual(1);
+      change = changes[0];
+      expect(change.valueTimeZone).toEqual('Asia/Tokyo');
     });
 
     it('timezone resolves when both @changelog and @Common.Timezone are service-level only on a renamed column', async () => {
@@ -178,6 +186,14 @@ describe('CDS Features', () => {
       expect(changes.length).toEqual(1);
       let change = changes[0];
       expect(change.valueTimeZone).toEqual('Asia/Tokyo');
+
+      await UPDATE.entity(ServiceOnlyTimezoneRenamed).where({ ID: data.ID }).set({ renamedTimezone: 'Europe/Berlin' });
+      changes = await SELECT.from({ ref: [{ id: ServiceOnlyTimezoneRenamed.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+        ID: change.ID
+      });
+      expect(changes.length).toEqual(1);
+      change = changes[0];
+      expect(change.valueTimeZone).toEqual('Europe/Berlin');
     });
   });
 
