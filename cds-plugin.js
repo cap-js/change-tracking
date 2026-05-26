@@ -2,8 +2,8 @@ const cds = require('@sap/cds');
 
 const { enhanceModel } = require('./lib/csn-enhancements');
 const { registerSessionVariableHandlers } = require('./lib/skipHandlers.js');
-const { deploySQLiteTriggers } = require('./lib/sqlite/register.js');
-const { registerPostgresCompilerHook, deployPostgresLabels } = require('./lib/postgres/register.js');
+const { registerSQLiteDeploymentHandler, deploySQLiteTriggers } = require('./lib/sqlite/register.js');
+const { registerPostgresCompilerHook, registerPostgresDeploymentHandler, deployPostgresLabels } = require('./lib/postgres/register.js');
 const { registerH2CompilerHook } = require('./lib/h2/register.js');
 const { registerHDICompilerHook } = require('./lib/hana/register.js');
 
@@ -14,6 +14,8 @@ cds.once('served', async () => {
   await deployPostgresLabels();
 });
 
+registerSQLiteDeploymentHandler();
+registerPostgresDeploymentHandler();
 registerH2CompilerHook();
 registerPostgresCompilerHook();
 registerHDICompilerHook();
