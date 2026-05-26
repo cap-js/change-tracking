@@ -1,4 +1,5 @@
 using { sap.capire.incidents as my } from '../db/schema';
+using {sap.changelog as ct} from '@cap-js/change-tracking';
 
 /**
  * Service used by support personell, i.e. the incidents' 'processors'.
@@ -19,6 +20,8 @@ service ProcessorService {
 
   entity Orders as projection on my.Orders;
   entity ExpressionScenarios as projection on my.ExpressionScenarios;
+
+  entity ChangeView as projection on ct.ChangeView;
 }
 
 /**

@@ -1,11 +1,8 @@
 using {sap.capire.bookshop as my} from '../db/schema';
-using {sap.changelog as change} from '@cap-js/change-tracking';
 
 service AdminService {
   @odata.draft.enabled
   entity BookStores @(cds.autoexpose) as projection on my.BookStores;
-
-  entity ChangeView                   as projection on change.ChangeView;
 
   entity Authors                      as projection on my.Authors;
   entity Report                       as projection on my.Report;
