@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@cap-js/cds-test": "*",
-    "@cap-js/cds-types": "^0.16.0"
+    "@cap-js/cds-types": "^0.17.0"
   },
   "cds": {
     "requires": {
