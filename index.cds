@@ -30,10 +30,6 @@ entity aspect @(UI.Facets: [{
 //   substring($user.locale, 0, (case when indexof($user.locale, '_') >= 0 then indexof($user.locale, '_') else length($user.locale) end))
 //   This would extract 'en' from 'en_GB', 'de' from 'de_DE', etc. (indexof was introduced in CDS 9)
 @readonly
-@cds.autoexpose
-@Capabilities.ReadRestrictions : {
-  Readable: false,
-}
 view ChangeView as
   select from Changes as change
   left outer join i18nKeys as attributeI18n

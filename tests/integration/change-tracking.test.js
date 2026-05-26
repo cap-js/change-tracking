@@ -2593,6 +2593,11 @@ describe('ChangeView access restrictions', () => {
     }
   });
 
+  it('allows direct read of ChangeView when explicitly exposed in the service', async () => {
+    const response = await GET(`/odata/v4/processor/ChangeView`);
+    expect(response.status).toBe(200);
+  });
+
   it('allows reading changes via entity navigation', async () => {
     const { data: bookStore } = await POST(`/odata/v4/admin/BookStores`, {
       name: 'Access Test Store'

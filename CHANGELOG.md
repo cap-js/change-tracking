@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 - Migration table now correctly handles composite keys from v1 using `HIERARCHY_COMPOSITE_ID` (supports up to 5 key parts)
+- `@Capabilities.ReadRestrictions` on ChangeView is now only applied when the view is auto-created by the plugin. Services that explicitly expose ChangeView allow direct read access.
 
 ## Version 2.0.0-beta.12 - 2026-05-18
 
