@@ -23,6 +23,7 @@ A [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
   - [Disable Lazy Loading](#disable-lazy-loading)
   - [Disable UI Facet generation](#disable-ui-facet-generation)
   - [Disable Association to Changes Generation](#disable-association-to-changes-generation)
+  - [Disabling Change Tracking](#disabling-change-tracking)
 - [Examples](#examples)
   - [Tracing Changes](#tracing-changes)
   - [Don&#39;ts](#donts)
@@ -257,7 +258,7 @@ annotate BookStores with @changelog: [name] {
 ```
 
 > [!NOTE]
-> When multiple children are created or deleted in a single transaction, only one composition entry is created per parent.
+> When multiple children are created or deleted in a single transaction, only one composition entry is created per parent. The `modification` type on composition parent entries is always `update`, regardless of whether children were created, updated, or deleted. This is because a single transaction may involve multiple types of operations on different children, making it impossible to assign a single accurate modification type. The actual modification type is reflected on the child entries themselves.
 
 Results in the following change logs:
 ![Change Tracking Composition of many children](./_assets/changes-children.png)
@@ -385,6 +386,42 @@ For some scenarios, e.g. when doing `UNION` and the `@changelog` annotation is s
 
 > [!IMPORTANT]
 > This will also suppress the addition of the UI facet, since the change-view is no longer available as the target entity.
+
+### Disabling Change Tracking
+
+When `@changelog` is defined on the underlying DB entity, all services that expose the entity will automatically track changes due to [annotation propagation](https://cap.cloud.sap/docs/cds/cdl#annotation-propagation). Use `@changelog: false` at the service, entity, or element level to selectively opt out of tracking.
+
+```cds
+// db/schema.cds — tracked across all services by default
+@changelog: [title]
+entity Incidents : cuid, managed {
+  title    : String @changelog;
+  date     : Date @changelog;
+}
+```
+```cds
+// srv/services.cds
+service ProcessorService {
+  entity Incidents as projection on db.Incidents;
+}
+
+// Disable tracking for the entire admin service
+@changelog: false;
+service AdminService {
+  entity Incidents as projection on db.Incidents;
+}
+
+// Disable tracking for a specific projection only
+service ReportingService {
+  @changelog: false
+  entity IncidentStats as projection on db.Incidents;
+}
+
+// Disable tracking for a specific element only
+annotate ProcessorService.Incidents with {
+  date @changelog: false;
+}
+```
 
 ### Select types of changes to track
 

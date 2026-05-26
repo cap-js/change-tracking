@@ -6,10 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Version 2.0.0-beta.13 - tbd
 
+### Changed 
+- Composition changelog entries on parents have always 'update' as modification type
+
+### Added
+- Consider `@Common.Timezone` on entities that are change-tracked only via a service-level `@changelog`.  Previously, `valueTimeZone` in `ChangeView` was resolved only for entities annotated with `@changelog` at the DB level
+
 ### Fixed
 - Migration table now correctly handles composite keys from v1 using `HIERARCHY_COMPOSITE_ID` (supports up to 5 key parts)
+- `@Capabilities.ReadRestrictions` on ChangeView is now only applied when the view is auto-created by the plugin. Services that explicitly expose ChangeView allow direct read access.
 
-## Version 2.0.0-beta.12 - 18.05.26
+## Version 2.0.0-beta.12 - 2026-05-18
 
 ### Fixed
 - Build crash when using `@changelog` path annotations on unmanaged associations due to missing guard on `col.keys`
@@ -21,7 +28,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 - Optimization to skip unnecessary subselect lookups for unmanaged associations when the `@changelog` path references a target key that is already available as a local foreign key field
 
-## Version 2.0.0-beta.11 - 28.04.26
+## Version 2.0.0-beta.11 - 2026-04-28
 
 ### Added
 - Database indexes for `sap.changelog.Changes` table on `parent_ID` for navigating the parent association hierarchy (SQLite, HANA, Postgres)
@@ -31,7 +38,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Deployment error when an entity key uses a custom type defined as an association (e.g., `type MyType : Association to SomeEntity`) due to incorrect entityKey expression in the changes association mapping
 - Runtime error when requesting `ChangeView` due to incorrect `where` clause for entities with association-typed keys in timezone column subselects
 
-## Version 2.0.0-beta.10 - 27.04.26
+## Version 2.0.0-beta.10 - 2026-04-27
 
 ### Changed
 - HANA triggers reverted from statement-level back to row-level execution for improved compatibility
@@ -46,7 +53,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Only cast entity keys to type string in the ON condition of changes when they are not type of `cds.String` or `cds.UUID`
 - ObjectID correctly falls back to entity key when all @changelog fields are NULL instead of showing "<empty>, <empty>,..., <empty>"
 
-## Version 2.0.0-beta.9 - 15.04.26
+## Version 2.0.0-beta.9 - 2026-04-15
 
 ### Added
 - Customizable objectID for composition changelog entries on parent entities:
@@ -56,12 +63,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Changed
 - Only skip change tracking for `@PersonalData.IsPotentiallySensitive` and `@PersonalData.IsPotentiallyPersonal` and not `@PersonalData.FieldSemantics`
 
-## Version 2.0.0-beta.8 - 09.04.26
+## Version 2.0.0-beta.8 - 2026-04-09
 
 ### Fixed
 - Do not add @UI.Hidden: ($draft.IsActiveEntity) to the UI changes section when the entity is not draft enabled.
 
-## Version 2.0.0-beta.7 - 08.04.26
+## Version 2.0.0-beta.7 - 2026-04-08
 
 ### Added
 - Support CDS expression language (CXL) in `@changelog` annotations to enable broader customization of objectIDs and changelog labels
@@ -75,7 +82,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Removed `CHANGE_TRACKING_DUMMY` entity
 - Change History section is now hidden in draft mode
 
-## Version 2.0.0-beta.6 - 26.03.26
+## Version 2.0.0-beta.6 - 2026-03-26
 
 ### Added
 - Provide detailed plan for v1 to v2 HANA migration
@@ -90,7 +97,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Dynamic localization now verifies `.texts` entity existence before attempting localized lookup
 
 
-## Version 2.0.0-beta.5 - 17.03.26
+## Version 2.0.0-beta.5 - 2026-03-17
 
 ### Added
 - Support dynamic localized label lookup, meaning if for example a property is change tracked and its change tracking label (@changelog : [<association>.<localized_prop>]) points to one localized property from its code list entity, the label is dynamically fetched when the change is read based on the users locale.
@@ -99,14 +106,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Postgres considers `disable*Tracking` for children changes
 - Human-readable `@changelog` annotation supports combination of direct entity elements and association elements
 
-## Version 2.0.0-beta.4 - 16.03.26
+## Version 2.0.0-beta.4 - 2026-03-16
 
 ### Added
 
 - Tracked Date, DateTime, Time and Timestamp properties are now correctly formatted again.
 - If a tracked property is annotated with `@Common.Timezone` the changelog now considers the Timezone as well.
 
-## Version 2.0.0-beta.3 - 13.03.26
+## Version 2.0.0-beta.3 - 2026-03-13
 
 ### Fixed
 - CSV data for `i18nKeys` and `CHANGE_TRACKING_DUMMY` is now correctly generated during the HANA build
@@ -116,7 +123,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Depth of displayed child changes can be configured via `maxDisplayHierarchyDepth`
 - Improved search capabilities for changes
 
-## Version 2.0.0-beta.2 - 11.03.26
+## Version 2.0.0-beta.2 - 2026-03-11
 
 ### Fixed
 - Fixed a server crash when resolving table names
@@ -127,7 +134,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Improved performance when quering changes
 
 
-## Version 2.0.0-beta.1 - 06.03.26
+## Version 2.0.0-beta.1 - 2026-03-06
 
 ### Added
 - Trigger generation for SQLite, HANA, Postgres and H2 to perform change tracking on a database level
@@ -158,27 +165,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Removed
 - Removed configuration option `considerLocalizedValues`
 
-## Version 1.1.4 - 03.12.25
+## Version 1.1.4 - 2025-12-03
 
 ### Fixed
 - Server no longer crashes when after a DB migration the service name or attribute name change
 - Fix crash when applications uses feature toogles or extensibility
 
 
-## Version 1.1.3 - 27.10.25
+## Version 1.1.3 - 2025-10-27
 
 ### Changed
 - Correctly handle changes on foreign keys when sending them via the document notation on an API level.
 
 
-## Version 1.1.2 - 23.10.25
+## Version 1.1.2 - 2025-10-23
 
 ### Fixed
 
 - Support single keys which are not named `ID`
 
 
-## Version 1.1.1 - 17.10.25
+## Version 1.1.1 - 2025-10-17
 
 ### Added
 
@@ -190,7 +197,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Correct localisation for `cds.Date`, `cds.Time`, `cds.DateTime` and `cds.Timestamp` properties
 
 
-## Version 1.1.0 - 13.10.25
+## Version 1.1.0 - 2025-10-13
 
 ### Added
 
@@ -207,7 +214,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 - Prepare for CDS9 in tests
 
-## Version 1.0.8 - 28.03.25
+## Version 1.0.8 - 2025-03-28
 
 ### Added
 
@@ -234,7 +241,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Updated peer dependency from CDS7 to CDS8
 
 
-## Version 1.0.7 - 20.08.24
+## Version 1.0.7 - 2024-08-20
 
 ### Added
 
@@ -260,7 +267,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Restructured Documentation
 
 
-## Version 1.0.6 - 29.04.24
+## Version 1.0.6 - 2024-04-29
 
 ### Fixed
 
@@ -276,13 +283,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
  - Improved documentation of the @changelog Annotation
 
-## Version 1.0.5 - 15.01.24
+## Version 1.0.5 - 2024-01-15
 
 ### Fixed
 
 - Error on HANA when logging Boolean or Numeric Data
 
-## Version 1.0.4 - 08.01.24
+## Version 1.0.4 - 2024-01-08
 
 ### Added
 
@@ -297,7 +304,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Handling of associations within change tracked entities
 - Handling of change log when custom actions on child entities are called
 
-## Version 1.0.3 - 10.11.23
+## Version 1.0.3 - 2023-11-10
 
 ### Added
 
@@ -309,13 +316,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Support cases where parent/child entries are created simultaneously.
 - Allow for lazy loading of change history table (with SAP UI5 release 1.120.0).
 
-## Version 1.0.2 - 31.10.23
+## Version 1.0.2 - 2023-10-31
 
 ### Changed
 
 - In README, use view of the full change-tracking table instead of the customized one for the main image.
 
-## Version 1.0.1 - 26.10.23
+## Version 1.0.1 - 2023-10-26
 
 ### Changed
 
@@ -325,7 +332,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 - Labels are looked up from the service entity (not the db entity only).
 
-## Version 1.0.0 - 18.10.23
+## Version 1.0.0 - 2023-10-18
 
 ### Added
 
