@@ -13,9 +13,9 @@ function _resolveEntities(entityNames, allEntities, hierarchyMap) {
     const entity = model.definitions[dbEntityName];
     if (!entity) return [];
     const hierarchyInfo = hierarchyMap.get(dbEntityName);
-    const rootEntityName = hierarchyInfo?.parent ?? null;
-    const rootEntity = rootEntityName ? model.definitions[rootEntityName] : null;
-    const rootMergedAnnotations = rootEntityName ? allEntities.find((d) => d.dbEntityName === rootEntityName)?.mergedAnnotations : null;
+    const parentEntityName = hierarchyInfo?.parent ?? null;
+    const parentEntity = parentEntityName ? model.definitions[parentEntityName] : null;
+    const parentMergedAnnotations = parentEntityName ? allEntities.find((d) => d.dbEntityName === parentEntityName)?.mergedAnnotations : null;
 
     // Resolve full ancestor chain for deep linking
     const ancestorChain = (hierarchyInfo?.ancestors ?? []).map((a) => ({
@@ -32,7 +32,7 @@ function _resolveEntities(entityNames, allEntities, hierarchyMap) {
       ancestorChain
     };
 
-    return [{ entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext }];
+    return [{ entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext }];
   });
 }
 
@@ -46,8 +46,8 @@ async function _regenerateSQLiteTriggers(entityNames, allEntities, hierarchyMap)
   await Promise.all(existing.map(({ name }) => cds.db.run(`DROP TRIGGER IF EXISTS "${name}"`)));
 
   // Generate and execute new triggers
-  const triggers = _resolveEntities(entityNames, allEntities, hierarchyMap).flatMap(({ entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext }) => {
-    const result = generateSQLiteTrigger(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext);
+  const triggers = _resolveEntities(entityNames, allEntities, hierarchyMap).flatMap(({ entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext }) => {
+    const result = generateSQLiteTrigger(model, entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext);
     return result ? [].concat(result) : [];
   });
 
@@ -58,8 +58,8 @@ async function _regeneratePostgresTriggers(entityNames, allEntities, hierarchyMa
   const model = cds.context?.model ?? cds.model;
   const { generatePostgresTriggers } = require('../lib/postgres/triggers.js');
 
-  const triggers = _resolveEntities(entityNames, allEntities, hierarchyMap).flatMap(({ entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext }) =>
-    generatePostgresTriggers(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext)
+  const triggers = _resolveEntities(entityNames, allEntities, hierarchyMap).flatMap(({ entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext }) =>
+    generatePostgresTriggers(model, entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext)
   );
 
   await Promise.all(triggers.map((t) => cds.db.run(t)));
@@ -69,11 +69,11 @@ async function _regenerateH2Triggers(entityNames, allEntities, hierarchyMap) {
   const model = cds.context?.model ?? cds.model;
   const { generateH2Trigger } = require('../lib/h2/triggers.js');
 
-  for (const { entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext } of _resolveEntities(entityNames, allEntities, hierarchyMap)) {
+  for (const { entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext } of _resolveEntities(entityNames, allEntities, hierarchyMap)) {
     const tableName = entity.name.replace(/\./g, '_').toUpperCase();
     await cds.db.run(`DROP TRIGGER IF EXISTS "${tableName}_CT_TRIGGER"`);
 
-    const triggerSQL = generateH2Trigger(model, entity, rootEntity, mergedAnnotations, rootMergedAnnotations, grandParentContext);
+    const triggerSQL = generateH2Trigger(model, entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext);
     if (triggerSQL) await cds.db.run(triggerSQL);
   }
 }

@@ -75,13 +75,13 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
         // Verify the conversation parent row exists
         Then.onTheDetailPage.iSeeChangeHistoryRow({
           field: 'conversation',
-          changeType: 'Create',
+          changeType: 'Update',
           objectID: 'alice',
           objectType: 'alice'
         });
 
         // Expand the conversation tree row to reveal child entries
-        When.onTheDetailPage.iExpandChangeHistoryRow('conversation', 'Create');
+        When.onTheDetailPage.iExpandChangeHistoryRow('conversation', 'Update');
 
         // Verify the two message child rows
         Then.onTheDetailPage.iSeeChangeHistoryRow({

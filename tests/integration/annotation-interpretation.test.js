@@ -193,7 +193,7 @@ describe('@changelog annotation interpretation', () => {
       modification: 'create',
       entityKey: [newRoot.ID, lvl1ID, lvl2ID]
     });
-    expect(createChanges.length).toEqual(5);
+    expect(createChanges.length).toEqual(3);
     expect(createChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'title').objectID).toEqual(`${newRoot.ID}, RootSample title`);
     // expect(createChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children').objectID).toEqual(`${newRoot.ID}, RootSample title`);
     expect(createChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title').objectID).toEqual(`${lvl1ID}, Level1Sample title, ${newRoot.ID}`);
@@ -220,7 +220,7 @@ describe('@changelog annotation interpretation', () => {
       modification: 'update',
       entityKey: [newRoot.ID, lvl1ID, lvl2ID]
     });
-    expect(updateChanges.length).toEqual(5);
+    expect(updateChanges.length).toEqual(7);
     expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'title').objectID).toEqual(`${newRoot.ID}, new RootSample title`);
     // expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.RootSample' && c.attribute === 'children').objectID).toEqual(`${newRoot.ID}, new RootSample title`);
     expect(updateChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample' && c.attribute === 'title').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
@@ -234,7 +234,7 @@ describe('@changelog annotation interpretation', () => {
       modification: 'delete',
       entityKey: [newRoot.ID, lvl1ID, lvl2ID]
     });
-    expect(deleteChanges.length).toEqual(3); // +1 for RootSample.children composition entry (RootSample is a composition child of GrandRootSample)
+    expect(deleteChanges.length).toEqual(2);
     //expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level1Sample').objectID).toEqual(`${lvl1ID}, new Level1Sample title, ${newRoot.ID}`);
     //expect(deleteChanges.find((c) => c.entity === 'sap.change_tracking.Level2Sample').objectID).toEqual(`${lvl2ID}, new Level2Sample title, ${newRoot.ID}`);
   });

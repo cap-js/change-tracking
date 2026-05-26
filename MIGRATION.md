@@ -14,10 +14,14 @@ In version 1, change-tracking data was split across two tables and tracked at th
 
 In v2, the `ChangeLog` table is removed. The schema of `Changes` has been redesigned to store all data directly within a single table.
 
+> [!WARNING]
+> During the migration from v1 to v2, information about which service a change originated from is lost. Consider the implications for your application before proceeding with the migration.
+
 ## Step-by-Step Guide
 
 ### Step 1: Upgrade to the latest v1 plugin version
 
+be
 Ensure your database is deployed with version `1.2.1` of `@cap-js/change-tracking`. You can verify your installed version by running:
 
 ```bash

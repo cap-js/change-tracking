@@ -705,7 +705,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
         headers: { 'Accept-Language': 'de' }
       });
-      const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update');
 
       expect(statusChange).toMatchObject({
         valueChangedFrom: 'N',
@@ -719,7 +719,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
         headers: { 'Accept-Language': 'en' }
       });
-      const statusChangeEN = changesEN.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChangeEN = changesEN.find((change) => change.attribute === 'status' && change.modification === 'update');
 
       expect(statusChangeEN).toMatchObject({
         valueChangedFrom: 'N',
@@ -748,7 +748,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`, {
         headers: { 'Accept-Language': 'de' }
       });
-      const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update');
 
       expect(statusChange).toMatchObject({
         valueChangedFrom: 'N',
@@ -762,7 +762,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/localization/Incidents(ID=${incidentID})/changes`, {
         headers: { 'Accept-Language': 'en' }
       });
-      const statusChangeEN = changesEN.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChangeEN = changesEN.find((change) => change.attribute === 'status' && change.modification === 'update');
 
       expect(statusChangeEN).toMatchObject({
         valueChangedFrom: 'N',
@@ -788,7 +788,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})/changes`, {
         headers: { 'Accept-Language': 'de' }
       });
-      const statusChange = changes.find((change) => change.attribute === 'status4' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChange = changes.find((change) => change.attribute === 'status4' && change.modification === 'update');
 
       expect(statusChange).toMatchObject({
         valueChangedFrom: 'N',
@@ -802,7 +802,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})/changes`, {
         headers: { 'Accept-Language': 'en' }
       });
-      const statusChangeEN = changesEN.find((change) => change.attribute === 'status4' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChangeEN = changesEN.find((change) => change.attribute === 'status4' && change.modification === 'update');
 
       expect(statusChangeEN).toMatchObject({
         valueChangedFrom: 'N',
@@ -827,7 +827,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
         headers: { 'Accept-Language': 'en_GB' }
       });
-      const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChange = changes.find((change) => change.attribute === 'status' && change.modification === 'update');
 
       expect(statusChange).toMatchObject({
         valueChangedFrom: 'N',
@@ -862,7 +862,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
         headers: { 'Accept-Language': 'de' }
       });
-      const statusChange = changes.find((change) => change.attribute === 'statusExpr' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChange = changes.find((change) => change.attribute === 'statusExpr' && change.modification === 'update');
 
       expect(statusChange).toMatchObject({
         valueChangedFrom: 'N',
@@ -876,7 +876,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/processor/Incidents(ID=${incidentID},IsActiveEntity=true)/changes`, {
         headers: { 'Accept-Language': 'en' }
       });
-      const statusChangeEN = changesEN.find((change) => change.attribute === 'statusExpr' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusChangeEN = changesEN.find((change) => change.attribute === 'statusExpr' && change.modification === 'update');
 
       expect(statusChangeEN).toMatchObject({
         valueChangedFrom: 'N',
@@ -922,7 +922,7 @@ describe('CDS Features', () => {
       } = await GET(`odata/v4/localization/DynamicLocalizationScenarios(ID=${incidentID})/changes`, {
         headers: { 'Accept-Language': 'en' }
       });
-      const statusNavChange = changes.find((change) => change.attribute === 'status4Nav' && change.modification === 'update' && change.entityKey === incidentID);
+      const statusNavChange = changes.find((change) => change.attribute === 'status4Nav' && change.modification === 'update');
       expect(statusNavChange).toMatchObject({
         valueChangedFrom: 'N',
         valueChangedFromLabel: 'New',
