@@ -34,6 +34,17 @@ service VariantTesting {
 
   entity CustomTypeKeyTable as projection on my.CustomTypeKeyTable;
 
+  entity ServiceLevelTimezoneRenamed as projection on my.DifferentFieldTypes {
+    ID,
+    srvRenamedDateTimeWDTZ as renamedDateTime,
+    timeZone as renamedTimeZone
+  };
+
+  entity ServiceOnlyTimezoneRenamed as projection on my.DifferentFieldTypes {
+    ID,
+    plainDateTime as renamedPlain,
+    timeZone as renamedTimezone
+  };
 }
 
 // Test: changes facet nested in CollectionFacet targeting changes/@UI.LineItem — plugin must not add a duplicate
@@ -84,3 +95,20 @@ annotate VariantTesting.CompositeKeyParent with @(UI.Facets: [{
     }]
   }]
 }]);
+
+// Test: service-level-only @changelog on elements that have @Common.Timezone at DB level
+annotate VariantTesting.DifferentFieldTypes with {
+  srvDateTimeWTZ  @changelog;
+  srvDateTimeWDTZ @changelog;
+};
+
+// Test: service-level-only @changelog + @Common.Timezone on renamed columns
+annotate VariantTesting.ServiceLevelTimezoneRenamed with {
+  renamedDateTime @changelog @Common.Timezone : renamedTimeZone;
+};
+
+// Test: service-level-only @changelog AND @Common.Timezone on a renamed column.
+// DB element 'plainDateTime' has no @Common.Timezone of its own.
+annotate VariantTesting.ServiceOnlyTimezoneRenamed with {
+  renamedPlain @changelog @Common.Timezone : renamedTimezone;
+};
