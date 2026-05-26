@@ -203,3 +203,8 @@ jobs:
 
             sleep 60
           done
+
+      - name: Stop application
+        if: always()
+        shell: bash
+        run: cf stop perf-bookshop-srv || true
