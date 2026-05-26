@@ -23,6 +23,11 @@ entity DifferentFieldTypes {
       dppField1 : String      @PersonalData.IsPotentiallyPersonal;
       dppField2 : String      @PersonalData.IsPotentiallySensitive;
       dppField3 : String      @PersonalData.FieldSemantics: 'DataControllerID';
+      // Elements for testing @Common.Timezone with service-level-only @changelog
+      srvDateTimeWTZ          : DateTime @Common.Timezone : 'Europe/Berlin';
+      srvDateTimeWDTZ         : DateTime @Common.Timezone : timeZone;
+      srvRenamedDateTimeWDTZ  : DateTime @Common.Timezone : timeZone;
+      plainDateTime           : DateTime;
       @changelog: false
       children  : Composition of many DifferentFieldTypesChildren
                     on children.parent = $self;

@@ -12,12 +12,13 @@ describe('CDS Features', () => {
       testingSRV = await cds.connect.to('VariantTesting');
     });
     it('timezone field is null in case of no timezone', async () => {
+      const { DifferentFieldTypes } = testingSRV.entities;
       const rootEntityData = {
         ID: cds.utils.uuid(),
         dateTime: new Date('2024-10-16T08:53:48Z')
       };
-      await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries(rootEntityData);
-      let changes = await SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+      await INSERT.into(DifferentFieldTypes).entries(rootEntityData);
+      let changes = await SELECT.from({ ref: [{ id: DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
         entity: 'sap.change_tracking.DifferentFieldTypes',
         entityKey: rootEntityData.ID,
         attribute: 'dateTime'
@@ -28,12 +29,13 @@ describe('CDS Features', () => {
     });
 
     it('timezone field has timezone for static annotation value', async () => {
+      const { DifferentFieldTypes } = testingSRV.entities;
       const rootEntityData = {
         ID: cds.utils.uuid(),
         dateTimeWTZ: new Date('2024-10-16T08:53:48Z')
       };
-      await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries(rootEntityData);
-      let changes = await SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+      await INSERT.into(DifferentFieldTypes).entries(rootEntityData);
+      let changes = await SELECT.from({ ref: [{ id: DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
         entity: 'sap.change_tracking.DifferentFieldTypes',
         entityKey: rootEntityData.ID,
         attribute: 'dateTimeWTZ'
@@ -44,12 +46,13 @@ describe('CDS Features', () => {
     });
 
     it('timezone field has timezone for dynamic annotation value', async () => {
+      const { DifferentFieldTypes } = testingSRV.entities;
       const rootEntityData = {
         ID: cds.utils.uuid(),
         dateTimeWDTZ: new Date('2024-10-16T08:53:48Z')
       };
-      await INSERT.into(testingSRV.entities.DifferentFieldTypes).entries(rootEntityData);
-      let changes = await SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+      await INSERT.into(DifferentFieldTypes).entries(rootEntityData);
+      let changes = await SELECT.from({ ref: [{ id: DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
         entity: 'sap.change_tracking.DifferentFieldTypes',
         entityKey: rootEntityData.ID,
         attribute: 'dateTimeWDTZ'
@@ -58,8 +61,8 @@ describe('CDS Features', () => {
       let change = changes[0];
       expect(change.valueTimeZone).toEqual('Europe/Berlin');
 
-      await UPDATE.entity(testingSRV.entities.DifferentFieldTypes).where({ ID: rootEntityData.ID }).set({ timeZone: 'Europe/Amsterdam' });
-      changes = await SELECT.from({ ref: [{ id: testingSRV.entities.DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+      await UPDATE.entity(DifferentFieldTypes).where({ ID: rootEntityData.ID }).set({ timeZone: 'Europe/Amsterdam' });
+      changes = await SELECT.from({ ref: [{ id: DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
         entity: 'sap.change_tracking.DifferentFieldTypes',
         entityKey: rootEntityData.ID,
         attribute: 'dateTimeWDTZ'
@@ -104,6 +107,93 @@ describe('CDS Features', () => {
         attribute: 'timezone'
       });
       expect(changes.length).toEqual(1);
+    });
+
+    it('timezone field has static timezone when @changelog is only on service level', async () => {
+      const { DifferentFieldTypes } = testingSRV.entities;
+      const rootEntityData = {
+        ID: cds.utils.uuid(),
+        srvDateTimeWTZ: new Date('2024-10-16T08:53:48Z')
+      };
+      await INSERT.into(DifferentFieldTypes).entries(rootEntityData);
+      let changes = await SELECT.from({ ref: [{ id: DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+        entity: 'sap.change_tracking.DifferentFieldTypes',
+        entityKey: rootEntityData.ID,
+        attribute: 'srvDateTimeWTZ'
+      });
+      expect(changes.length).toEqual(1);
+      let change = changes[0];
+      expect(change.valueTimeZone).toEqual('Europe/Berlin');
+    });
+
+    it('timezone field has dynamic timezone when @changelog is only on service level', async () => {
+      const { DifferentFieldTypes } = testingSRV.entities;
+      const rootEntityData = {
+        ID: cds.utils.uuid(),
+        srvDateTimeWDTZ: new Date('2024-10-16T08:53:48Z'),
+        timeZone: 'Europe/Amsterdam'
+      };
+      await INSERT.into(DifferentFieldTypes).entries(rootEntityData);
+      let changes = await SELECT.from({ ref: [{ id: DifferentFieldTypes.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+        entity: 'sap.change_tracking.DifferentFieldTypes',
+        entityKey: rootEntityData.ID,
+        attribute: 'srvDateTimeWDTZ'
+      });
+      expect(changes.length).toEqual(1);
+      let change = changes[0];
+      expect(change.valueTimeZone).toEqual('Europe/Amsterdam');
+    });
+
+    it('timezone field resolves dynamic timezone with renamed columns on service level', async () => {
+      const { ServiceLevelTimezoneRenamed } = testingSRV.entities;
+      const rootEntityData = {
+        ID: cds.utils.uuid(),
+        renamedDateTime: new Date('2024-10-16T08:53:48Z'),
+        renamedTimeZone: 'Europe/Amsterdam'
+      };
+      await INSERT.into(ServiceLevelTimezoneRenamed).entries(rootEntityData);
+      let changes = await SELECT.from({ ref: [{ id: ServiceLevelTimezoneRenamed.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+        entity: 'sap.change_tracking.DifferentFieldTypes',
+        entityKey: rootEntityData.ID,
+        attribute: 'srvRenamedDateTimeWDTZ'
+      });
+      expect(changes.length).toEqual(1);
+      let change = changes[0];
+      expect(change.valueTimeZone).toEqual('Europe/Amsterdam');
+
+      await UPDATE.entity(ServiceLevelTimezoneRenamed).where({ ID: rootEntityData.ID }).set({ renamedTimeZone: 'Asia/Tokyo' });
+      changes = await SELECT.from({ ref: [{ id: ServiceLevelTimezoneRenamed.name, where: [{ ref: ['ID'] }, '=', { val: rootEntityData.ID }] }, 'changes'] }).where({
+        ID: change.ID
+      });
+      expect(changes.length).toEqual(1);
+      change = changes[0];
+      expect(change.valueTimeZone).toEqual('Asia/Tokyo');
+    });
+
+    it('timezone resolves when both @changelog and @Common.Timezone are service-level only on a renamed column', async () => {
+      const { ServiceOnlyTimezoneRenamed } = testingSRV.entities;
+      const data = {
+        ID: cds.utils.uuid(),
+        renamedPlain: new Date('2024-10-16T08:53:48Z'),
+        renamedTimezone: 'Asia/Tokyo'
+      };
+      await INSERT.into(ServiceOnlyTimezoneRenamed).entries(data);
+      let changes = await SELECT.from({ ref: [{ id: ServiceOnlyTimezoneRenamed.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+        entity: 'sap.change_tracking.DifferentFieldTypes',
+        entityKey: data.ID,
+        attribute: 'plainDateTime'
+      });
+      expect(changes.length).toEqual(1);
+      let change = changes[0];
+      expect(change.valueTimeZone).toEqual('Asia/Tokyo');
+
+      await UPDATE.entity(ServiceOnlyTimezoneRenamed).where({ ID: data.ID }).set({ renamedTimezone: 'Europe/Berlin' });
+      changes = await SELECT.from({ ref: [{ id: ServiceOnlyTimezoneRenamed.name, where: [{ ref: ['ID'] }, '=', { val: data.ID }] }, 'changes'] }).where({
+        ID: change.ID
+      });
+      expect(changes.length).toEqual(1);
+      change = changes[0];
+      expect(change.valueTimeZone).toEqual('Europe/Berlin');
     });
   });
 
