@@ -139,7 +139,7 @@ jobs:
 
 
       # Install kubectl, add kubeconf, modify test config file, run test
-      - uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4
+      - uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
         id: install
       - name: pull kubeconfig
         env:
@@ -204,7 +204,7 @@ jobs:
             sleep 60
           done
 
-      - name: Undeploy application
-        if: ${{ always() }}
+      - name: Stop application
+        if: always()
         shell: bash
-        run: cf undeploy perf-bookshop --delete-services -f || true
+        run: cf stop perf-bookshop-srv || true
