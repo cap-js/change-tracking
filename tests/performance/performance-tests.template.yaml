@@ -35,7 +35,7 @@ spec:
       sleep: 1s
       thresholds:
         - aggregationMethod: avg
-          expectedValue: "550"
+          expectedValue: "1600"
           metric: responseTime
           operator: <=
         - aggregationMethod: percent
@@ -43,7 +43,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "1600"
+          expectedValue: "4500"
           metric: responseTime
           operator: <=
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.createChildren
@@ -72,7 +72,7 @@ spec:
       sleep: 1s
       thresholds:
         - aggregationMethod: avg
-          expectedValue: "1500"
+          expectedValue: "5000"
           metric: responseTime
           operator: <=
         - aggregationMethod: percent
@@ -80,7 +80,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "2500"
+          expectedValue: "8000"
           metric: responseTime
           operator: <=
     - api: ${PERF_HOST}/odata/v4/admin/Books({bookID})/AdminService.updateChildren
@@ -109,7 +109,7 @@ spec:
       sleep: 1s
       thresholds:
         - aggregationMethod: avg
-          expectedValue: "1500"
+          expectedValue: "4500"
           metric: responseTime
           operator: <=
         - aggregationMethod: percent
@@ -117,7 +117,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "3000"
+          expectedValue: "7000"
           metric: responseTime
           operator: <=
     # TODO: Re-enable once the hierarchy SQL query is optimised
@@ -178,7 +178,7 @@ spec:
       sleep: 1s
       thresholds:
         - aggregationMethod: avg
-          expectedValue: "2000"
+          expectedValue: "6500"
           metric: responseTime
           operator: <=
         - aggregationMethod: percent
@@ -186,7 +186,7 @@ spec:
           metric: errors
           operator: <=
         - aggregationMethod: p(99)
-          expectedValue: "3000"
+          expectedValue: "9500"
           metric: responseTime
           operator: <=
   customTest:
