@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Fixed
 - Migration table now correctly handles composite keys from v1 using `HIERARCHY_COMPOSITE_ID` (supports up to 5 key parts)
 - `@Capabilities.ReadRestrictions` on ChangeView is now only applied when the view is auto-created by the plugin. Services that explicitly expose ChangeView allow direct read access.
+- SQLite sidecar crash on startup in multi-tenant applications due to trigger/index deployment running before tenant tables exist
+- Invoke `enhanceModel` in after-deploy handler of `cds.xt.DeploymentService` for SQLite and Postgres because the `loaded` handler is not invoked on the tenant CSN from `ModelProviderService.getCsn()`
+- HDI deployment failure (sap.changelog.Changes_CT_INDEX.hdbindex requires db://SAP_CHANGELOG_CHANGES which is not provided by any file) caused by adding `.hdbindex` artifacts even when Changes table does not exist in the compiled model
+- HDI deployment failure (invalid column name: CHANGEVIEW_0.PARENT_ENTITYKEY) during extensibility upgrades since `enhanceModel` was not called on the tenant CSN before HANA compilation
 
 ## Version 2.0.0-beta.12 - 2026-05-18
 
