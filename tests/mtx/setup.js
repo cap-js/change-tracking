@@ -123,10 +123,7 @@ async function stopSidecar(proc) {
   if (proc && !proc.killed) {
     if (proc.exitCode === null) {
       proc.kill();
-      await Promise.race([
-        new Promise((resolve) => proc.on('exit', resolve)),
-        new Promise((resolve) => setTimeout(resolve, 5000))
-      ]);
+      await Promise.race([new Promise((resolve) => proc.on('exit', resolve)), new Promise((resolve) => setTimeout(resolve, 5000))]);
     }
   }
   cleanDbFiles();

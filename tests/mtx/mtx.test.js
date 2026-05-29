@@ -30,7 +30,6 @@ if (isSqlite) {
 }
 
 describeIfSqlite('Change-Tracking MTX', () => {
-
   describe('Tenant subscription deploys change-tracking artifacts', () => {
     it('deploys triggers', () => {
       const Database = require('better-sqlite3');
