@@ -12,7 +12,8 @@
         "kind": "sql"
       },
       "[production]": {
-        "multitenancy": true
+        "multitenancy": true,
+        "extensibility": true
       },
       "[with-mtx]": {
         "multitenancy": true
