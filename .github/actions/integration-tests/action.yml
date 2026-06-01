@@ -71,6 +71,11 @@ runs:
     - name: Install all dependencies
       shell: bash
       run: npm install
+
+    - name: Pin @sap/cds for CAP 8 matrix
+      if: ${{ inputs.CDS_VERSION == '8' }}
+      shell: bash
+      run: npm i @sap/cds@8 --no-save
       
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV
