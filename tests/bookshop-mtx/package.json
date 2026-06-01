@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@cap-js/change-tracking": "file:../../.",
-    "@sap/cds-mtxs": "^3"
+    "@sap/cds-mtxs": "^2 || ^3"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^1 || ^2"
