@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "@cap-js/change-tracking": "file:../../.",
-    "@sap/cds": "^8 || ^9",
     "@sap/cds-mtxs": "^2 || ^3"
   },
   "devDependencies": {
