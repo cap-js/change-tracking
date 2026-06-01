@@ -1,7 +1,7 @@
 {
   "name": "bookshop-mtx",
   "dependencies": {
-    "@cap-js/change-tracking": "*",
+    "@cap-js/change-tracking": "file:../../../.",
     "@cap-js/hana": "^1 || ^2",
     "@sap/cds": "^8 || ^9",
     "@sap/cds-mtxs": "^2 || ^3",
