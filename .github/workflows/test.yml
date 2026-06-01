@@ -41,11 +41,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
       - run: npm i
+      - run: cd tests/bookshop && npm i
+      - run: cd tests/bookshop-mtx && npm i
       - name: Pin @sap/cds for CAP 8 matrix
         if: matrix.cds-version == '8'
         run: npm i @sap/cds@8 --no-save
-      - run: cd tests/bookshop && npm i
-      - run: cd tests/bookshop-mtx && npm i
       - name: Run SQLite tests
         run: npm run test
 
