@@ -65,6 +65,28 @@ runs:
       with:
         node-version: ${{ inputs.NODE_VERSION }}
 
+    - name: Set CDS version-specific dependencies
+      if: ${{ inputs.CDS_VERSION == '8' }}
+      shell: bash
+      run: |
+        echo "Installing CDS 8 compatible packages..."
+        npm pkg set "devDependencies.@sap/cds=^8.9.8"
+        npm pkg set "devDependencies.@cap-js/sqlite=^1"
+        npm pkg set "devDependencies.@cap-js/cds-test=^0.4.1"
+        npm pkg set "overrides.@cap-js/sqlite=^1"
+        npm pkg set "overrides.@cap-js/hana=^1"
+        npm pkg set "overrides.@cap-js/db-service=^1"
+        npm pkg set "overrides.@cap-js/postgres=^1"
+        npm pkg set "overrides.@sap/cds-mtxs=^2"
+        npm pkg set "overrides.@cap-js/cds-test=^0.4.1"
+        npm pkg set "devDependencies.@cap-js/cds-types=^0.11"
+        cd tests/bookshop
+        npm pkg set "dependencies.@cap-js/hana=^1"
+        npm pkg set "dependencies.@cap-js/postgres=^1"
+        npm pkg set "devDependencies.@cap-js/sqlite=^1"
+        cd ../bookshop-mtx
+        npm pkg set "dependencies.@sap/cds-mtxs=^2"
+        npm pkg set "devDependencies.@cap-js/sqlite=^1"
     - name: Install global CDS
       shell: bash
       run: npm i -g @sap/cds-dk@${{ inputs.CDS_VERSION }}
@@ -72,11 +94,6 @@ runs:
       shell: bash
       run: npm install
 
-    - name: Pin @sap/cds for CAP 8 matrix
-      if: ${{ inputs.CDS_VERSION == '8' }}
-      shell: bash
-      run: npm i @sap/cds@8 --no-save
-      
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV
       shell: bash
