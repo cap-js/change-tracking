@@ -27,7 +27,7 @@
 	},
 	"devDependencies": {
 		"@cap-js/attachments": "^2",
-		"@cap-js/cds-test": "*",
+		"@cap-js/cds-test": "^0",
 		"@cap-js/change-tracking": "file:.",
 		"@cap-js/sqlite": "^1 || ^2",
 		"express": "^4"
