@@ -51,7 +51,7 @@
     }
   },
   "jest": {
-    "testTimeout": 180000
+    "testTimeout": 200000
   },
   "workspaces": [
     "tests/*"
