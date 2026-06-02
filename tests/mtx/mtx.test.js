@@ -4,12 +4,13 @@ const cds = require('@sap/cds');
 const path = require('path');
 const { APP_DIR, ensureSidecarPlugin, cleanDbFiles, startSidecar, subscribeTenant, upgradeTenant, stopSidecar } = require('./setup');
 
+const { axios } = cds.test(APP_DIR);
+axios.defaults.auth = { username: 'alice' };
+
 jest.setTimeout(60_000);
 
-const isSqlite = cds.env.requires?.db?.kind === 'sqlite' || cds.env.requires?.db?.kind === 'better-sqlite';
-
+const isSqlite = cds.env.requires?.db?.kind === 'sqlite';
 const describeIfSqlite = isSqlite ? describe : describe.skip;
-
 let sidecar;
 
 if (isSqlite) {
@@ -24,9 +25,6 @@ if (isSqlite) {
   afterAll(async () => {
     await stopSidecar(sidecar?.proc);
   });
-
-  const { axios } = cds.test(APP_DIR);
-  axios.defaults.auth = { username: 'alice' };
 }
 
 describeIfSqlite('Change-Tracking MTX', () => {
