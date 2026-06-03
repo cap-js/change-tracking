@@ -1,7 +1,7 @@
 const { spawn, execSync } = require('child_process');
 const os = require('os');
-const cds = require('@sap/cds');
-const { path, readFileSync, writeFileSync, readdirSync, unlinkSync } = cds.utils;
+const path = require('path');
+const fs = require('fs');
 
 const APP_DIR = path.resolve(__dirname, '../bookshop-mtx');
 const SIDECAR_DIR = path.join(APP_DIR, 'mtx', 'sidecar');
@@ -13,7 +13,7 @@ const PLUGIN_ROOT = path.resolve(__dirname, '../..');
  */
 function ensureSidecarPlugin() {
   const pkgPath = path.join(SIDECAR_DIR, 'package.json');
-  const originalPkg = readFileSync(pkgPath, 'utf-8');
+  const originalPkg = fs.readFileSync(pkgPath, 'utf-8');
   const tmpDir = os.tmpdir();
   const tgz = execSync(`npm pack --pack-destination ${tmpDir}`, {
     cwd: PLUGIN_ROOT,
@@ -24,7 +24,7 @@ function ensureSidecarPlugin() {
     encoding: 'utf-8',
     stdio: 'ignore'
   });
-  writeFileSync(pkgPath, originalPkg);
+  fs.writeFileSync(pkgPath, originalPkg);
 }
 
 /**
@@ -33,13 +33,13 @@ function ensureSidecarPlugin() {
 function cleanDbFiles() {
   let files;
   try {
-    files = readdirSync(APP_DIR);
+    files = fs.readdirSync(APP_DIR);
   } catch {
     return;
   }
   for (const f of files.filter((f) => /^db.*\.sqlite(-shm|-wal)?$/.test(f))) {
     try {
-      unlinkSync(path.join(APP_DIR, f));
+      fs.unlinkSync(path.join(APP_DIR, f));
     } catch {
       /* ignore */
     }

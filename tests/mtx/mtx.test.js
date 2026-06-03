@@ -1,7 +1,7 @@
-process.env.CDS_ENV = 'with-mtx';
+process.env.CDS_ENV = process.env.CDS_ENV ? `${process.env.CDS_ENV},with-mtx` : 'with-mtx';
 
 const cds = require('@sap/cds');
-const { path } = cds.utils;
+const path = require('path');
 const { APP_DIR, ensureSidecarPlugin, cleanDbFiles, startSidecar, subscribeTenant, upgradeTenant, stopSidecar } = require('./setup');
 
 const { axios, POST, GET } = cds.test(APP_DIR);
