@@ -1,7 +1,7 @@
 const { spawn, execSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
 const os = require('os');
+const cds = require('@sap/cds');
+const { path, readFileSync, writeFileSync, readdirSync, unlinkSync } = cds.utils;
 
 const APP_DIR = path.resolve(__dirname, '../bookshop-mtx');
 const SIDECAR_DIR = path.join(APP_DIR, 'mtx', 'sidecar');
@@ -13,7 +13,7 @@ const PLUGIN_ROOT = path.resolve(__dirname, '../..');
  */
 function ensureSidecarPlugin() {
   const pkgPath = path.join(SIDECAR_DIR, 'package.json');
-  const originalPkg = fs.readFileSync(pkgPath, 'utf-8');
+  const originalPkg = readFileSync(pkgPath, 'utf-8');
   const tmpDir = os.tmpdir();
   const tgz = execSync(`npm pack --pack-destination ${tmpDir}`, {
     cwd: PLUGIN_ROOT,
@@ -24,7 +24,7 @@ function ensureSidecarPlugin() {
     encoding: 'utf-8',
     stdio: 'ignore'
   });
-  fs.writeFileSync(pkgPath, originalPkg);
+  writeFileSync(pkgPath, originalPkg);
 }
 
 /**
@@ -33,13 +33,13 @@ function ensureSidecarPlugin() {
 function cleanDbFiles() {
   let files;
   try {
-    files = fs.readdirSync(APP_DIR);
+    files = readdirSync(APP_DIR);
   } catch {
     return;
   }
   for (const f of files.filter((f) => /^db.*\.sqlite(-shm|-wal)?$/.test(f))) {
     try {
-      fs.unlinkSync(path.join(APP_DIR, f));
+      unlinkSync(path.join(APP_DIR, f));
     } catch {
       /* ignore */
     }
@@ -47,12 +47,13 @@ function cleanDbFiles() {
 }
 
 /**
- * Start the MTX sidecar via `cds watch` on a random port.
- * Resolves with { proc, port } when the server is listening.
+ * Start the MTX sidecar via the locally-installed `@sap/cds` server (`bin/serve.js`)
+ * on a random port. Resolves with { proc, port } when the server is listening.
  */
 function startSidecar() {
   return new Promise((resolve, reject) => {
-    const proc = spawn('npx', ['cds', 'watch', '--port', '0'], {
+    const serveJs = path.join(SIDECAR_DIR, 'node_modules', '@sap', 'cds', 'bin', 'serve.js');
+    const proc = spawn(process.execPath, [serveJs, '--port', '0'], {
       cwd: SIDECAR_DIR,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, FORCE_COLOR: 'false', NODE_ENV: 'development' }
