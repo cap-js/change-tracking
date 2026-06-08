@@ -211,7 +211,6 @@ describe('Non-ID key support', () => {
       pages: [{ NOT_ID: pageID, page: 1 }]
     });
     await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/ProcessorService.draftActivate`, {});
-    await cds.delete(cds.model.definitions['sap.changelog.Changes']);
     await POST(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/ProcessorService.draftEdit`, {});
 
     await PATCH(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=false)/pages(NOT_ID='${pageID}',IsActiveEntity=false)`, {
@@ -223,7 +222,7 @@ describe('Non-ID key support', () => {
     const {
       data: { value: changes }
     } = await GET(`odata/v4/processor/BooksNotID(NOT_ID='${ID}',IsActiveEntity=true)/changes`);
-    const change = changes.find((change) => change.attribute === 'page');
+    const change = changes.find((change) => change.attribute === 'page' && change.modification === 'update');
     expect(change).toHaveProperty('valueChangedFrom', '1');
     expect(change).toHaveProperty('valueChangedTo', '2');
     expect(change).toHaveProperty('modification', 'update');
