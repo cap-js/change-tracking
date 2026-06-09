@@ -516,6 +516,23 @@ entity Status {
 
 Please be aware this means the localized value is then stored and shown in the change log, e.g. if a user speaking another language accesses the change log later, they will still see the value in the language used by the user who caused the change log.
 
+### Use row-level HANA triggers (fallback)
+
+By default, change-tracking emits **statement-level** HANA triggers (`REFERENCING NEW TABLE … FOR EACH STATEMENT`), which fire once per SQL statement and process all affected rows in one set-based operation. This is significantly faster than row-level triggers (`REFERENCING NEW ROW … FOR EACH ROW`) especially for bulk operations.
+
+```json
+"cds": {
+  "requires": {
+    "change-tracking": {
+      "rowLevelTriggers": true
+    }
+  }
+}
+```
+
+> [!NOTE]
+> This flag is a temporary workaround for "invalid RID address" HANA errors observed with statement-level triggers in some scenarios, and will likely be removed once the underlying HANA issue is resolved.
+
 ## Examples
 
 This section describes modelling cases for further reference, from simple to complex, including the following:
