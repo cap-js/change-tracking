@@ -4,17 +4,20 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.0.0-beta.13 - tbd
+## Version 2.0.0-beta.13 - 2026-06-09
 
 ### Changed 
 - Composition changelog entries on parents have always 'update' as modification type
+- HANA triggers now use statement-level execution by default for improved bulk DML performance
 
 ### Added
 - Consider `@Common.Timezone` on entities that are change-tracked only via a service-level `@changelog`.  Previously, `valueTimeZone` in `ChangeView` was resolved only for entities annotated with `@changelog` at the DB level
+- `rowLevelTriggers` configuration flag to opt into legacy row-level HANA triggers as a workaround for "invalid RID address" errors
 
 ### Fixed
 - Migration table now correctly handles composite keys from v1 using `HIERARCHY_COMPOSITE_ID` (supports up to 5 key parts)
 - `@Capabilities.ReadRestrictions` on ChangeView is now only applied when the view is auto-created by the plugin. Services that explicitly expose ChangeView allow direct read access.
+- HDI deployment failure caused by adding `.hdbindex` artifacts even when Changes table does not exist in the compiled model
 
 ## Version 2.0.0-beta.12 - 2026-05-18
 
