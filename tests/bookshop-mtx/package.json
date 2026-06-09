@@ -8,9 +8,6 @@
   },
   "cds": {
     "requires": {
-      "db": {
-        "kind": "sql"
-      },
       "[production]": {
         "multitenancy": true,
         "extensibility": true
