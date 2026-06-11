@@ -18,12 +18,17 @@ A [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
     - [Expression-based labels](#expression-based-labels)
     - [Localized values](#localized-values)
   - [Human-readable IDs for Composition Entries](#human-readable-ids-for-composition-entries)
+  - [Tracing any kind of change](#tracing-any-kind-of-change)
 - [Advanced Options](#advanced-options)
   - [Altered Table View](#altered-table-view)
   - [Disable Lazy Loading](#disable-lazy-loading)
   - [Disable UI Facet generation](#disable-ui-facet-generation)
   - [Disable Association to Changes Generation](#disable-association-to-changes-generation)
   - [Disabling Change Tracking](#disabling-change-tracking)
+  - [Select types of changes to track](#select-types-of-changes-to-track)
+  - [Preserve change logs of deleted data](#preserve-change-logs-of-deleted-data)
+  - [Adjust the depth of the entity hierarchy tracking](#adjust-the-depth-of-the-entity-hierarchy-tracking)
+  - [Disable Children Change Linking](#disable-children-change-linking)
 - [Examples](#examples)
   - [Tracing Changes](#tracing-changes)
   - [Don&#39;ts](#donts)
@@ -64,7 +69,7 @@ cds watch
 > [!WARNING]
 > Please be aware that [**sensitive** or **personal** data](https://cap.cloud.sap/docs/guides/data-privacy/annotations#annotating-personal-data) (annotated with `@PersonalData`) is not change tracked, since viewing the log allows users to circumvent [audit-logging](https://cap.cloud.sap/docs/guides/data-privacy/audit-logging#setup).
 
-All you need to do, is to identify what should be change-tracked by annotating respective entities and elements in your model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _db/change-tracking.cds_:
+All you need to do is identify what should be change-tracked by annotating respective entities and elements in your model with the `@changelog` annotation. Following the [best practice of separation of concerns](https://cap.cloud.sap/docs/guides/domain-modeling#separation-of-concerns), we do so in a separate file _db/change-tracking.cds_:
 
 ```cds
 using { sap.capire.Incidents, sap.capire.Conversations } from './schema.cds';
@@ -106,7 +111,7 @@ If you have a Fiori Element application, the CDS plugin automatically provides a
 
 ### Human-readable Types and Fields
 
-By default the implementation looks up *Object Type* names or *Field* names from respective  `@title` or  `@Common.Label` annotations and uses the technical name as a fall back.
+By default the implementation looks up *Object Type* names or *Field* names from respective `@title` or `@Common.Label` annotations and uses the technical name as a fall back.
 
 For example, without the `@title` annotation, changes to conversation entries would show up with the technical entity name:
 
@@ -297,7 +302,7 @@ In cases, like above, where the human-readable value only consists of one field,
 
 ### Tracing any kind of change
 
-Change tracking is implemented with Database triggers and supports HANA Cloud, SQLite, Postgres and H2.
+Change tracking is implemented with Database triggers and supports HANA Cloud, SQLite and Postgres.
 
 Leveraging database triggers means any change will be tracked no matter how it is represented in the service. Thus tracking changes made via unions, or via views with joins will still work.
 
@@ -363,7 +368,7 @@ The system now uses the SAP Fiori elements default setting `@UI.PartOfPreview: t
 
 If you do not want the auto-provided UI facet for viewing changes, you can provide your own facet for the `changes` association in the `@UI.Facets` annotation and the plugin won't override it.
 
-Furthermore if you annotate the association as not readable, the facet is also not added. You can achive this, like 
+Furthermore if you annotate the association as not readable, the facet is also not added. You can achieve this, like
 
 ```cds
 @Capabilities.NavigationRestrictions.RestrictedProperties : [
@@ -382,7 +387,7 @@ entity SalesOrders {
 
 ### Disable Association to Changes Generation
 
-For some scenarios, e.g. when doing `UNION` and the `@changelog` annotation is still propagated, the automatic addition of the association to `changes` does not make sense. You can use `@changelog.disable_assoc`for this to be disabled on entity level.
+For some scenarios, e.g. when doing `UNION` and the `@changelog` annotation is still propagated, the automatic addition of the association to `changes` does not make sense. You can use `@changelog.disable_assoc` for this to be disabled on entity level.
 
 > [!IMPORTANT]
 > This will also suppress the addition of the UI facet, since the change-view is no longer available as the target entity.
@@ -477,9 +482,9 @@ By default, the depth of the changes hierarchy for any entity is 3. This means, 
 > [!IMPORTANT]
 > The depth of the hierarchy has a performance impact, so be careful with increasing it!
 
-### Disable Chidlren Change Linking
+### Disable Children Change Linking
 
-By default, when a child entity in a composition is change-tracked, an additional changelog is created on the parent entity. This record has `valueDataType = 'cds.Composition'` and the `attribute` set to the composition field name (e.g. `conversation`). It links changes from a child to the parent allows hierarchical viewing of changes across the composition tree.
+By default, when a child entity in a composition is change-tracked, an additional changelog is created on the parent entity. This record has `valueDataType = 'cds.Composition'` and the `attribute` set to the composition field name (e.g. `conversation`). It links changes from a child to the parent and allows hierarchical viewing of changes across the composition tree.
 
 To disable this linking behavior for a specific composition, annotate the composition field with `@changelog: false`:
 
@@ -497,41 +502,6 @@ entity Incidents : cuid, managed {
 ```
 
 With `@changelog: false` on the composition field, individual changes on the child entity (e.g. changes to `message`) are still tracked, but no linking changelog is created on the parent. This means the child's changes will not appear in the parent's change history hierarchy.
-
-### Tracking localized values
-
-Localized properties, like `descr` in the example, are respected and the localized value during change log creation is used for the label.
-
-```cds
-entity Incidents : cuid, managed {
-  // … more fields
-  status         : Association to Status default 'N' @changelog : [status.descr];
-}
-
-entity Status {
-  key code    : String:
-  descr : localized String;
-}
-```
-
-Please be aware this means the localized value is then stored and shown in the change log, e.g. if a user speaking another language accesses the change log later, they will still see the value in the language used by the user who caused the change log.
-
-### Use row-level HANA triggers (fallback)
-
-By default, change-tracking emits **statement-level** HANA triggers (`REFERENCING NEW TABLE … FOR EACH STATEMENT`), which fire once per SQL statement and process all affected rows in one set-based operation. This is significantly faster than row-level triggers (`REFERENCING NEW ROW … FOR EACH ROW`) especially for bulk operations.
-
-```json
-"cds": {
-  "requires": {
-    "change-tracking": {
-      "rowLevelTriggers": true
-    }
-  }
-}
-```
-
-> [!NOTE]
-> This flag is a temporary workaround for "invalid RID address" HANA errors observed with statement-level triggers in some scenarios, and will likely be removed once the underlying HANA issue is resolved.
 
 ## Examples
 
@@ -641,8 +611,6 @@ annotate Incidents with @changelog: [title] {
 
 ### 🛑 Don'ts
 
-
-
 #### Use Case 1: Don't trace changes for field(s) with `Association to many`
 
 ```cds
@@ -666,7 +634,7 @@ entity AggregatedBusinessTransactionData @(cds.autoexpose) : cuid {
 }
 ```
 
-The reason is that: When deploying to relational databases, Associations are mapped to foreign keys. Yet, when mapped to non-relational databases they're just references. More details could be found in [Prefer Managed Associations](https://cap.cloud.sap/docs/guides/domain-models#managed-associations). In the above sample, there is no column for FootprintInventory in the table AggregatedBusinessTransactionData, but there is a navigation property FootprintInventory of in OData entity metadata.
+The reason is that: When deploying to relational databases, Associations are mapped to foreign keys. Yet, when mapped to non-relational databases they're just references. More details could be found in [Prefer Managed Associations](https://cap.cloud.sap/docs/guides/domain-models#managed-associations). In the above sample, there is no column for FootprintInventory in the table AggregatedBusinessTransactionData, but there is a navigation property FootprintInventory in OData entity metadata.
 
 ## Troubleshooting
 
@@ -679,6 +647,25 @@ On HANA `session_context('APPLICATIONUSER')` is being used. All queries going th
 On Postgres `current_setting('cap.applicationuser', true)` is being used to retrieve the user information and again all queries going through `@cap-js/postgres` have the context. 
 
 On SQLite no session context function exists. Thus `@cap-js/sqlite` defines a UDF called `session_context` which looks up the session context from the database client used by `@cap-js/sqlite`. If you manually insert to SQLite circumventing the CAP driver, please make sure the UDF is defined.
+
+### "Invalid RID address" error with statement-level HANA triggers
+
+Statement-level triggers could cause "invalid RID address" errors on certain HANA versions. This issue has been fixed with HANA version **2026.2.17** (QRC 1/2026). If you encounter this error, upgrade your HANA instance to at least this version.
+
+As a temporary workaround, you can fall back to row-level triggers by setting the `rowLevelTriggers` flag in your project configuration:
+
+```json
+"cds": {
+  "requires": {
+    "change-tracking": {
+      "rowLevelTriggers": true
+    }
+  }
+}
+```
+
+> [!NOTE]
+> Row-level triggers are slower than statement-level triggers, especially for bulk operations. The `rowLevelTriggers` flag is a temporary workaround and will be removed in a future version.
 
 ## Contributing
 
