@@ -14,17 +14,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Dynamic localized label lookup: if a `@changelog` label points to a localized property from a code list entity, the label is resolved in the reader's locale at read time
 - Support CDS expression language (CXL) in `@changelog` annotations for custom objectIDs and changelog labels
 - Customizable objectID for composition changelog entries on parent entities
+- Support for tracked Date, DateTime, Time and Timestamp properties with correct formatting
+- Support for `@Common.Timezone` on change-tracked entities
 - Database indexes on `sap.changelog.Changes` for faster parent composition lookups and deduplication queries
 - Generation of `.hdbmigrationtable` and updating `undeploy.json` via `cds add change-tracking-migration`
 - HANA procedure `SAP_CHANGELOG_RESTORE_BACKLINKS` to restore parent-child hierarchy for composition changes
-- `rowLevelTriggers` configuration flag to opt into row-level HANA triggers as a workaround for "invalid RID address" errors
-- Support for tracked Date, DateTime, Time and Timestamp properties with correct formatting
-- Support for `@Common.Timezone` on change-tracked entities
-- Change History section is hidden in draft mode
 
 ### Changed
-- Switch from event handler registration to native database triggers for change capture mechanism
-- HANA triggers use statement-level execution by default for improved bulk DML performance
 - Removed table entity `sap.changelog.ChangeLog` and flattened into `sap.changelog.Changes`
 - Display changes with a Tree Table
 - Changes from child entities are shown on the parent ChangeView by default (configurable via `maxDisplayHierarchyDepth`)
@@ -34,10 +30,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Modifications on `sap.changelog.Changes`:
     - Removed `serviceEntityPath`, `keys` and foreign key `changeLog`
     - Renamed `entityID` to `objectID`
-    - Renamed `parentEntityID` to `rootObjectID` and `parentKey` to `rootEntityKey`
     - Added `entityKey`, `createdAt` and `createdBy` from deleted entity `sap.changelog.ChangeLog`
-    - Added `rootEntity` field
-- ChangeView in services is no longer directly accessible; it can only be accessed via navigation paths
+    - Added `parent` association and `chidlren` composition
+- Change History section is hidden in draft mode
 
 ### Fixed
 - Performance issues when working with entities that include a large number of fields and children
@@ -47,10 +42,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Explicit type casts for Date, DateTime, Time, Timestamp and Decimal fields in `ChangeView`
 - Format tracked decimal values with correct precision (e.g., Decimal(11,4) stores 0 as `0.0000`)
 - ObjectID correctly falls back to entity key when all `@changelog` fields are NULL
-- Deployment error when an entity key uses a custom type defined as an association
 
 ### Removed
+- Event handler registration for change capture mechanism
+- Entity `sap.changelog.ChangeLog` and flattened into `sap.changelog.Changes`
 - Removed configuration option `considerLocalizedValues`
+- Information about which service a change originated from
 
 ## Version 1.1.4 - 2025-12-03
 
