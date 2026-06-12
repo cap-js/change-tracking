@@ -30,7 +30,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
     - Removed `serviceEntityPath`, `keys` and foreign key `changeLog`
     - Renamed `entityID` to `objectID`
     - Added `entityKey`, `createdAt` and `createdBy` from deleted entity `sap.changelog.ChangeLog`
-    - Added `parent` association and `chidlren` composition
+    - Added `parent` association and `children` composition
 - Change History section is hidden in draft mode
 
 ### Fixed
