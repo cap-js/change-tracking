@@ -21,7 +21,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - HANA procedure `SAP_CHANGELOG_RESTORE_BACKLINKS` to restore parent-child hierarchy for composition changes
 
 ### Changed
-- Removed table entity `sap.changelog.ChangeLog` and flattened into `sap.changelog.Changes`
 - Display changes with a Tree Table
 - Changes from child entities are shown on the parent ChangeView by default (configurable via `maxDisplayHierarchyDepth`)
 - Composition changelog entries on parents always have `update` as modification type
