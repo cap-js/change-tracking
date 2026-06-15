@@ -4,169 +4,49 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.0.0-beta.13 - 2026-06-09
-
-### Changed 
-- Composition changelog entries on parents have always 'update' as modification type
-- HANA triggers now use statement-level execution by default for improved bulk DML performance
+## Version 2.0.0 - 2026-06-12
 
 ### Added
-- Consider `@Common.Timezone` on entities that are change-tracked only via a service-level `@changelog`.  Previously, `valueTimeZone` in `ChangeView` was resolved only for entities annotated with `@changelog` at the DB level
-- `rowLevelTriggers` configuration flag to opt into legacy row-level HANA triggers as a workaround for "invalid RID address" errors
-
-### Fixed
-- Migration table now correctly handles composite keys from v1 using `HIERARCHY_COMPOSITE_ID` (supports up to 5 key parts)
-- `@Capabilities.ReadRestrictions` on ChangeView is now only applied when the view is auto-created by the plugin. Services that explicitly expose ChangeView allow direct read access.
-- HDI deployment failure caused by adding `.hdbindex` artifacts even when Changes table does not exist in the compiled model
-
-## Version 2.0.0-beta.12 - 2026-05-18
-
-### Fixed
-- Build crash when using `@changelog` path annotations on unmanaged associations due to missing guard on `col.keys`
-- SQLite update trigger `OF` clause generates correct column names for unmanaged associations (e.g., `assocName_fkField` instead of `fkField`)
-- SQLite association label lookup using the entity's primary key instead of the foreign key field in the `where` clause for unmanaged associations
-- Deduplication of column names in update trigger `OF` clauses when a field is referenced by both a tracked element and an unmanaged association
-- Prevent server crash when no db connection is available during session variable assignment
-
-### Added
-- Optimization to skip unnecessary subselect lookups for unmanaged associations when the `@changelog` path references a target key that is already available as a local foreign key field
-
-## Version 2.0.0-beta.11 - 2026-04-28
-
-### Added
-- Database indexes for `sap.changelog.Changes` table on `parent_ID` for navigating the parent association hierarchy (SQLite, HANA, Postgres)
-
-### Fixed
-- ChangeView in services is no longer directly accessible. Now it can only be accessed via the navigation paths
-- Deployment error when an entity key uses a custom type defined as an association (e.g., `type MyType : Association to SomeEntity`) due to incorrect entityKey expression in the changes association mapping
-- Runtime error when requesting `ChangeView` due to incorrect `where` clause for entities with association-typed keys in timezone column subselects
-
-## Version 2.0.0-beta.10 - 2026-04-27
-
-### Changed
-- HANA triggers reverted from statement-level back to row-level execution for improved compatibility
-- Restored `CHANGE_TRACKING_DUMMY` entity required for row-level HANA triggers
-
-### Added
-- Database indexes on `sap.changelog.Changes` table for faster parent composition lookups and deduplication queries (SQLite, HANA, Postgres)
-
-### Fixed
-- Server crash when running raw inserts due to missing guards in service handler for setting session variables.
-- Deployment crash during trigger and procedure generation for entities that use SQL reserved keywords as columns names (e.g. `order`) due to missing escaping
-- Only cast entity keys to type string in the ON condition of changes when they are not type of `cds.String` or `cds.UUID`
-- ObjectID correctly falls back to entity key when all @changelog fields are NULL instead of showing "<empty>, <empty>,..., <empty>"
-
-## Version 2.0.0-beta.9 - 2026-04-15
-
-### Added
-- Customizable objectID for composition changelog entries on parent entities:
-  - **Composition of one**: objectID is derived from the child entity's `@changelog` annotation, falling back to the parent entity's `@changelog`
-  - **Composition of many**: objectID falls back to the parent entity's `@changelog` annotation, but can be customized on the composition field using `@changelog` with a path or expression referencing parent
-
-### Changed
-- Only skip change tracking for `@PersonalData.IsPotentiallySensitive` and `@PersonalData.IsPotentiallyPersonal` and not `@PersonalData.FieldSemantics`
-
-## Version 2.0.0-beta.8 - 2026-04-09
-
-### Fixed
-- Do not add @UI.Hidden: ($draft.IsActiveEntity) to the UI changes section when the entity is not draft enabled.
-
-## Version 2.0.0-beta.7 - 2026-04-08
-
-### Added
-- Support CDS expression language (CXL) in `@changelog` annotations to enable broader customization of objectIDs and changelog labels
-
-### Fixed
-- Existing Facets for displaying the Changes UI are correctly detected avoiding redundant Changes sections.
-- Format tracked decimal values with correct precision (e.g., Decimal(11,4) stores 0 as '0.0000')
-
-### Changed
-- HANA triggers changed from row-level to statement-level execution
-- Removed `CHANGE_TRACKING_DUMMY` entity
-- Change History section is now hidden in draft mode
-
-## Version 2.0.0-beta.6 - 2026-03-26
-
-### Added
-- Provide detailed plan for v1 to v2 HANA migration
+- Trigger generation for SQLite, HANA, Postgres and H2 to perform change tracking on the database level
+- Allow grouping of changes via new `transactionID` column
+- `valueChangedFromLabel` and `valueChangedToLabel` columns on `sap.changelog.Changes` for localized labels
+- Allow change tracking skip via session variables for entire transactions, entities, elements (`ct.skip`)
+- Dynamic localized label lookup: if a `@changelog` label points to a localized property from a code list entity, the label is resolved in the reader's locale at read time
+- Support CDS expression language (CXL) in `@changelog` annotations for custom objectIDs and changelog labels
+- Customizable objectID for composition changelog entries on parent entities
+- Support for tracked Date, DateTime, Time and Timestamp properties with correct formatting
+- Support for `@Common.Timezone` on change-tracked entities
+- Database indexes on `sap.changelog.Changes` for faster parent composition lookups and deduplication queries
 - Generation of `.hdbmigrationtable` and updating `undeploy.json` via `cds add change-tracking-migration`
 - HANA procedure `SAP_CHANGELOG_RESTORE_BACKLINKS` to restore parent-child hierarchy for composition changes
 
-### Fixed
-- Explicit type casts for Date, DateTime, Time, Timestamp and Decimal fields in `ChangeView` to avoid conversion errors
-- Lazy load database adapters to prevent crashes when optional dependencies are not installed
-- Skip changelogs referencing association targets annotated with `@cds.persistence.skip`
-- Cast single entity keys to `cds.String` to prevent type conversion errors
-- Dynamic localization now verifies `.texts` entity existence before attempting localized lookup
-
-
-## Version 2.0.0-beta.5 - 2026-03-17
-
-### Added
-- Support dynamic localized label lookup, meaning if for example a property is change tracked and its change tracking label (@changelog : [<association>.<localized_prop>]) points to one localized property from its code list entity, the label is dynamically fetched when the change is read based on the users locale.
-
-### Fixed
-- Postgres considers `disable*Tracking` for children changes
-- Human-readable `@changelog` annotation supports combination of direct entity elements and association elements
-
-## Version 2.0.0-beta.4 - 2026-03-16
-
-### Added
-
-- Tracked Date, DateTime, Time and Timestamp properties are now correctly formatted again.
-- If a tracked property is annotated with `@Common.Timezone` the changelog now considers the Timezone as well.
-
-## Version 2.0.0-beta.3 - 2026-03-13
-
-### Fixed
-- CSV data for `i18nKeys` and `CHANGE_TRACKING_DUMMY` is now correctly generated during the HANA build
-
 ### Changed
-- Changes from child entities are shown on the parent ChangeView by default
-- Depth of displayed child changes can be configured via `maxDisplayHierarchyDepth`
-- Improved search capabilities for changes
-
-## Version 2.0.0-beta.2 - 2026-03-11
-
-### Fixed
-- Fixed a server crash when resolving table names
-- Support entity level `@changelog` annotation where no explicit elements for the object ID are defined
-- Trigger generation works again for MTX scenarios
-
-### Changed
-- Improved performance when quering changes
-
-
-## Version 2.0.0-beta.1 - 2026-03-06
-
-### Added
-- Trigger generation for SQLite, HANA, Postgres and H2 to perform change tracking on a database level
-- Allow grouping of changes via new `transactionID` column
-- Added `valueChangedFromLabel` and `valueChangedToLabel` to `sap.changelog.Changes` for localized labels
-- Allow change tracking skip via session variables for entire transactions, entities, elements (`ct.skip`)
+- Display changes with a Tree Table
+- Changes from child entities are shown on the parent ChangeView by default (configurable via `maxDisplayHierarchyDepth`)
+- Composition changelog entries on parents always have `update` as modification type
+- Only skip change tracking for `@PersonalData.IsPotentiallySensitive` and `@PersonalData.IsPotentiallyPersonal` (not `@PersonalData.FieldSemantics`)
+- Localization is performed on database level via `sap.changelog.i18nKeys` table
+- Modifications on `sap.changelog.Changes`:
+    - Removed `serviceEntityPath`, `keys` and foreign key `changeLog`
+    - Renamed `entityID` to `objectID`
+    - Added `entityKey`, `createdAt` and `createdBy` from deleted entity `sap.changelog.ChangeLog`
+    - Added `parent` association and `children` composition
+- Change History section is hidden in draft mode
 
 ### Fixed
 - Performance issues when working with entities that include a large number of fields and children
 - Creation of changelogs at bulk operations
-- Fixed search and sort functionality on the `ChangeView`
-- `LargeString` are truncated and don't lead to failing insert
-- Supports change tracking with every kind of update operation 
-
-### Changed
-- Switch from event handler registration to native database triggers for change capture mechanism
-- Removed table entity `sap.changelog.ChangeLog` and flattened into `sap.changelog.Changes`
-- Display changes with a Tree Table
-- Modifications on `sap.changelog.Changes`
-    - Removed `serviceEntityPath`, `keys` and foreign key `changeLog`
-    - Renamed `entityID` to `objectID`
-    - Renamed `parentEntityID` to `rootObjectID` and `parentKey` to `rootEntityKey`
-    - Added `entityKey`, `createdAt` and `createdBy` from deleted entity `sap.changelog.ChangeLog`
-    - Added `rootEntity` field 
-- Localization is performed on database level and therefore the table `sap.changelog.i18nKeys` that stores localized labels was added
-- Expose localized label fields on `sap.changelog.ChangeView`
+- Search and sort functionality on the `ChangeView`
+- `LargeString` values are truncated and don't lead to failing inserts
+- Explicit type casts for Date, DateTime, Time, Timestamp and Decimal fields in `ChangeView`
+- Format tracked decimal values with correct precision (e.g., Decimal(11,4) stores 0 as `0.0000`)
+- ObjectID correctly falls back to entity key when all `@changelog` fields are NULL
 
 ### Removed
+- Event handler registration for change capture mechanism
+- Entity `sap.changelog.ChangeLog` and flattened into `sap.changelog.Changes`
 - Removed configuration option `considerLocalizedValues`
+- Information about which service a change originated from
 
 ## Version 1.1.4 - 2025-12-03
 
