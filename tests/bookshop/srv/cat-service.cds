@@ -2,11 +2,11 @@ using { sap.capire.bookshop as my } from '../db/schema';
 service CatalogService @(path:'/browse') {
 
   /** For displaying lists of Books */
-  @readonly entity ListOfBooks as projection on Books
+  @readonly entity ListOfBooks as projection on my.Books
   excluding { descr };
 
   /** For display in details pages */
-  @readonly entity Books as projection on my.Books { *,
+  @readonly @cds.redirection.target entity Books as projection on my.Books { *,
     @changelog: false
     author.name as author
   } excluding { createdBy, modifiedBy };
