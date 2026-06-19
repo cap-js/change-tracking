@@ -29,7 +29,7 @@
     "format:check": "npx -y prettier@3 --check ."
   },
   "peerDependencies": {
-    "@sap/cds": "^9.9.1"
+    "@sap/cds": ">=8.5"
   },
   "engines": {
     "node": ">=20.0.0"
