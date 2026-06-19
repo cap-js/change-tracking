@@ -7,7 +7,6 @@ service CatalogService @(path:'/browse') {
 
   /** For display in details pages */
   @readonly entity Books as projection on my.Books { *,
-    @changelog: false
     author.name as author
   } excluding { createdBy, modifiedBy };
 

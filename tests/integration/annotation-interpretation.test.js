@@ -606,7 +606,7 @@ describe('@changelog annotation interpretation', () => {
     });
   });
 
-  describe('service projections with element renames', () => {
+  describe('different annotations in service projections', () => {
     it('does not conflict when a service renames an element but @changelog annotations are inherited unchanged', async () => {
       const {
         data: { ID: incidentID }
@@ -654,6 +654,52 @@ describe('@changelog annotation interpretation', () => {
       const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
       expect(statusChange).toBeDefined();
       expect(statusChange.objectID).toEqual('Stormy Weathers: Munich - Entity-level expression test');
+    });
+
+    it('does not conflict when a service projection inherits a specific @changelog as true', async () => {
+      // CatalogService.ListOfBooks is a simple projection on my.Books.
+      // The DB entity Books has author @changelog: [author.name.firstName, author.name.lastName] (specific).
+      // CDS propagation may simplify this to just 'true' on the projected element.
+      // AdminService.Books also has author @changelog: [author.name.firstName, author.name.lastName] (specific).
+      // The merge must not throw a conflict error when encountering 'true' vs the specific annotation.
+      const adminService = await cds.connect.to('AdminService');
+      const { ChangeView } = adminService.entities;
+
+      const bookStoreID = cds.utils.uuid();
+      const bookID = cds.utils.uuid();
+      const authorID1 = cds.utils.uuid();
+      const authorID2 = cds.utils.uuid();
+
+      await INSERT.into('sap.capire.bookshop.Authors').entries([
+        { ID: authorID1, name_firstName: 'Jane', name_lastName: 'Austen' },
+        { ID: authorID2, name_firstName: 'Mark', name_lastName: 'Twain' }
+      ]);
+
+      await POST(`/odata/v4/admin/BookStores`, { ID: bookStoreID, name: 'Test BookStore' });
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/books`, {
+        ID: bookID,
+        title: 'Test Book',
+        author_ID: authorID1
+      });
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      // Update the author association via AdminService (which has specific @changelog on author)
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+      await PATCH(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`, { author_ID: authorID2 });
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      const changes = await SELECT.from(ChangeView).where({
+        attribute: 'author',
+        entityKey: bookID,
+        modification: 'update'
+      });
+
+      expect(changes.length).toBeGreaterThan(0);
+      // The specific annotation [author.name.firstName, author.name.lastName] should be used for display
+      expect(changes[0].valueChangedTo).toBeTruthy();
     });
   });
 });
