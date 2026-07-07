@@ -370,6 +370,51 @@ describe('@changelog annotation interpretation', () => {
     expect(trackedChanges.length).toEqual(1);
   });
 
+  // @changelog paths that resolve to valueChangedToLabel or objectID must not
+  // include @PersonalData values. Reproduces the downstream-extension shape:
+  // a base entity with a @PersonalData field, and a separate `annotate` block
+  // pointing @changelog at that field via an association.
+  it('does not leak @PersonalData via association label or objectID paths', async () => {
+    const testingSRV = await cds.connect.to('VariantTesting');
+    const { Employees, ChangeView } = testingSRV.entities;
+
+    const managerID = cds.utils.uuid();
+    await INSERT.into(Employees).entries({
+      ID: managerID,
+      name: 'Manager Mallory',
+      officeLocation: 'Berlin',
+      salary: 987654 // @PersonalData.IsPotentiallyPersonal
+    });
+
+    const reportID = cds.utils.uuid();
+    await INSERT.into(Employees).entries({
+      ID: reportID,
+      name: 'Report Robin',
+      officeLocation: 'Berlin',
+      salary: 50000,
+      manager_ID: managerID
+    });
+
+    // Innocuous edit any user with write access to Employees can perform.
+    await UPDATE(Employees).where({ ID: reportID }).with({ officeLocation: 'Munich' });
+
+    const changes = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.Employees',
+      entityKey: reportID
+    });
+
+    const looksLikeSalary = (v) => v != null && String(v).startsWith('987654');
+    const leakedLabels = changes
+      .filter((c) => looksLikeSalary(c.valueChangedToLabel))
+      .map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
+    const leakedObjectIDs = changes
+      .filter((c) => looksLikeSalary(c.objectID))
+      .map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
+
+    expect(leakedLabels).toEqual([]);
+    expect(leakedObjectIDs).toEqual([]);
+  });
+
   describe('Code lists resolution', () => {
     it('displays human-readable code list name when single attribute is annotated with @changelog', async () => {
       const adminService = await cds.connect.to('AdminService');

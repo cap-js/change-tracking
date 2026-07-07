@@ -34,6 +34,8 @@ service VariantTesting {
 
   entity CustomTypeKeyTable as projection on my.CustomTypeKeyTable;
 
+  entity Employees as projection on my.Employees;
+
   entity ServiceLevelTimezoneRenamed as projection on my.DifferentFieldTypes {
     ID,
     srvRenamedDateTimeWDTZ as renamedDateTime,
@@ -111,4 +113,12 @@ annotate VariantTesting.ServiceLevelTimezoneRenamed with {
 // DB element 'plainDateTime' has no @Common.Timezone of its own.
 annotate VariantTesting.ServiceOnlyTimezoneRenamed with {
   renamedPlain @changelog @Common.Timezone : renamedTimezone;
+};
+
+// Simulates a downstream extension that adds @changelog paths pointing at
+// a @PersonalData field on the base model. The base Employees entity has
+// no @changelog annotations on its own.
+annotate VariantTesting.Employees with @(changelog: [manager.salary]) {
+  manager @changelog: [manager.salary];
+  officeLocation @changelog;
 };

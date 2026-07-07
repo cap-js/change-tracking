@@ -160,3 +160,14 @@ entity CustomTypeKeyTable {
 }
 
 type CustomType : Association to one TrackingComposition;
+
+// Base HR model: `salary` is @PersonalData; no @changelog anywhere.
+// A downstream `annotate` (see feature-testing.cds) adds a leaky
+// @changelog path pointing at this field.
+entity Employees {
+  key ID             : UUID;
+      name           : String;
+      officeLocation : String;
+      salary         : Decimal @PersonalData.IsPotentiallyPersonal;
+      manager        : Association to Employees;
+}
