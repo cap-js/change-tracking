@@ -164,14 +164,17 @@ describe('change log generation', () => {
       expect(changes.length).toEqual(3);
 
       const numberLog = changes.find((c) => c.attribute === 'number');
+      expect(numberLog).toBeDefined();
       expect(numberLog.valueChangedFrom).toEqual(null);
       expect(Number(numberLog.valueChangedTo)).toEqual(42);
 
       const boolLog = changes.find((c) => c.attribute === 'bool');
+      expect(boolLog).toBeDefined();
       expect(boolLog.valueChangedFrom).toEqual(null);
       expect(boolLog.valueChangedTo).toEqual('true');
 
       const titleLog = changes.find((c) => c.attribute === 'title');
+      expect(titleLog).toBeDefined();
       expect(titleLog.valueChangedFrom).toEqual(null);
       expect(titleLog.valueChangedTo).toEqual('Upserted record');
     });
@@ -188,17 +191,20 @@ describe('change log generation', () => {
       await UPSERT.into(DifferentFieldTypes).entries({ ID: id, number: 99, bool: true, title: 'Updated via upsert' });
 
       const changes = await SELECT.from(ChangeView).where({ entityKey: id, modification: 'update' });
-      expect(changes.length).toBeGreaterThan(0);
+      expect(changes.length).toEqual(3);
 
       const numberLog = changes.find((c) => c.attribute === 'number');
+      expect(numberLog).toBeDefined();
       expect(Number(numberLog.valueChangedFrom)).toEqual(10);
       expect(Number(numberLog.valueChangedTo)).toEqual(99);
 
       const boolLog = changes.find((c) => c.attribute === 'bool');
+      expect(boolLog).toBeDefined();
       expect(boolLog.valueChangedFrom).toEqual('false');
       expect(boolLog.valueChangedTo).toEqual('true');
 
       const titleLog = changes.find((c) => c.attribute === 'title');
+      expect(titleLog).toBeDefined();
       expect(titleLog.valueChangedFrom).toEqual('Original');
       expect(titleLog.valueChangedTo).toEqual('Updated via upsert');
     });
