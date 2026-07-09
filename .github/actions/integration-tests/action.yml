@@ -57,36 +57,20 @@ runs:
           fi
         done
 
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        ref: ${{ github.event.pull_request.head.sha || github.sha }}
     - name: Use Node.js ${{ inputs.NODE_VERSION}}
       uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
       with:
         node-version: ${{ inputs.NODE_VERSION }}
 
-    - name: Set CDS version-specific dependencies
-      if: ${{ inputs.CDS_VERSION == '8' }}
+    - name: Pin CDS 9 compatible stack
+      if: ${{ inputs.CDS_VERSION == '9' }}
       shell: bash
       run: |
-        echo "Installing CDS 8 compatible packages..."
-        npm pkg set "devDependencies.@sap/cds=^8.9.8"
-        npm pkg set "devDependencies.@cap-js/sqlite=^1"
-        npm pkg set "devDependencies.@cap-js/cds-test=^0.4.1"
-        npm pkg set "overrides.@cap-js/sqlite=^1"
-        npm pkg set "overrides.@cap-js/hana=^1"
-        npm pkg set "overrides.@cap-js/db-service=^1"
-        npm pkg set "overrides.@cap-js/postgres=^1"
-        npm pkg set "overrides.@sap/cds-mtxs=^2"
-        npm pkg set "overrides.@cap-js/cds-test=^0.4.1"
-        npm pkg set "devDependencies.@cap-js/cds-types=^0.11"
-        cd tests/bookshop
-        npm pkg set "dependencies.@cap-js/hana=^1"
-        npm pkg set "dependencies.@cap-js/postgres=^1"
-        npm pkg set "devDependencies.@cap-js/sqlite=^1"
-        cd ../bookshop-mtx
-        npm pkg set "dependencies.@sap/cds-mtxs=^2"
-        npm pkg set "devDependencies.@cap-js/sqlite=^1"
+        npm pkg set "overrides.@cap-js/hana=^2"
+        npm pkg set "overrides.@sap/cds-mtxs=^3"
+        npm pkg set "devDependencies.@sap/cds=^9"
+        npm pkg set --workspace=tests/bookshop "dependencies.@sap/cds=^9"
+        npm pkg set --workspace=tests/bookshop-mtx "dependencies.@sap/cds=^9"
     - name: Install global CDS
       shell: bash
       run: npm i -g @sap/cds-dk@${{ inputs.CDS_VERSION }}
@@ -97,8 +81,8 @@ runs:
     - name: Set node env for HANA
       run: echo "NODE_VERSION_HANA=$(echo ${{ inputs.NODE_VERSION }} | tr . _)" >> $GITHUB_ENV
       shell: bash
-    - name: Set node env for CDS
-      run: echo "CDS_VERSION=$(echo ${{ inputs.CDS_VERSION }} | tr . _)" >> $GITHUB_ENV
+    - name: Set CDS version env for HANA
+      run: echo "CDS_VERSION_HANA=$(echo ${{ inputs.CDS_VERSION }} | tr . _)" >> $GITHUB_ENV
       shell: bash
     - name: CDS Versions being used
       run: cds v -i
@@ -107,12 +91,12 @@ runs:
     # Deploy model to HANA
     - name: Create HDI Container
       shell: bash
-      run: cf create-service hana hdi-shared cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION
-    - run: cd tests/bookshop/ && CDS_ENV=production cds deploy --to hana:cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION
+      run: cf create-service hana hdi-shared cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$CDS_VERSION_HANA-$NODE_VERSION_HANA
+    - run: cd tests/bookshop/ && CDS_ENV=production cds deploy --to hana:cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$CDS_VERSION_HANA-$NODE_VERSION_HANA
       shell: bash
 
     # Bind against BTP services
-    - run: cds bind db -2 cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION -o package.json
+    - run: cds bind db -2 cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$CDS_VERSION_HANA-$NODE_VERSION_HANA -o package.json
       shell: bash
 
     # Run tests in hybrid mode
@@ -122,7 +106,7 @@ runs:
     # Cleanup BTP services
     - name: Delete HDI Container Key
       if: ${{ always() }}
-      run: cf delete-service-key cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION-key -f
+      run: cf delete-service-key cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$CDS_VERSION_HANA-$NODE_VERSION_HANA cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$CDS_VERSION_HANA-$NODE_VERSION_HANA-key -f
       shell: bash
 
     # Note: The initial delete attempt often fails due to an "ongoing operation on service binding" error.
@@ -131,7 +115,7 @@ runs:
       shell: bash
       run: |
         for i in {1..3}; do
-          cf delete-service cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$NODE_VERSION_HANA-$CDS_VERSION -f && break
+          cf delete-service cap-js-change-tracking-hana-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}-$CDS_VERSION_HANA-$NODE_VERSION_HANA -f && break
           echo "HDI container delete failed, retrying ($i/3)..."
           sleep 10
           if [ "$i" -eq 3 ]; then

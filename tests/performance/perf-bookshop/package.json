@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "dependencies": {
     "@cap-js/change-tracking": "file:../../../",
-    "@cap-js/hana": "^2",
-    "@sap/cds": "^9",
+    "@cap-js/hana": ">=2",
+    "@sap/cds": ">=9",
     "@sap/xssec": "^4"
   },
   "devDependencies": {
-    "@cap-js/sqlite": "^2",
-    "@sap/cds-dk": "^9"
+    "@cap-js/sqlite": ">=2"
   },
   "scripts": {
     "start": "cds-serve"
