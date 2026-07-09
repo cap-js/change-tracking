@@ -152,7 +152,7 @@ describe('change log generation', () => {
     });
   });
 
-  describe.only('UPSERT operations', () => {
+  describe('UPSERT operations', () => {
     it('logs field values when upserting a new record', async () => {
       const testingSRV = await cds.connect.to('VariantTesting');
       const { ChangeView, DifferentFieldTypes } = testingSRV.entities;
