@@ -85,7 +85,8 @@ jobs:
         run: |
           npm pkg set "overrides.@cap-js/hana=^2"
           npm pkg set "devDependencies.@sap/cds=^9"
-          npm pkg set --workspace=tests/performance/perf-bookshop "dependencies.@cap-js/hana=^2"
+          cd ./tests/performance/perf-bookshop
+          npm pkg set "dependencies.@cap-js/hana=^2"
 
       - name: Install global CDS
         shell: bash

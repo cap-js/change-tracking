@@ -50,7 +50,6 @@
     "testTimeout": 200000
   },
   "workspaces": [
-    "tests/*",
-    "tests/performance/*"
+    "tests/*"
   ]
 }
