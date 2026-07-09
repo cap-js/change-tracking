@@ -51,6 +51,6 @@
   },
   "workspaces": [
     "tests/*",
-    "tests/performance/"
+    "tests/performance/*"
   ]
 }
