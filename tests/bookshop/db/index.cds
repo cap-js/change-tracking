@@ -161,9 +161,9 @@ entity CustomTypeKeyTable {
 
 type CustomType : Association to one TrackingComposition;
 
-// Base HR model: `salary` is @PersonalData; no @changelog anywhere.
-// A downstream `annotate` (see feature-testing.cds) adds a leaky
-// @changelog path pointing at this field.
+// `salary` is @PersonalData; a leaky @changelog annotation is applied in
+// feature-testing.cds. The Expr variants differ only in how deeply their
+// annotation nests the manager.salary ref.
 entity Employees {
   key ID             : UUID;
       name           : String;
@@ -172,23 +172,17 @@ entity Employees {
       manager        : Association to Employees;
 }
 
-// Same as Employees but used to test expression-based @changelog
-// annotations referencing @PersonalData fields (see feature-testing.cds).
-entity EmployeesExpr {
-  key ID             : UUID;
-      name           : String;
-      officeLocation : String;
-      salary         : Decimal @PersonalData.IsPotentiallyPersonal;
-      manager        : Association to EmployeesExpr;
+// top-level expression
+entity EmployeesExpr : Employees {
+  manager : Association to EmployeesExpr;
 }
 
-// Same as EmployeesExpr but the @PersonalData ref is buried inside a nested
-// sub-expression (see feature-testing.cds), which the ref walker must recurse
-// into.
-entity EmployeesNestedExpr {
-  key ID             : UUID;
-      name           : String;
-      officeLocation : String;
-      salary         : Decimal @PersonalData.IsPotentiallyPersonal;
-      manager        : Association to EmployeesNestedExpr;
+// ref nested in a sub-expression
+entity EmployeesNestedExpr : Employees {
+  manager : Association to EmployeesNestedExpr;
+}
+
+// ref nested in function-call arguments
+entity EmployeesFuncExpr : Employees {
+  manager : Association to EmployeesFuncExpr;
 }

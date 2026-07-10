@@ -40,6 +40,8 @@ service VariantTesting {
 
   entity EmployeesNestedExpr as projection on my.EmployeesNestedExpr;
 
+  entity EmployeesFuncExpr as projection on my.EmployeesFuncExpr;
+
   entity ServiceLevelTimezoneRenamed as projection on my.DifferentFieldTypes {
     ID,
     srvRenamedDateTimeWDTZ as renamedDateTime,
@@ -138,5 +140,12 @@ annotate VariantTesting.EmployeesExpr with @(changelog: [('Manager earns ' || ma
 // The ref walker must recurse into nested xpr tokens to catch it.
 annotate VariantTesting.EmployeesNestedExpr with @(changelog: [('Manager earns ' || ('' || manager.salary))]) {
   manager @changelog: [('Salary: ' || ('' || manager.salary))];
+  officeLocation @changelog;
+};
+
+// Same scenario but the @PersonalData ref is hidden inside a function call's
+// arguments. The ref walker must recurse into token.args to catch it.
+annotate VariantTesting.EmployeesFuncExpr with @(changelog: [('Manager earns ' || coalesce(manager.salary, 0))]) {
+  manager @changelog: [('Salary: ' || coalesce(manager.salary, 0))];
   officeLocation @changelog;
 };
