@@ -181,3 +181,14 @@ entity EmployeesExpr {
       salary         : Decimal @PersonalData.IsPotentiallyPersonal;
       manager        : Association to EmployeesExpr;
 }
+
+// Same as EmployeesExpr but the @PersonalData ref is buried inside a nested
+// sub-expression (see feature-testing.cds), which the ref walker must recurse
+// into.
+entity EmployeesNestedExpr {
+  key ID             : UUID;
+      name           : String;
+      officeLocation : String;
+      salary         : Decimal @PersonalData.IsPotentiallyPersonal;
+      manager        : Association to EmployeesNestedExpr;
+}
