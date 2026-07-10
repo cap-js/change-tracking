@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 - Fix `<expr>.cds` compilation error during `cds deploy --to hana` when expression-based `@changelog` annotations (CXL) are used as objectIDs on entities with compositions
+- Prevent `@PersonalData` field values from leaking into `objectID` or `valueChangedToLabel` columns when `@changelog` annotations reference such fields via path expressions or CXL
 
 
 ## Version 2.0.1 - 2026-06-19
