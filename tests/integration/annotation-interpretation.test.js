@@ -452,6 +452,46 @@ describe('@changelog annotation interpretation', () => {
     expect(leakedObjectIDs).toEqual([]);
   });
 
+  // @changelog: [('Manager earns ' || (manager.salary or manager.salary))] on entity level
+  // manager @changelog: [('Salary: ' || (manager.salary or manager.salary))] on element level
+  // The @PersonalData ref is nested one level deep inside the expression.
+  it('does not leak @PersonalData via nested expression-based @changelog annotations', async () => {
+    const testingSRV = await cds.connect.to('VariantTesting');
+    const { EmployeesNestedExpr, ChangeView } = testingSRV.entities;
+
+    const managerID = cds.utils.uuid();
+    await INSERT.into(EmployeesNestedExpr).entries({
+      ID: managerID,
+      name: 'Manager Mallory',
+      officeLocation: 'Berlin',
+      salary: 445566 // @PersonalData.IsPotentiallyPersonal
+    });
+
+    const reportID = cds.utils.uuid();
+    await INSERT.into(EmployeesNestedExpr).entries({
+      ID: reportID,
+      name: 'Report Robin',
+      officeLocation: 'Berlin',
+      salary: 50000,
+      manager_ID: managerID
+    });
+
+    // Innocuous update that triggers change tracking
+    await UPDATE(EmployeesNestedExpr).where({ ID: reportID }).with({ officeLocation: 'Munich' });
+
+    const changes = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.EmployeesNestedExpr',
+      entityKey: reportID
+    });
+
+    const looksLikeSalary = (v) => v != null && String(v).includes('445566');
+    const leakedLabels = changes.filter((c) => looksLikeSalary(c.valueChangedToLabel)).map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
+    const leakedObjectIDs = changes.filter((c) => looksLikeSalary(c.objectID)).map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
+
+    expect(leakedLabels).toEqual([]);
+    expect(leakedObjectIDs).toEqual([]);
+  });
+
   describe('Code lists resolution', () => {
     it('displays human-readable code list name when single attribute is annotated with @changelog', async () => {
       const adminService = await cds.connect.to('AdminService');

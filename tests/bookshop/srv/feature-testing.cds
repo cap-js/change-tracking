@@ -38,6 +38,8 @@ service VariantTesting {
 
   entity EmployeesExpr as projection on my.EmployeesExpr;
 
+  entity EmployeesNestedExpr as projection on my.EmployeesNestedExpr;
+
   entity ServiceLevelTimezoneRenamed as projection on my.DifferentFieldTypes {
     ID,
     srvRenamedDateTimeWDTZ as renamedDateTime,
@@ -129,5 +131,12 @@ annotate VariantTesting.Employees with @(changelog: [manager.salary]) {
 // Expressions referencing @PersonalData fields must also be rejected.
 annotate VariantTesting.EmployeesExpr with @(changelog: [('Manager earns ' || manager.salary)]) {
   manager @changelog: [('Salary: ' || manager.salary)];
+  officeLocation @changelog;
+};
+
+// Same scenario but the @PersonalData ref is nested inside a sub-expression.
+// The ref walker must recurse into nested xpr tokens to catch it.
+annotate VariantTesting.EmployeesNestedExpr with @(changelog: [('Manager earns ' || ('' || manager.salary))]) {
+  manager @changelog: [('Salary: ' || ('' || manager.salary))];
   officeLocation @changelog;
 };
