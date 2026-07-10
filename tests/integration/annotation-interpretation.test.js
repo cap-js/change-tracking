@@ -338,7 +338,8 @@ describe('@changelog annotation interpretation', () => {
 
     expect(changesInDb.length).toEqual(1);
     expect(changesInDb[0].valueChangedFromLabel).toEqual(null);
-    expect(changesInDb[0].valueChangedToLabel).toEqual('Japan, Honda, Ōsaka');
+    // 'Japan, Ōsaka' instead of 'Japan, Honda, Ōsaka', since Customers.name is @PersonalData.IsPotentiallyPersonal
+    expect(changesInDb[0].valueChangedToLabel).toEqual('Japan, Ōsaka');
     expect(changesInDb[0].valueDataType).toEqual('cds.Association');
   });
 
@@ -404,12 +405,48 @@ describe('@changelog annotation interpretation', () => {
     });
 
     const looksLikeSalary = (v) => v != null && String(v).startsWith('987654');
-    const leakedLabels = changes
-      .filter((c) => looksLikeSalary(c.valueChangedToLabel))
-      .map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
-    const leakedObjectIDs = changes
-      .filter((c) => looksLikeSalary(c.objectID))
-      .map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
+    const leakedLabels = changes.filter((c) => looksLikeSalary(c.valueChangedToLabel)).map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
+    const leakedObjectIDs = changes.filter((c) => looksLikeSalary(c.objectID)).map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
+
+    expect(leakedLabels).toEqual([]);
+    expect(leakedObjectIDs).toEqual([]);
+  });
+
+  // Same as above, but with expression-based @changelog annotations:
+  // @changelog: [('Manager earns ' || manager.salary)] on entity level
+  // manager @changelog: [('Salary: ' || manager.salary)] on element level
+  it('does not leak @PersonalData via expression-based @changelog annotations', async () => {
+    const testingSRV = await cds.connect.to('VariantTesting');
+    const { EmployeesExpr, ChangeView } = testingSRV.entities;
+
+    const managerID = cds.utils.uuid();
+    await INSERT.into(EmployeesExpr).entries({
+      ID: managerID,
+      name: 'Manager Mallory',
+      officeLocation: 'Berlin',
+      salary: 112233 // @PersonalData.IsPotentiallyPersonal
+    });
+
+    const reportID = cds.utils.uuid();
+    await INSERT.into(EmployeesExpr).entries({
+      ID: reportID,
+      name: 'Report Robin',
+      officeLocation: 'Berlin',
+      salary: 50000,
+      manager_ID: managerID
+    });
+
+    // Innocuous update that triggers change tracking
+    await UPDATE(EmployeesExpr).where({ ID: reportID }).with({ officeLocation: 'Munich' });
+
+    const changes = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.EmployeesExpr',
+      entityKey: reportID
+    });
+
+    const looksLikeSalary = (v) => v != null && String(v).includes('112233');
+    const leakedLabels = changes.filter((c) => looksLikeSalary(c.valueChangedToLabel)).map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
+    const leakedObjectIDs = changes.filter((c) => looksLikeSalary(c.objectID)).map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
 
     expect(leakedLabels).toEqual([]);
     expect(leakedObjectIDs).toEqual([]);

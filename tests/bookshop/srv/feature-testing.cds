@@ -36,6 +36,8 @@ service VariantTesting {
 
   entity Employees as projection on my.Employees;
 
+  entity EmployeesExpr as projection on my.EmployeesExpr;
+
   entity ServiceLevelTimezoneRenamed as projection on my.DifferentFieldTypes {
     ID,
     srvRenamedDateTimeWDTZ as renamedDateTime,
@@ -120,5 +122,12 @@ annotate VariantTesting.ServiceOnlyTimezoneRenamed with {
 // no @changelog annotations on its own.
 annotate VariantTesting.Employees with @(changelog: [manager.salary]) {
   manager @changelog: [manager.salary];
+  officeLocation @changelog;
+};
+
+// Same scenario but with expression-based @changelog annotations.
+// Expressions referencing @PersonalData fields must also be rejected.
+annotate VariantTesting.EmployeesExpr with @(changelog: [('Manager earns ' || manager.salary)]) {
+  manager @changelog: [('Salary: ' || manager.salary)];
   officeLocation @changelog;
 };

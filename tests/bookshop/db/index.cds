@@ -171,3 +171,13 @@ entity Employees {
       salary         : Decimal @PersonalData.IsPotentiallyPersonal;
       manager        : Association to Employees;
 }
+
+// Same as Employees but used to test expression-based @changelog
+// annotations referencing @PersonalData fields (see feature-testing.cds).
+entity EmployeesExpr {
+  key ID             : UUID;
+      name           : String;
+      officeLocation : String;
+      salary         : Decimal @PersonalData.IsPotentiallyPersonal;
+      manager        : Association to EmployeesExpr;
+}
