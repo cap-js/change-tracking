@@ -34,6 +34,14 @@ service VariantTesting {
 
   entity CustomTypeKeyTable as projection on my.CustomTypeKeyTable;
 
+  entity Employees as projection on my.Employees;
+
+  entity EmployeesExpr as projection on my.EmployeesExpr;
+
+  entity EmployeesNestedExpr as projection on my.EmployeesNestedExpr;
+
+  entity EmployeesFuncExpr as projection on my.EmployeesFuncExpr;
+
   entity ServiceLevelTimezoneRenamed as projection on my.DifferentFieldTypes {
     ID,
     srvRenamedDateTimeWDTZ as renamedDateTime,
@@ -111,4 +119,33 @@ annotate VariantTesting.ServiceLevelTimezoneRenamed with {
 // DB element 'plainDateTime' has no @Common.Timezone of its own.
 annotate VariantTesting.ServiceOnlyTimezoneRenamed with {
   renamedPlain @changelog @Common.Timezone : renamedTimezone;
+};
+
+// Simulates a downstream extension that adds @changelog paths pointing at
+// a @PersonalData field on the base model. The base Employees entity has
+// no @changelog annotations on its own.
+annotate VariantTesting.Employees with @(changelog: [manager.salary]) {
+  manager @changelog: [manager.salary];
+  officeLocation @changelog;
+};
+
+// Same scenario but with expression-based @changelog annotations.
+// Expressions referencing @PersonalData fields must also be rejected.
+annotate VariantTesting.EmployeesExpr with @(changelog: [('Manager earns ' || manager.salary)]) {
+  manager @changelog: [('Salary: ' || manager.salary)];
+  officeLocation @changelog;
+};
+
+// Same scenario but the @PersonalData ref is nested inside a sub-expression.
+// The ref walker must recurse into nested xpr tokens to catch it.
+annotate VariantTesting.EmployeesNestedExpr with @(changelog: [('Manager earns ' || ('' || manager.salary))]) {
+  manager @changelog: [('Salary: ' || ('' || manager.salary))];
+  officeLocation @changelog;
+};
+
+// Same scenario but the @PersonalData ref is hidden inside a function call's
+// arguments. The ref walker must recurse into token.args to catch it.
+annotate VariantTesting.EmployeesFuncExpr with @(changelog: [('Manager earns ' || coalesce(manager.salary, 0))]) {
+  manager @changelog: [('Salary: ' || coalesce(manager.salary, 0))];
+  officeLocation @changelog;
 };
