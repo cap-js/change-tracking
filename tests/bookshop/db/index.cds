@@ -160,3 +160,29 @@ entity CustomTypeKeyTable {
 }
 
 type CustomType : Association to one TrackingComposition;
+
+// `salary` is @PersonalData; a leaky @changelog annotation is applied in
+// feature-testing.cds. The Expr variants differ only in how deeply their
+// annotation nests the manager.salary ref.
+entity Employees {
+  key ID             : UUID;
+      name           : String;
+      officeLocation : String;
+      salary         : Decimal @PersonalData.IsPotentiallyPersonal;
+      manager        : Association to Employees;
+}
+
+// top-level expression
+entity EmployeesExpr : Employees {
+  manager : Association to EmployeesExpr;
+}
+
+// ref nested in a sub-expression
+entity EmployeesNestedExpr : Employees {
+  manager : Association to EmployeesNestedExpr;
+}
+
+// ref nested in function-call arguments
+entity EmployeesFuncExpr : Employees {
+  manager : Association to EmployeesFuncExpr;
+}
