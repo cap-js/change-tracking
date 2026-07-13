@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.0.2 - tbd
+## Version 2.0.2 - 2026-07-13
 
 ### Fixed
 - Fix `<expr>.cds` compilation error during `cds deploy --to hana` when expression-based `@changelog` annotations (CXL) are used as objectIDs on entities with compositions
 - Prevent `@PersonalData` field values from leaking into `objectID` or `valueChangedToLabel` columns when `@changelog` annotations reference such fields via path expressions or CXL
+- Fix missing `cds.Composition` parent entry and broken `parent_ID` links in generated triggers when a DB-level `select *` view of a parent entity inherits the same composition
 
 
 ## Version 2.0.1 - 2026-06-19

@@ -42,6 +42,10 @@ service VariantTesting {
 
   entity EmployeesFuncExpr as projection on my.EmployeesFuncExpr;
 
+  // Test for DB-level view shadowing the composition parent mapping
+  entity VersionWithAssignments as projection on my.VersionWithAssignments;
+  entity VersionAssignment       as projection on my.VersionAssignment;
+
   entity ServiceLevelTimezoneRenamed as projection on my.DifferentFieldTypes {
     ID,
     srvRenamedDateTimeWDTZ as renamedDateTime,
@@ -148,4 +152,18 @@ annotate VariantTesting.EmployeesNestedExpr with @(changelog: [('Manager earns '
 annotate VariantTesting.EmployeesFuncExpr with @(changelog: [('Manager earns ' || coalesce(manager.salary, 0))]) {
   manager @changelog: [('Salary: ' || coalesce(manager.salary, 0))];
   officeLocation @changelog;
+};
+
+// Test: DB-level view shadowing the composition parent mapping.
+// VersionsForLock (select * from VersionWithAssignments) inherits the 'assignments'
+// composition and overwrites the child->parent map entry in analyzeCompositions.
+// The trigger for VersionAssignment must still emit the cds.Composition parent INSERT
+// wired to the actual VersionWithAssignments table (not the view).
+annotate VariantTesting.VersionWithAssignments with @changelog: [title] {
+  title @changelog;
+};
+
+annotate VariantTesting.VersionAssignment with {
+  version @changelog: [version.title];
+  tag     @changelog;
 };

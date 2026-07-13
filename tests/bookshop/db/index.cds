@@ -1,13 +1,13 @@
 using from './change-logs';
 using from './joins-and-unions';
 using from './batch-inserts';
+using {cuid} from '@sap/cds/common';
 
 
 namespace sap.change_tracking;
 
 @title: 'Different field types'
-entity DifferentFieldTypes {
-  key ID        : UUID;
+entity DifferentFieldTypes : cuid {
       title     : String      @changelog;
       largeText : LargeString @changelog;
       dateTime  : DateTime;
@@ -34,8 +34,7 @@ entity DifferentFieldTypes {
       nonExistent : Association to one NonExistentTable @changelog: [nonExistent.name]; // Unsupported - should trigger warning
 }
 
-entity DifferentFieldTypesChildren {
-  key ID     : UUID;
+entity DifferentFieldTypesChildren : cuid {
       parent : Association to one DifferentFieldTypes;
       double : Double;
 }
@@ -74,8 +73,7 @@ entity Level2Sample {
 
 // By intent no @changelog on the entity level
 @title: '{i18n>bookStore.objectTitle}'
-entity TrackingComposition {
-  key ID                   : UUID;
+entity TrackingComposition : cuid {
       name                 : String;
       children             : Composition of many ComposedEntities
                                on children.parent = $self;
@@ -87,13 +85,11 @@ entity TrackingComposition {
                                on childrenExplicitMany.parent = $self;
 }
 
-aspect CompositionAspect {
-  key ID     : UUID;
+aspect CompositionAspect : cuid {
       aspect : String;
 }
 
-entity ExplicitCompositionOne {
-  key ID       : UUID;
+entity ExplicitCompositionOne : cuid {
       parentID : UUID;
       parent   : Association to one TrackingComposition
                    on parent.ID = parentID;
@@ -101,8 +97,7 @@ entity ExplicitCompositionOne {
       price    : Decimal;
 }
 
-entity ExplicitCompositionMany {
-  key ID       : UUID;
+entity ExplicitCompositionMany : cuid {
       parentID : UUID;
       parent   : Association to one TrackingComposition
                    on parent.ID = parentID;
@@ -112,8 +107,7 @@ entity ExplicitCompositionMany {
 
 // By intent no @changelog on the entity level
 @title: '{i18n>books.objectTitle}'
-entity ComposedEntities {
-  key ID     : UUID;
+entity ComposedEntities : cuid {
       parent : Association to one TrackingComposition;
       title  : String;
       price  : Decimal;
@@ -130,8 +124,7 @@ entity CompositeKeyParent {
 }
 
 @changelog: [title]
-entity ObjectIdFallbackParent {
-  key ID   : UUID;
+entity ObjectIdFallbackParent : cuid {
   title    : String @changelog;
   @changelog
   children : Composition of many ObjectIdFallbackChild
@@ -139,8 +132,7 @@ entity ObjectIdFallbackParent {
 }
 
 @changelog: [fieldA, fieldB]
-entity ObjectIdFallbackChild {
-  key ID   : UUID;
+entity ObjectIdFallbackChild : cuid {
   parent   : Association to one ObjectIdFallbackParent;
   fieldA   : String @changelog;
   fieldB   : String @changelog;
@@ -148,8 +140,7 @@ entity ObjectIdFallbackChild {
 }
 
 @cds.persistence.skip
-entity NonExistentTable {
-  key ID : UUID;
+entity NonExistentTable : cuid {
       name : String;
 }
 
@@ -161,11 +152,28 @@ entity CustomTypeKeyTable {
 
 type CustomType : Association to one TrackingComposition;
 
+// DB-level view (select *) shadowing the composition parent mapping
+//
+// VersionWithAssignments has a composition 'assignments' pointing to VersionAssignment
+// VersionsForLock is a DB-level view that inherits the same composition
+entity VersionWithAssignments : cuid {
+      title       : String;
+      assignments : Composition of many VersionAssignment
+                      on assignments.version = $self;
+}
+
+entity VersionAssignment : cuid {
+      version : Association to one VersionWithAssignments @changelog: [version.title];
+      tag     : String @changelog;
+}
+
+// DB-level view that inherits the 'assignments' composition from VersionWithAssignments
+entity VersionsForLock as select from VersionWithAssignments { * };
+
 // `salary` is @PersonalData; a leaky @changelog annotation is applied in
 // feature-testing.cds. The Expr variants differ only in how deeply their
 // annotation nests the manager.salary ref.
-entity Employees {
-  key ID             : UUID;
+entity Employees : cuid {
       name           : String;
       officeLocation : String;
       salary         : Decimal @PersonalData.IsPotentiallyPersonal;
