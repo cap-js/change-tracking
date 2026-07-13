@@ -1,7 +1,7 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, axios } = cds.test(bookshop);
-axios.defaults.auth = { username: 'alice', password: 'admin' };
+const { POST, PATCH, DELETE, defaults } = cds.test(bookshop);
+defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('change log generation', () => {
   describe('4-level composition hierarchy (GrandRootSample -> RootSample -> Level1Sample -> Level2Sample)', () => {

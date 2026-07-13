@@ -1,8 +1,8 @@
 const cds = require('@sap/cds');
 const path = require('path');
 const app = path.join(__dirname, '../bookshop');
-const { axios, GET, POST, PATCH, DELETE } = cds.test(app);
-axios.defaults.auth = { username: 'alice' };
+const { defaults, GET, POST, PATCH, DELETE } = cds.test(app);
+defaults.auth = { username: 'alice' };
 
 async function newIncident() {
   const res = await POST(`odata/v4/processor/Incidents`, {
