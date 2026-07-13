@@ -161,6 +161,26 @@ entity CustomTypeKeyTable {
 
 type CustomType : Association to one TrackingComposition;
 
+// DB-level view (select *) shadowing the composition parent mapping
+//
+// VersionWithAssignments has a composition 'assignments' pointing to VersionAssignment
+// VersionsForLock is a DB-level view that inherits the same composition
+entity VersionWithAssignments {
+  key ID          : UUID;
+      title       : String;
+      assignments : Composition of many VersionAssignment
+                      on assignments.version = $self;
+}
+
+entity VersionAssignment {
+  key ID      : UUID;
+      version : Association to one VersionWithAssignments @changelog: [version.title];
+      tag     : String @changelog;
+}
+
+// DB-level view that inherits the 'assignments' composition from VersionWithAssignments
+entity VersionsForLock as select from VersionWithAssignments { * };
+
 // `salary` is @PersonalData; a leaky @changelog annotation is applied in
 // feature-testing.cds. The Expr variants differ only in how deeply their
 // annotation nests the manager.salary ref.
