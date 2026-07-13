@@ -1,6 +1,6 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, GET, axios } = cds.test(bookshop);
+const { POST, PATCH, DELETE, axios } = cds.test(bookshop);
 axios.defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('change log generation', () => {
