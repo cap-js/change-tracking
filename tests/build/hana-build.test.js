@@ -5,6 +5,7 @@ const TempUtil = require('./tempUtil.js');
 const tempUtil = new TempUtil(__filename);
 
 const bookshopDir = path.join(__dirname, '../bookshop');
+cds.test(bookshopDir);
 const isHana = cds.env.requires?.db?.kind === 'hana';
 
 (isHana ? describe : describe.skip)('HANA Build', () => {
