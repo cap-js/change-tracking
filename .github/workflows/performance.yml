@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-  pull_request_target:
+  pull_request:
     branches: [main]
     types: [reopened, synchronize, opened]
 
@@ -166,6 +166,12 @@ jobs:
               echo "Performance tests succeeded."
               kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
               exit 0
+            fi
+
+            if [ "$STATUS" = "Succeeded" ] && [ "$THRESHOLD_STATUS" = "ThresholdBreached" ]; then
+              echo "❌ Performance tests completed but thresholds were breached."
+              kubectl get testruns "$PERF_TEST_RUN_NAME" -o json | jq '.status'
+              exit 1
             fi
 
             if [ "$STATUS" = "Failed" ]; then
