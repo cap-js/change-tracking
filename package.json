@@ -33,7 +33,8 @@
   },
   "devDependencies": {
     "@cap-js/cds-test": ">=1",
-    "@cap-js/cds-types": "^0"
+    "@cap-js/cds-types": "^0",
+    "vitest": "^3.2.7"
   },
   "cds": {
     "requires": {
