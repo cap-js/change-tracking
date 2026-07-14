@@ -1,7 +1,7 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, GET, axios } = cds.test(bookshop);
-axios.defaults.auth = { username: 'alice', password: 'admin' };
+const { POST, PATCH, DELETE, defaults } = cds.test(bookshop);
+defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('composition tracking (draft)', () => {
   describe('Composition of one', () => {
