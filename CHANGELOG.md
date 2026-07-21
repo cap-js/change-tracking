@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.0.3 - 2026-07-21
+
+### Fixed
+- Skip trigger generation for localized text tables (`*.texts`)
+
 ## Version 2.0.2 - 2026-07-13
 
 ### Fixed

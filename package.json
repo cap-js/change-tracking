@@ -1,6 +1,6 @@
 {
   "name": "@cap-js/change-tracking",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "CDS plugin providing out-of-the box support for automatic capturing, storing, and viewing of the change records of modeled entities.",
   "repository": "cap-js/change-tracking",
   "author": "SAP SE (https://www.sap.com)",
@@ -19,7 +19,7 @@
     "test": "npx vitest --silent",
     "test:sqlite": "CI=true CDS_ENV=sqlite npx vitest --silent",
     "test:pg": "npm run start:pg && CI=true CDS_ENV=pg npx vitest --silent",
-    "test:hana": "CI=true cds bind --exec -- npx vitest --silent",
+    "test:hana": "CI=true cds bind --exec -- npx vitest --silent=true",
     "deploy:hana": "cd tests/bookshop && cds deploy -2 hana && cd ../../",
     "deploy:hana:rowlevel": "cd tests/bookshop && CDS_ENV=rowlevel cds deploy -2 hana && cd ../../",
     "start:pg": "cd tests/bookshop/ && docker compose -f pg-stack.yml up -d && npm run deploy:pg && cd ../..",
