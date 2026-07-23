@@ -1,6 +1,6 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, GET, defaults } = cds.test(bookshop);
+const { POST, PATCH, DELETE, GET, axios, defaults } = cds.test(bookshop);
 defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('Expression-based @changelog annotations', () => {
@@ -412,5 +412,43 @@ describe('ChangeView access restrictions', () => {
     const response = await GET(`/odata/v4/admin/BookStores(ID=${bookStore.ID},IsActiveEntity=true)/changes`);
     expect(response.status).toBe(200);
     expect(response.data.value.length).toBeGreaterThan(0);
+  });
+
+  // ProjectionScopedFull (admin) exposes `secret`; ProjectionScopedNarrow (support)
+  // excludes it. A support-only user should still read the change history via the
+  // narrow projection, scoped to the fields it exposes: `publicField` visible, `secret` filtered out.
+  it('scopes changelog rows to the fields a service projection exposes', async () => {
+    const bob = { auth: { username: 'bob', password: '' } }; // support role only
+
+    const ID = cds.utils.uuid();
+    await POST(`/odata/v4/variant-testing/ProjectionScopedFull`, { ID, publicField: 'pub-v1', secret: 'SECRET-v1' });
+    await PATCH(`/odata/v4/variant-testing/ProjectionScopedFull(ID=${ID})`, { publicField: 'pub-v2', secret: 'SECRET-v2' });
+
+    // bob cannot read `secret` on the entity itself
+    await expect(axios.get(`/odata/v4/variant-testing/ProjectionScopedFull(ID=${ID})`, bob)).rejects.toMatchObject({
+      response: { status: 403 }
+    });
+
+    // bob can read the narrow projection, but `secret` is not part of it
+    const { data: narrow } = await axios.get(`/odata/v4/variant-testing/ProjectionScopedNarrow(ID=${ID})`, bob);
+    expect(narrow.publicField).toBe('pub-v2');
+    expect(narrow.secret).toBeUndefined();
+
+    // bob's change history via the narrow projection: exactly the two `publicField`
+    // rows (create from POST, update from PATCH), and no `secret` rows.
+    const { data } = await axios.get(
+      `/odata/v4/variant-testing/ProjectionScopedNarrow(ID=${ID})/changes?$select=attribute,valueChangedTo,modification`,
+      bob
+    );
+    // sort in JS: createdAt is the transaction timestamp, so same-request writes are not
+    // totally ordered by the DB. `modification` gives a stable order (create < update).
+    const rows = data.value
+      .map((r) => ({ attribute: r.attribute, valueChangedTo: r.valueChangedTo, modification: r.modification }))
+      .sort((a, b) => a.modification.localeCompare(b.modification));
+    // exactly the `publicField` history (create from POST, update from PATCH); no `secret`
+    expect(rows).toEqual([
+      { attribute: 'publicField', valueChangedTo: 'pub-v1', modification: 'create' },
+      { attribute: 'publicField', valueChangedTo: 'pub-v2', modification: 'update' }
+    ]);
   });
 });
