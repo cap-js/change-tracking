@@ -194,3 +194,17 @@ entity EmployeesNestedExpr : Employees {
 entity EmployeesFuncExpr : Employees {
   manager : Association to EmployeesFuncExpr;
 }
+
+// Single-service scenario: parent + child in ONE service; child carries an
+// entity-level @restrict (travels with auto-exposure, unlike service @requires).
+// Checks whether the child's raw data is blocked for a support user while the
+// parent's hierarchical /changes still leaks the child's history.
+entity RestrictedParent : cuid {
+  title    : String @changelog;
+  children : Composition of many RestrictedChild on children.parent = $self;
+}
+
+entity RestrictedChild : cuid {
+  parent : Association to one RestrictedParent;
+  secret : String @changelog;
+}

@@ -167,3 +167,11 @@ annotate VariantTesting.VersionAssignment with {
   version @changelog: [version.title];
   tag     @changelog;
 };
+
+// Single service: parent readable by support; child entity restricted to admin
+// via entity-level @restrict (which auto-exposure carries, unlike @requires).
+service RestrictedHierService @(requires: 'support') {
+  entity RestrictedParent as projection on my.RestrictedParent;
+  @restrict: [{ grant: '*', to: 'admin' }]
+  entity RestrictedChild  as projection on my.RestrictedChild;
+}
