@@ -413,4 +413,42 @@ describe('ChangeView access restrictions', () => {
     expect(response.status).toBe(200);
     expect(response.data.value.length).toBeGreaterThan(0);
   });
+
+  // RestrictedHierService (support) exposes a parent and its composition child;
+  // the child entity is @restrict'ed to admin. A support user is 403 on the child
+  // both directly and via composition navigation, yet the parent's hierarchical
+  // /changes navigation still surfaces the child's changelog rows.
+  it('does not expose restricted descendant composition changelog rows via parent /changes', async () => {
+    const bob = { auth: { username: 'bob', password: '' } }; // support role only
+
+    const parentID = cds.utils.uuid();
+    const childID = cds.utils.uuid();
+    await POST(`/odata/v4/restricted-hier/RestrictedParent`, {
+      ID: parentID,
+      title: 'P1',
+      children: [{ ID: childID, secret: 'CHILD-SECRET-v1' }]
+    });
+    await PATCH(`/odata/v4/restricted-hier/RestrictedChild(ID=${childID})`, { secret: 'CHILD-SECRET-v2' });
+
+    // bob is blocked from the child, both directly and via composition navigation
+    await expect(GET(`/odata/v4/restricted-hier/RestrictedChild(ID=${childID})`, bob)).rejects.toMatchObject({
+      response: { status: 403 }
+    });
+    await expect(GET(`/odata/v4/restricted-hier/RestrictedParent(ID=${parentID})/children`, bob)).rejects.toMatchObject({
+      response: { status: 403 }
+    });
+
+    // ...so the parent's change history must not carry the child's `secret` rows
+    const { data } = await GET(
+      `/odata/v4/restricted-hier/RestrictedParent(ID=${parentID})/changes?$select=entity,attribute,valueChangedTo`,
+      bob
+    );
+    // the parent's own history is still returned (guards against a vacuous pass)
+    expect(data.value).toContainEqual(
+      expect.objectContaining({ entity: 'sap.change_tracking.RestrictedParent', attribute: 'title' })
+    );
+    // but no rows for the @restrict'ed child
+    const childRows = data.value.filter((r) => r.entity === 'sap.change_tracking.RestrictedChild');
+    expect(childRows).toEqual([]);
+  });
 });
