@@ -9,19 +9,21 @@ const { registerHDICompilerHook } = require('./lib/hana/register.js');
 
 cds.on('loaded', enhanceModel);
 cds.on('compile.to.edmx', enhanceModel);
-cds.on('listening', registerSessionVariableHandlers);
-cds.once('served', async () => {
-  await deploySQLiteTriggers();
-  await deployPostgresLabels();
-});
+//cds.on('compile.to.runtime', enhanceModel);
 
-// Enhance CSNs returned by cds.xt.ModelProviderService.getExtCsn
+// Workaround: enhance CSNs returned by cds.xt.ModelProviderService.getExtCsn
 cds.on('serving', (srv) => {
   if (srv.name !== 'cds.xt.ModelProviderService') return;
   srv.after(['getCsn', 'getExtCsn'], (csn) => {
     if (!csn || typeof csn !== 'object' || !csn.definitions) return;
     enhanceModel(csn);
   });
+});
+
+cds.on('listening', registerSessionVariableHandlers);
+cds.once('served', async () => {
+  await deploySQLiteTriggers();
+  await deployPostgresLabels();
 });
 
 registerSQLiteDeploymentHandler();

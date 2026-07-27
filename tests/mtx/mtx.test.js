@@ -2,6 +2,7 @@ process.env.CDS_ENV = process.env.CDS_ENV ? `${process.env.CDS_ENV},with-mtx` : 
 
 const cds = require('@sap/cds');
 const path = require('path');
+const { DatabaseSync } = require('node:sqlite');
 const { APP_DIR, ensureSidecarPlugin, cleanDbFiles, startSidecar, subscribeTenant, upgradeTenant, stopSidecar } = require('./setup');
 
 const { axios, POST, GET } = cds.test(APP_DIR);
@@ -30,16 +31,14 @@ if (isSqlite) {
 describeIfSqlite('Change-Tracking MTX', () => {
   describe('Tenant subscription deploys change-tracking artifacts', () => {
     it('deploys triggers', () => {
-      const Database = require('better-sqlite3');
-      const db = new Database(path.join(APP_DIR, 'db-t1.sqlite'), { readonly: true });
+      const db = new DatabaseSync(path.join(APP_DIR, 'db-t1.sqlite'), { readOnly: true });
       const triggers = db.prepare("SELECT name FROM sqlite_master WHERE type = 'trigger'").all();
       expect(triggers.length).toBeGreaterThan(0);
       db.close();
     });
 
     it('deploys indexes', () => {
-      const Database = require('better-sqlite3');
-      const db = new Database(path.join(APP_DIR, 'db-t1.sqlite'), { readonly: true });
+      const db = new DatabaseSync(path.join(APP_DIR, 'db-t1.sqlite'), { readOnly: true });
       const indexes = db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE '%changelog%'").all();
       expect(indexes.some((i) => i.name === 'sap_changelog_Changes_ct_index')).toBe(true);
       expect(indexes.some((i) => i.name === 'sap_changelog_Changes_parent_index')).toBe(true);
@@ -47,16 +46,14 @@ describeIfSqlite('Change-Tracking MTX', () => {
     });
 
     it('deploys service-level ChangeViews', () => {
-      const Database = require('better-sqlite3');
-      const db = new Database(path.join(APP_DIR, 'db-t1.sqlite'), { readonly: true });
+      const db = new DatabaseSync(path.join(APP_DIR, 'db-t1.sqlite'), { readOnly: true });
       const views = db.prepare("SELECT name FROM sqlite_master WHERE name LIKE '%ChangeView%'").all();
       expect(views.some((v) => v.name === 'AdminService_ChangeView')).toBe(true);
       db.close();
     });
 
     it('deploys i18n labels', () => {
-      const Database = require('better-sqlite3');
-      const db = new Database(path.join(APP_DIR, 'db-t1.sqlite'), { readonly: true });
+      const db = new DatabaseSync(path.join(APP_DIR, 'db-t1.sqlite'), { readOnly: true });
       const { cnt } = db.prepare('SELECT COUNT(*) as cnt FROM sap_changelog_i18nKeys').get();
       expect(cnt).toBeGreaterThan(0);
       db.close();
@@ -70,42 +67,55 @@ describeIfSqlite('Change-Tracking MTX', () => {
     });
 
     it('triggers still exist after upgrade', () => {
-      const Database = require('better-sqlite3');
-      const db = new Database(path.join(APP_DIR, 'db-t1.sqlite'), { readonly: true });
+      const db = new DatabaseSync(path.join(APP_DIR, 'db-t1.sqlite'), { readOnly: true });
       const triggers = db.prepare("SELECT name FROM sqlite_master WHERE type = 'trigger'").all();
       expect(triggers.length).toBeGreaterThan(0);
       db.close();
     });
 
     it('ChangeViews still exist after upgrade', () => {
-      const Database = require('better-sqlite3');
-      const db = new Database(path.join(APP_DIR, 'db-t1.sqlite'), { readonly: true });
+      const db = new DatabaseSync(path.join(APP_DIR, 'db-t1.sqlite'), { readOnly: true });
       const views = db.prepare("SELECT name FROM sqlite_master WHERE name LIKE '%ChangeView%'").all();
       expect(views.some((v) => v.name === 'AdminService_ChangeView')).toBe(true);
       db.close();
     });
 
     it('labels still exist after upgrade', () => {
-      const Database = require('better-sqlite3');
-      const db = new Database(path.join(APP_DIR, 'db-t1.sqlite'), { readonly: true });
+      const db = new DatabaseSync(path.join(APP_DIR, 'db-t1.sqlite'), { readOnly: true });
       const { cnt } = db.prepare('SELECT COUNT(*) as cnt FROM sap_changelog_i18nKeys').get();
       expect(cnt).toBeGreaterThan(0);
       db.close();
     });
   });
 
-  describe('Model enhancement via compile.for.runtime', () => {
-    it('enhances tenant CSN with AdminService.ChangeView', () => {
-      // Verify enhanceModel is applied when compiling for runtime
-      // Load the app model (which goes through compile.for.runtime)
-      const csn = cds.model;
-      expect(csn.definitions['AdminService.ChangeView']).toBeDefined();
+  describe('Model enhancement for tenant-specific models', () => {
+    it('tenant runtime CSN has AdminService.ChangeView', async () => {
+      const mps = await cds.connect.to('cds.xt.ModelProviderService');
+      const csn = await mps.getCsn({ tenant: 't1', toggles: ['*'] });
+      const model = cds.compile.for.nodejs(csn);
+      expect(model.definitions['AdminService.ChangeView']).toBeDefined();
     });
 
-    it('adds changes association to tracked entities', () => {
-      const csn = cds.model;
-      expect(csn.definitions['AdminService.BookStores'].elements.changes).toBeDefined();
-      expect(csn.definitions['AdminService.BookStores'].elements.changes.target).toBe('AdminService.ChangeView');
+    it('tenant runtime CSN has changes association on tracked entities', async () => {
+      const mps = await cds.connect.to('cds.xt.ModelProviderService');
+      const csn = await mps.getCsn({ tenant: 't1', toggles: ['*'] });
+      const model = cds.compile.for.nodejs(csn);
+      expect(model.definitions['AdminService.BookStores'].elements.changes).toBeDefined();
+      expect(model.definitions['AdminService.BookStores'].elements.changes.target).toBe('AdminService.ChangeView');
+    });
+
+    it('OData $metadata exposes ChangeView entity type', async () => {
+      const { data } = await GET('/odata/v4/admin/$metadata', {
+        auth: { username: 'alice' } // -> tenant t1
+      });
+      expect(data).toContain('ChangeView');
+    });
+
+    it('OData $metadata exposes changes navigation property', async () => {
+      const { data } = await GET('/odata/v4/admin/$metadata', {
+        auth: { username: 'alice' } // -> tenant t1
+      });
+      expect(data).toContain('NavigationProperty Name="changes"');
     });
   });
 
@@ -126,10 +136,10 @@ describeIfSqlite('Change-Tracking MTX', () => {
       const {
         data: { value: changes }
       } = await GET(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=true)/changes`, {
-        auth: { username: 'fred' }
+        auth: { username: 'fred' } // -> tenant t2
       });
 
-      expect(changes.length).toBeGreaterThan(0);
+      expect(changes.length).toBe(2);
       const titleChange = changes.find((c) => c.attribute === 'title');
       expect(titleChange).toMatchObject({
         entity: 'sap.capire.bookshop.Books',
@@ -150,14 +160,15 @@ describeIfSqlite('Change-Tracking MTX', () => {
     it('tracks the feature-toggled isbn column when fred creates a Book', async () => {
       // `isbn` exists only because the `isbn` feature toggle is active for fred (tenant t2)
       const isbnValue = '978-0345391803';
-      const bookID = await createBook({ title: 'Book-with-isbn', isbn: isbnValue }, 'fred');
+      const bookID = await createBook({ title: 'Book-with-isbn', descr: 'A test book with ISBN', isbn: isbnValue }, 'fred');
 
       const {
         data: { value: changes }
       } = await GET(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=true)/changes`, {
-        auth: { username: 'fred' }
+        auth: { username: 'fred' } // -> tenant t2
       });
 
+      expect(changes.length).toBe(3);
       const isbnChange = changes.find((c) => c.attribute === 'isbn');
       expect(isbnChange).toBeTruthy();
       expect(isbnChange).toMatchObject({
@@ -176,9 +187,10 @@ describeIfSqlite('Change-Tracking MTX', () => {
       const {
         data: { value: changes }
       } = await GET(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=true)/changes`, {
-        auth: { username: 'fred' }
+        auth: { username: 'fred' } // -> tenant t2
       });
 
+      expect(changes.length).toBe(2);
       const stockChange = changes.find((c) => c.attribute === 'stock');
       expect(stockChange).toBeTruthy();
       expect(stockChange).toMatchObject({
@@ -190,12 +202,9 @@ describeIfSqlite('Change-Tracking MTX', () => {
       });
     });
 
-    // SKIPPED: this asserts the *intended* user-level feature-toggle gating, which
-    // is not yet implemented. Currently change-tracking triggers are deployed at
-    // tenant subscription time and fire regardless of the request user's features.
-    // To make this pass we'd need request-time gating via session variables that
-    // suppress writes for entities/elements whose @changelog only exists due to a
-    // feature the current user lacks. See discussion on lib/skipHandlers.js.
+    // The tests asserts the intended user-level feature-toggle gating, which is not yet implemented.
+    // Triggers are deployed at tenant subscription time and fire regardless of the request user's features.
+    // Add request-time gating via session variables that suppress writes for entities/elements whose @changelog only exists due to a feature the current user lacks.
     it.skip('does not track stock when isbn toggle is not set (dave on tenant t1, features:[])', async () => {
       const bookID = await createBook({ title: 'Book-no-features', stock: 99 }, 'dave');
 
