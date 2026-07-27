@@ -321,6 +321,21 @@ describe('Configuration Options', () => {
       expect(dateChange).toBeTruthy();
       expect(dateChange.valueChangedTo).toEqual('2025-03-10');
     });
+
+    it('honors @changelog: false on a nested composition-of-many target during a deep write', async () => {
+      // SkipRoot -> mids[] (SkipMid) -> leaves[] (SkipLeaf); SkipLeaf is @changelog: false.
+      // The leaf sits below a composition-of-many, so its skip must survive nested traversal.
+      const rootID = cds.utils.uuid();
+      const leafID = cds.utils.uuid();
+      await POST('/odata/v4/variant-testing/SkipRoot', {
+        ID: rootID,
+        title: 'root',
+        mids: [{ ID: cds.utils.uuid(), label: 'mid', leaves: [{ ID: leafID, note: 'LEAF-NOTE' }] }]
+      });
+
+      const leafChanges = await SELECT.from('sap.changelog.Changes').where({ entity: 'sap.change_tracking.SkipLeaf', entityKey: leafID });
+      expect(leafChanges).toEqual([]);
+    });
   });
 
   (isHana ? it.skip : it)('maxDisplayHierarchyDepth controls auto-discovery of composition targets', async () => {
