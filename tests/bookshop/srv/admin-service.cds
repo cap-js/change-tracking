@@ -100,3 +100,8 @@ annotate AdminService.Order with @(UI.Facets: [{
   Label  : 'Custom Changes',
   Target : 'changes/@UI.PresentationVariant',
 }]);
+
+// Test if trigger generation for .texts tables are skipped
+annotate AdminService.Books.texts with {
+  title @changelog;
+};

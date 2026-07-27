@@ -34,6 +34,18 @@ service VariantTesting {
 
   entity CustomTypeKeyTable as projection on my.CustomTypeKeyTable;
 
+  entity Employees as projection on my.Employees;
+
+  entity EmployeesExpr as projection on my.EmployeesExpr;
+
+  entity EmployeesNestedExpr as projection on my.EmployeesNestedExpr;
+
+  entity EmployeesFuncExpr as projection on my.EmployeesFuncExpr;
+
+  // Test for DB-level view shadowing the composition parent mapping
+  entity VersionWithAssignments as projection on my.VersionWithAssignments;
+  entity VersionAssignment       as projection on my.VersionAssignment;
+
   entity ServiceLevelTimezoneRenamed as projection on my.DifferentFieldTypes {
     ID,
     srvRenamedDateTimeWDTZ as renamedDateTime,
@@ -111,4 +123,47 @@ annotate VariantTesting.ServiceLevelTimezoneRenamed with {
 // DB element 'plainDateTime' has no @Common.Timezone of its own.
 annotate VariantTesting.ServiceOnlyTimezoneRenamed with {
   renamedPlain @changelog @Common.Timezone : renamedTimezone;
+};
+
+// Simulates a downstream extension that adds @changelog paths pointing at
+// a @PersonalData field on the base model. The base Employees entity has
+// no @changelog annotations on its own.
+annotate VariantTesting.Employees with @(changelog: [manager.salary]) {
+  manager @changelog: [manager.salary];
+  officeLocation @changelog;
+};
+
+// Same scenario but with expression-based @changelog annotations.
+// Expressions referencing @PersonalData fields must also be rejected.
+annotate VariantTesting.EmployeesExpr with @(changelog: [('Manager earns ' || manager.salary)]) {
+  manager @changelog: [('Salary: ' || manager.salary)];
+  officeLocation @changelog;
+};
+
+// Same scenario but the @PersonalData ref is nested inside a sub-expression.
+// The ref walker must recurse into nested xpr tokens to catch it.
+annotate VariantTesting.EmployeesNestedExpr with @(changelog: [('Manager earns ' || ('' || manager.salary))]) {
+  manager @changelog: [('Salary: ' || ('' || manager.salary))];
+  officeLocation @changelog;
+};
+
+// Same scenario but the @PersonalData ref is hidden inside a function call's
+// arguments. The ref walker must recurse into token.args to catch it.
+annotate VariantTesting.EmployeesFuncExpr with @(changelog: [('Manager earns ' || coalesce(manager.salary, 0))]) {
+  manager @changelog: [('Salary: ' || coalesce(manager.salary, 0))];
+  officeLocation @changelog;
+};
+
+// Test: DB-level view shadowing the composition parent mapping.
+// VersionsForLock (select * from VersionWithAssignments) inherits the 'assignments'
+// composition and overwrites the child->parent map entry in analyzeCompositions.
+// The trigger for VersionAssignment must still emit the cds.Composition parent INSERT
+// wired to the actual VersionWithAssignments table (not the view).
+annotate VariantTesting.VersionWithAssignments with @changelog: [title] {
+  title @changelog;
+};
+
+annotate VariantTesting.VersionAssignment with {
+  version @changelog: [version.title];
+  tag     @changelog;
 };

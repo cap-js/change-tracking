@@ -101,6 +101,7 @@ annotate bookshop.Books with {
     authorWithAssocObjectID.dateOfBirth,
     authorWithAssocObjectID.name.lastName
   ];
+  author @changelog: [author.name.firstName, author.name.lastName];
 }
 
 annotate bookshop.OrderItem with {

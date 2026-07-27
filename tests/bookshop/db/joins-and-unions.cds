@@ -1,8 +1,9 @@
 
+using { cuid } from '@sap/cds/common';
+
 namespace sap.change_tracking;
 
-entity Events {
-    key ID: UUID;
+entity Events : cuid {
     object_ID          : String not null         @mandatory;
     object_Type        : String not null         @mandatory  @assert.range  enum {
         A;
@@ -24,8 +25,7 @@ type Component          : String enum {
   KLM;
 }
 
-entity UseCases {
-    key ID :UUID;
+entity UseCases : cuid {
           type                   : String(100) @changelog;
           booleanField                 : Boolean default false  @changelog;
           name                   : String(100)  @changelog;
@@ -34,21 +34,17 @@ entity UseCases {
           area: String @changelog;
 };
 
-entity DataRequests {
-    key ID :UUID;
+entity DataRequests : cuid {
     useCase_ID: UUID;
     useCase: Association to one UseCases on useCase.ID = useCase_ID;
 };
-entity DataSets {
-    key ID :UUID;
+entity DataSets : cuid {
     dataRequest: Association to one DataRequests;
 };
-entity DataDefinition {
-    key ID :UUID;
+entity DataDefinition : cuid {
     dataRequest: Association to one DataRequests;
 };
-entity DataAreas {
-    key ID :UUID;
+entity DataAreas : cuid {
     name: String @changelog;
 };
 

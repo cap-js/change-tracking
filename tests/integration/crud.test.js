@@ -1,7 +1,7 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
-const { POST, PATCH, DELETE, GET, axios } = cds.test(bookshop);
-axios.defaults.auth = { username: 'alice', password: 'admin' };
+const { POST, PATCH, DELETE, GET, defaults } = cds.test(bookshop);
+defaults.auth = { username: 'alice', password: 'admin' };
 
 describe('change log generation', () => {
   describe('Basic CRUD operations', () => {
@@ -149,6 +149,64 @@ describe('change log generation', () => {
       const boolChange3 = changesOrder3.find((change) => change.attribute === 'bool');
       expect(boolChange3.valueChangedFrom).toEqual(null);
       expect(boolChange3.valueChangedTo).toEqual('false');
+    });
+  });
+
+  describe('UPSERT operations', () => {
+    it('logs field values when upserting a new record', async () => {
+      const testingSRV = await cds.connect.to('VariantTesting');
+      const { ChangeView, DifferentFieldTypes } = testingSRV.entities;
+
+      const id = cds.utils.uuid();
+      await UPSERT.into(DifferentFieldTypes).entries({ ID: id, number: 42, bool: true, title: 'Upserted record' });
+
+      const changes = await SELECT.from(ChangeView).where({ entityKey: id, modification: 'create' });
+      expect(changes.length).toEqual(3);
+
+      const numberLog = changes.find((c) => c.attribute === 'number');
+      expect(numberLog).toBeDefined();
+      expect(numberLog.valueChangedFrom).toEqual(null);
+      expect(Number(numberLog.valueChangedTo)).toEqual(42);
+
+      const boolLog = changes.find((c) => c.attribute === 'bool');
+      expect(boolLog).toBeDefined();
+      expect(boolLog.valueChangedFrom).toEqual(null);
+      expect(boolLog.valueChangedTo).toEqual('true');
+
+      const titleLog = changes.find((c) => c.attribute === 'title');
+      expect(titleLog).toBeDefined();
+      expect(titleLog.valueChangedFrom).toEqual(null);
+      expect(titleLog.valueChangedTo).toEqual('Upserted record');
+    });
+
+    it('logs old and new values when upserting an existing record (update path)', async () => {
+      const testingSRV = await cds.connect.to('VariantTesting');
+      const { ChangeView, DifferentFieldTypes } = testingSRV.entities;
+
+      const id = cds.utils.uuid();
+      // First create the record
+      await INSERT.into(DifferentFieldTypes).entries({ ID: id, number: 10, bool: false, title: 'Original' });
+
+      // Now upsert the same record with changed values
+      await UPSERT.into(DifferentFieldTypes).entries({ ID: id, number: 99, bool: true, title: 'Updated via upsert' });
+
+      const changes = await SELECT.from(ChangeView).where({ entityKey: id, modification: 'update' });
+      expect(changes.length).toEqual(3);
+
+      const numberLog = changes.find((c) => c.attribute === 'number');
+      expect(numberLog).toBeDefined();
+      expect(Number(numberLog.valueChangedFrom)).toEqual(10);
+      expect(Number(numberLog.valueChangedTo)).toEqual(99);
+
+      const boolLog = changes.find((c) => c.attribute === 'bool');
+      expect(boolLog).toBeDefined();
+      expect(boolLog.valueChangedFrom).toEqual('false');
+      expect(boolLog.valueChangedTo).toEqual('true');
+
+      const titleLog = changes.find((c) => c.attribute === 'title');
+      expect(titleLog).toBeDefined();
+      expect(titleLog.valueChangedFrom).toEqual('Original');
+      expect(titleLog.valueChangedTo).toEqual('Updated via upsert');
     });
   });
 

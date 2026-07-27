@@ -5,6 +5,7 @@ const TempUtil = require('./tempUtil.js');
 const tempUtil = new TempUtil(__filename);
 
 const bookshopDir = path.join(__dirname, '../bookshop');
+cds.test(bookshopDir);
 const isHana = cds.env.requires?.db?.kind === 'hana';
 
 (isHana ? describe : describe.skip)('HANA Build', () => {
@@ -84,6 +85,13 @@ const isHana = cds.env.requires?.db?.kind === 'hana';
       const result = compiler(freshCsn(), {});
       const triggers = result.definitions.filter((def) => def.kind === 'HDBTRIGGER' || (def.sql && def.sql.includes('TRIGGER')));
       expect(triggers.length).toBeGreaterThan(0);
+    });
+
+    test('Build does not generate triggers for .texts entities', () => {
+      const result = compiler(freshCsn(), {});
+      const triggers = result.definitions.filter((def) => def.sql && def.sql.includes('TRIGGER'));
+      const textsTriggers = triggers.filter((def) => def.name.includes('.texts'));
+      expect(textsTriggers).toHaveLength(0);
     });
   });
 });

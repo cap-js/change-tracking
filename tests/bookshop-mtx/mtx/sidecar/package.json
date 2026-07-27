@@ -11,9 +11,6 @@
   "devDependencies": {
     "@cap-js/sqlite": "^1 || ^2"
   },
-  "engines": {
-    "node": ">=20"
-  },
   "scripts": {
     "start": "cds-serve"
   },

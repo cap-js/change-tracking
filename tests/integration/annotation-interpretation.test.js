@@ -338,7 +338,8 @@ describe('@changelog annotation interpretation', () => {
 
     expect(changesInDb.length).toEqual(1);
     expect(changesInDb[0].valueChangedFromLabel).toEqual(null);
-    expect(changesInDb[0].valueChangedToLabel).toEqual('Japan, Honda, Ōsaka');
+    // 'Japan, Ōsaka' instead of 'Japan, Honda, Ōsaka', since Customers.name is @PersonalData.IsPotentiallyPersonal
+    expect(changesInDb[0].valueChangedToLabel).toEqual('Japan, Ōsaka');
     expect(changesInDb[0].valueDataType).toEqual('cds.Association');
   });
 
@@ -368,6 +369,167 @@ describe('@changelog annotation interpretation', () => {
       attribute: 'dppField3'
     });
     expect(trackedChanges.length).toEqual(1);
+  });
+
+  // @changelog paths that resolve to valueChangedToLabel or objectID must not
+  // include @PersonalData values. Reproduces the downstream-extension shape:
+  // a base entity with a @PersonalData field, and a separate `annotate` block
+  // pointing @changelog at that field via an association.
+  it('does not leak @PersonalData via association label or objectID paths', async () => {
+    const testingSRV = await cds.connect.to('VariantTesting');
+    const { Employees, ChangeView } = testingSRV.entities;
+
+    const managerID = cds.utils.uuid();
+    await INSERT.into(Employees).entries({
+      ID: managerID,
+      name: 'Manager Mallory',
+      officeLocation: 'Berlin',
+      salary: 987654 // @PersonalData.IsPotentiallyPersonal
+    });
+
+    const reportID = cds.utils.uuid();
+    await INSERT.into(Employees).entries({
+      ID: reportID,
+      name: 'Report Robin',
+      officeLocation: 'Berlin',
+      salary: 50000,
+      manager_ID: managerID
+    });
+
+    // Innocuous edit any user with write access to Employees can perform.
+    await UPDATE(Employees).where({ ID: reportID }).with({ officeLocation: 'Munich' });
+
+    const changes = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.Employees',
+      entityKey: reportID
+    });
+
+    const looksLikeSalary = (v) => v != null && String(v).startsWith('987654');
+    const leakedLabels = changes.filter((c) => looksLikeSalary(c.valueChangedToLabel)).map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
+    const leakedObjectIDs = changes.filter((c) => looksLikeSalary(c.objectID)).map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
+
+    expect(leakedLabels).toEqual([]);
+    expect(leakedObjectIDs).toEqual([]);
+  });
+
+  // Same as above, but with expression-based @changelog annotations:
+  // @changelog: [('Manager earns ' || manager.salary)] on entity level
+  // manager @changelog: [('Salary: ' || manager.salary)] on element level
+  it('does not leak @PersonalData via expression-based @changelog annotations', async () => {
+    const testingSRV = await cds.connect.to('VariantTesting');
+    const { EmployeesExpr, ChangeView } = testingSRV.entities;
+
+    const managerID = cds.utils.uuid();
+    await INSERT.into(EmployeesExpr).entries({
+      ID: managerID,
+      name: 'Manager Mallory',
+      officeLocation: 'Berlin',
+      salary: 112233 // @PersonalData.IsPotentiallyPersonal
+    });
+
+    const reportID = cds.utils.uuid();
+    await INSERT.into(EmployeesExpr).entries({
+      ID: reportID,
+      name: 'Report Robin',
+      officeLocation: 'Berlin',
+      salary: 50000,
+      manager_ID: managerID
+    });
+
+    // Innocuous update that triggers change tracking
+    await UPDATE(EmployeesExpr).where({ ID: reportID }).with({ officeLocation: 'Munich' });
+
+    const changes = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.EmployeesExpr',
+      entityKey: reportID
+    });
+
+    const looksLikeSalary = (v) => v != null && String(v).includes('112233');
+    const leakedLabels = changes.filter((c) => looksLikeSalary(c.valueChangedToLabel)).map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
+    const leakedObjectIDs = changes.filter((c) => looksLikeSalary(c.objectID)).map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
+
+    expect(leakedLabels).toEqual([]);
+    expect(leakedObjectIDs).toEqual([]);
+  });
+
+  // Same as above, but the @PersonalData ref is nested inside a sub-expression (token.xpr):
+  // @changelog: [('Manager earns ' || ('' || manager.salary))] on entity level
+  // manager @changelog: [('Salary: ' || ('' || manager.salary))] on element level
+  it('does not leak @PersonalData via nested expression-based @changelog annotations', async () => {
+    const testingSRV = await cds.connect.to('VariantTesting');
+    const { EmployeesNestedExpr, ChangeView } = testingSRV.entities;
+
+    const managerID = cds.utils.uuid();
+    await INSERT.into(EmployeesNestedExpr).entries({
+      ID: managerID,
+      name: 'Manager Mallory',
+      officeLocation: 'Berlin',
+      salary: 445566 // @PersonalData.IsPotentiallyPersonal
+    });
+
+    const reportID = cds.utils.uuid();
+    await INSERT.into(EmployeesNestedExpr).entries({
+      ID: reportID,
+      name: 'Report Robin',
+      officeLocation: 'Berlin',
+      salary: 50000,
+      manager_ID: managerID
+    });
+
+    // Innocuous update that triggers change tracking
+    await UPDATE(EmployeesNestedExpr).where({ ID: reportID }).with({ officeLocation: 'Munich' });
+
+    const changes = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.EmployeesNestedExpr',
+      entityKey: reportID
+    });
+
+    const looksLikeSalary = (v) => v != null && String(v).includes('445566');
+    const leakedLabels = changes.filter((c) => looksLikeSalary(c.valueChangedToLabel)).map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
+    const leakedObjectIDs = changes.filter((c) => looksLikeSalary(c.objectID)).map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
+
+    expect(leakedLabels).toEqual([]);
+    expect(leakedObjectIDs).toEqual([]);
+  });
+
+  // Same as above, but the @PersonalData ref is hidden inside function-call arguments (token.args):
+  // @changelog: [('Manager earns ' || coalesce(manager.salary, 0))] on entity level
+  // manager @changelog: [('Salary: ' || coalesce(manager.salary, 0))] on element level
+  it('does not leak @PersonalData via function-call expression-based @changelog annotations', async () => {
+    const testingSRV = await cds.connect.to('VariantTesting');
+    const { EmployeesFuncExpr, ChangeView } = testingSRV.entities;
+
+    const managerID = cds.utils.uuid();
+    await INSERT.into(EmployeesFuncExpr).entries({
+      ID: managerID,
+      name: 'Manager Mallory',
+      officeLocation: 'Berlin',
+      salary: 778899 // @PersonalData.IsPotentiallyPersonal
+    });
+
+    const reportID = cds.utils.uuid();
+    await INSERT.into(EmployeesFuncExpr).entries({
+      ID: reportID,
+      name: 'Report Robin',
+      officeLocation: 'Berlin',
+      salary: 50000,
+      manager_ID: managerID
+    });
+
+    // Innocuous update that triggers change tracking
+    await UPDATE(EmployeesFuncExpr).where({ ID: reportID }).with({ officeLocation: 'Munich' });
+
+    const changes = await SELECT.from(ChangeView).where({
+      entity: 'sap.change_tracking.EmployeesFuncExpr',
+      entityKey: reportID
+    });
+
+    const looksLikeSalary = (v) => v != null && String(v).includes('778899');
+    const leakedLabels = changes.filter((c) => looksLikeSalary(c.valueChangedToLabel)).map((c) => ({ attribute: c.attribute, valueChangedToLabel: c.valueChangedToLabel }));
+    const leakedObjectIDs = changes.filter((c) => looksLikeSalary(c.objectID)).map((c) => ({ attribute: c.attribute, objectID: c.objectID }));
+
+    expect(leakedLabels).toEqual([]);
+    expect(leakedObjectIDs).toEqual([]);
   });
 
   describe('Code lists resolution', () => {
@@ -606,7 +768,7 @@ describe('@changelog annotation interpretation', () => {
     });
   });
 
-  describe('service projections with element renames', () => {
+  describe('different annotations in service projections', () => {
     it('does not conflict when a service renames an element but @changelog annotations are inherited unchanged', async () => {
       const {
         data: { ID: incidentID }
@@ -654,6 +816,52 @@ describe('@changelog annotation interpretation', () => {
       const statusChange = changes.find((c) => c.attribute === 'status' && c.modification === 'update');
       expect(statusChange).toBeDefined();
       expect(statusChange.objectID).toEqual('Stormy Weathers: Munich - Entity-level expression test');
+    });
+
+    it('does not conflict when a service projection inherits a specific @changelog as true', async () => {
+      // CatalogService.ListOfBooks is a simple projection on my.Books.
+      // The DB entity Books has author @changelog: [author.name.firstName, author.name.lastName] (specific).
+      // CDS propagation may simplify this to just 'true' on the projected element.
+      // AdminService.Books also has author @changelog: [author.name.firstName, author.name.lastName] (specific).
+      // The merge must not throw a conflict error when encountering 'true' vs the specific annotation.
+      const adminService = await cds.connect.to('AdminService');
+      const { ChangeView } = adminService.entities;
+
+      const bookStoreID = cds.utils.uuid();
+      const bookID = cds.utils.uuid();
+      const authorID1 = cds.utils.uuid();
+      const authorID2 = cds.utils.uuid();
+
+      await INSERT.into('sap.capire.bookshop.Authors').entries([
+        { ID: authorID1, name_firstName: 'Jane', name_lastName: 'Austen' },
+        { ID: authorID2, name_firstName: 'Mark', name_lastName: 'Twain' }
+      ]);
+
+      await POST(`/odata/v4/admin/BookStores`, { ID: bookStoreID, name: 'Test BookStore' });
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/books`, {
+        ID: bookID,
+        title: 'Test Book',
+        author_ID: authorID1
+      });
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      // Update the author association via AdminService (which has specific @changelog on author)
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=true)/AdminService.draftEdit`, {});
+      await PATCH(`/odata/v4/admin/Books(ID=${bookID},IsActiveEntity=false)`, { author_ID: authorID2 });
+      await POST(`/odata/v4/admin/BookStores(ID=${bookStoreID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+
+      const changes = await SELECT.from(ChangeView).where({
+        attribute: 'author',
+        entityKey: bookID,
+        modification: 'update'
+      });
+
+      expect(changes.length).toBeGreaterThan(0);
+      // The specific annotation [author.name.firstName, author.name.lastName] should be used for display
+      expect(changes[0].valueChangedTo).toBeTruthy();
     });
   });
 });

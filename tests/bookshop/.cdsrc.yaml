@@ -19,3 +19,6 @@ requires:
         destroyTimeoutMillis: 1000
     "[hana]":
       kind: hana
+  change-tracking:
+    "[rowlevel]":
+      rowLevelTriggers: true

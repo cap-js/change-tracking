@@ -2,14 +2,14 @@
   "dependencies": {
     "@cap-js/attachments": "^3",
     "@cap-js/change-tracking": "file:../../.",
-    "@cap-js/hana": "^1 || ^2",
-    "@cap-js/postgres": "^1 || ^2"
+    "@cap-js/hana": ">=2",
+    "@cap-js/postgres": ">=2"
   },
   "devDependencies": {
-    "@cap-js/sqlite": "^1 || ^2",
-    "@sap/cds-dk": "^8 || ^9",
+    "@cap-js/sqlite": ">=2",
     "puppeteer": "^25.1.0",
-    "ui5-test-runner": "^5.13.1"
+    "ui5-test-runner": "^5.13.1",
+    "better-sqlite3": ">=12"
   },
   "scripts": {
     "start": "cds-serve",
@@ -54,6 +54,9 @@
       "change-tracking": {
         "preserveDeletes": false,
         "maxDisplayHierarchyDepth": 4
+      },
+      "sqlite": {
+        "driver": "better-sqlite3"
       }
     },
     "features": {
