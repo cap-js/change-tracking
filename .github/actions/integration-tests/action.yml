@@ -71,6 +71,7 @@ runs:
         npm pkg set "devDependencies.@sap/cds=^9"
         npm pkg set --workspace=tests/bookshop "dependencies.@sap/cds=^9"
         npm pkg set --workspace=tests/bookshop-mtx "dependencies.@sap/cds=^9"
+        npm pkg set --workspace=tests/bookshop-mtx "devDependencies.@cap-js/hana=^2"
     - name: Install global CDS
       shell: bash
       run: npm i -g @sap/cds-dk@${{ inputs.CDS_VERSION }}
