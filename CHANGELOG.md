@@ -4,12 +4,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.1.0 - 2026-07-27
+## Version 2.1.0 - tbd
 
 ### Fixed
-- SQLite sidecar crash on startup in multi-tenant applications due to trigger/index deployment running before tenant tables exist
-- Invoke `enhanceModel` in after-deploy handler of `cds.xt.DeploymentService` for SQLite and Postgres because the `loaded` handler is not invoked on the tenant CSN from `ModelProviderService.getCsn()`
-- HDI deployment failure (sap.changelog.Changes_CT_INDEX.hdbindex requires db://SAP_CHANGELOG_CHANGES which is not provided by any file) caused by adding `.hdbindex` artifacts even when Changes table does not exist in the compiled model
+- Prevent SQLite sidecar crash on startup in multi-tenant applications due to trigger/index deployment running before tenant tables exist
+- Invoke `enhanceModel` in after-deploy handler of `cds.xt.DeploymentService` because the `loaded` handler is not invoked on the tenant CSN from `ModelProviderService.getCsn()`
+- Fix HDI deployment failure (sap.changelog.Changes_CT_INDEX.hdbindex requires db://SAP_CHANGELOG_CHANGES which is not provided by any file) caused by adding `.hdbindex` artifacts even when Changes table does not exist in the compiled model
 - HDI deployment failure (`invalid column name: CHANGEVIEW_0.PARENT_ENTITYKEY`) during extensibility upgrades since `enhanceModel` was not called on the tenant CSN before HANA compilation
 
 ## Version 2.0.3 - 2026-07-21
