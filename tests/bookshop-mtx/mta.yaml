@@ -1,0 +1,101 @@
+_schema-version: 3.3.0
+ID: bookshop-mtx
+version: 1.0.0
+description: "A simple CAP project."
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm pack ../../
+        - sh -c 'TGZ_FILE="$(ls -1 | grep -E "^cap-js-change-tracking.*\.tgz$" | head -n 1)" && npm install "./${TGZ_FILE}" && cp "${TGZ_FILE}"
+          mtx/sidecar/ && cd mtx/sidecar && npm install "./${TGZ_FILE}"'
+        - npx -p @sap/cds-dk cds build --production
+        - sh -c 'TGZ_FILE="$(ls -1 | grep -E "^cap-js-change-tracking.*\.tgz$" | head -n 1)" && cp "${TGZ_FILE}" ./gen/srv/ && cp "${TGZ_FILE}"
+          ./gen/mtx/sidecar/'
+modules:
+  - name: bookshop-mtx-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      instances: 1
+      buildpack: nodejs_buildpack
+    build-parameters:
+      builder: npm
+    provides:
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: bookshop-mtx-db
+      - name: bookshop-mtx-auth
+
+  - name: bookshop-mtx-mtx
+    type: nodejs
+    path: gen/mtx/sidecar
+    build-parameters:
+      builder: npm
+    parameters:
+      instances: 1
+      memory: 256M
+      disk-quota: 512M
+    hooks:
+      - name: upgrade-all
+        type: task
+        phases:
+          - blue-green.application.before-start.idle
+          - deploy.application.before-start
+        parameters:
+          name: upgrade
+          memory: 512M # increase as required
+          disk-quota: 768M # increase as required
+          command: cds-mtx upgrade '*'
+    provides:
+      - name: mtx-api
+        properties:
+          mtx-url: ${default-url}
+    requires:
+      - name: bookshop-mtx-db
+      - name: bookshop-mtx-auth
+      - name: bookshop-mtx-registry
+
+resources:
+  - name: bookshop-mtx-registry
+    type: org.cloudfoundry.managed-service
+    requires:
+      - name: mtx-api
+    parameters:
+      service: saas-registry
+      service-plan: application
+      config:
+        xsappname: bookshop-mtx-${org}-${space}
+        appName: bookshop-mtx-${org}-${space}
+        displayName: bookshop-mtx
+        description: A simple CAP project.
+        category: 'Category'
+        appUrls:
+          getDependencies: ~{mtx-api/mtx-url}/-/cds/saas-provisioning/dependencies
+          onSubscription: ~{mtx-api/mtx-url}/-/cds/saas-provisioning/tenant/{tenantId}
+          onSubscriptionAsync: true
+          onUnSubscriptionAsync: true
+          onUpdateDependenciesAsync: true
+          callbackTimeoutMillis: 300000 # Increase if your deployments are taking longer than that
+  - name: bookshop-mtx-db
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: service-manager
+      service-plan: container
+  - name: bookshop-mtx-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: bookshop-mtx-${org}-${space}
+        tenant-mode: shared
+        oauth2-configuration:
+          credential-types:
+            - "binding-secret"
+            - "x509"

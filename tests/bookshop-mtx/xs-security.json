@@ -1,0 +1,28 @@
+{
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.mtcallback",
+      "description": "Subscription via SaaS Registry",
+      "grant-as-authority-to-apps": [
+        "$XSAPPNAME(application,sap-provisioning,tenant-onboarding)"
+      ]
+    },
+    {
+      "name": "$XSAPPNAME.cds.ExtensionDeveloper",
+      "description": "Extend CAP applications via extension projects"
+    }
+  ],
+  "attributes": [],
+  "role-templates": [
+    {
+      "name": "ExtensionDeveloper",
+      "description": "Extension development including UIFlex extensibility",
+      "scope-references": [
+        "$XSAPPNAME.cds.ExtensionDeveloper"
+      ]
+    }
+  ],
+  "authorities": [
+    "$XSAPPNAME.cds.ExtensionDeveloper"
+  ]
+}
