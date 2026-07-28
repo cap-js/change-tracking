@@ -3,9 +3,7 @@
     {
       "name": "$XSAPPNAME.mtcallback",
       "description": "Subscription via SaaS Registry",
-      "grant-as-authority-to-apps": [
-        "$XSAPPNAME(application,sap-provisioning,tenant-onboarding)"
-      ]
+      "grant-as-authority-to-apps": ["$XSAPPNAME(application,sap-provisioning,tenant-onboarding)"]
     },
     {
       "name": "$XSAPPNAME.cds.ExtensionDeveloper",
@@ -17,12 +15,8 @@
     {
       "name": "ExtensionDeveloper",
       "description": "Extension development including UIFlex extensibility",
-      "scope-references": [
-        "$XSAPPNAME.cds.ExtensionDeveloper"
-      ]
+      "scope-references": ["$XSAPPNAME.cds.ExtensionDeveloper"]
     }
   ],
-  "authorities": [
-    "$XSAPPNAME.cds.ExtensionDeveloper"
-  ]
+  "authorities": ["$XSAPPNAME.cds.ExtensionDeveloper"]
 }
