@@ -439,14 +439,9 @@ describe('ChangeView access restrictions', () => {
     });
 
     // ...so the parent's change history must not carry the child's `secret` rows
-    const { data } = await GET(
-      `/odata/v4/restricted-hier/RestrictedParent(ID=${parentID})/changes?$select=entity,attribute,valueChangedTo`,
-      bob
-    );
+    const { data } = await GET(`/odata/v4/restricted-hier/RestrictedParent(ID=${parentID})/changes?$select=entity,attribute,valueChangedTo`, bob);
     // the parent's own history is still returned (guards against a vacuous pass)
-    expect(data.value).toContainEqual(
-      expect.objectContaining({ entity: 'sap.change_tracking.RestrictedParent', attribute: 'title' })
-    );
+    expect(data.value).toContainEqual(expect.objectContaining({ entity: 'sap.change_tracking.RestrictedParent', attribute: 'title' }));
     // but no rows for the @restrict'ed child
     const childRows = data.value.filter((r) => r.entity === 'sap.change_tracking.RestrictedChild');
     expect(childRows).toEqual([]);
