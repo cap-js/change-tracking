@@ -11,7 +11,8 @@ cds.on('loaded', enhanceModel);
 cds.on('compile.to.edmx', enhanceModel);
 //cds.on('compile.to.runtime', enhanceModel);
 
-// Workaround: enhance CSNs returned by cds.xt.ModelProviderService.getExtCsn
+// REVISIT: Remove once `compile.for.runtime` is reliably called for tenant-specific models
+// enhance CSNs returned by cds.xt.ModelProviderService.getExtCsn
 cds.on('serving', (srv) => {
   if (srv.name !== 'cds.xt.ModelProviderService') return;
   srv.after(['getCsn', 'getExtCsn'], (csn) => {
