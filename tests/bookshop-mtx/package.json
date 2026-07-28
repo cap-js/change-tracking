@@ -2,13 +2,13 @@
   "name": "bookshop-mtx",
   "dependencies": {
     "@cap-js/change-tracking": "file:../../.",
-    "@cap-js/hana": "^3",
+    "@cap-js/hana": ">=2",
     "@sap/cds-mtxs": ">=3",
     "@sap/xssec": "^4"
   },
   "devDependencies": {
     "@cap-js/sqlite": ">=2",
-    "@sap/cds-dk": "^10",
+    "@sap/cds-dk": ">=9",
     "better-sqlite3": ">=12"
   },
   "scripts": {
