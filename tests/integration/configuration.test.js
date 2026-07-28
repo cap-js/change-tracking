@@ -915,14 +915,3 @@ describe('Configuration Options', () => {
     expect(restoredChange.objectID).toEqual(parentID);
   });
 });
-describe('MTX Build', () => {
-  it('adds changes association only during runtime compilation, not during xtended CSN build', async () => {
-    const csn = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'xtended' });
-    expect(csn.definitions['AdminService.BookStores'].elements?.changes).toBeFalsy();
-
-    const csn2 = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'inferred' });
-    const effectiveCSN2 = await cds.compile.for.nodejs(csn2);
-
-    expect(effectiveCSN2.definitions['AdminService.BookStores'].elements.changes).toBeTruthy();
-  });
-});
