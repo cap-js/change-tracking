@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-  pull_request_target:
+  pull_request:
     branches: [main]
     types: [reopened, synchronize, opened]
 
@@ -48,13 +48,10 @@ jobs:
           npm pkg set "overrides.@cap-js/hana=^2"
           npm pkg set "overrides.@sap/cds-mtxs=^3"
           npm pkg set "devDependencies.@sap/cds=^9"
-          npm pkg set "devDependencies.@cap-js/hana=^2"
           npm pkg set --workspace=tests/bookshop "dependencies.@sap/cds=^9"
           npm pkg set --workspace=tests/bookshop-mtx "dependencies.@sap/cds=^9"
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
       - run: npm i
-      - run: cd tests/bookshop && npm i
-      - run: cd tests/bookshop-mtx && npm i
       - run: cds v -i
       - name: Run SQLite tests
         run: npm run test
@@ -88,7 +85,6 @@ jobs:
           npm pkg set "overrides.@cap-js/hana=^2"
           npm pkg set "overrides.@sap/cds-mtxs=^3"
           npm pkg set "devDependencies.@sap/cds=^9"
-          npm pkg set "devDependencies.@cap-js/hana=^2"
           npm pkg set --workspace=tests/bookshop "dependencies.@sap/cds=^9"
           npm pkg set --workspace=tests/bookshop-mtx "dependencies.@sap/cds=^9"
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
