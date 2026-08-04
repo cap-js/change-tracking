@@ -67,6 +67,8 @@ runs:
       shell: bash
       run: |
         npm pkg set "overrides.@cap-js/hana=^2"
+        npm pkg set "overrides.@cap-js/sqlite=^2"
+        npm pkg set "overrides.@cap-js/postgres=^2"
         npm pkg set "overrides.@sap/cds-mtxs=^3"
         npm pkg set "devDependencies.@sap/cds=^9"
         npm pkg set --workspace=tests/bookshop "dependencies.@sap/cds=^9"

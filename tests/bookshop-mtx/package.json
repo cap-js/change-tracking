@@ -1,23 +1,28 @@
 {
+  "name": "bookshop-mtx",
   "dependencies": {
     "@cap-js/change-tracking": "file:../../.",
-    "@sap/cds-mtxs": ">=3"
+    "@cap-js/hana": "^2 || ^3",
+    "@sap/cds-mtxs": "^3 || ^4",
+    "@sap/xssec": "^4"
   },
   "devDependencies": {
-    "@cap-js/sqlite": ">=2",
+    "@cap-js/sqlite": "^2 || ^3",
+    "@sap/cds-dk": ">=9",
     "better-sqlite3": ">=12"
+  },
+  "scripts": {
+    "start": "cds-serve"
   },
   "cds": {
     "sqlite": {
       "driver": "better-sqlite3"
     },
     "requires": {
-      "db": {
-        "kind": "sql"
-      },
       "[production]": {
         "multitenancy": true,
-        "extensibility": true
+        "extensibility": true,
+        "auth": "xsuaa"
       },
       "[with-mtx]": {
         "multitenancy": true
