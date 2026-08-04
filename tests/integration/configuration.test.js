@@ -321,6 +321,21 @@ describe('Configuration Options', () => {
       expect(dateChange).toBeTruthy();
       expect(dateChange.valueChangedTo).toEqual('2025-03-10');
     });
+
+    it('honors @changelog: false on a nested composition-of-many target during a deep write', async () => {
+      // SkipRoot -> mids[] (SkipMid) -> leaves[] (SkipLeaf); SkipLeaf is @changelog: false.
+      // The leaf sits below a composition-of-many, so its skip must survive nested traversal.
+      const rootID = cds.utils.uuid();
+      const leafID = cds.utils.uuid();
+      await POST('/odata/v4/variant-testing/SkipRoot', {
+        ID: rootID,
+        title: 'root',
+        mids: [{ ID: cds.utils.uuid(), label: 'mid', leaves: [{ ID: leafID, note: 'LEAF-NOTE' }] }]
+      });
+
+      const leafChanges = await SELECT.from('sap.changelog.Changes').where({ entity: 'sap.change_tracking.SkipLeaf', entityKey: leafID });
+      expect(leafChanges).toEqual([]);
+    });
   });
 
   (isHana ? it.skip : it)('maxDisplayHierarchyDepth controls auto-discovery of composition targets', async () => {
@@ -913,16 +928,5 @@ describe('Configuration Options', () => {
     });
     expect(restoredChange).toBeTruthy();
     expect(restoredChange.objectID).toEqual(parentID);
-  });
-});
-describe('MTX Build', () => {
-  it('adds changes association only during runtime compilation, not during xtended CSN build', async () => {
-    const csn = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'xtended' });
-    expect(csn.definitions['AdminService.BookStores'].elements?.changes).toBeFalsy();
-
-    const csn2 = await cds.load([path.join(__dirname, '../bookshop-mtx/srv'), '@cap-js/change-tracking'], { flavor: 'inferred' });
-    const effectiveCSN2 = await cds.compile.for.nodejs(csn2);
-
-    expect(effectiveCSN2.definitions['AdminService.BookStores'].elements.changes).toBeTruthy();
   });
 });

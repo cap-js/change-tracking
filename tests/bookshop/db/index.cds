@@ -206,3 +206,29 @@ entity RestrictedChild : cuid {
   parent : Association to one RestrictedParent;
   secret : String @changelog;
 }
+
+// Three-level composition-of-many chain for the nested deep-write skip test.
+// The leaf's service projection is annotated @changelog: false; a single deep
+// write (root -> mid[] -> leaf[]) must set the leaf skip var so no leaf rows are logged.
+entity SkipRoot : cuid {
+  title : String @changelog;
+  mids  : Composition of many SkipMid on mids.parent = $self;
+}
+
+entity SkipMid : cuid {
+  parent : Association to one SkipRoot;
+  label  : String @changelog;
+  leaves : Composition of many SkipLeaf on leaves.parent = $self;
+}
+
+entity SkipLeaf : cuid {
+  parent : Association to one SkipMid;
+  note   : String @changelog;
+}
+
+// a full projection and a narrow one that excludes `secret`. Used to check whether
+// /changes on the narrow projection leaks changelog rows for the hidden field.
+entity ProjectionScoped : cuid {
+  publicField : String @changelog;
+  secret      : String @changelog;
+}

@@ -3,6 +3,8 @@ using {sap.capire.bookshop as my} from '../db/schema';
 service AdminService {
   @odata.draft.enabled
   entity BookStores @(cds.autoexpose) as projection on my.BookStores;
+
+  entity Books as projection on my.Books;
 }
 
 annotate AdminService.BookStores with @changelog: [name] {
