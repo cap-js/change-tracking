@@ -42,6 +42,12 @@ service VariantTesting {
 
   entity EmployeesFuncExpr as projection on my.EmployeesFuncExpr;
 
+  // 3-level composition chain; leaf opts out of change tracking (see annotate below)
+  entity SkipRoot as projection on my.SkipRoot;
+  entity SkipMid  as projection on my.SkipMid;
+  @changelog: false
+  entity SkipLeaf as projection on my.SkipLeaf;
+
   // Full projection exposes both tracked fields, restricted to admin.
   @restrict: [{ grant: '*', to: 'admin' }]
   entity ProjectionScopedFull as projection on my.ProjectionScoped;
