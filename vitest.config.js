@@ -1,7 +1,5 @@
-import { defineConfig } from 'vitest/config';
-
-export default defineConfig({
+export default {
   test: {
     testTimeout: 60_000
   }
-});
+};
