@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ## Version 2.2.0 - tbd
 
 ### Fixed
-- Prevent `/changes` navigation from leaking change history for change-tracked fields that are excluded from a service projection 
+- Prevent `/changes` navigation from leaking change history for change-tracked fields that are excluded from a service projection
+- Consider `@changelog: false` on nested composition-of-many targets during deep writes
 
 ## Version 2.1.0 - 2026-07-28
 
