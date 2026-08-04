@@ -48,6 +48,13 @@ service VariantTesting {
   @changelog: false
   entity SkipLeaf as projection on my.SkipLeaf;
 
+  // Full projection exposes both tracked fields, restricted to admin.
+  @restrict: [{ grant: '*', to: 'admin' }]
+  entity ProjectionScopedFull as projection on my.ProjectionScoped;
+  // Narrow projection excludes `secret`, readable by the lower-privilege support role.
+  @restrict: [{ grant: '*', to: 'support' }]
+  entity ProjectionScopedNarrow as projection on my.ProjectionScoped excluding { secret };
+
   // Test for DB-level view shadowing the composition parent mapping
   entity VersionWithAssignments as projection on my.VersionWithAssignments;
   entity VersionAssignment       as projection on my.VersionAssignment;

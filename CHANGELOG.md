@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.2.0 - tbd
+
+### Fixed
+- Prevent `/changes` navigation from leaking change history for change-tracked fields that are excluded from a service projection 
+
 ## Version 2.1.0 - 2026-07-28
 
 ### Fixed

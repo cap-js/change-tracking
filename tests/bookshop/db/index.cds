@@ -213,3 +213,10 @@ entity SkipLeaf : cuid {
   parent : Association to one SkipMid;
   note   : String @changelog;
 }
+
+// a full projection and a narrow one that excludes `secret`. Used to check whether
+// /changes on the narrow projection leaks changelog rows for the hidden field.
+entity ProjectionScoped : cuid {
+  publicField : String @changelog;
+  secret      : String @changelog;
+}
