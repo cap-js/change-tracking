@@ -2,40 +2,28 @@ name: CI
 
 on:
   workflow_dispatch:
+  merge_group:
   push:
     branches: [main]
-  pull_request_target:
+  pull_request:
     branches: [main]
-    types: [reopened, synchronize, opened]
 
 permissions:
   contents: read
 
 jobs:
-  requires-approval:
-    runs-on: ubuntu-latest
-    name: Waiting for PR approval as this workflow runs on pull_request_target
-    if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.owner.login != 'cap-js'
-    environment: pr-approval
-    steps:
-      - name: Approval Step
-        run: echo "This job has been approved!"
-
   test-sqlite:
     runs-on: ubuntu-latest
-    needs: requires-approval
-    if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
     name: SQLite Tests with Node.js ${{ matrix.node-version }} and CDS ${{ matrix.cds-version }}
     strategy:
       fail-fast: false
       matrix:
         node-version: [22.x, 24.x]
         cds-version: [9, latest]
+        # On PRs only the "latest" combination runs; the merge queue runs the full matrix.
+        exclude: ${{ github.event_name == 'merge_group' && fromJSON('[]') || fromJSON('[{"node-version":"22.x","cds-version":9},{"node-version":"24.x","cds-version":9},{"node-version":"22.x","cds-version":"latest"}]') }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
@@ -58,19 +46,16 @@ jobs:
 
   test-postgres:
     runs-on: ubuntu-latest
-    needs: requires-approval
-    if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
     name: PostgreSQL Tests with Node.js ${{ matrix.node-version }} and CDS ${{ matrix.cds-version }}
     strategy:
       fail-fast: false
       matrix:
         node-version: [22.x, 24.x]
         cds-version: [9, latest]
+        # On PRs only the "latest" combination runs; the merge queue runs the full matrix.
+        exclude: ${{ github.event_name == 'merge_group' && fromJSON('[]') || fromJSON('[{"node-version":"22.x","cds-version":9},{"node-version":"24.x","cds-version":9},{"node-version":"22.x","cds-version":"latest"}]') }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: true
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
@@ -97,19 +82,16 @@ jobs:
 
   test-hana:
     runs-on: ubuntu-latest
-    needs: requires-approval
-    if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
     name: HANA Integration Tests with Node.js ${{ matrix.node-version }} and CDS ${{ matrix.cds-version }}
     strategy:
       fail-fast: false
       matrix:
         node-version: [22.x, 24.x]
         cds-version: [9, latest]
+        # On PRs only the "latest" combination runs; the merge queue runs the full matrix.
+        exclude: ${{ github.event_name == 'merge_group' && fromJSON('[]') || fromJSON('[{"node-version":"22.x","cds-version":9},{"node-version":"24.x","cds-version":9},{"node-version":"22.x","cds-version":"latest"}]') }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          allow-unsafe-pr-checkout: true
       - name: Run HANA integration tests
         uses: ./.github/actions/integration-tests
         with:
@@ -120,3 +102,12 @@ jobs:
           CF_SPACE: ${{ secrets['CF_SPACE'] }}
           NODE_VERSION: ${{ matrix.node-version }}
           CDS_VERSION: ${{ matrix.cds-version }}
+
+  results:
+    if: always()
+    runs-on: ubuntu-latest
+    name: Summary
+    needs: [test-sqlite, test-postgres, test-hana]
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
