@@ -25,37 +25,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install dependencies and Cloud Foundry CLI (v8.9.0)
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libc6 wget tar
-        wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=8.9.0&source=github-rel" -O cf-cli.tar.gz
-        tar -xvzf cf-cli.tar.gz
-        sudo mv cf /usr/local/bin/
-        sudo mv cf8 /usr/local/bin/
-        cf --version
-
-    - name: Authenticate with Cloud Foundry
-      shell: bash
-      env:
-        CF_API: ${{ inputs.CF_API }}
-        CF_USERNAME: ${{ inputs.CF_USERNAME }}
-        CF_PASSWORD: ${{ inputs.CF_PASSWORD }}
-        CF_ORG: ${{ inputs.CF_ORG }}
-        CF_SPACE: ${{ inputs.CF_SPACE }}
-      run: |
-        for i in {1..5}; do
-          cf api "$CF_API" && \
-          cf auth && \
-          cf target -o "$CF_ORG" -s "$CF_SPACE" && break
-          echo "cf login failed, retrying ($i/5)..."
-          sleep 10
-          if [ "$i" -eq 5 ]; then
-            echo "❌ cf login failed after 5 attempts."
-            exit 1
-          fi
-        done
+    - name: Setup CF CLI and authenticate
+      uses: cap-js/cf-setup@v2
+      with:
+        api: ${{ inputs.CF_API }}
+        org: ${{ inputs.CF_ORG }}
+        space: ${{ inputs.CF_SPACE }}
+        username: ${{ inputs.CF_USERNAME }}
+        password: ${{ inputs.CF_PASSWORD }}
 
     - name: Use Node.js ${{ inputs.NODE_VERSION}}
       uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
