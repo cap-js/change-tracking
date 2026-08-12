@@ -11,14 +11,48 @@ cds:
     mock:
       users:
         - name: alice
+          password: ""
           tenant: t1
           roles:
             - admin
             - support
         - name: bob
+          password: ""
           tenant: t1
           roles:
             - builder
+            - cds.ExtensionDeveloper
+        - name: carol
+          password: ""
+          tenant: t1
+          roles:
+            - admin
+            - cds.ExtensionDeveloper
+        - name: dave
+          password: ""
+          tenant: t1
+          roles:
+            - admin
+        - name: erin
+          password: ""
+          tenant: t2
+          roles:
+            - admin
+            - cds.ExtensionDeveloper
+        - name: fred
+          password: ""
+          tenant: t2
+          features:
+            - isbn
+        - name: me
+          password: ""
+          tenant: t1
+          features:
+            - "*"
+        - name: yves
+          password: ""
+          roles:
+            - internal-user
 
 # logging:
 #   level:

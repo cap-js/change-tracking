@@ -27,11 +27,13 @@ service ProcessorService {
 /**
  * Service used by administrators to manage customers and incidents.
  */
+@path: 'incidents-admin'
 service IncidentsAdminService {
   entity Customers as projection on my.Customers;
   entity Incidents as projection on my.Incidents;
 }
 
+@path: 'localization'
 service LocalizationService {
   @UI.Facets : [
     {
