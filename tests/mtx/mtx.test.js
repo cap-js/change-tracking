@@ -1,18 +1,25 @@
-process.env.CDS_ENV = process.env.CDS_ENV ? `${process.env.CDS_ENV},with-mtx` : 'with-mtx';
+const isJavaEnv = /java/i.test(process.env.CDS_ENV || '');
 
-const cds = require('@sap/cds');
-const path = require('path');
-const { DatabaseSync } = require('node:sqlite');
-const { APP_DIR, ensureSidecarPlugin, cleanDbFiles, startSidecar, subscribeTenant, upgradeTenant, stopSidecar } = require('./setup');
+if (isJavaEnv) {
+  describe.skip('Change-Tracking MTX (skipped: Java)', () => {
+    it('MTX is a Node.js only feature', () => {});
+  });
+} else {
+  process.env.CDS_ENV = process.env.CDS_ENV ? `${process.env.CDS_ENV},with-mtx` : 'with-mtx';
 
-const { axios, POST, GET } = cds.test(APP_DIR);
-axios.defaults.auth = { username: 'alice' };
+  const cds = require('@sap/cds');
+  const path = require('path');
+  const { DatabaseSync } = require('node:sqlite');
+  const { APP_DIR, ensureSidecarPlugin, cleanDbFiles, startSidecar, subscribeTenant, upgradeTenant, stopSidecar } = require('./setup');
 
-const isSqlite = cds.env.requires?.db?.kind === 'sqlite';
-const describeIfSqlite = isSqlite ? describe : describe.skip;
-let sidecar;
+  const { axios, POST, GET } = cds.test(APP_DIR);
+  axios.defaults.auth = { username: 'alice' };
 
-if (isSqlite) {
+  const isSqlite = cds.env.requires?.db?.kind === 'sqlite';
+  const describeIfSqlite = isSqlite ? describe : describe.skip;
+  let sidecar;
+
+  if (isSqlite) {
   beforeAll(async () => {
     ensureSidecarPlugin();
     cleanDbFiles();
@@ -223,3 +230,4 @@ describeIfSqlite('Change-Tracking MTX', () => {
     });
   });
 });
+}
