@@ -58,10 +58,15 @@ if (isJavaEnv) {
     // Wrap the request methods so that any `(key=value[,...])` segment where
     // `key` refers to an `Edm.String` element of the addressed entity gets its
     // value auto-quoted. Tests that already quote their keys are unaffected.
+    //
+    // Also translate the Node-only `?sap-locale=<x>` query parameter into an
+    // `Accept-Language: <x>` header, which is what CAP Java honors, so
+    // shared tests that rely on per-request locale overrides keep working.
     for (const method of ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']) {
       const original = cds_test[method].bind(cds_test);
       cds_test[method] = (...args) => {
         args = _quoteStringKeys(args);
+        args = _translateSapLocale(args);
         return original(...args);
       };
       // Preserve the uppercase aliases (GET, POST, ...) that just bind to lowercase.
@@ -117,6 +122,23 @@ if (isJavaEnv) {
       return _origConnectTo(datasource, options);
     };
 
+    // Node's runtime auto-flattens managed associations into `<assoc>_<key>`
+    // FK scalars on service entity element maps. Tests inspect these through
+    // `cds.entities('MyService').X.elements.<assoc>_<key>` — which uses
+    // `cds.model.definitions` directly, bypassing the `cds.connect.to` shim
+    // above. Trigger the FK expansion for *every* service in the model
+    // proactively so `cds.entities()` returns the flattened form.
+    //
+    // Deferred until first accessed so we don't interfere with the app-startup
+    // compile that already ran when the model was loaded.
+    before(async () => {
+      if (!cds.model?.definitions) return;
+      for (const [name, def] of Object.entries(cds.model.definitions)) {
+        if (def?.kind !== 'service') continue;
+        _buildJavaServiceShim(name, cds.model);
+      }
+    });
+
     return cds_test;
   };
 
@@ -124,6 +146,12 @@ if (isJavaEnv) {
    * Build a minimal ApplicationService-like object for a CDS service that lives
    * only on the Java side. Exposes `.entities` (service-scoped) and `.name`,
    * which is all the integration tests actually consume.
+   *
+   * Also expands each returned entity's `elements` map to include the
+   * flattened `<assoc>_<key>` FK scalars for managed associations. Node's
+   * runtime does this automatically via `cds.compile.for.nodejs`; the raw
+   * `cds.model` used by the Java-test setup does not, and some tests rely
+   * on inspecting these FKs (e.g. `entities.X.elements.assoc_ID`).
    */
   function _buildJavaServiceShim(name, model) {
     const cds = require('@sap/cds');
@@ -133,6 +161,7 @@ if (isJavaEnv) {
       if (!defName.startsWith(prefix)) continue;
       if (def.kind !== 'entity') continue;
       const shortName = defName.slice(prefix.length);
+      _addFlattenedFKs(def, model);
       entities[shortName] = def;
     }
     return {
@@ -143,6 +172,27 @@ if (isJavaEnv) {
       run: (...args) => cds.db.run(...args),
       tx: (...args) => cds.db.tx(...args)
     };
+  }
+
+  function _addFlattenedFKs(def, model) {
+    if (!def?.elements) return;
+    for (const [name, el] of Object.entries(def.elements)) {
+      if (el?.type !== 'cds.Association' && el?.type !== 'cds.Composition') continue;
+      if (!Array.isArray(el.keys) || el.keys.length === 0) continue;
+      const targetName = typeof el.target === 'string' ? el.target : el.target?.name;
+      const target = targetName && model.definitions[targetName];
+      if (!target?.elements) continue;
+      for (const k of el.keys) {
+        const fk = typeof k === 'string' ? k : k.ref?.[0] ?? k.as;
+        if (!fk) continue;
+        const flatName = `${name}_${fk}`;
+        if (def.elements[flatName]) continue;
+        const targetElem = target.elements[fk];
+        if (!targetElem) continue;
+        def.elements[flatName] = { type: targetElem.type };
+        if (targetElem.length) def.elements[flatName].length = targetElem.length;
+      }
+    }
   }
 
   /**
@@ -212,6 +262,58 @@ if (isJavaEnv) {
     let base = serviceName.split('.').pop();
     if (base.endsWith('Service')) base = base.slice(0, -'Service'.length);
     return base.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+  }
+
+  /**
+   * Node's CDS runtime honors `?sap-locale=<x>` as a query-parameter locale
+   * override for a single request. CAP Java only reads the `Accept-Language`
+   * header. Translate the query parameter into a header on-the-fly so shared
+   * tests that use `?sap-locale=de` on `PATCH`/`POST` get the expected
+   * per-request locale in Java as well. The parameter is stripped from the
+   * URL to avoid Olingo rejecting the (to it) unknown query option.
+   */
+  function _translateSapLocale(args) {
+    if (typeof args[0] !== 'string') return args;
+    let url = args[0];
+    const m = url.match(/[?&]sap-locale=([^&]+)/);
+    if (!m) return args;
+    const locale = decodeURIComponent(m[1]);
+    // Remove `sap-locale=…` (and its leading separator) from the URL.
+    url = url.replace(/([?&])sap-locale=[^&]*(&?)/, (match, sep, trailer) => {
+      if (sep === '?' && trailer === '&') return '?';
+      if (sep === '?' && !trailer) return '';
+      if (sep === '&' && !trailer) return '';
+      if (sep === '&' && trailer === '&') return '&';
+      return '';
+    });
+    // Determine which arg slot carries the axios `config` object. For `get`
+    // and `delete` it's `args[1]`; for `post`/`patch`/`put` it's `args[2]`.
+    // We heuristically pick the last arg that looks like a plain config obj.
+    const rest = args.slice(1);
+    let configIdx = -1;
+    for (let i = rest.length - 1; i >= 0; i--) {
+      const v = rest[i];
+      if (v && typeof v === 'object' && !Array.isArray(v) && !Buffer.isBuffer(v) && (v.headers || v.params || v.timeout || v.baseURL || v.auth)) {
+        configIdx = i + 1;
+        break;
+      }
+    }
+    const patched = [url, ...rest];
+    const patchHeaders = (cfg) => ({
+      ...cfg,
+      headers: { ...(cfg?.headers ?? {}), 'Accept-Language': locale }
+    });
+    if (configIdx > 0) {
+      patched[configIdx] = patchHeaders(patched[configIdx]);
+    } else {
+      // No explicit config — append one. axios `.get`/`.delete`/`.head`/
+      // `.options` take `(url, config?)`; `.post`/`.put`/`.patch` take
+      // `(url, data?, config?)`. We can't reliably tell which shape we're
+      // in from the args alone, so append at the end. Both shapes tolerate
+      // a trailing config object.
+      patched.push(patchHeaders());
+    }
+    return patched;
   }
 
   // Re-export cds.test's static helpers so existing usage keeps working
