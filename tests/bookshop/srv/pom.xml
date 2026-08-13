@@ -38,6 +38,15 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- HCQL adapter: enables /hcql/dbProxy for the Node-side test client to
+		     forward `cds.db.run(...)` / `SELECT.from(...)` calls against the
+		     running Java application (see lib/testing/java-hcql.js). -->
+		<dependency>
+			<groupId>com.sap.cds</groupId>
+			<artifactId>cds-adapter-hcql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
