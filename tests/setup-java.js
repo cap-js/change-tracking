@@ -64,10 +64,12 @@ if (isJavaEnv) {
     // shared tests that rely on per-request locale overrides keep working.
     for (const method of ['get', 'post', 'put', 'patch', 'delete', 'head', 'options']) {
       const original = cds_test[method].bind(cds_test);
-      cds_test[method] = (...args) => {
+      cds_test[method] = async (...args) => {
         args = _quoteStringKeys(args);
         args = _translateSapLocale(args);
-        return original(...args);
+        const res = await original(...args);
+        _flattenAssocFKs(res, args);
+        return res;
       };
       // Preserve the uppercase aliases (GET, POST, ...) that just bind to lowercase.
       const upper = method.toUpperCase();
@@ -117,7 +119,13 @@ if (isJavaEnv) {
       const name = typeof datasource === 'string' ? datasource : datasource?.name;
       if (name && !cds.env.requires?.[name] && cds.model?.definitions?.[name]?.kind === 'service') {
         const model = cds.model;
-        return Promise.resolve(_buildJavaServiceShim(name, model));
+        const shim = _buildJavaServiceShim(name, model);
+        // Also expose the shim through `cds.services.<Name>` — some tests
+        // mutate runtime annotations via that path (e.g. dynamically injecting
+        // `@changelog` at test time).
+        if (!cds.services) cds.services = {};
+        if (!cds.services[name]) cds.services[name] = shim;
+        return Promise.resolve(shim);
       }
       return _origConnectTo(datasource, options);
     };
@@ -133,9 +141,11 @@ if (isJavaEnv) {
     // compile that already ran when the model was loaded.
     before(async () => {
       if (!cds.model?.definitions) return;
+      if (!cds.services) cds.services = {};
       for (const [name, def] of Object.entries(cds.model.definitions)) {
         if (def?.kind !== 'service') continue;
-        _buildJavaServiceShim(name, cds.model);
+        const shim = _buildJavaServiceShim(name, cds.model);
+        if (!cds.services[name]) cds.services[name] = shim;
       }
     });
 
@@ -193,6 +203,48 @@ if (isJavaEnv) {
         if (targetElem.length) def.elements[flatName].length = targetElem.length;
       }
     }
+  }
+
+  /**
+   * CAP Java's OData V4 responses omit the flattened `<assoc>_<key>` scalar for
+   * composition-of-one when the nested composition target is inlined in the
+   * response. Node returns both the flattened FK and the nested object. Some
+   * shared integration tests read `entity.<assoc>_ID` from the response;
+   * transparently patch missing flattened FKs from the nested object so those
+   * tests keep working under Java.
+   */
+  function _flattenAssocFKs(res, args) {
+    const data = res?.data;
+    if (!data || typeof data !== 'object') return;
+    const url = typeof args?.[0] === 'string' ? args[0] : null;
+    if (!url) return;
+    const match = url.match(/\/odata\/v4\/([^/?#]+)\/([A-Za-z_][\w.]*)/);
+    if (!match) return;
+    const [, servicePath, entityShortName] = match;
+    const cds = require('@sap/cds');
+    const entity = _resolveEntityByServicePath(cds.model, servicePath, entityShortName);
+    if (!entity?.elements) return;
+
+    const patchOne = (row) => {
+      if (!row || typeof row !== 'object' || Array.isArray(row)) return;
+      for (const [name, el] of Object.entries(entity.elements)) {
+        if (el?.type !== 'cds.Association' && el?.type !== 'cds.Composition') continue;
+        if (!(name in row)) continue;
+        const nested = row[name];
+        if (!nested || typeof nested !== 'object' || Array.isArray(nested)) continue;
+        const target = el.target && cds.model.definitions[el.target];
+        if (!target?.elements) continue;
+        const targetKeys = Object.entries(target.elements).filter(([, e]) => e.key).map(([n]) => n);
+        for (const k of targetKeys) {
+          const flatName = `${name}_${k}`;
+          if (row[flatName] != null) continue;
+          if (nested[k] != null) row[flatName] = nested[k];
+        }
+      }
+    };
+
+    if (Array.isArray(data.value)) data.value.forEach(patchOne);
+    else patchOne(data);
   }
 
   /**
