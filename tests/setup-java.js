@@ -210,37 +210,124 @@ if (isJavaEnv) {
     if (!/[\(,][^)]*=/.test(url)) return args; // no key predicates
 
     // Match `/odata/v4/<svc>/<Entity>(<keys>)` and rewrite the keys segment.
-    // We only touch the first key predicate — nested `(k=v)` on navigation
-    // segments follow the same rules but tests here never use them.
-    const rewritten = url.replace(/(\/odata\/v4\/([^/?#]+)\/([A-Za-z_][\w.]*))\(([^)]+)\)/, (match, prefix, servicePath, entityName, keysStr) => {
+    // Also handle nested navigation segments like `/Entity(k1=v1)/Nav(k2=v2)`,
+    // where the navigation target may be an inline composition entity that
+    // requires an implicit `up__<key>` predicate on CAP Java.
+    let rewritten = url;
+
+    // Step 1: rewrite the root entity segment.
+    let rootMatch = null;
+    rewritten = rewritten.replace(/(\/odata\/v4\/([^/?#]+)\/([A-Za-z_][\w.]*))\(([^)]+)\)/, (match, prefix, servicePath, entityName, keysStr) => {
       const entity = _resolveEntityByServicePath(cds.model, servicePath, entityName);
       if (!entity?.elements) return match;
+      rootMatch = { servicePath, entityName, entity };
 
-      const parts = keysStr.split(',').map((part) => {
-        const eq = part.indexOf('=');
-        if (eq < 0) return part;
-        const key = part.slice(0, eq).trim();
-        const value = part.slice(eq + 1).trim();
-        if (!key || !value) return part;
-        // Already quoted / boolean / numeric / null — leave as-is.
-        if (/^'.*'$/.test(value)) return part;
-        if (/^(true|false|null)$/i.test(value)) return part;
-        if (/^-?\d+(?:\.\d+)?$/.test(value)) return part;
-
-        const element = entity.elements[key];
-        if (!element) return part;
-        // CDS `UUID` maps to `Edm.Guid` (unquoted). Only quote for `Edm.String`.
-        const type = element.type;
-        if (type === 'cds.String' || type === 'cds.LargeString') {
-          const escaped = value.replace(/'/g, "''");
-          return `${key}='${escaped}'`;
-        }
-        return part;
-      });
+      const parts = keysStr.split(',').map((part) => _quotePart(part, entity));
       return `${prefix}(${parts.join(',')})`;
     });
+
+    // Step 2: rewrite any subsequent navigation segments, e.g. `/Items(ID=Y)`.
+    // For inline compositions, the target CSN entity has extra `up__<key>`
+    // fields; when the user only provided one key we prepend the parent's key
+    // so CAP Java's stricter Olingo parser accepts the URL.
+    if (rootMatch) {
+      const cds = require('@sap/cds');
+      const model = cds.model;
+      // Extract root key value(s) from the rewritten URL for later injection.
+      const rootKeysMatch = rewritten.match(/(\/odata\/v4\/[^/?#]+\/[A-Za-z_][\w.]*)\(([^)]+)\)/);
+      const rootKeysStr = rootKeysMatch?.[2] ?? '';
+      const rootKeys = _parseKeyString(rootKeysStr);
+
+      let currentEntity = rootMatch.entity;
+      let currentEntityQName = `${_findServiceName(model, rootMatch.servicePath)}.${rootMatch.entityName}`;
+
+      // Iterate over subsequent /Segment(keys) tokens.
+      rewritten = rewritten.replace(/\/([A-Za-z_][\w]*)\(([^)]+)\)/g, (match, navName, keysStr, offset) => {
+        // Skip the first match (root segment) — the regex is greedy from left.
+        if (offset < rewritten.indexOf(rootMatch.entityName)) return match;
+        const navElement = currentEntity?.elements?.[navName];
+        if (!navElement?.target) return match;
+        const navTarget = model.definitions[navElement.target];
+        if (!navTarget?.elements) {
+          currentEntity = navTarget;
+          currentEntityQName = navElement.target;
+          return match;
+        }
+
+        let parts = keysStr.split(',').map((p) => p.trim()).filter(Boolean);
+        // Detect inline composition target: has `up__<X>` FK field(s) not
+        // supplied by the caller — auto-inject from parent key(s).
+        const upFields = Object.keys(navTarget.elements).filter((n) => n.startsWith('up__'));
+        for (const up of upFields) {
+          const suppliedKeys = new Set(parts.map((p) => p.split('=')[0].trim()));
+          if (suppliedKeys.has(up)) continue;
+          // Find the matching root key by stripping `up__`
+          const rootKeyName = up.slice(4);
+          const rootValue = rootKeys[rootKeyName];
+          if (rootValue !== undefined) parts.unshift(`${up}=${rootValue}`);
+        }
+        // Also quote string keys of the navigation target.
+        parts = parts.map((part) => _quotePart(part, navTarget));
+
+        currentEntity = navTarget;
+        currentEntityQName = navElement.target;
+        return `/${navName}(${parts.join(',')})`;
+      });
+    }
+
+    // Step 3: normalize whitespace inside key predicates so `(a, b)` and
+    // `(a , b)` both become `(a,b)` — CAP Java's Olingo does not tolerate
+    // interstitial spaces here.
+    rewritten = rewritten.replace(/\(([^)]+)\)/g, (match, inner) => {
+      // Only rewrite if this looks like a key predicate (contains `=`).
+      if (!inner.includes('=')) return match;
+      const cleaned = inner.split(',').map((p) => p.trim()).join(',');
+      return `(${cleaned})`;
+    });
+
     if (rewritten === url) return args;
     return [rewritten, ...args.slice(1)];
+  }
+
+  function _quotePart(part, entity) {
+    const eq = part.indexOf('=');
+    if (eq < 0) return part;
+    const key = part.slice(0, eq).trim();
+    const value = part.slice(eq + 1).trim();
+    if (!key || !value) return part;
+    if (/^'.*'$/.test(value)) return `${key}=${value}`;
+    if (/^(true|false|null)$/i.test(value)) return `${key}=${value}`;
+    if (/^-?\d+(?:\.\d+)?$/.test(value)) return `${key}=${value}`;
+    const element = entity.elements[key];
+    if (!element) return `${key}=${value}`;
+    const type = element.type;
+    if (type === 'cds.String' || type === 'cds.LargeString') {
+      const escaped = value.replace(/'/g, "''");
+      return `${key}='${escaped}'`;
+    }
+    return `${key}=${value}`;
+  }
+
+  function _parseKeyString(keysStr) {
+    const out = {};
+    for (const part of keysStr.split(',')) {
+      const eq = part.indexOf('=');
+      if (eq < 0) continue;
+      const key = part.slice(0, eq).trim();
+      const value = part.slice(eq + 1).trim();
+      if (key) out[key] = value;
+    }
+    return out;
+  }
+
+  function _findServiceName(model, servicePath) {
+    if (!model) return '';
+    for (const [name, def] of Object.entries(model.definitions)) {
+      if (def?.kind !== 'service') continue;
+      const path = def['@path'] || _defaultServicePath(name);
+      if (path === servicePath || path === `/${servicePath}`) return name;
+    }
+    return '';
   }
 
   function _resolveEntityByServicePath(model, servicePath, shortName) {
