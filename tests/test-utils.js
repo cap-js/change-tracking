@@ -72,7 +72,7 @@ const _generators = {
 };
 
 async function regenerateTriggers(entityNames) {
-  const kind = cds.env.requires?.db;
+  const kind = cds.env.requires?.db?.kind;
   const generator = _generators[kind];
   if (!generator) throw new Error(`regenerateTriggers() does not support database kind '${kind}'`);
 
