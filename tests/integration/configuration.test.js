@@ -7,12 +7,14 @@ const { POST, PATCH, DELETE, GET, defaults } = cds.test(bookshop);
 defaults.auth = { username: 'alice', password: 'admin' };
 
 const isHana = cds.env.requires?.db?.kind === 'hana';
+const isJava = cds.env.env === 'java';
+const skipRegen = isHana || isJava;
 
-describe('Configuration Options', () => {
+(skipRegen ? describe.skip : describe)('Configuration Options', () => {
   // Entities used in the VariantTesting service tests
   const variantEntities = ['sap.change_tracking.RootSample', 'sap.change_tracking.Level1Sample', 'sap.change_tracking.Level2Sample'];
 
-  (isHana ? it.skip : it)('retains all change logs and logs deletion when preserveDeletes is enabled', async () => {
+  it('retains all change logs and logs deletion when preserveDeletes is enabled', async () => {
     cds.env.requires['change-tracking'].preserveDeletes = true;
     await regenerateTriggers(variantEntities);
     const variantSrv = await cds.connect.to('VariantTesting');
@@ -60,7 +62,7 @@ describe('Configuration Options', () => {
     await regenerateTriggers(variantEntities);
   });
 
-  (isHana ? it.skip : it)('skips update logging when disableUpdateTracking is enabled', async () => {
+  it('skips update logging when disableUpdateTracking is enabled', async () => {
     cds.env.requires['change-tracking'].disableUpdateTracking = true;
     await regenerateTriggers('sap.change_tracking.Level2Sample');
     const testingSRV = await cds.connect.to('VariantTesting');
@@ -90,7 +92,7 @@ describe('Configuration Options', () => {
     expect(changes.length).toEqual(1);
   });
 
-  (isHana ? it.skip : it)('skips create logging when disableCreateTracking is enabled', async () => {
+  it('skips create logging when disableCreateTracking is enabled', async () => {
     cds.env.requires['change-tracking'].disableCreateTracking = true;
     await regenerateTriggers('sap.change_tracking.Level2Sample');
     const testingSRV = await cds.connect.to('VariantTesting');
@@ -119,7 +121,7 @@ describe('Configuration Options', () => {
     expect(changes.length).toEqual(1);
   });
 
-  (isHana ? it.skip : it)('skips create logging for composition children during deep insert when disableCreateTracking is enabled', async () => {
+  it('skips create logging for composition children during deep insert when disableCreateTracking is enabled', async () => {
     cds.env.requires['change-tracking'].disableCreateTracking = true;
     await regenerateTriggers(variantEntities);
     const variantSrv = await cds.connect.to('VariantTesting');
@@ -174,7 +176,7 @@ describe('Configuration Options', () => {
     await regenerateTriggers(variantEntities);
   });
 
-  (isHana ? it.skip : it)('skips delete logging when disableDeleteTracking is enabled', async () => {
+  it('skips delete logging when disableDeleteTracking is enabled', async () => {
     cds.env.requires['change-tracking'].disableDeleteTracking = true;
     await regenerateTriggers('sap.change_tracking.Level2Sample');
     const testingSRV = await cds.connect.to('VariantTesting');
@@ -204,141 +206,7 @@ describe('Configuration Options', () => {
     expect(changes.length).toEqual(1);
   });
 
-  describe('Service-specific tracking', () => {
-    it('only tracks changes when @changelog is defined on the specific service entity', async () => {
-      // Create via CatalogService (no @changelog) - should NOT be tracked
-      const { data: newStore } = await POST(`/browse/BookStores`, {
-        name: 'New book store via browse'
-      });
-
-      const {
-        data: { value: changes }
-      } = await GET(`/odata/v4/admin/BookStores(ID=${newStore.ID},IsActiveEntity=true)/changes`);
-      expect(changes.length).toEqual(0);
-
-      // Create via AdminService (has @changelog) - SHOULD be tracked
-      const { data: newStore2 } = await POST(`/odata/v4/admin/BookStores`, {
-        name: 'New book store via admin'
-      });
-      await POST(`/odata/v4/admin/BookStores(ID=${newStore2.ID},IsActiveEntity=false)/AdminService.draftActivate`, {});
-      const {
-        data: { value: changes2 }
-      } = await GET(`/odata/v4/admin/BookStores(ID=${newStore2.ID},IsActiveEntity=true)/changes`);
-      expect(changes2.length).toEqual(2);
-      const nameChange = changes2.find((change) => change.attribute === 'name');
-
-      expect(nameChange).toMatchObject({
-        entity: 'sap.capire.bookshop.BookStores',
-        attribute: 'name',
-        valueChangedFrom: null,
-        valueChangedTo: 'New book store via admin'
-      });
-    });
-
-    it('tracks changes via all services when @changelog is defined on the DB entity', async () => {
-      const { data: newIncident } = await POST(`/odata/v4/processor/Incidents`, {
-        title: 'Test incident for inheritance',
-        date: '2025-01-15'
-      });
-      await POST(`/odata/v4/processor/Incidents(ID=${newIncident.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
-
-      const {
-        data: { value: changes }
-      } = await GET(`/odata/v4/processor/Incidents(ID=${newIncident.ID},IsActiveEntity=true)/changes`);
-
-      // Should have changelog entries because DB entity has @changelog
-      expect(changes.length).toBeGreaterThan(0);
-
-      const dateChange = changes.find((c) => c.attribute === 'status');
-      expect(dateChange).toMatchObject({
-        entity: 'sap.capire.incidents.Incidents',
-        attribute: 'status',
-        valueChangedTo: 'N',
-        valueChangedToLabel: 'New'
-      });
-    });
-
-    it('disables all tracking for a service annotated with @changelog: false', async () => {
-      // IncidentsAdminService has @changelog: false at service level
-      // Even though DB entity has @changelog, changes via this service should NOT be tracked
-      const { data: newIncident } = await POST(`/odata/v4/incidents-admin/Incidents`, {
-        title: 'Test incident via admin',
-        date: '2025-02-20'
-      });
-
-      const changes = await SELECT.from('sap.changelog.Changes').where({
-        entity: 'sap.capire.incidents.Incidents',
-        entityKey: newIncident.ID
-      });
-
-      expect(changes.length).toEqual(0);
-    });
-
-    it('excludes specific fields annotated with @changelog: false from tracking', async () => {
-      // AdminService.Customers.city has @changelog: false
-      // city should NOT be tracked, but name, country, and age SHOULD be tracked
-      const { data: newCustomer } = await POST(`/odata/v4/admin/Customers`, {
-        name: 'Test customer for element skip', // also skipped since @Personal.data
-        city: 'Munich',
-        country: 'Germany',
-        age: 30
-      });
-
-      const {
-        data: { value: changes }
-      } = await GET(`/odata/v4/admin/Customers(ID=${newCustomer.ID})/changes`);
-
-      const ageChange = changes.find((c) => c.attribute === 'age');
-      expect(ageChange).toBeTruthy();
-      expect(ageChange.valueChangedTo).toBe('30');
-
-      const cityChange = changes.find((c) => c.attribute === 'city');
-      expect(cityChange).toBeFalsy();
-    });
-
-    it('tracks direct database modifications when DB entity has @changelog', async () => {
-      // sap.capire.incidents.Incidents has @changelog at DB level
-      // Direct INSERT into DB entity SHOULD be tracked
-      const { Incidents } = cds.entities('sap.capire.incidents');
-      const incidentID = cds.utils.uuid();
-
-      await INSERT.into(Incidents).entries({
-        ID: incidentID,
-        title: 'Direct DB incident',
-        date: '2025-03-10'
-      });
-
-      // Query changes from changelog table
-      const changes = await SELECT.from('sap.changelog.Changes').where({
-        entity: 'sap.capire.incidents.Incidents',
-        entityKey: incidentID
-      });
-
-      // Should have changelog entries because DB entity has @changelog
-      expect(changes.length).toBeGreaterThan(0);
-
-      const dateChange = changes.find((c) => c.attribute === 'date');
-      expect(dateChange).toBeTruthy();
-      expect(dateChange.valueChangedTo).toEqual('2025-03-10');
-    });
-
-    it('honors @changelog: false on a nested composition-of-many target during a deep write', async () => {
-      // SkipRoot -> mids[] (SkipMid) -> leaves[] (SkipLeaf); SkipLeaf is @changelog: false.
-      // The leaf sits below a composition-of-many, so its skip must survive nested traversal.
-      const rootID = cds.utils.uuid();
-      const leafID = cds.utils.uuid();
-      await POST('/odata/v4/variant-testing/SkipRoot', {
-        ID: rootID,
-        title: 'root',
-        mids: [{ ID: cds.utils.uuid(), label: 'mid', leaves: [{ ID: leafID, note: 'LEAF-NOTE' }] }]
-      });
-
-      const leafChanges = await SELECT.from('sap.changelog.Changes').where({ entity: 'sap.change_tracking.SkipLeaf', entityKey: leafID });
-      expect(leafChanges).toEqual([]);
-    });
-  });
-
-  (isHana ? it.skip : it)('maxDisplayHierarchyDepth controls auto-discovery of composition targets', async () => {
+  it('maxDisplayHierarchyDepth controls auto-discovery of composition targets', async () => {
     const originalDepth = cds.env.requires['change-tracking'].maxDisplayHierarchyDepth;
 
     cds.env.requires['change-tracking'].maxDisplayHierarchyDepth = 1;
@@ -415,6 +283,141 @@ describe('Configuration Options', () => {
       parent_parent_entityKey: null
     });
   });
+});
+
+// REVISIT: move into a dedicated test file 
+describe('Serivce-specific tracking with @changelog: false', () => {
+  it('only tracks changes when @changelog is defined on the specific service entity', async () => {
+    // Create via CatalogService (no @changelog) - should NOT be tracked
+    const { data: newStore } = await POST(`/browse/BookStores`, {
+      name: 'New book store via browse'
+    });
+
+    const {
+      data: { value: changes }
+    } = await GET(`/odata/v4/admin/BookStores(ID=${newStore.ID},IsActiveEntity=true)/changes`);
+    expect(changes.length).toEqual(0);
+
+    // Create via AdminService (has @changelog) - SHOULD be tracked
+    const { data: newStore2 } = await POST(`/odata/v4/admin/BookStores`, {
+      name: 'New book store via admin'
+    });
+    await POST(`/odata/v4/admin/BookStores(ID=${newStore2.ID},IsActiveEntity=false)/AdminService.draftActivate`, {});
+    const {
+      data: { value: changes2 }
+    } = await GET(`/odata/v4/admin/BookStores(ID=${newStore2.ID},IsActiveEntity=true)/changes`);
+    expect(changes2.length).toEqual(2);
+    const nameChange = changes2.find((change) => change.attribute === 'name');
+
+    expect(nameChange).toMatchObject({
+      entity: 'sap.capire.bookshop.BookStores',
+      attribute: 'name',
+      valueChangedFrom: null,
+      valueChangedTo: 'New book store via admin'
+    });
+  });
+
+  it('tracks changes via all services when @changelog is defined on the DB entity', async () => {
+    const { data: newIncident } = await POST(`/odata/v4/processor/Incidents`, {
+      title: 'Test incident for inheritance',
+      date: '2025-01-15'
+    });
+    await POST(`/odata/v4/processor/Incidents(ID=${newIncident.ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+    const {
+      data: { value: changes }
+    } = await GET(`/odata/v4/processor/Incidents(ID=${newIncident.ID},IsActiveEntity=true)/changes`);
+
+    // Should have changelog entries because DB entity has @changelog
+    expect(changes.length).toBeGreaterThan(0);
+
+    const dateChange = changes.find((c) => c.attribute === 'status');
+    expect(dateChange).toMatchObject({
+      entity: 'sap.capire.incidents.Incidents',
+      attribute: 'status',
+      valueChangedTo: 'N',
+      valueChangedToLabel: 'New'
+    });
+  });
+
+  it('disables all tracking for a service annotated with @changelog: false', async () => {
+    // IncidentsAdminService has @changelog: false at service level
+    // Even though DB entity has @changelog, changes via this service should NOT be tracked
+    const { data: newIncident } = await POST(`/odata/v4/incidents-admin/Incidents`, {
+      title: 'Test incident via admin',
+      date: '2025-02-20'
+    });
+
+    const changes = await SELECT.from('sap.changelog.Changes').where({
+      entity: 'sap.capire.incidents.Incidents',
+      entityKey: newIncident.ID
+    });
+
+    expect(changes.length).toEqual(0);
+  });
+
+  it('excludes specific fields annotated with @changelog: false from tracking', async () => {
+    // AdminService.Customers.city has @changelog: false
+    // city should NOT be tracked, but name, country, and age SHOULD be tracked
+    const { data: newCustomer } = await POST(`/odata/v4/admin/Customers`, {
+      name: 'Test customer for element skip', // also skipped since @Personal.data
+      city: 'Munich',
+      country: 'Germany',
+      age: 30
+    });
+
+    const {
+      data: { value: changes }
+    } = await GET(`/odata/v4/admin/Customers(ID=${newCustomer.ID})/changes`);
+
+    const ageChange = changes.find((c) => c.attribute === 'age');
+    expect(ageChange).toBeTruthy();
+    expect(ageChange.valueChangedTo).toBe('30');
+
+    const cityChange = changes.find((c) => c.attribute === 'city');
+    expect(cityChange).toBeFalsy();
+  });
+
+  it('tracks direct database modifications when DB entity has @changelog', async () => {
+    // sap.capire.incidents.Incidents has @changelog at DB level
+    // Direct INSERT into DB entity SHOULD be tracked
+    const { Incidents } = cds.entities('sap.capire.incidents');
+    const incidentID = cds.utils.uuid();
+
+    await INSERT.into(Incidents).entries({
+      ID: incidentID,
+      title: 'Direct DB incident',
+      date: '2025-03-10'
+    });
+
+    // Query changes from changelog table
+    const changes = await SELECT.from('sap.changelog.Changes').where({
+      entity: 'sap.capire.incidents.Incidents',
+      entityKey: incidentID
+    });
+
+    // Should have changelog entries because DB entity has @changelog
+    expect(changes.length).toBeGreaterThan(0);
+
+    const dateChange = changes.find((c) => c.attribute === 'date');
+    expect(dateChange).toBeTruthy();
+    expect(dateChange.valueChangedTo).toEqual('2025-03-10');
+  });
+
+  it('honors @changelog: false on a nested composition-of-many target during a deep write', async () => {
+    // SkipRoot -> mids[] (SkipMid) -> leaves[] (SkipLeaf); SkipLeaf is @changelog: false.
+    // The leaf sits below a composition-of-many, so its skip must survive nested traversal.
+    const rootID = cds.utils.uuid();
+    const leafID = cds.utils.uuid();
+    await POST('/odata/v4/variant-testing/SkipRoot', {
+      ID: rootID,
+      title: 'root',
+      mids: [{ ID: cds.utils.uuid(), label: 'mid', leaves: [{ ID: leafID, note: 'LEAF-NOTE' }] }]
+    });
+
+    const leafChanges = await SELECT.from('sap.changelog.Changes').where({ entity: 'sap.change_tracking.SkipLeaf', entityKey: leafID });
+    expect(leafChanges).toEqual([]);
+  });
 
   it('Should not track if entity is annotated @changelog: false', async () => {
     const { data: record } = await POST(`/odata/v4/variant-testing/DifferentFieldTypes`, {
@@ -440,6 +443,7 @@ describe('Configuration Options', () => {
   });
 });
 
+// REVISIT: move into a dedicated test file 
 (isHana ? describe : describe.skip)('Restore Backlinks HANA Procedure', () => {
   it('restores backlinks for create operations', async () => {
     const testingSRV = await cds.connect.to('VariantTesting');

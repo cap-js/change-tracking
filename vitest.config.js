@@ -11,6 +11,7 @@ const javaOverrides = isJavaEnv
 
 export default {
   test: {
+    silent: true,
     testTimeout: 120_000,
     setupFiles: ['./tests/setup-java.js'],
     ...javaOverrides

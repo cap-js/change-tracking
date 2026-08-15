@@ -30,7 +30,7 @@ cds:
           password: ""
           tenant: t1
           roles:
-            - builder
+            - support
             - cds.ExtensionDeveloper
         - name: carol
           password: ""

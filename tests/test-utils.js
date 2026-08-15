@@ -65,27 +65,14 @@ async function _regeneratePostgresTriggers(entityNames, allEntities, hierarchyMa
   await Promise.all(triggers.map((t) => cds.db.run(t)));
 }
 
-async function _regenerateH2Triggers(entityNames, allEntities, hierarchyMap) {
-  const model = cds.context?.model ?? cds.model;
-  const { generateH2Trigger } = require('../lib/h2/triggers.js');
-
-  for (const { entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext } of _resolveEntities(entityNames, allEntities, hierarchyMap)) {
-    const tableName = entity.name.replace(/\./g, '_').toUpperCase();
-    await cds.db.run(`DROP TRIGGER IF EXISTS "${tableName}_CT_TRIGGER"`);
-
-    const triggerSQL = generateH2Trigger(model, entity, parentEntity, mergedAnnotations, parentMergedAnnotations, grandParentContext);
-    if (triggerSQL) await cds.db.run(triggerSQL);
-  }
-}
 
 const _generators = {
   sqlite: _regenerateSQLiteTriggers,
-  postgres: _regeneratePostgresTriggers,
-  h2: _regenerateH2Triggers
+  postgres: _regeneratePostgresTriggers
 };
 
 async function regenerateTriggers(entityNames) {
-  const kind = cds.env.requires?.db?.kind;
+  const kind = cds.env.requires?.db;
   const generator = _generators[kind];
   if (!generator) throw new Error(`regenerateTriggers() does not support database kind '${kind}'`);
 
