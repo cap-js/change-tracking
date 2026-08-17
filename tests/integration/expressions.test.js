@@ -1,7 +1,7 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE, GET, defaults } = cds.test(bookshop);
-defaults.auth = { username: 'alice', password: 'admin' };
+defaults.auth = { username: 'alice', password: '' };
 
 const isJava = cds.env.env === 'java';
 

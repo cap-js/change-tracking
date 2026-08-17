@@ -4,7 +4,7 @@ const { regenerateTriggers } = require('../test-utils.js');
 
 const bookshop = path.resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE, GET, defaults } = cds.test(bookshop);
-defaults.auth = { username: 'alice', password: 'admin' };
+defaults.auth = { username: 'alice', password: '' };
 
 const isHana = cds.env.requires?.db?.kind === 'hana';
 const isJava = cds.env.env === 'java';

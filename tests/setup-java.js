@@ -96,30 +96,11 @@ if (isJavaEnv) {
       });
     }
 
-    // CAP Java mock users have no password by default. Tests configured with a
-    // Node-style `defaults.auth = { username: 'alice', password: 'admin' }` would
-    // therefore receive HTTP 401. Force an empty password whenever a Java test
-    // supplies `admin`/`support`/... as password, keeping the same username so the
-    // user's role mapping still applies.
-    //
-    // Additionally, seed a default `alice` auth so test files that never set
-    // `defaults.auth` themselves (e.g. annotation-interpretation.test.js) still
-    // authenticate correctly instead of receiving 401.
-    const _defaults = cds_test.defaults;
-    const _authDescriptor = Object.getOwnPropertyDescriptor(_defaults, 'auth');
-    let _auth = _authDescriptor?.value ?? _defaults.auth ?? { username: 'alice', password: '' };
-    Object.defineProperty(_defaults, 'auth', {
-      configurable: true,
-      enumerable: true,
-      get() { return _auth; },
-      set(v) {
-        if (v && typeof v === 'object' && v.username) {
-          _auth = { ...v, password: '' };
-        } else {
-          _auth = v;
-        }
-      }
-    });
+    // CAP Java mock users have no password
+    // Set default `alice` auth so test files that never set `defaults.auth` themselves still authenticate correctly instead of receiving 401
+    if (!cds_test.defaults.auth) {
+      cds_test.defaults.auth = { username: 'alice', password: '' };
+    }
 
     // Node tests routinely do `cds.connect.to('VariantTesting')` etc. to obtain a
     // service object whose `.entities` shorthand they use in `SELECT.from(...)`.
@@ -148,10 +129,10 @@ if (isJavaEnv) {
     };
 
     // Node's runtime auto-flattens managed associations into `<assoc>_<key>`
-    // FK scalars on service entity element maps. Tests inspect these through
-    // `cds.entities('MyService').X.elements.<assoc>_<key>` — which uses
-    // `cds.model.definitions` directly, bypassing the `cds.connect.to` shim
-    // above. Trigger the FK expansion for *every* service in the model
+    // FK scalars on service entity element maps. Some tests inspect these
+    // through `cds.entities('MyService').X.elements.<assoc>_<key>` — which
+    // uses `cds.model.definitions` directly, bypassing the `cds.connect.to`
+    // shim above. Trigger the FK expansion for every service in the model
     // proactively so `cds.entities()` returns the flattened form.
     //
     // Deferred until first accessed so we don't interfere with the app-startup
@@ -226,7 +207,8 @@ if (isJavaEnv) {
    * CAP Java's OData V4 responses omit the flattened `<assoc>_<key>` scalar for
    * composition-of-one when the nested composition target is inlined in the
    * response. Node returns both the flattened FK and the nested object. Some
-   * shared integration tests read `entity.<assoc>_ID` from the response;
+   * shared integration tests read `entity.<assoc>_ID` from the response
+   * (e.g. `composition-draft.test.js` extracts `order.header_ID`);
    * transparently patch missing flattened FKs from the nested object so those
    * tests keep working under Java.
    */
@@ -289,7 +271,7 @@ if (isJavaEnv) {
     rewritten = rewritten.replace(/(\/odata\/v4\/([^/?#]+)\/([A-Za-z_][\w.]*))\(([^)]+)\)/, (match, prefix, servicePath, entityName, keysStr) => {
       const entity = _resolveEntityByServicePath(cds.model, servicePath, entityName);
       if (!entity?.elements) return match;
-      rootMatch = { servicePath, entityName, entity };
+      rootMatch = { entityName, entity };
 
       const parts = keysStr.split(',').map((part) => _quotePart(part, entity));
       return `${prefix}(${parts.join(',')})`;
@@ -300,7 +282,6 @@ if (isJavaEnv) {
     // fields; when the user only provided one key we prepend the parent's key
     // so CAP Java's stricter Olingo parser accepts the URL.
     if (rootMatch) {
-      const cds = require('@sap/cds');
       const model = cds.model;
       // Extract root key value(s) from the rewritten URL for later injection.
       const rootKeysMatch = rewritten.match(/(\/odata\/v4\/[^/?#]+\/[A-Za-z_][\w.]*)\(([^)]+)\)/);
@@ -308,7 +289,6 @@ if (isJavaEnv) {
       const rootKeys = _parseKeyString(rootKeysStr);
 
       let currentEntity = rootMatch.entity;
-      let currentEntityQName = `${_findServiceName(model, rootMatch.servicePath)}.${rootMatch.entityName}`;
 
       // Iterate over subsequent /Segment(keys) tokens.
       rewritten = rewritten.replace(/\/([A-Za-z_][\w]*)\(([^)]+)\)/g, (match, navName, keysStr, offset) => {
@@ -319,7 +299,6 @@ if (isJavaEnv) {
         const navTarget = model.definitions[navElement.target];
         if (!navTarget?.elements) {
           currentEntity = navTarget;
-          currentEntityQName = navElement.target;
           return match;
         }
 
@@ -339,7 +318,6 @@ if (isJavaEnv) {
         parts = parts.map((part) => _quotePart(part, navTarget));
 
         currentEntity = navTarget;
-        currentEntityQName = navElement.target;
         return `/${navName}(${parts.join(',')})`;
       });
     }
@@ -387,16 +365,6 @@ if (isJavaEnv) {
       if (key) out[key] = value;
     }
     return out;
-  }
-
-  function _findServiceName(model, servicePath) {
-    if (!model) return '';
-    for (const [name, def] of Object.entries(model.definitions)) {
-      if (def?.kind !== 'service') continue;
-      const path = def['@path'] || _defaultServicePath(name);
-      if (path === servicePath || path === `/${servicePath}`) return name;
-    }
-    return '';
   }
 
   function _resolveEntityByServicePath(model, servicePath, shortName) {

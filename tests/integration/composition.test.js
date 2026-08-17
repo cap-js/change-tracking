@@ -1,7 +1,7 @@
 const cds = require('@sap/cds');
 const bookshop = require('path').resolve(__dirname, './../bookshop');
 const { POST, PATCH, DELETE, defaults } = cds.test(bookshop);
-defaults.auth = { username: 'alice', password: 'admin' };
+defaults.auth = { username: 'alice', password: '' };
 
 describe('composition tracking', () => {
   it('does not link child entity changes to the root entity when composition field is annotated with @changelog false', async () => {
