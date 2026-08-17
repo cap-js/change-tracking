@@ -289,7 +289,7 @@ const skipRegen = isHana || isJava;
 describe('Serivce-specific tracking with @changelog: false', () => {
   it('only tracks changes when @changelog is defined on the specific service entity', async () => {
     // Create via CatalogService (no @changelog) - should NOT be tracked
-    const { data: newStore } = await POST(`/browse/BookStores`, {
+    const { data: newStore } = await POST(`/odata/v4/browse/BookStores`, {
       name: 'New book store via browse'
     });
 

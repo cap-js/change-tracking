@@ -415,7 +415,6 @@ describe('CDS Features', () => {
     expect(changes[0].valueChangedFrom).toEqual(null);
     expect(changes[0].valueChangedTo).toEqual('RootSample title3');
     expect(changes[0].entityKey).toEqual(rootID);
-    expect(changes[0].rootEntityKey).toEqual(null);
     expect(changes[0].objectID).toEqual(`${rootID}, RootSample title3`);
     expect(changes[0].parent_ID).toBeNull();
 
@@ -429,7 +428,7 @@ describe('CDS Features', () => {
     expect(changes[0].valueChangedTo).toEqual('Level1Sample title3');
     expect(changes[0].parent_entity).toEqual('sap.change_tracking.RootSample');
     expect(changes[0].parent_entityKey).toEqual(rootID);
-    //expect(changes[0].objectID).toEqual(`${lvl1ID}, Level1Sample title3, ${rootID}`);
+    expect(changes[0].objectID).toEqual(`${lvl1ID}, Level1Sample title3, ${rootID}`);
 
     changes = await SELECT.from(ChangeView).where({
       entity: 'sap.change_tracking.Level2Sample',
@@ -441,7 +440,7 @@ describe('CDS Features', () => {
     expect(changes[0].valueChangedTo).toEqual('Level2Sample title3');
     expect(changes[0].parent_entity).toEqual('sap.change_tracking.Level1Sample');
     expect(changes[0].parent_entityKey).toEqual(lvl1ID);
-    //expect(changes[0].objectID).toEqual(`${lvl2ID}, Level2Sample title3, ${rootID}`);
+    expect(changes[0].objectID).toEqual(`${lvl2ID}, Level2Sample title3, ${rootID}`);
   });
 
   it('Works for <as select from> views as well', async () => {

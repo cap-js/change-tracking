@@ -69,6 +69,23 @@ if (isJavaEnv) {
         args = _translateSapLocale(args);
         const res = await original(...args);
         _flattenAssocFKs(res, args);
+        // Mirror axios's default `validateStatus` behavior: non-2xx responses
+        // reject the returned promise with an error that carries the response
+        // on `.response`. This is what tests expect when they use either
+        // `try/catch` on `error.response.status` or `.rejects.toMatchObject({
+        // response: { status: 4xx } })`. We keep the low-level
+        // `defaults.validateStatus = () => true` (see above) so the raw
+        // response body is available on the error rather than being replaced
+        // by axios's generic message.
+        if (res && typeof res.status === 'number' && (res.status < 200 || res.status >= 300)) {
+          const err = new Error(`Request failed with status code ${res.status}`);
+          err.response = res;
+          err.status = res.status;
+          err.config = res.config;
+          err.request = res.request;
+          err.isAxiosError = true;
+          throw err;
+        }
         return res;
       };
       // Preserve the uppercase aliases (GET, POST, ...) that just bind to lowercase.
