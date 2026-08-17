@@ -262,7 +262,7 @@ if (isJavaEnv) {
     const cds = require('@sap/cds');
     const url = typeof args[0] === 'string' ? args[0] : null;
     if (!url) return args;
-    if (!/[\(,][^)]*=/.test(url)) return args; // no key predicates
+    if (!/[(,][^)]*=/.test(url)) return args; // no key predicates
 
     // Match `/odata/v4/<svc>/<Entity>(<keys>)` and rewrite the keys segment.
     // Also handle nested navigation segments like `/Entity(k1=v1)/Nav(k2=v2)`,

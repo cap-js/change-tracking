@@ -286,7 +286,7 @@ const skipRegen = isHana || isJava;
 });
 
 // REVISIT: move into a dedicated test file
-describe('Serivce-specific tracking with @changelog: false', () => {
+describe('Service-specific tracking with @changelog: false', () => {
   it('only tracks changes when @changelog is defined on the specific service entity', async () => {
     // Create via CatalogService (no @changelog) - should NOT be tracked
     const { data: newStore } = await POST(`/odata/v4/browse/BookStores`, {
