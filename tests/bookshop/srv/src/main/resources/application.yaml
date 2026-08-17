@@ -6,6 +6,10 @@ spring:
   sql.init.separator: ";;"
 cds:
   data-source.auto-config.enabled: false
+  audit-log:
+    personal-data:
+      throw-on-missing-data-subject: false
+      enabled: false
   security:
     # Match mock users with default node mock users
     mock:
