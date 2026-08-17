@@ -6,16 +6,6 @@ spring:
   sql.init.separator: ";;"
 cds:
   data-source.auto-config.enabled: false
-  # Disable audit-log enforcement in tests: entities like DifferentFieldTypes
-  # carry @PersonalData.IsPotentiallyPersonal fields but no accompanying
-  # data-subject semantics (this is intentional for test coverage). CAP Java's
-  # default audit-log handler rejects such operations with
-  # "A data subject … is missing" which rolls back the transaction and prevents
-  # the change-tracking trigger's changelog rows from being committed.
-  audit-log:
-    personal-data:
-      throw-on-missing-data-subject: false
-      enabled: false
   security:
     # Match mock users with default node mock users
     mock:
@@ -64,3 +54,6 @@ cds:
           roles:
             - internal-user
 
+# logging:
+#   level:
+#     com.sap.cds.persistence.sql: DEBUG

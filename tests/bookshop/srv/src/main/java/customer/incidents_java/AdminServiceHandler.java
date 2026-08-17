@@ -31,8 +31,12 @@ public class AdminServiceHandler implements EventHandler {
     @Autowired
     private PersistenceService db;
 
+    private CqnAnalyzer analyzer;
+
     @Autowired
-    private CdsModel model;
+    void setModel(CdsModel model) {
+        analyzer = CqnAnalyzer.create(model);
+    }
 
     @Before(event = DraftService.EVENT_DRAFT_NEW, entity = BookStores_.CDS_NAME)
     public void defaultBookStoreLifecycleStatus(DraftNewEventContext context, BookStores draft) {
@@ -63,7 +67,6 @@ public class AdminServiceHandler implements EventHandler {
     private String extractNoteId(OrderItemNoteActivateContext context) {
         try {
             if (context.getCqn() == null) return null;
-            CqnAnalyzer analyzer = CqnAnalyzer.create(model);
             AnalysisResult result = analyzer.analyze(context.getCqn().ref());
             Map<String, Object> keyValues = result.targetKeyValues();
             Object id = keyValues == null ? null : keyValues.get("ID");
