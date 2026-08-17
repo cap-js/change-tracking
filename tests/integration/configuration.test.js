@@ -285,7 +285,7 @@ const skipRegen = isHana || isJava;
   });
 });
 
-// REVISIT: move into a dedicated test file 
+// REVISIT: move into a dedicated test file
 describe('Serivce-specific tracking with @changelog: false', () => {
   it('only tracks changes when @changelog is defined on the specific service entity', async () => {
     // Create via CatalogService (no @changelog) - should NOT be tracked
@@ -443,7 +443,7 @@ describe('Serivce-specific tracking with @changelog: false', () => {
   });
 });
 
-// REVISIT: move into a dedicated test file 
+// REVISIT: move into a dedicated test file
 (isHana ? describe : describe.skip)('Restore Backlinks HANA Procedure', () => {
   it('restores backlinks for create operations', async () => {
     const testingSRV = await cds.connect.to('VariantTesting');

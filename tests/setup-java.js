@@ -92,7 +92,9 @@ if (isJavaEnv) {
       const upper = method.toUpperCase();
       Object.defineProperty(cds_test, upper, {
         configurable: true,
-        get() { return cds_test[method].bind(cds_test); }
+        get() {
+          return cds_test[method].bind(cds_test);
+        }
       });
     }
 
@@ -191,7 +193,7 @@ if (isJavaEnv) {
       const target = targetName && model.definitions[targetName];
       if (!target?.elements) continue;
       for (const k of el.keys) {
-        const fk = typeof k === 'string' ? k : k.ref?.[0] ?? k.as;
+        const fk = typeof k === 'string' ? k : (k.ref?.[0] ?? k.as);
         if (!fk) continue;
         const flatName = `${name}_${fk}`;
         if (def.elements[flatName]) continue;
@@ -233,7 +235,9 @@ if (isJavaEnv) {
         if (!nested || typeof nested !== 'object' || Array.isArray(nested)) continue;
         const target = el.target && cds.model.definitions[el.target];
         if (!target?.elements) continue;
-        const targetKeys = Object.entries(target.elements).filter(([, e]) => e.key).map(([n]) => n);
+        const targetKeys = Object.entries(target.elements)
+          .filter(([, e]) => e.key)
+          .map(([n]) => n);
         for (const k of targetKeys) {
           const flatName = `${name}_${k}`;
           if (row[flatName] != null) continue;
@@ -302,7 +306,10 @@ if (isJavaEnv) {
           return match;
         }
 
-        let parts = keysStr.split(',').map((p) => p.trim()).filter(Boolean);
+        let parts = keysStr
+          .split(',')
+          .map((p) => p.trim())
+          .filter(Boolean);
         // Detect inline composition target: has `up__<X>` FK field(s) not
         // supplied by the caller — auto-inject from parent key(s).
         const upFields = Object.keys(navTarget.elements).filter((n) => n.startsWith('up__'));
@@ -328,7 +335,10 @@ if (isJavaEnv) {
     rewritten = rewritten.replace(/\(([^)]+)\)/g, (match, inner) => {
       // Only rewrite if this looks like a key predicate (contains `=`).
       if (!inner.includes('=')) return match;
-      const cleaned = inner.split(',').map((p) => p.trim()).join(',');
+      const cleaned = inner
+        .split(',')
+        .map((p) => p.trim())
+        .join(',');
       return `(${cleaned})`;
     });
 

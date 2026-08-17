@@ -65,7 +65,6 @@ async function _regeneratePostgresTriggers(entityNames, allEntities, hierarchyMa
   await Promise.all(triggers.map((t) => cds.db.run(t)));
 }
 
-
 const _generators = {
   sqlite: _regenerateSQLiteTriggers,
   postgres: _regeneratePostgresTriggers
