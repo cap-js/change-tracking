@@ -1,13 +1,13 @@
-const isJavaEnv = /java/i.test(process.env.CDS_ENV || '');
+const cds = require('@sap/cds');
+const isJava = cds.env.env === 'java';
 
-if (isJavaEnv) {
+if (isJava) {
   describe.skip('Change-Tracking MTX (skipped: Java)', () => {
     it('MTX is a Node.js only feature', () => {});
   });
 } else {
   process.env.CDS_ENV = process.env.CDS_ENV ? `${process.env.CDS_ENV},with-mtx` : 'with-mtx';
 
-  const cds = require('@sap/cds');
   const path = require('path');
   const { DatabaseSync } = require('node:sqlite');
   const { APP_DIR, ensureSidecarPlugin, cleanDbFiles, startSidecar, subscribeTenant, upgradeTenant, stopSidecar } = require('./setup');
