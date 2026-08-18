@@ -142,7 +142,7 @@ jobs:
       - run: java -version
       - run: mvn -v
       - name: Run Java (H2) tests
-        run: npm run test:java
+        run: npm run test:h2
 
   results:
     if: always()
