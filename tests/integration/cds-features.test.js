@@ -231,6 +231,71 @@ describe('CDS Features', () => {
       expect(change.valueChangedToLabelDate).toEqual('2024-10-16');
     });
 
+    it('reads mixed date changes with the Fiori hierarchy request', async () => {
+      const {
+        data: { ID }
+      } = await POST(`/odata/v4/processor/Incidents`, {
+        date: '2024-10-16',
+        datetime: '2024-10-16T08:53:48Z'
+      });
+      await POST(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=false)/ProcessorService.draftActivate`, {});
+
+      const apply = `orderby(createdAt desc)/com.sap.vocabularies.Hierarchy.v1.TopLevels(HierarchyNodes=$root/Incidents(ID=${ID},IsActiveEntity=true)/changes,HierarchyQualifier='ChangeHierarchy',NodeProperty='ID',Levels=1)`;
+      const select = [
+        'DrillState',
+        'ID',
+        'attributeLabel',
+        'createdAt',
+        'createdBy',
+        'entityLabel',
+        'modificationLabel',
+        'objectID',
+        'valueChangedFromLabel',
+        'valueChangedFromLabelDate',
+        'valueChangedFromLabelDateTime',
+        'valueChangedFromLabelDateTimeWTZ',
+        'valueChangedFromLabelTime',
+        'valueChangedFromLabelTimestamp',
+        'valueChangedToLabel',
+        'valueChangedToLabelDate',
+        'valueChangedToLabelDateTime',
+        'valueChangedToLabelDateTimeWTZ',
+        'valueChangedToLabelTime',
+        'valueChangedToLabelTimestamp',
+        'valueDataType',
+        'valueTimeZone'
+      ].join(',');
+      const { data } = await GET(`/odata/v4/processor/Incidents(ID=${ID},IsActiveEntity=true)/changes?$apply=${encodeURIComponent(apply)}&$select=${select}&$count=true&$skip=0&$top=207`);
+
+      expect(data['@odata.count']).toBeGreaterThanOrEqual(2);
+      expect(data.value).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ valueDataType: 'cds.Date', valueChangedToLabelDate: expect.any(String) }),
+          expect.objectContaining({ valueDataType: 'cds.DateTime', valueChangedToLabelDateTime: expect.any(String) })
+        ])
+      );
+    });
+
+    it('serves change view when a temporal Changes row has a non-parseable label', async () => {
+      const pollutedID = cds.utils.uuid();
+      await INSERT.into('sap.changelog.Changes').entries({
+        ID: pollutedID,
+        attribute: 'x',
+        valueChangedTo: '2027-01-29',
+        valueChangedToLabel: 'ITEM-42',
+        entity: 'test.E',
+        entityKey: 'k',
+        objectID: 'oid',
+        modification: 'create',
+        valueDataType: 'cds.Date',
+        createdBy: 'test',
+        transactionID: 1
+      });
+      const changes = await SELECT.from('sap.changelog.ChangeView').where({ ID: pollutedID });
+      expect(changes.length).toEqual(1);
+      expect(changes[0].valueChangedToLabelDate).toEqual('2027-01-29');
+    });
+
     it('tracked timestamp change is exposed in custom field', async () => {
       const { Incidents } = cds.entities('sap.capire.incidents');
       const { Incidents: srvIncidents } = cds.entities('ProcessorService');
