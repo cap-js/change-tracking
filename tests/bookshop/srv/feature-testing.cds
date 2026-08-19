@@ -1,6 +1,7 @@
 using {sap.change_tracking as my} from '../db/index';
 using {sap.changelog as change} from '@cap-js/change-tracking';
 
+@path: 'variant-testing'
 service VariantTesting {
   @cds.redirection.target
   entity DifferentFieldTypes as projection on my.DifferentFieldTypes;

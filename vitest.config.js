@@ -1,5 +1,8 @@
 export default {
   test: {
-    testTimeout: 60_000
+    silent: true,
+    testTimeout: 120_000,
+    hookTimeout: 100_000,
+    setupFiles: ['./tests/setup-java.js']
   }
 };
