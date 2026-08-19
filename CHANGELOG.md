@@ -4,13 +4,14 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.2.0 - tbd
+## Version 2.2.0 - 2026-08-19
 
 ### Fixed
 - Prevent `/changes` navigation from leaking change history for change-tracked fields that are excluded from a service projection
 - Consider `@changelog: false` on nested composition-of-many targets during deep writes
 - Fix `Duplicate definition of element "parent_entityKey" (in entity:"sap.changelog.ChangeView"/query:1)` compile error during tenant upgrade in multi-tenant apps with `extensibility: true`
 - Fix HANA `SqlError: invalid number` / `invalid DATE, TIME or TIMESTAMP value` when reading the Fiori change hierarchy caused by casting `valueChanged*Label` instead `valueChanged*` in `ChangeView`
+- Fix trigger generation for H2 for local CAP Java development
 
 ## Version 2.1.0 - 2026-07-28
 
