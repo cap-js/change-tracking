@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const path = require('path');
 const app = path.join(__dirname, '../bookshop');
 const { defaults, GET, POST, PATCH, DELETE } = cds.test(app);
-defaults.auth = { username: 'alice' };
+defaults.auth = { username: 'alice', password: '' };
 
 async function newIncident() {
   const res = await POST(`odata/v4/processor/Incidents`, {
