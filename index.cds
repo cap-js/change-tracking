@@ -81,36 +81,26 @@ view ChangeView as
                                                           UI.MultiLineText
                                                         ),
         (valueDataType = 'cds.DateTime' ? cast(
-          COALESCE(
-            change.valueChangedFromLabel, change.valueChangedFrom
-          ) as DateTime
+          change.valueChangedFrom as DateTime
         ) : null) as valueChangedFromLabelDateTime    : DateTime     @(title: '{i18n>Changes.valueChangedFrom}',
                                                         ),
         (valueDataType = 'cds.DateTime'
         or valueDataType = 'cds.Timestamp' ? cast(
-          COALESCE(
-            change.valueChangedFromLabel, change.valueChangedFrom
-          ) as DateTime
+          change.valueChangedFrom as DateTime
         ) : null) as valueChangedFromLabelDateTimeWTZ : DateTime     @(
                                                           title          : '{i18n>Changes.valueChangedFrom}',
                                                           Common.Timezone: valueTimeZone
                                                         ),
         (valueDataType = 'cds.Time' ? cast(
-          COALESCE(
-            change.valueChangedFromLabel, change.valueChangedFrom
-          ) as Time
+          change.valueChangedFrom as Time
         ) : null) as valueChangedFromLabelTime        : Time         @(title: '{i18n>Changes.valueChangedFrom}',
                                                         ),
         (valueDataType = 'cds.Date' ? cast(
-          COALESCE(
-            change.valueChangedFromLabel, change.valueChangedFrom
-          ) as Date
+          change.valueChangedFrom as Date
         ) : null) as valueChangedFromLabelDate        : Date         @(title: '{i18n>Changes.valueChangedFrom}',
                                                         ),
         (valueDataType = 'cds.Timestamp' ? cast(
-          COALESCE(
-            change.valueChangedFromLabel, change.valueChangedFrom
-          ) as Timestamp
+          change.valueChangedFrom as Timestamp
         ) : null) as valueChangedFromLabelTimestamp   : Timestamp    @(title: '{i18n>Changes.valueChangedFrom}',
                                                         ),
         COALESCE(
@@ -120,36 +110,26 @@ view ChangeView as
                                                           UI.MultiLineText
                                                         ),
         (valueDataType = 'cds.DateTime' ? cast(
-          COALESCE(
-            change.valueChangedToLabel, change.valueChangedTo
-          ) as DateTime
+          change.valueChangedTo as DateTime
         ) : null) as valueChangedToLabelDateTime      : DateTime     @(title: '{i18n>Changes.valueChangedTo}',
                                                         ),
         (valueDataType = 'cds.DateTime'
         or valueDataType = 'cds.Timestamp' ? cast(
-          COALESCE(
-            change.valueChangedToLabel, change.valueChangedTo
-          ) as DateTime
+          change.valueChangedTo as DateTime
         ) : null) as valueChangedToLabelDateTimeWTZ   : DateTime     @(
                                                           title          : '{i18n>Changes.valueChangedTo}',
                                                           Common.Timezone: valueTimeZone
                                                         ),
         (valueDataType = 'cds.Time' ? cast(
-          COALESCE(
-            change.valueChangedToLabel, change.valueChangedTo
-          ) as Time
+          change.valueChangedTo as Time
         ) : null) as valueChangedToLabelTime          : Time         @(title: '{i18n>Changes.valueChangedTo}',
                                                         ),
         (valueDataType = 'cds.Date' ? cast(
-          COALESCE(
-            change.valueChangedToLabel, change.valueChangedTo
-          ) as Date
+          change.valueChangedTo as Date
         ) : null) as valueChangedToLabelDate          : Date         @(title: '{i18n>Changes.valueChangedTo}',
                                                         ),
         (valueDataType = 'cds.Timestamp' ? cast(
-          COALESCE(
-            change.valueChangedToLabel, change.valueChangedTo
-          ) as Timestamp
+          change.valueChangedTo as Timestamp
         ) : null) as valueChangedToLabelTimestamp     : Timestamp    @(title: '{i18n>Changes.valueChangedTo}',
                                                         ),
         null      as valueTimeZone                    : String       @(
