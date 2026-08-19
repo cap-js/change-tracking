@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@cap-js/attachments": "^3",
+    "@cap-js/attachments": "^4",
     "@cap-js/change-tracking": "file:../../.",
     "@cap-js/hana": ">=2",
     "@cap-js/postgres": ">=2"
