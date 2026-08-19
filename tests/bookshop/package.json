@@ -7,9 +7,10 @@
   },
   "devDependencies": {
     "@cap-js/sqlite": ">=2",
+    "@sap/cds-dk": "^10.0.7",
+    "better-sqlite3": ">=12",
     "puppeteer": "^25.1.0",
-    "ui5-test-runner": "^5.13.1",
-    "better-sqlite3": ">=12"
+    "ui5-test-runner": "^5.13.1"
   },
   "scripts": {
     "start": "cds-serve",
