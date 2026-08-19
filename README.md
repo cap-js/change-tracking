@@ -667,6 +667,26 @@ As a temporary workaround, you can fall back to row-level triggers by setting th
 > [!NOTE]
 > Row-level triggers are slower than statement-level triggers, especially for bulk operations. The `rowLevelTriggers` flag is a temporary workaround and will be removed in a future version.
 
+### "no such table" error when starting locally with a persistent SQLite database
+
+When using a file-based SQLite database (e.g. `db.sqlite`) for local development, starting the server may fail with an error like:
+
+```
+Error: no such table: main.SAP_CAPIRE_BOOKSHOP_BOOKS in:
+CREATE TRIGGER IF NOT EXISTS SAP_CAPIRE_BOOKSHOP_BOOKS_ct_create AFTER INSERT ...
+```
+
+CAP only auto-deploys the schema at server startup for **in-memory** SQLite. For a persistent SQLite file, you must deploy the schema yourself before starting the server, otherwise the change-tracking plugin cannot create its triggers on the (missing) application tables:
+
+```sh
+cds deploy
+cds watch
+```
+
+See the CAP docs on [using persistent SQLite databases](https://cap.cloud.sap/docs/guides/databases-sqlite#persistent-databases) for details.
+
+---
+
 ## Contributing
 
 This project is open to feature requests/suggestions, bug reports etc. via [GitHub issues](https://github.com/cap-js/change-tracking/issues). Contribution and feedback are encouraged and always welcome. For more information about how to contribute, the project structure, as well as additional contribution information, see our [Contribution Guidelines](CONTRIBUTING.md).
