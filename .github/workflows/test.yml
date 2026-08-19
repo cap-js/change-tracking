@@ -99,7 +99,7 @@ jobs:
           NODE_VERSION: ${{ matrix.node-version }}
           CDS_VERSION: ${{ matrix.cds-version }}
 
-  test-java:
+  test-h2:
     runs-on: ubuntu-latest
     name: H2 Tests with Node.js ${{ matrix.node-version }} and CDS ${{ matrix.cds-version }}
     strategy:
@@ -142,7 +142,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     name: Summary
-    needs: [test-sqlite, test-postgres, test-hana, test-java]
+    needs: [test-sqlite, test-postgres, test-hana, test-h2]
     steps:
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         run: exit 1
