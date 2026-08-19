@@ -20,8 +20,6 @@ jobs:
       matrix:
         node-version: [22.x, 24.x]
         cds-version: [9, latest]
-        # On PRs only the "latest" combination runs; the merge queue runs the full matrix.
-        exclude: ${{ github.event_name == 'merge_group' && fromJSON('[]') || fromJSON('[{"node-version":"22.x","cds-version":9},{"node-version":"24.x","cds-version":9},{"node-version":"22.x","cds-version":"latest"}]') }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Use Node.js ${{ matrix.node-version }}
@@ -52,8 +50,6 @@ jobs:
       matrix:
         node-version: [22.x, 24.x]
         cds-version: [9, latest]
-        # On PRs only the "latest" combination runs; the merge queue runs the full matrix.
-        exclude: ${{ github.event_name == 'merge_group' && fromJSON('[]') || fromJSON('[{"node-version":"22.x","cds-version":9},{"node-version":"24.x","cds-version":9},{"node-version":"22.x","cds-version":"latest"}]') }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Use Node.js ${{ matrix.node-version }}
@@ -88,7 +84,7 @@ jobs:
       matrix:
         node-version: [22.x, 24.x]
         cds-version: [9, latest]
-        # On PRs only the "latest" combination runs; the merge queue runs the full matrix.
+        # On PRs/pushes only the Node.js 24 + CDS latest combination runs; the merge queue runs the full matrix.
         exclude: ${{ github.event_name == 'merge_group' && fromJSON('[]') || fromJSON('[{"node-version":"22.x","cds-version":9},{"node-version":"24.x","cds-version":9},{"node-version":"22.x","cds-version":"latest"}]') }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -111,8 +107,6 @@ jobs:
       matrix:
         node-version: [22.x, 24.x]
         cds-version: [9, latest]
-        # On PRs only the "latest" combination runs; the merge queue runs the full matrix.
-        exclude: ${{ github.event_name == 'merge_group' && fromJSON('[]') || fromJSON('[{"node-version":"22.x","cds-version":9},{"node-version":"24.x","cds-version":9},{"node-version":"22.x","cds-version":"latest"}]') }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Use Node.js ${{ matrix.node-version }}
