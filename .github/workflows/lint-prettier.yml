@@ -24,4 +24,4 @@ jobs:
           allow-unsafe-pr-checkout: true
       - run: npm i
       - run: npm run lint
-      - run: npm run format:check
+      - run: npm run prettier:check
