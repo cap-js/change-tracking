@@ -1,6 +1,5 @@
 using from './change-logs';
 using from './joins-and-unions';
-using from './batch-inserts';
 using {cuid} from '@sap/cds/common';
 
 
