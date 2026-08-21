@@ -194,6 +194,18 @@ entity EmployeesFuncExpr : Employees {
   manager : Association to EmployeesFuncExpr;
 }
 
+// Single-service scenario: parent + child in ONE service; child carries an
+// entity-level @restrict (travels with auto-exposure, unlike service @requires).
+entity RestrictedParent : cuid {
+  title    : String @changelog;
+  children : Composition of many RestrictedChild on children.parent = $self;
+}
+
+entity RestrictedChild : cuid {
+  parent : Association to one RestrictedParent;
+  secret : String @changelog;
+}
+
 // Three-level composition-of-many chain for the nested deep-write skip test.
 // The leaf's service projection is annotated @changelog: false; a single deep
 // write (root -> mid[] -> leaf[]) must set the leaf skip var so no leaf rows are logged.
