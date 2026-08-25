@@ -7,7 +7,7 @@ defaults.auth = { username: 'alice', password: '' };
 
 const isHana = cds.env.requires?.db?.kind === 'hana';
 
-(isHana ? describe : describe.skip)('Restore Backlinks HANA Procedure', () => {
+describe.skipIf(!isHana)('Restore Backlinks HANA Procedure', () => {
   it('restores backlinks for create operations', async () => {
     const testingSRV = await cds.connect.to('VariantTesting');
     const { RootSample, ChangeView } = testingSRV.entities;
