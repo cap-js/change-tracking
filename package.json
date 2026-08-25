@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "lint": "npx eslint .",
-    "test": "npx vitest --silent",
+    "test": "npx vitest",
     "test:sqlite": "CDS_ENV=sqlite npx vitest run",
     "test:pg": "npm run start:pg && CDS_ENV=pg npx vitest run",
     "test:hana": "cds bind --exec -- npx vitest run",

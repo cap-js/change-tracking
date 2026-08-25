@@ -47,10 +47,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- H2 must be on the compile classpath because @cap-js/change-tracking
+		     generates trigger classes (in src/gen/java/sap/changelog/triggers/)
+		     that extend org.h2.tools.TriggerAdapter. These classes are compiled
+		     as part of the standard Maven build; H2 itself is still only used
+		     at runtime (via the CREATE TRIGGER ... CALL '<fqcn>' form). -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
 		</dependency>
 
 		<dependency>
