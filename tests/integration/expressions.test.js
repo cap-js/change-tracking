@@ -397,7 +397,7 @@ describe('Expression-based @changelog annotations', () => {
 
 describe('ChangeView access restrictions', () => {
   // CAP Java doesn't enforce `@Capabilities.ReadRestrictions.Readable: false`
-  (isJava ? it.skip : it)('rejects direct read of ChangeView from service root with 405', async () => {
+  it.skipIf(isJava)('rejects direct read of ChangeView from service root with 405', async () => {
     try {
       await GET(`/odata/v4/admin/ChangeView`);
       expect('request').toBe('should have failed');

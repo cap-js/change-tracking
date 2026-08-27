@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.2.1 - 2026-08-26
+
+### Changed
+- Generate a dedicated Java class per H2 trigger implementation and a shared `AbstractChangeTrackingTrigger` base class instead of inline trigger logic
+
 ## Version 2.2.0 - 2026-08-19
 
 ### Fixed

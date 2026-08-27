@@ -29,6 +29,7 @@ hs_err*
 .vscode
 .idea
 .reloadtrigger
+db/data/sap.changelog-i18nKeys.csv
 
 # added by cds
 .cdsrc-private.json

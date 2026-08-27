@@ -16,7 +16,6 @@ if (isJava) {
   axios.defaults.auth = { username: 'alice' };
 
   const isSqlite = cds.env.requires?.db?.kind === 'sqlite';
-  const describeIfSqlite = isSqlite ? describe : describe.skip;
   let sidecar;
 
   if (isSqlite) {
@@ -35,7 +34,7 @@ if (isJava) {
     });
   }
 
-  describeIfSqlite('Change-Tracking MTX', () => {
+  describe.skipIf(!isSqlite)('Change-Tracking MTX', () => {
     describe('Tenant subscription deploys change-tracking artifacts', () => {
       it('deploys triggers', () => {
         const db = new DatabaseSync(path.join(APP_DIR, 'db-t1.sqlite'), { readOnly: true });
