@@ -10,7 +10,7 @@ const isHana = cds.env.requires?.db?.kind === 'hana';
 const isJava = cds.env.env === 'java';
 const skipRegen = isHana || isJava;
 
-(skipRegen ? describe.skip : describe)('Configuration Options', () => {
+describe.skipIf(skipRegen)('Configuration Options', () => {
   // Entities used in the VariantTesting service tests
   const variantEntities = ['sap.change_tracking.RootSample', 'sap.change_tracking.Level1Sample', 'sap.change_tracking.Level2Sample'];
 

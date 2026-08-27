@@ -8,7 +8,7 @@ const bookshopDir = path.join(__dirname, '../bookshop');
 cds.test(bookshopDir);
 const isHana = cds.env.requires?.db?.kind === 'hana';
 
-(isHana ? describe : describe.skip)('HANA Build', () => {
+describe.skipIf(!isHana)('HANA Build', () => {
   let compiler;
   let csn;
   const originalCwd = process.cwd();
