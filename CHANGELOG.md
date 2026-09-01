@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.2.2 - 2026-09-01
+
+### Fixed
+- Cast the code list key to string in dynamic localization to fix `SqlError: invalid number` in service-level `ChangeView` when using HANA
+
 ## Version 2.2.1 - 2026-08-26
 
 ### Changed
