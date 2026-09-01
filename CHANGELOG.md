@@ -9,10 +9,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Fixed
 - Cast the code list key to string in dynamic localization to fix `SqlError: invalid number` in service-level `ChangeView` when using HANA
 
-## Version 2.2.1 - 2026-08-26
+## Version 2.2.1 - 2026-08-27
 
 ### Changed
 - Generate a dedicated Java class per H2 trigger implementation and a shared `AbstractChangeTrackingTrigger` base class instead of inline trigger logic
+
+### Fixed
+- Preserve v1 transaction grouping during migration by deriving `transactionID` from `changeLog_ID` instead of the seconds of `createdAt`
 
 ## Version 2.2.0 - 2026-08-19
 
