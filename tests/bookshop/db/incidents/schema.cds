@@ -76,6 +76,10 @@ entity Status : CodeList {
   criticality : Integer;
 }
 
+entity NumericStatus : CodeList {
+  key code : Integer;
+}
+
 entity Urgency : CodeList {
   key code : String enum {
     high   = 'H';
@@ -142,6 +146,9 @@ entity DynamicLocalizationScenarios : cuid {
 
   status4 : String @changelog : [status4Nav.descr]; //Unmanaged association -> possible;
   status4Nav: Association to one Status on status4Nav.code = status4 @changelog : [status4Nav.descr];
+
+  status5  : Association to one NumericStatus @changelog : [status5.descr]; // Integer-keyed code list -> reproduces #358
+  someDate : Date @changelog; // coexisting temporal row that triggers the coercion trap
 }
 
 entity VHWithMultiKey : CodeList {

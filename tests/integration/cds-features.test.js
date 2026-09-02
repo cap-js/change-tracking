@@ -994,6 +994,35 @@ describe('CDS Features', () => {
         valueChangedToLabel: 'Resolved'
       });
     });
+
+    it('resolves localized label for a numeric-keyed CodeLists and does not throw an invalid number error', async () => {
+      const {
+        data: { ID }
+      } = await POST(`odata/v4/localization/DynamicLocalizationScenarios`, {
+        status5_code: 1,
+        someDate: '2027-01-30'
+      });
+
+      const {
+        data: { value: changes }
+      } = await GET(`odata/v4/localization/DynamicLocalizationScenarios(ID=${ID})/changes`, {
+        headers: { 'Accept-Language': 'de' }
+      });
+
+      expect(changes.length).toBeGreaterThanOrEqual(2);
+
+      const statusChange = changes.find((c) => c.attribute === 'status5' && c.modification === 'create');
+      expect(statusChange).toMatchObject({
+        valueChangedTo: '1',
+        valueChangedToLabel: 'Neu'
+      });
+
+      const dateChange = changes.find((c) => c.attribute === 'someDate' && c.modification === 'create');
+      expect(dateChange).toMatchObject({
+        valueChangedTo: '2027-01-30',
+        valueDataType: 'cds.Date'
+      });
+    });
   });
 
   describe('Draft', () => {
