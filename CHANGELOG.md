@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.2.3 - tbd
+
+### Fixed
+- `cds deploy --to h2 --dry` outputs valid SQL without prepending the H2 trigger generation log
+
 ## Version 2.2.2 - 2026-09-02
 
 ### Fixed
