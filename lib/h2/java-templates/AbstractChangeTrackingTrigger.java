@@ -61,6 +61,17 @@ public abstract class AbstractChangeTrackingTrigger extends TriggerAdapter {
         return locale;
     }
 
+    protected String getUser(Connection conn) throws SQLException {
+        String user = getSessionVariable(conn, "user_id");
+        if (user != null && !user.isEmpty()) return user;
+        try (PreparedStatement stmt = conn.prepareStatement("SELECT CURRENT_USER()")) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getString(1);
+            }
+        }
+        return null;
+    }
+
     protected boolean hasExistingCompositionEntry(Connection conn, String entityName, String entityKey, String attribute) throws SQLException {
         String sql = "SELECT 1 FROM sap_changelog_Changes WHERE ENTITY = ? AND ENTITYKEY = ? AND ATTRIBUTE = ? AND VALUEDATATYPE = 'cds.Composition' AND TRANSACTIONID = TRANSACTION_ID()";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
