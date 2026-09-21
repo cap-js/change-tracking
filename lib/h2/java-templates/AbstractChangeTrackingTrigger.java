@@ -62,7 +62,7 @@ public abstract class AbstractChangeTrackingTrigger extends TriggerAdapter {
     }
 
     protected String getUser(Connection conn) throws SQLException {
-        String user = getSessionVariable(conn, "user_id");
+        String user = getSessionVariable(conn, "applicationuser");
         if (user != null && !user.isEmpty()) return user;
         try (PreparedStatement stmt = conn.prepareStatement("SELECT CURRENT_USER()")) {
             try (ResultSet rs = stmt.executeQuery()) {

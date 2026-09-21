@@ -37,6 +37,7 @@
     "@cap-js/cds-types": "^0"
   },
   "cds": {
+    "plugin": true,
     "requires": {
       "change-tracking": {
         "model": "@cap-js/change-tracking",
