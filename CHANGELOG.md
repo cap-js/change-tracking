@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Fixed
 - `cds deploy --to h2 --dry` outputs valid SQL without prepending the H2 trigger generation log
+- The trigger Java code for H2 is now properly using the `applicationuser` session context variable for the createdBy column.
 
 ## Version 2.2.2 - 2026-09-02
 
