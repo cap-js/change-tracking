@@ -84,9 +84,18 @@ jobs:
         shell: bash
         run: |
           npm pkg set "overrides.@cap-js/hana=^2"
+          npm pkg set "overrides.@cap-js/sqlite=^2"
           npm pkg set "devDependencies.@sap/cds=^9"
-          cd ./tests/performance/perf-bookshop
+          cd ./tests/bookshop
+          npm pkg set "devDependencies.@cap-js/sqlite=^2"
           npm pkg set "dependencies.@cap-js/hana=^2"
+          cd ../bookshop-mtx
+          npm pkg set "devDependencies.@cap-js/sqlite=^2"
+          npm pkg set "dependencies.@cap-js/hana=^2"
+          cd ../performance/perf-bookshop
+          npm pkg set "dependencies.@sap/cds=^9"
+          npm pkg set "dependencies.@cap-js/hana=^2"
+          npm pkg set "devDependencies.@cap-js/sqlite=^2"
 
       - name: Install global CDS
         shell: bash
