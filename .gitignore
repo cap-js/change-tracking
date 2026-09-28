@@ -10,3 +10,4 @@ gen/
 .secrets
 report/
 *.sql
+.idea
