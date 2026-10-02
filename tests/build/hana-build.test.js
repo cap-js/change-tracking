@@ -87,11 +87,11 @@ describe.skipIf(!isHana)('HANA Build', () => {
       expect(triggers.length).toBeGreaterThan(0);
     });
 
-    test('Build does not generate triggers for .texts entities', () => {
+    test('Build generates triggers for annotated .texts entities', () => {
       const result = compiler(freshCsn(), {});
       const triggers = result.definitions.filter((def) => def.sql && def.sql.includes('TRIGGER'));
       const textsTriggers = triggers.filter((def) => def.name.includes('.texts'));
-      expect(textsTriggers).toHaveLength(0);
+      expect(textsTriggers.length).toBeGreaterThan(0);
     });
   });
 });
