@@ -102,7 +102,9 @@ annotate AdminService.Order with @(UI.Facets: [{
   Target : 'changes/@UI.PresentationVariant',
 }]);
 
-// Test if trigger generation for .texts tables are skipped
-annotate AdminService.Books.texts with {
-  title @changelog;
+// Track changes on localized texts of Books
+annotate AdminService.Books.texts with @(changelog: [locale]) {
+  locale @changelog;
+  title  @changelog;
+  descr  @changelog;
 };
