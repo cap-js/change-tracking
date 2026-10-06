@@ -3,8 +3,12 @@ name: Lint
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
   pull_request:
     types: [opened, synchronize, reopened, auto_merge_enabled]
+    paths-ignore:
+      - '**/*.md'
   merge_group:
 
 permissions:
