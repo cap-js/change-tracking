@@ -8,6 +8,12 @@ A [CDS plugin](https://cap.cloud.sap/docs/node.js/cds-plugins#cds-plugin-package
 > With version 2.0, we completely refactored how changes are tracked. Previously, the logic relied on the application layer, which limited the types of trackable queries and came with major performance penalties in larger projects. With v2.0 the changes are now fully tracked on the database layer via database triggers. Furthermore, the table definition for changes was cleaned up with v2.0. This means any upgrade involves a schema change.
 
 
+### Why This Plugin Works for Both CAP Node.js and CAP Java
+
+This plugin is implemented as a **CDS plugin** — a Node.js package that hooks into CDS's build pipeline. During the build, it generates **native database triggers** (SQL DDL) directly from the CDS model. Because the triggers run at the database level, they are completely independent of the application runtime: neither CAP Node.js nor CAP Java needs to do anything special at request time to capture changes.
+
+The annotations (`@changelog`) are interpreted once at build time by the plugin, and the resulting triggers are then deployed alongside the schema. Any application — regardless of runtime — that writes to the tracked tables will have its changes captured automatically by the database.
+
 ### Table of Contents
 
 - [Try it Locally](#try-it-locally)
@@ -54,6 +60,8 @@ npm i
 cd tests/bookshop
 cds watch
 ```
+
+For testing with CAP Java, just execute `mvn cds:watch` instead of `cds watch`.
 
 
 > [!Warning]
