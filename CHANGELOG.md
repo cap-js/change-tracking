@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Version 2.2.3 - 2026-10-06
+## Version 2.2.3 - 2026-10-09
 
 ### Added
 - Support tracking on localized text tables. Changes to annotated localized fields (e.g. `title`, `descr`, `locale`) are linked to the parent entity's change history.
@@ -279,4 +279,3 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Added
 
 - Initial release
-
