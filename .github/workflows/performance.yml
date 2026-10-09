@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
   pull_request_target:
     branches: [main]
     types: [reopened, synchronize, opened]
+    paths-ignore:
+      - '**/*.md'
 
 permissions:
   contents: read
