@@ -4,9 +4,6 @@ on:
     types: [assigned, opened, synchronize, reopened, labeled, unlabeled]
     branches:
       - main
-    paths-ignore:
-      - '**/*.md'
-
 permissions:
   contents: read
 

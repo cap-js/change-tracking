@@ -15,30 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      non-md: ${{ steps.filter.outputs.non-md }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          allow-unsafe-pr-checkout: true
-      - id: filter
-        run: |
-          if [ "${{ github.event_name }}" = "merge_group" ]; then
-            echo "non-md=true" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            NON_MD=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -v '\.md$' || true)
-            [ -n "$NON_MD" ] && echo "non-md=true" >> "$GITHUB_OUTPUT" || echo "non-md=false" >> "$GITHUB_OUTPUT"
-          else
-            NON_MD=$(git diff --name-only HEAD^ HEAD | grep -v '\.md$' || true)
-            [ -n "$NON_MD" ] && echo "non-md=true" >> "$GITHUB_OUTPUT" || echo "non-md=false" >> "$GITHUB_OUTPUT"
-          fi
-
   lint:
-    needs: changes
-    if: needs.changes.outputs.non-md == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
