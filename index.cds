@@ -237,6 +237,57 @@ annotate ChangeView with @(UI: {
       Value         : createdBy,
       @UI.Importance: #High
     },
+    
+    // By explicitly setting these properties to hidden they do not appear in the ViewSettings for the table,
+    // avoiding redundant "Value from", "Value to" entries
+    {
+      Value: valueChangedFromLabel,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedFromLabelDate,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedFromLabelDateTime,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedFromLabelDateTimeWTZ,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedFromLabelTime,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedFromLabelTimestamp,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedToLabel,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedToLabelDate,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedToLabelDateTime,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedToLabelDateTimeWTZ,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedToLabelTime,
+      @UI.Hidden
+    },
+    {
+      Value: valueChangedToLabelTimestamp,
+      @UI.Hidden
+    }
   ],
   DeleteHidden                        : true,
   FieldGroup #valueChangedFrom        : {
@@ -309,12 +360,12 @@ annotate ChangeView with @(UI: {
   }
 }) {
   valueChangedFrom                  @UI.Hidden;
+  valueChangedTo                    @UI.Hidden;
   valueChangedFromLabelDate         @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Date');
   valueChangedFromLabelDateTime     @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.DateTime');
   valueChangedFromLabelDateTimeWTZ  @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.DateTime');
   valueChangedFromLabelTime         @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Time');
   valueChangedFromLabelTimestamp    @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Timestamp');
-  valueChangedTo                    @UI.Hidden;
   valueChangedToLabelDate           @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.Date');
   valueChangedToLabelDateTime       @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.DateTime');
   valueChangedToLabelDateTimeWTZ    @UI.AdaptationHidden  @UI.Hidden: ($self.valueDataType != 'cds.DateTime');
