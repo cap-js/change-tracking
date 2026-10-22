@@ -94,12 +94,13 @@ sap.ui.define(['sap/fe/test/ObjectPage', 'sap/ui/test/OpaBuilder', 'sap/ui/test/
             var oTable = aTables.filter(_isChangeHistoryTable)[0];
             var oRowBinding = oTable.getRowBinding();
             var iIndex = oRowBinding.getContexts(0, oRowBinding.getLength()).findIndex(function (oContext) {
-              return oContext.getProperty('attributeLabel') === sFieldText
-                && (!sChangeType || oContext.getProperty('modificationLabel') === sChangeType);
+              return oContext.getProperty('attributeLabel') === sFieldText && (!sChangeType || oContext.getProperty('modificationLabel') === sChangeType);
             });
-            oTable.findAggregatedObjects(true, function (oControl) {
-              return oControl.isA('sap.ui.table.TreeTable');
-            })[0].setFirstVisibleRow(iIndex);
+            oTable
+              .findAggregatedObjects(true, function (oControl) {
+                return oControl.isA('sap.ui.table.TreeTable');
+              })[0]
+              .setFirstVisibleRow(iIndex);
           }
         }).and.waitFor({
           controlType: 'sap.ui.table.Row',
