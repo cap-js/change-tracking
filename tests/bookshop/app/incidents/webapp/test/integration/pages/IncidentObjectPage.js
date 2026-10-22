@@ -84,20 +84,38 @@ sap.ui.define(['sap/fe/test/ObjectPage', 'sap/ui/test/OpaBuilder', 'sap/ui/test/
        */
       iExpandChangeHistoryRow: function (sFieldText, sChangeType) {
         return this.waitFor({
+          controlType: 'sap.ui.mdc.Table',
+          check: function (aTables) {
+            return aTables.some(function (oTable) {
+              return _isChangeHistoryTable(oTable) && oTable.getRowBinding();
+            });
+          },
+          success: function (aTables) {
+            var oTable = aTables.filter(_isChangeHistoryTable)[0];
+            var oRowBinding = oTable.getRowBinding();
+            var iIndex = oRowBinding.getContexts(0, oRowBinding.getLength()).findIndex(function (oContext) {
+              return oContext.getProperty('attributeLabel') === sFieldText && (!sChangeType || oContext.getProperty('modificationLabel') === sChangeType);
+            });
+            oTable
+              .findAggregatedObjects(true, function (oControl) {
+                return oControl.isA('sap.ui.table.TreeTable');
+              })[0]
+              .setFirstVisibleRow(iIndex);
+          }
+        }).and.waitFor({
           controlType: 'sap.ui.table.Row',
           matchers: function (oRow) {
             if (!_isChangeHistoryRow(oRow)) {
               return false;
             }
-            var oDomRef = oRow.getDomRef();
-            if (!oDomRef) {
+            var oContext = oRow.getBindingContext();
+            if (!oContext) {
               return false;
             }
-            var sText = oDomRef.innerText;
-            if (sText.indexOf(sFieldText) === -1) {
+            if (oContext.getProperty('attributeLabel') !== sFieldText) {
               return false;
             }
-            if (sChangeType && sText.indexOf(sChangeType) === -1) {
+            if (sChangeType && oContext.getProperty('modificationLabel') !== sChangeType) {
               return false;
             }
             return true;
@@ -495,31 +513,37 @@ sap.ui.define(['sap/fe/test/ObjectPage', 'sap/ui/test/OpaBuilder', 'sap/ui/test/
 
       /**
        * Asserts that a specific row exists in the Change History
-       * tree table where ALL expected values appear in the same
-       * row's DOM text. More precise than iSeeChangeHistoryEntryWith
-       * which checks the entire table.
+       * table binding where ALL expected values belong to one context.
+       * This also verifies values from hidden LineItem fields.
        * @param {object} oExpected - Key-value pairs that must all
        *   appear in a single row (e.g. { field: "Status",
        *   changeType: "Create", newValue: "In Process" })
        */
       iSeeChangeHistoryRow: function (oExpected) {
-        var aExpectedValues = Object.keys(oExpected).map(function (k) {
-          return oExpected[k];
-        });
+        var mProperties = {
+          field: 'attributeLabel',
+          changeType: 'modificationLabel',
+          newValue: 'valueChangedToLabel',
+          oldValue: 'valueChangedFromLabel',
+          objectID: 'objectID',
+          objectType: 'entityLabel'
+        };
 
         return OpaBuilder.create(this)
-          .hasType('sap.ui.table.Row')
-          .has(function (oRow) {
-            if (!_isChangeHistoryRow(oRow)) {
+          .hasType('sap.ui.mdc.Table')
+          .has(function (oTable) {
+            if (!_isChangeHistoryTable(oTable)) {
               return false;
             }
-            var oDomRef = oRow.getDomRef();
-            if (!oDomRef) {
+            var oRowBinding = oTable.getRowBinding();
+            if (!oRowBinding) {
               return false;
             }
-            var sText = oDomRef.innerText;
-            return aExpectedValues.every(function (sVal) {
-              return sText.indexOf(sVal) > -1;
+            var aContexts = oRowBinding.getContexts(0, oRowBinding.getLength());
+            return aContexts.some(function (oContext) {
+              return Object.keys(oExpected).every(function (sKey) {
+                return oContext.getProperty(mProperties[sKey]) === oExpected[sKey];
+              });
             });
           })
           .check(function () {
