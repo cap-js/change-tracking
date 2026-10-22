@@ -71,7 +71,7 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
           field: 'Status',
           changeType: 'Update',
           newValue: 'Resolved',
-          objectID: 'Sunny Sunshine',
+          objectID: 'Sunny Sunshine: Walldorf - Solar panel broken',
           objectType: 'Support Incidents'
         });
       });

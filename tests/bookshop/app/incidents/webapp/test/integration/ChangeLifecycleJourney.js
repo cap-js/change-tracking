@@ -68,7 +68,7 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
           field: 'Status',
           changeType: 'Create',
           newValue: 'In Process',
-          objectID: 'Sunny Sunshine',
+          objectID: 'Sunny Sunshine: Walldorf - OPA Test Incident',
           objectType: 'Support Incidents'
         });
 
@@ -76,8 +76,8 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
         Then.onTheDetailPage.iSeeChangeHistoryRow({
           field: 'conversation',
           changeType: 'Update',
-          objectID: 'alice',
-          objectType: 'alice'
+          objectID: 'Sunny Sunshine: Walldorf - OPA Test Incident',
+          objectType: 'Support Incidents'
         });
 
         // Expand the conversation tree row to reveal child entries
@@ -131,7 +131,7 @@ sap.ui.define(['sap/ui/test/opaQunit'], function (opaTest) {
         Then.onTheDetailPage.iSeeChangeHistoryRow({
           field: 'conversation',
           changeType: 'Update',
-          objectID: 'alice',
+          objectID: 'Sunny Sunshine: Walldorf - OPA Test Incident',
           objectType: 'Support Incidents'
         });
 
