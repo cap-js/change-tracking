@@ -743,6 +743,30 @@ describe('CDS Features', () => {
   });
 
   describe('Dynamic localization', () => {
+    it('localizes explicit attribute labels when the i18n key equals the element name', async () => {
+      const {
+        data: { ID }
+      } = await POST('/odata/v4/admin/Order', { role: 'manager' });
+
+      const {
+        data: { value: germanChanges }
+      } = await GET(`/odata/v4/admin/Order(${ID})/changes`, {
+        headers: { 'Accept-Language': 'de' }
+      });
+      expect(germanChanges.find((change) => change.attribute === 'role')).toMatchObject({
+        attributeLabel: 'Rolle'
+      });
+
+      const {
+        data: { value: englishChanges }
+      } = await GET(`/odata/v4/admin/Order(${ID})/changes`, {
+        headers: { 'Accept-Language': 'en' }
+      });
+      expect(englishChanges.find((change) => change.attribute === 'role')).toMatchObject({
+        attributeLabel: 'Role'
+      });
+    });
+
     async function newIncident() {
       const res = await POST(`odata/v4/processor/Incidents`, {
         customer_ID: '1004161',
