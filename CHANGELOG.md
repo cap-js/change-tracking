@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Version 2.2.4 - Upcoming
+
+### Fixed
+- `cds build` no longer crashes with `Cannot read properties of undefined (reading 'projection')` for service projections on entities with parameters
+
 ## Version 2.2.3 - 2026-10-09
 
 ### Added
