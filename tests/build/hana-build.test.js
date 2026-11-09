@@ -21,7 +21,8 @@ describe.skipIf(!isHana)('HANA Build', () => {
     process.chdir(testDir);
     cds.root = testDir;
     cds.env = cds.env.for('cds', bookshopDir);
-    cds.requires = cds.env.requires;
+    // cds 9 caches `requires`, cds 10 makes it a read-only getter on `env`
+    Reflect.set(cds, 'requires', cds.env.requires);
     require('../../cds-plugin.js');
     compiler = cds.compiler.to.hdi.migration;
 
