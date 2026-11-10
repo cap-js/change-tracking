@@ -354,6 +354,33 @@ In the UI, the *Change History* table now contains only the five columns with th
 
 For more information and examples on adding Fiori Annotations, see [Adding SAP Fiori Annotations](https://cap.cloud.sap/docs/advanced/fiori#fiori-annotations).
 
+To adjust the amount of visible rows, [manifest.json](./tests/bookshop/app/incidents/webapp/manifest.json) is necessary:
+
+```json
+{
+  "<ObjectPage>": {
+    "type": "Component",
+    "id": "<ObjectPage>",
+    "name": "sap.fe.templates.ObjectPage",
+    "options": {
+      "settings": {
+        ...
+        "controlConfiguration": {
+          "changes/@com.sap.vocabularies.UI.v1.LineItem": {
+            "tableSettings": {
+              "rowCount": 3,
+              "rowCountMode": "Auto"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+The two options "rowCount" and "rowCountMode" are explained in the [SAP Fiori elements documentation](https://ui5.sap.com/#/topic/459326f6bc734c48b00ba50827086084).
+
 ### Disable lazy loading
 
 To disable the lazy loading feature of the *Change History* table, you can add the following annotation to your `db/change-tracking.cds`:

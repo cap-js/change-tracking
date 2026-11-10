@@ -152,6 +152,12 @@
                       "name": "Inline"
                     }
                   }
+                },
+                "changes/@com.sap.vocabularies.UI.v1.LineItem": {
+                  "tableSettings": {
+                    "rowCount": 3,
+                    "rowCountMode": "Auto"
+                  }
                 }
               }
             }
