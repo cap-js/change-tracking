@@ -123,6 +123,7 @@ entity Report : cuid {
 
 entity Order : cuid {
   title      : String @title : '{i18n>title}' @changelog;
+  role       : String @title : '{i18n>role}' @changelog;
   type       : Association to one OrderType;
   report     : Association to one Report;
   header     : Composition of one OrderHeader;
