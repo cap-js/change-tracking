@@ -28,6 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: requires-approval
     if: always() && (needs.requires-approval.result == 'success' || needs.requires-approval.result == 'skipped')
+    permissions:
+      id-token: write
+      contents: read
     concurrency:
       group: performance-tests
     name: Performance tests for ${{ matrix.node-version }} and CAP ${{ matrix.cds-version }}
@@ -46,12 +49,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install dependencies and Cloud Foundry CLI (v8.9.0)
+      - name: Install dependencies and Cloud Foundry CLI (v8.18.3)
         shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install -y libc6 wget tar
-          wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=8.9.0&source=github-rel" -O cf-cli.tar.gz
+          wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=8.18.3&source=github-rel" -O cf-cli.tar.gz
           tar -xvzf cf-cli.tar.gz
           sudo mv cf /usr/local/bin/
           sudo mv cf8 /usr/local/bin/
@@ -62,18 +65,37 @@ jobs:
         shell: bash
         run: npm i -g mbt
 
-      - name: Authenticate with Cloud Foundry
+      - name: Authenticate with Cloud Foundry (GitHub OIDC)
         shell: bash
         env:
           CF_API: ${{ secrets['CF_API'] }}
-          CF_USERNAME: ${{ secrets['CF_USERNAME'] }}
-          CF_PASSWORD: ${{ secrets['CF_PASSWORD'] }}
           CF_ORG: ${{ secrets['CF_ORG'] }}
           CF_SPACE: ${{ secrets['CF_SPACE'] }}
+          CF_USER_ORIGIN: ${{ secrets['CF_USER_ORIGIN'] }}
+          CIS_ISSUER_URI: ${{ secrets['CIS_ISSUER_URI'] }}
         run: |
+          set -euo pipefail
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "::error::ACTIONS_ID_TOKEN_REQUEST_URL is not set. The calling job needs 'permissions: id-token: write'."
+            exit 1
+          fi
+          # A trailing slash is a common mistake and would make the audience not match
+          audience=$(jq -rn --arg a "${CIS_ISSUER_URI%/}" '$a|@uri')
+          if ! githubJwt=$(curl -sSf \
+              -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              -H "Accept: application/json; api-version=2.0" \
+              "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$audience" | jq -r '.value // empty'); then
+            echo "::error::Could not get a GitHub OIDC token."
+            exit 1
+          fi
+          if [ -z "$githubJwt" ]; then
+            echo "::error::Could not get a GitHub OIDC token."
+            exit 1
+          fi
+          echo "::add-mask::$githubJwt"
           for i in {1..5}; do
             cf api "$CF_API" && \
-            cf auth && \
+            cf auth --assertion "$githubJwt" --origin "$CF_USER_ORIGIN" && \
             cf target -o "$CF_ORG" -s "$CF_SPACE" && break
             echo "cf login failed, retrying ($i/5)..."
             sleep 10

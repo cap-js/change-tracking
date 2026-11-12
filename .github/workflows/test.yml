@@ -104,6 +104,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.non-md == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     name: HANA Integration Tests with Node.js ${{ matrix.node-version }} and CDS ${{ matrix.cds-version }}
     strategy:
       fail-fast: false
@@ -118,8 +121,8 @@ jobs:
         uses: ./.github/actions/integration-tests
         with:
           CF_API: ${{ secrets['CF_API'] }}
-          CF_USERNAME: ${{ secrets['CF_USERNAME'] }}
-          CF_PASSWORD: ${{ secrets['CF_PASSWORD'] }}
+          CF_USER_ORIGIN: ${{ secrets['CF_USER_ORIGIN'] }}
+          CIS_ISSUER_URI: ${{ secrets['CIS_ISSUER_URI'] }}
           CF_ORG: ${{ secrets['CF_ORG'] }}
           CF_SPACE: ${{ secrets['CF_SPACE'] }}
           NODE_VERSION: ${{ matrix.node-version }}
