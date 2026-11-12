@@ -155,6 +155,22 @@ entity CHANGE_TRACKING_DUMMY {
   key X : String(5);
 }
 
+/**
+ * Lightweight staging table written by compile-time triggers on .drafts shadow tables.
+ * Records which entity types within a draft were touched — without storing old/new values.
+ * Consumed by CAP Java delta save to skip or narrow the active before-image read.
+ * Rows are cleaned up automatically via ON DELETE CASCADE from DraftAdministrativeData.
+ */
+entity DraftChanges {
+  key draftUUID  : UUID;
+  key entityName : String(150);
+  key changeType : String(6) enum {
+        update = 'update';
+        insert = 'insert';
+        delete = 'delete';
+      };
+}
+
 entity Changes : cuid {
   parent                : Association to one Changes;
   children              : Composition of many Changes
