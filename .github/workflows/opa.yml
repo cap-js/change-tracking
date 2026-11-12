@@ -27,7 +27,7 @@ jobs:
         with:
           allow-unsafe-pr-checkout: true
       - name: Use Node.js 22.x
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v6
         with:
           node-version: 22.x
       - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
@@ -36,7 +36,7 @@ jobs:
         run: cd tests/bookshop && npm run test:opa
       - name: Upload OPA test reports
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: opa-test-report-${{ matrix.cds-version }}
           path: tests/bookshop/report/
