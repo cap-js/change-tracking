@@ -25,54 +25,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Cloud Foundry CLI (v8.18.3)
-      shell: bash
-      run: |
-        wget "https://packages.cloudfoundry.org/stable?release=linux64-binary&version=8.18.3&source=github-rel" -O cf-cli.tar.gz
-        tar -xvzf cf-cli.tar.gz
-        sudo mv cf /usr/local/bin/
-        sudo mv cf8 /usr/local/bin/
-        cf --version
-
-    - name: Authenticate with Cloud Foundry (GitHub OIDC)
-      shell: bash
-      env:
-        CF_API: ${{ inputs.CF_API }}
-        CF_ORG: ${{ inputs.CF_ORG }}
-        CF_SPACE: ${{ inputs.CF_SPACE }}
-        CF_USER_ORIGIN: ${{ inputs.CF_USER_ORIGIN }}
-        CIS_ISSUER_URI: ${{ inputs.CIS_ISSUER_URI }}
-      run: |
-        set -euo pipefail
-        if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
-          echo "::error::ACTIONS_ID_TOKEN_REQUEST_URL is not set. The calling job needs 'permissions: id-token: write'."
-          exit 1
-        fi
-        # A trailing slash is a common mistake and would make the audience not match
-        audience=$(jq -rn --arg a "${CIS_ISSUER_URI%/}" '$a|@uri')
-        if ! githubJwt=$(curl -sSf \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            -H "Accept: application/json; api-version=2.0" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$audience" | jq -r '.value // empty'); then
-          echo "::error::Could not get a GitHub OIDC token."
-          exit 1
-        fi
-        if [ -z "$githubJwt" ]; then
-          echo "::error::Could not get a GitHub OIDC token."
-          exit 1
-        fi
-        echo "::add-mask::$githubJwt"
-        for i in {1..5}; do
-          cf api "$CF_API" && \
-          cf auth --assertion "$githubJwt" --origin "$CF_USER_ORIGIN" && \
-          cf target -o "$CF_ORG" -s "$CF_SPACE" && break
-          echo "cf login failed, retrying ($i/5)..."
-          sleep 10
-          if [ "$i" -eq 5 ]; then
-            echo "❌ cf login failed after 5 attempts."
-            exit 1
-          fi
-        done
+    - name: Setup CF CLI and authenticate (GitHub OIDC)
+      uses: cap-js/cf-setup@c52742d9cfff538a77265af25c054758da9813da # v2.1.0
+      with:
+        api: ${{ inputs.CF_API }}
+        org: ${{ inputs.CF_ORG }}
+        space: ${{ inputs.CF_SPACE }}
+        origin: ${{ inputs.CF_USER_ORIGIN }}
+        oidc-audience: ${{ inputs.CIS_ISSUER_URI }}
 
     - name: Use Node.js ${{ inputs.NODE_VERSION}}
       uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
