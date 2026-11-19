@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         allow-unsafe-pr-checkout: true
-    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v6
       with:
         node-version: 24
         registry-url: https://registry.npmjs.org/
@@ -31,7 +31,7 @@ jobs:
         echo "version=$(npm pkg get version | tr -d '"')" >> $GITHUB_OUTPUT
     - name: parse changelog
       id: parse-changelog
-      uses: schwma/parse-changelog-action@1c2b2005ccf594cc3a45d33c10af4ab924d3a1c5 # v1.2.0
+      uses: schwma/parse-changelog-action@7676697ef5e08612fa8b30b385cc318d29b71567 # v1.2.1
       with:
         version: '${{ steps.get-version.outputs.version }}'
     - name: create a GitHub release
